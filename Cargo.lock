@@ -188,7 +188,7 @@ checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
 [[package]]
 name = "candle-core"
 version = "0.2.3"
-source = "git+https://github.com/huggingface/candle.git?rev=4abc1ea34dbc834e561f442737faf2c735f0a6ce#4abc1ea34dbc834e561f442737faf2c735f0a6ce"
+source = "git+https://github.com/huggingface/candle.git?rev=667f01c17323a5c28a9ae12d9f4512c36cc411b9#667f01c17323a5c28a9ae12d9f4512c36cc411b9"
 dependencies = [
  "byteorder",
  "candle-gemm",
@@ -212,7 +212,7 @@ dependencies = [
 [[package]]
 name = "candle-flash-attn"
 version = "0.2.3"
-source = "git+https://github.com/huggingface/candle.git?rev=4abc1ea34dbc834e561f442737faf2c735f0a6ce#4abc1ea34dbc834e561f442737faf2c735f0a6ce"
+source = "git+https://github.com/huggingface/candle.git?rev=667f01c17323a5c28a9ae12d9f4512c36cc411b9#667f01c17323a5c28a9ae12d9f4512c36cc411b9"
 dependencies = [
  "anyhow",
  "candle-core",
@@ -349,7 +349,7 @@ dependencies = [
 [[package]]
 name = "candle-kernels"
 version = "0.2.3"
-source = "git+https://github.com/huggingface/candle.git?rev=4abc1ea34dbc834e561f442737faf2c735f0a6ce#4abc1ea34dbc834e561f442737faf2c735f0a6ce"
+source = "git+https://github.com/huggingface/candle.git?rev=667f01c17323a5c28a9ae12d9f4512c36cc411b9#667f01c17323a5c28a9ae12d9f4512c36cc411b9"
 dependencies = [
  "glob",
  "rayon",
@@ -358,7 +358,7 @@ dependencies = [
 [[package]]
 name = "candle-nn"
 version = "0.2.3"
-source = "git+https://github.com/huggingface/candle.git?rev=4abc1ea34dbc834e561f442737faf2c735f0a6ce#4abc1ea34dbc834e561f442737faf2c735f0a6ce"
+source = "git+https://github.com/huggingface/candle.git?rev=667f01c17323a5c28a9ae12d9f4512c36cc411b9#667f01c17323a5c28a9ae12d9f4512c36cc411b9"
 dependencies = [
  "candle-core",
  "half",
@@ -373,7 +373,7 @@ dependencies = [
 [[package]]
 name = "candle-transformers"
 version = "0.2.3"
-source = "git+https://github.com/huggingface/candle.git?rev=4abc1ea34dbc834e561f442737faf2c735f0a6ce#4abc1ea34dbc834e561f442737faf2c735f0a6ce"
+source = "git+https://github.com/huggingface/candle.git?rev=667f01c17323a5c28a9ae12d9f4512c36cc411b9#667f01c17323a5c28a9ae12d9f4512c36cc411b9"
 dependencies = [
  "candle-core",
  "candle-flash-attn",
@@ -1899,18 +1899,18 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "1.0.48"
+version = "1.0.49"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d6d7a740b8a666a7e828dd00da9c0dc290dff53154ea77ac109281de90589b7"
+checksum = "1177e8c6d7ede7afde3585fd2513e611227efd6481bd78d2e82ba1ce16557ed4"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.48"
+version = "1.0.49"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49922ecae66cc8a249b77e68d1d0623c1b2c514f0060c27cdc68bd62a1219d35"
+checksum = "10712f02019e9288794769fba95cd6847df9874d49d871d062172f9dd41bc4cc"
 dependencies = [
  "proc-macro2",
  "quote",
