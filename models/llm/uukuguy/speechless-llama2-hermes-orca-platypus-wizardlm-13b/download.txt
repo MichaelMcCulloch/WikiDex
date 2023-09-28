@@ -1,0 +1,5 @@
+https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b/resolve/main/model-00001-of-00003.safetensors
+https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b/resolve/main/model-00002-of-00003.safetensors
+https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b/resolve/main/model-00003-of-00003.safetensors
+https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b/resolve/main/config.json
+https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b/resolve/main/tokenizer.json

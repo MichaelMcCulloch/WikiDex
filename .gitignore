@@ -1,1 +1,16 @@
 /target
+models/llm/NousResearch/Llama-2-13b-chat-hf/config.json
+models/llm/NousResearch/Llama-2-13b-chat-hf/model-00001-of-00003.safetensors
+models/llm/NousResearch/Llama-2-13b-chat-hf/model-00002-of-00003.safetensors
+models/llm/NousResearch/Llama-2-13b-chat-hf/model-00003-of-00003.safetensors
+models/llm/NousResearch/Llama-2-13b-chat-hf/tokenizer.json
+models/llm/NousResearch/Llama-2-13b-hf/config.json
+models/llm/NousResearch/Llama-2-13b-hf/model-00001-of-00003.safetensors
+models/llm/NousResearch/Llama-2-13b-hf/model-00002-of-00003.safetensors
+models/llm/NousResearch/Llama-2-13b-hf/model-00003-of-00003.safetensors
+models/llm/NousResearch/Llama-2-13b-hf/tokenizer.json
+models/llm/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b/config.json
+models/llm/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b/model-00001-of-00003.safetensors
+models/llm/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b/model-00002-of-00003.safetensors
+models/llm/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b/model-00003-of-00003.safetensors
+models/llm/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b/tokenizer.json

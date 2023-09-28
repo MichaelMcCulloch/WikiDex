@@ -1,0 +1,5 @@
+https://huggingface.co/NousResearch/Llama-2-13b-chat-hf/resolve/main/model-00001-of-00003.safetensors
+https://huggingface.co/NousResearch/Llama-2-13b-chat-hf/resolve/main/model-00002-of-00003.safetensors
+https://huggingface.co/NousResearch/Llama-2-13b-chat-hf/resolve/main/model-00003-of-00003.safetensors
+https://huggingface.co/NousResearch/Llama-2-13b-chat-hf/resolve/main/config.json
+https://huggingface.co/TheBloke/Llama-2-13B-chat-GPTQ/resolve/main/tokenizer.json
