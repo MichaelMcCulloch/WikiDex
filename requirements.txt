@@ -1,0 +1,5 @@
+--index-url https://download.pytorch.org/whl/nightly/cu121
+https://github.com/turboderp/exllamav2/releases/download/v0.0.4/exllamav2-0.0.4-py3-none-any.whl
+torch
+flask
+flask_cors
