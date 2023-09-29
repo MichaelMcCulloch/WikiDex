@@ -23,4 +23,5 @@ WORKDIR /app
 copy ./llama.py /app/llama.py
 
 # CMD ls -l /usr/local/cuda
+EXPOSE 5000:5000
 cmd . /build/venv/bin/activate && export CUDA_HOME=/usr/local/cuda && python3 ./llama.py -m /app/models/llm/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ -mode llama

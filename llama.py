@@ -3,7 +3,6 @@ import os
 import torch
 import argparse
 import time
-import flash_attn
 from flask import Flask, jsonify, request
 
 from exllamav2 import(
@@ -162,4 +161,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     assistant = ChatAssistant(args)
-    app.run(port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False)
