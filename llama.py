@@ -3,6 +3,7 @@ import os
 import torch
 import argparse
 import time
+import flash_attn
 from flask import Flask, jsonify, request
 
 from exllamav2 import(
