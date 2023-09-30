@@ -7,10 +7,10 @@ edition = "2021"
 
 [dependencies]
 faiss = { git = "https://github.com/MichaelMcCulloch/faiss-rs.git",branch = "latest+avx2", features = ["static"] }
-candle-core = {git = "https://github.com/huggingface/candle.git",rev = "667f01c17323a5c28a9ae12d9f4512c36cc411b9", features=["cuda", "cudnn","mkl"]}
-candle-nn = {git = "https://github.com/huggingface/candle.git",rev = "667f01c17323a5c28a9ae12d9f4512c36cc411b9", features=["cuda","mkl"]}
-candle-transformers={git = "https://github.com/huggingface/candle.git",rev = "667f01c17323a5c28a9ae12d9f4512c36cc411b9", features=["cuda","flash-attn","mkl"] }
-candle-flash-attn={git = "https://github.com/huggingface/candle.git",rev = "667f01c17323a5c28a9ae12d9f4512c36cc411b9"}
+candle-core = {git = "https://github.com/huggingface/candle.git",rev = "667f01c17323a5c28a9ae12d9f4512c36cc411b9", features = ["cuda", "cudnn","mkl"]}
+candle-nn = {git = "https://github.com/huggingface/candle.git",rev = "667f01c17323a5c28a9ae12d9f4512c36cc411b9", features = ["cuda","mkl"]}
+candle-transformers = {git = "https://github.com/huggingface/candle.git",rev = "667f01c17323a5c28a9ae12d9f4512c36cc411b9", features = ["cuda","flash-attn","mkl"] }
+candle-flash-attn = {git = "https://github.com/huggingface/candle.git",rev = "667f01c17323a5c28a9ae12d9f4512c36cc411b9"}
 intel-mkl-src = "0.8.1"
 safetensors = "0.3.3"
 serde = { version = "1.0.188"  }
@@ -20,3 +20,15 @@ cudarc = "0.9.14"
 anyhow = "1.0.75"
 tokenizers = "0.14.0"
 hf-hub = "0.3.1"
+crossbeam = "0.8.2"
+actix-web = "4.4.0"
+actix-cors = "0.6.4"
+actix-rt = "2.9.0"
+env_logger = "0.10.0"
+log = "0.4.20"
+listenfd = "1.0.1"
+flate2 = "1.0.27"
+futures = "0.3.28"
+async-trait ="0.1.73"
+sqlx = { version = "0.7.2", features = ["sqlite", "runtime-tokio"] }
+tokio = { version = "1.32.0", features = ["rt", "macros"]}
