@@ -19,7 +19,7 @@ pub enum IndexLoadError {
 pub enum IndexSearchError {
     IncorrectDimensions,
 }
-
+impl std::error::Error for IndexLoadError{}
 impl Display for IndexLoadError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "Index Load Error")

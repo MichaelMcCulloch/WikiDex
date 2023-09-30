@@ -17,6 +17,8 @@ pub enum DocstoreRetrieveError {
 }
 
 
+impl std::error::Error for DocstoreLoadError{}
+
 impl Display for DocstoreLoadError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {

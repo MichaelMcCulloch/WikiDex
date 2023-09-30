@@ -29,6 +29,7 @@ pub enum BertLoadError {
     ModelRead,
 }
 
+impl std::error::Error for BertLoadError{}
 pub enum BertEmbedError {
     Tokenize,
     Embed,
