@@ -27,3 +27,8 @@ actix-rt = "2.9.0"
 env_logger = "0.10.0"
 log = "0.4.20"
 listenfd = "1.0.1"
+flate2 = "1.0.27"
+futures = "0.3.28"
+async-trait ="0.1.73"
+sqlx = { version = "0.7.2", features = ["sqlite", "runtime-tokio"] }
+tokio = { version = "1.32.0", features = ["rt", "macros"]}

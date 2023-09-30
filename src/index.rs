@@ -57,7 +57,7 @@ impl Index {
             .map_err(|e| IndexLoadError::IndexFormatError(e))?;
         let dims = faiss::Index::d(&index);
 
-        println!("Load Index {:?}", start.elapsed());
+        log::info!("Load Index {:?}", start.elapsed());
         Ok(Index { index, dims })
     }
 }
@@ -71,7 +71,7 @@ impl Search for Index {
     type E = IndexSearchError;
 
     fn search(&self, query: &Vec<Vec<f32>>, neighbors: usize) -> Result<Vec<Vec<i64>>, IndexSearchError> {
-
+        let start = std::time::Instant::now();
         let flattened_query : Vec<f32> = query
             .iter()
             .all(|q| q.len() == self.dims as usize)
@@ -80,6 +80,8 @@ impl Search for Index {
 
         let rs = self.index.search(&flattened_query, 4).unwrap();
         let x : Vec<i64>= rs.labels.iter().map(|i| i.to_native()).collect();
-        Ok(x.chunks_exact(neighbors).map(|v|v.to_vec()).collect())
+        let indices = x.chunks_exact(neighbors).map(|v|v.to_vec()).collect();
+        log::info!("Index {:?}", start.elapsed());
+        Ok(indices)
     }
 }

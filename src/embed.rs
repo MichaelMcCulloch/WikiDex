@@ -1,6 +1,6 @@
 use std::{
-    fmt::{self, Display, Formatter},
-    path::{Path, PathBuf},
+    fmt::{self, Display, Formatter, Debug},
+    path::Path,
 };
 
 use candle_core::{Tensor, CudaDevice, backend::BackendDevice};
@@ -70,7 +70,7 @@ impl Display for BertLoadError {
         }
     }
 }
-impl fmt::Display for BertEmbedError {
+impl Display for BertEmbedError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             BertEmbedError::Tokenize => write!(f, "Error during tokenization"),
@@ -80,20 +80,20 @@ impl fmt::Display for BertEmbedError {
     }
 }
 
-impl fmt::Debug for BertFile {
+impl Debug for BertFile {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "{}", self)
     }
 }
 
-impl fmt::Debug for BertLoadError {
+impl Debug for BertLoadError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "{}", self)
     }
 }
 
 
-impl fmt::Debug for BertEmbedError {
+impl Debug for BertEmbedError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self)
     }
@@ -101,32 +101,32 @@ impl fmt::Debug for BertEmbedError {
 
 impl BertEmbed {
     pub fn new<P: AsRef<Path>>(model_path: &P) -> Result<Self, BertLoadError> {
+        let model_path = model_path.as_ref();
         let device = candle_core::Device::Cuda(CudaDevice::new(0).unwrap());
 
         let start = std::time::Instant::now();
 
-        let model_dir = PathBuf::from(model_path.as_ref());
-        if !model_dir.exists() {
+        if !model_path.exists() {
             return Err(BertLoadError::FileNotFound(BertFile::Directory));
         }
         let (embed_config, embed_tokenizer, embed_model) = {
             (
                 {
-                    let config_path = model_dir.join("config.json");
+                    let config_path = model_path.join("config.json");
                     config_path
                         .exists()
                         .then(|| config_path)
                         .ok_or(BertLoadError::FileNotFound(BertFile::Config))?
                 },
                 {
-                    let tokenizer_path = model_dir.join("tokenizer.json");
+                    let tokenizer_path = model_path.join("tokenizer.json");
                     tokenizer_path
                         .exists()
                         .then(|| tokenizer_path)
                         .ok_or(BertLoadError::FileNotFound(BertFile::Tokenizer))?
                 },
                 {
-                    let model_path = model_dir.join("model.safetensors");
+                    let model_path = model_path.join("model.safetensors");
                     model_path
                         .exists()
                         .then(|| model_path)
@@ -154,7 +154,7 @@ impl BertEmbed {
                 .map_err(|_| BertLoadError::ModelRead)?
         };
         let embed_model = BertModel::load(vb, &config).map_err(|_| BertLoadError::ModelLoad)?;
-        println!("Load Embedder {:?}", start.elapsed());
+        log::info!("Load Embedder {:?}", start.elapsed());
         Ok(BertEmbed {
             embed_model,
             embed_tokenizer,
@@ -201,7 +201,7 @@ impl Embed for BertEmbed {
             .map_err(|_| BertEmbedError::Tensor)?
             .to_vec1()
             .map_err(|_| BertEmbedError::Tensor)?;
-        println!("Embed {:?}", start.elapsed());
+        log::info!("Embed {:?}", start.elapsed());
         Ok(e)
     }
 }
