@@ -1,9 +1,9 @@
 use std::{
-    fmt::{self, Debug, Display, Formatter},
+    fmt::{self, Display, Formatter},
     path::{Path, PathBuf},
 };
 
-use candle_core::{Device, Tensor};
+use candle_core::{Tensor, CudaDevice, backend::BackendDevice};
 use candle_nn::VarBuilder;
 use candle_transformers::models::bert::{BertModel, Config, DTYPE};
 use tokenizers::Tokenizer;
@@ -100,7 +100,9 @@ impl fmt::Debug for BertEmbedError {
 }
 
 impl BertEmbed {
-    pub fn new<P: AsRef<Path>>(model_path: &P, device: &Device) -> Result<Self, BertLoadError> {
+    pub fn new<P: AsRef<Path>>(model_path: &P) -> Result<Self, BertLoadError> {
+        let device = candle_core::Device::Cuda(CudaDevice::new(0).unwrap());
+
         let start = std::time::Instant::now();
 
         let model_dir = PathBuf::from(model_path.as_ref());
