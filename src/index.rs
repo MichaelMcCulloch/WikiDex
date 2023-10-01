@@ -82,7 +82,7 @@ impl Search for Index {
         let rs = self.index.search(&flattened_query, 4).unwrap();
         let x : Vec<i64>= rs.labels.iter().map(|i| i.to_native()).collect();
         let indices = x.chunks_exact(neighbors).map(|v|v.to_vec()).collect();
-        log::info!("Index {:?}", start.elapsed());
+        log::debug!("Index {:?}", start.elapsed());
         Ok(indices)
     }
 
@@ -90,7 +90,7 @@ impl Search for Index {
         let start = std::time::Instant::now();
         let rs = self.index.search(&query, 4).unwrap();
         let indices : Vec<i64>= rs.labels.iter().map(|i| i.to_native()).collect();
-        log::info!("Index {:?}", start.elapsed());
+        log::debug!("Index {:?}", start.elapsed());
         Ok(indices)
     }
 }

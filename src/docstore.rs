@@ -110,7 +110,7 @@ impl Docstore for SqliteDocstore {
             }).collect::<Vec<(i64, String)>>()
         }).collect::<Vec<Vec<(i64, String)>>>();
       
-        log::info!("SQL Query {:?}", start.elapsed());
+        log::debug!("SQL Query {:?}", start.elapsed());
 
       
         Ok(result)
@@ -151,7 +151,7 @@ impl Docstore for SqliteDocstore {
             (doc.0, doc.1.clone())
         }).collect::<Vec<(i64, String)>>();
       
-        log::info!("SQL Query {:?}", start.elapsed());
+        log::debug!("SQL Query {:?}", start.elapsed());
 
         Ok(result)
     }

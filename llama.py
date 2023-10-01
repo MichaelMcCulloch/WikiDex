@@ -100,7 +100,7 @@ class ChatAssistant:
     def generate_response(self, conversation):
 
         active_context = self.get_tokenized_context( conversation, self.model.config.max_seq_len - self.min_space_in_context)
-
+        print("Input context length: " + str(len(active_context[0])))
         start = time.time()
         self.generator.begin_stream(active_context, self.settings)
 

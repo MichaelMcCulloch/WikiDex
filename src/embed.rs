@@ -202,7 +202,7 @@ impl Embed for BertEmbed {
             .map_err(|_| BertEmbedError::Tensor)?
             .to_vec1()
             .map_err(|_| BertEmbedError::Tensor)?;
-        log::info!("Embed {:?}", start.elapsed());
+        log::debug!("Embed {:?}", start.elapsed());
         Ok(e)
     }
 }
