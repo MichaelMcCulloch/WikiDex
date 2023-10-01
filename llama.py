@@ -3,6 +3,7 @@ import os
 import torch
 import argparse
 import time
+import json
 from flask import Flask, jsonify, request
 
 from exllamav2 import(
@@ -74,6 +75,7 @@ class ChatAssistant:
             return self.tokenizer.encode(text)
 
     def get_tokenized_context(self, json, max_len):
+
         while True:
             context = torch.empty((1, 0), dtype=torch.long)
             prompt = ""
@@ -137,7 +139,7 @@ class ChatAssistant:
 
 @app.route('/conversation', methods=['POST'])
 def conversation():
-    json_data = request.json
+    json_data = json.loads(request.json)
     response = assistant.generate_response(json_data)
     json_data['conversation'].append(response)
     return jsonify(json_data)
@@ -156,9 +158,10 @@ if __name__ == '__main__':
     parser.add_argument("-repp", "--repetition_penalty", type=float, default=1.1, help="Sampler repetition penalty, default = 1.1 (1 to disable)")
     parser.add_argument("-maxr", "--max_response_tokens", type=int, default=1000, help="Max tokens per response, default = 1000")
     parser.add_argument("-resc", "--response_chunk", type=int, default=250, help="Space to reserve in context for reply, default = 250")
+    parser.add_argument("-port", "--port", type=int, default=5050, help="Port on which to expose the service")
 
     model_init.add_args(parser)
     args = parser.parse_args()
 
     assistant = ChatAssistant(args)
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=args.port, debug=False)
