@@ -1,28 +1,10 @@
-use std::{sync::Arc, string};
+use std::{sync::Arc};
 
 use actix_web::{web::{Json, Data}, dev::Server, middleware, HttpServer, post, App, HttpResponse, Responder};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use utoipa::{ToSchema, OpenApi};
 use utoipa_redoc::{Redoc, Servable};
-
-
-
-
-/* [
-  {
-    "User": "string"
-  },
-  {
-    "Assistant": [
-      {},
-      {}
-    ]
-  }
-] */
-
-
 
 #[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
 enum Message {
@@ -73,10 +55,6 @@ struct LlmMessage {
         schemas(Query),
         schemas(Answer)
     ),
-    // tags(
-    //     (name = "todo", description = "Todo management endpoints.")
-    // ),
-    // modifiers(&SecurityAddon)
 )]
 struct ApiDoc;
 
@@ -125,12 +103,6 @@ async fn conversation(
 ) -> impl Responder {
     log::info!("Conversation Received");
     let url = "http://0.0.0.0:5050/conversation";
-    // let conversation = vec![
-    //     Message::User(String::from("What is the capital of France?")),
-    //     Message::Assistant(String::from("The capital of france is Paris![0]"), vec![String::from("https://en.wikipedia.org/wiki/France")]),
-    //     Message::User(String::from("And who is the current prime minister of france, and where were they born?")),
-    //     Message::Assistant(String::from("The president of the French Republic as of 2023 is Emmanuel Macron![0] and he was born in Amiens, Somme, France[1]"), vec![String::from("https://en.wikipedia.org/wiki/President_of_France"), String::from("https://en.wikipedia.org/wiki/Emmanuel_Macron")]),
-    // ]; 
 
     match conversation.last(){
         Some(Message::User(user_query)) => {

@@ -95,7 +95,7 @@ impl Docstore for SqliteDocstore {
                 let binary_data = row.get::<Vec<u8>, _>("doc");
                 let mut gz = GzDecoder::new(&*binary_data);
                 let mut document = String::new();
-                gz.read_to_string(&mut document).unwrap();
+                gz.read_to_string(&mut document).map_err(|_| DocstoreRetrieveError::InvalidDocument).unwrap();
                 (
                     index,
                     document,
@@ -138,7 +138,7 @@ impl Docstore for SqliteDocstore {
                 let binary_data = row.get::<Vec<u8>, _>("doc");
                 let mut gz = GzDecoder::new(&*binary_data);
                 let mut document = String::new();
-                gz.read_to_string(&mut document).unwrap();
+                gz.read_to_string(&mut document).map_err(|_| DocstoreRetrieveError::InvalidDocument).unwrap();
                 (
                     index,
                     document,

@@ -36,12 +36,6 @@ async fn main()-> anyhow::Result<()>  {
     let docstore = SqliteDocstore::new(&docstore_path).await.map_err(anyhow::Error::from)?;
     let server = run_server(index, embedder, docstore)?;
     server.await.map_err(anyhow::Error::from)
-    //// Embedder Stuff
-
-    // let embedding = embedder.embed(prompt).unwrap();
-    // let qquery = vec![embedding.clone(); 15];
-    // let result = index.search(&qquery, 4).unwrap();
-    // let _documents = docstore.retreive(&result).await.unwrap();
 
 }
 
