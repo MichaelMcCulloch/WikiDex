@@ -21,7 +21,6 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
 
 WORKDIR /app
 copy ./llama.py /app/llama.py
-
 # CMD ls -l /usr/local/cuda
-EXPOSE 5000:5000
-cmd . /build/venv/bin/activate && export CUDA_HOME=/usr/local/cuda && python3 ./llama.py -m /app/models/llm/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ -mode llama
+EXPOSE "${HOST_API_PORT:-5050}:${CONTAINER_API_PORT:-5050}"
+cmd . /build/venv/bin/activate && export CUDA_HOME=/usr/local/cuda && python3 ./llama.py -m /app/models/llm/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ/gptq-4bit-32g-actorder_True/ -mode llama --port ${CONTAINER_API_PORT:-5050}

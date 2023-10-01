@@ -5,13 +5,16 @@ mod index;
 mod docstore;
 mod server;
 
-use docstore::{Docstore, SqliteDocstore};
-use server::run_server; 
+use docstore::SqliteDocstore;
+use server::run_server;
 
 use crate::{
-    embed::{BertEmbed, Embed},
-    index::{Index, Search},
+    embed::BertEmbed,
+    index::Index,
 };
+
+
+
 #[actix_web::main]
 async fn main()-> anyhow::Result<()>  {
 
@@ -24,7 +27,6 @@ async fn main()-> anyhow::Result<()>  {
         ),
     ); 
     env_logger::init();
-    let prompt = "What are the primary paradigms in Artificial Intelligence?";
     let embedder_path = "models/embed/thenlper/gte-small/";
     let index_path = "/home/michael/Development/retreival_augmented_generation/db/wikipedia.faiss";
     let docstore_path = "/home/michael/Development/retreival_augmented_generation/db/docstore.sqlite3";

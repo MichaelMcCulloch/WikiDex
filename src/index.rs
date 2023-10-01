@@ -64,13 +64,14 @@ impl Index {
 
 pub trait Search {
     type E;
-    fn search(&self, query: &Vec<Vec<f32>>, neighbors: usize) -> Result<Vec<Vec<i64>>, Self::E>;
+    fn search(&self, query: &Vec<f32>, neighbors: usize) -> Result<Vec<i64>, Self::E>;
+    fn batch_search(&self, query: &Vec<Vec<f32>>, neighbors: usize) -> Result<Vec<Vec<i64>>, Self::E>;
 }
 
 impl Search for Index {
     type E = IndexSearchError;
 
-    fn search(&self, query: &Vec<Vec<f32>>, neighbors: usize) -> Result<Vec<Vec<i64>>, IndexSearchError> {
+    fn batch_search(&self, query: &Vec<Vec<f32>>, neighbors: usize) -> Result<Vec<Vec<i64>>, IndexSearchError> {
         let start = std::time::Instant::now();
         let flattened_query : Vec<f32> = query
             .iter()
@@ -81,6 +82,14 @@ impl Search for Index {
         let rs = self.index.search(&flattened_query, 4).unwrap();
         let x : Vec<i64>= rs.labels.iter().map(|i| i.to_native()).collect();
         let indices = x.chunks_exact(neighbors).map(|v|v.to_vec()).collect();
+        log::info!("Index {:?}", start.elapsed());
+        Ok(indices)
+    }
+
+    fn search(&self, query: &Vec<f32>, neighbors: usize) -> Result<Vec<i64>, Self::E> {
+        let start = std::time::Instant::now();
+        let rs = self.index.search(&query, 4).unwrap();
+        let indices : Vec<i64>= rs.labels.iter().map(|i| i.to_native()).collect();
         log::info!("Index {:?}", start.elapsed());
         Ok(indices)
     }
