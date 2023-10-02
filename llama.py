@@ -140,7 +140,7 @@ class ChatAssistant:
 
 @app.route('/conversation', methods=['POST'])
 def conversation():
-    json_data = request.json
+    json_data = json.loads(request.json)
     response = assistant.generate_response(json_data)
     json_data['conversation'].append(response)
     return jsonify(json_data)
