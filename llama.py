@@ -61,6 +61,7 @@ class ChatAssistant:
         elif self.mode == "raw":
             self.first_prompt = f"""<|system_prompt|>\n{self.username}: <|user_prompt|>\n{self.botname}:"""
             self.subs_prompt = f"""{self.username}: <|user_prompt|>\n{self.botname}:"""
+        self.generator.warmup()
 
     def format_prompt(self,system, user_prompt, first):
         if first:
@@ -134,12 +135,12 @@ class ChatAssistant:
 
         time_taken = time.time() - start
         tokens_per_second = response_tokens / time_taken
-        print("Tokens per second:", tokens_per_second)
+        print(f"Response generated in {time_taken:.2f} seconds, {response_tokens} tokens, {response_tokens / time_taken:.2f} tokens/second")
         return {"role": "assistant", "message": response_text}
 
 @app.route('/conversation', methods=['POST'])
 def conversation():
-    json_data = json.loads(request.json)
+    json_data = request.json
     response = assistant.generate_response(json_data)
     json_data['conversation'].append(response)
     return jsonify(json_data)
