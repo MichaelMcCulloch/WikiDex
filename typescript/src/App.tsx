@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import './App.css';
 
 interface Message {
   User?: string;
@@ -49,26 +50,35 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <div style={{ height: '80vh', overflowY: 'scroll' }}>
-          {conversation.map((message, idx) => (
-            <div key={idx}>
-              {message.User && <p>{message.User}</p>}
-              {message.Assistant && (
-                <div>
+        <div className="message-list">
+          {conversation.map((message, idx) => {
+            if (message.User) {
+              return <div key={idx} className="user-text"><p>{message.User}</p></div>;
+            }
+            if (message.Assistant) {
+              return (
+                <div key={idx} className="assistant-text">
                   <p>{message.Assistant[0]}</p>
-                  {message.Assistant[1].map((url, idx) => (
-                    <a key={idx} href={url}>Link</a>
-                  ))}
+                  <ul style={{ display: 'flex', flexDirection: 'row', gap: '8px' }}>
+                    {message.Assistant[1].map((url, urlIdx) => (
+                      <li key={urlIdx} style={{ listStyleType: 'none' }}>
+                        <div className="link-bubble">
+                          <a href={url}>{url}</a>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              )}
-            </div>
-          ))}
+              );
+            }
+            return null;  // this is just to handle cases where neither User nor Assistant properties are present, though it shouldn't occur based on your data structure
+          })}
           <div ref={messagesEndRef} />
         </div>
 
-        <div style={{ position: 'fixed', bottom: 0, display: 'flex', width: '100%', padding: 16, boxSizing: 'border-box' }}>
-          <input type="text" onChange={(e) => setInputText(e.target.value)} value={inputText} style={{ width: '80%', marginRight: 8 }} />
-          <button onClick={submit} style={{ width: '20%' }}>Submit</button>
+        <div style={{ position: 'fixed', bottom: 0, display: 'flex', width: '100%', padding: 16, boxSizing: 'border-box', backgroundColor: '#282c34' }}>
+          <input type="text" onChange={(e) => setInputText(e.target.value)} value={inputText} style={{ width: '80%', marginRight: 8, padding: 8, borderRadius: 4, border: 'none' }} />
+          <button onClick={submit} style={{ width: '20%', backgroundColor: '#61dafb', border: 'none', color: '#282c34', padding: 8, borderRadius: 4 }}>Submit</button>
         </div>
       </header>
     </div>
