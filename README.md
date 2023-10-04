@@ -10,6 +10,6 @@ This project aims to provide a powerful backend for a RESTful API that serves as
     curl -X POST http://0.0.0.0:5000/query -d '"What is the meaning of life?"' -H "Content-Type: application/json"
     ```
 - `/conversation`
-    ```rust
-    unimplemented!("Coming Soon!")
+    ```bash
+    curl -X POST "https://text-gen-webui.semanticallyinvalid.net/conversation" -H "Content-Type: application/json" -d '[{"User":"Why is it so difficult to put humans on Mars?"}]'
     ```
