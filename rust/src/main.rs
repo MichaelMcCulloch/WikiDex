@@ -4,6 +4,7 @@ mod embed;
 mod index;
 mod docstore;
 mod server;
+mod protocol;
 
 use docstore::SqliteDocstore;
 use server::run_server;
