@@ -1,6 +1,7 @@
 use std::{sync::Arc};
 
-use actix_web::{web::{Json, Data}, dev::Server, middleware, HttpServer, post, App, HttpResponse, Responder};
+use actix_cors::Cors;
+use actix_web::{web::{Json, Data}, dev::Server, middleware, HttpServer, post, App, HttpResponse, Responder, http};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use utoipa::{ToSchema, OpenApi};
@@ -113,6 +114,7 @@ async fn conversation(
 
             let dummy0 = documents[0].0;
             let dummy1 = documents[1].0;
+            let dummy2 = documents[2].0;
             let dummy3 = documents[3].0;
 
             let input = LlmInput{
@@ -121,7 +123,7 @@ async fn conversation(
                 The documents provided are listed as:
                 {formatted_document_list}
                 
-                Please answer the query "{user_query}" using only the provided documents. Cite the source documents by number in square brackets following the referenced information. For example, this statement requires a citation[{dummy0}], and this statement cites two articles[{dummy1},{dummy3}], and this statement cites all articles[{dummy0}-{dummy3}].)"###),
+                Please answer the query "{user_query}" using only the provided documents. Cite the source documents by number in square brackets following the referenced information. For example, this statement requires a citation[{dummy0}], and this statement cites two articles[{dummy1},{dummy3}], and this statement cites all articles[{dummy0},{dummy1},{dummy2},{dummy3}].)"###),
                 conversation: vec![LlmMessage{role: String::from("user"), message: format!("{}", user_query)}]
             };
             let request_body = serde_json::to_string(&input).unwrap();
@@ -169,6 +171,7 @@ pub fn run_server(index: Index, embed: BertEmbed, docstore: SqliteDocstore) -> R
     let mut server = HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
+            .wrap(Cors::permissive())
             .app_data(Data::new(index.clone()))
             .app_data(Data::new(embed.clone()))
             .app_data(Data::new(docstore.clone()))
