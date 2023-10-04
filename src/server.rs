@@ -1,48 +1,15 @@
-use std::{sync::Arc};
+use std::sync::Arc;
 
 use actix_cors::Cors;
-use actix_web::{web::{Json, Data}, dev::Server, middleware, HttpServer, post, App, HttpResponse, Responder, http};
+use actix_web::{web::{Json, Data}, dev::Server, middleware, HttpServer, post, App, HttpResponse, Responder};
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
-use utoipa::{ToSchema, OpenApi};
+use utoipa::OpenApi;
 use utoipa_redoc::{Redoc, Servable};
 
-#[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
-enum Message {
-    User(String),
-    Assistant(String, Vec<String>),
-}
-
-#[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
-struct Conversation(Vec<Message>);
-
-#[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
-
-struct Query(String);
-
-#[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
-
-struct Answer(String);
-
-
-use crate::docstore::Docstore;
+use crate::{docstore::Docstore, protocol::{oracle::*, llama::*}};
 use crate::embed::Embed;
 use crate::index::Search;
 use crate::{docstore::SqliteDocstore, embed::BertEmbed, index::Index};
-
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-struct LlmInput {
-    pub system: String,
-    pub conversation: Vec<LlmMessage>
-}
-
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-struct LlmMessage {
-    pub role: String,
-    pub message: String,
-}
 
 #[derive(OpenApi)]
 #[openapi(
