@@ -35,6 +35,7 @@ function App() {
     });
   }
 
+
   async function submit() {
     const userMessageArray = [{ User: inputText }];
 
@@ -134,6 +135,11 @@ function App() {
           <input
             type="text"
             onChange={(e) => setInputText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                submit();
+              }
+            }}
             value={inputText}
             style={{
               width: "80%",
@@ -144,7 +150,7 @@ function App() {
             }}
           />
           <button
-            onClick={submit}
+            onClick={submit}  
             style={{
               width: "20%",
               backgroundColor: "#61dafb",
