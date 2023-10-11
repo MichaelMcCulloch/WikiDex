@@ -25,8 +25,8 @@ async fn main()-> anyhow::Result<()>  {
     ); 
     env_logger::init();
     let embedder_path = "models/embed/thenlper/gte-small/";
-    let index_path = "/home/michael/Development/retreival_augmented_generation/db/wikipedia.faiss";
-    let docstore_path = "/home/michael/Development/retreival_augmented_generation/db/docstore.sqlite3";
+    let index_path = "db/thenlper/gte-small/index.faiss";
+    let docstore_path = "db/thenlper/gte-small/docstore.sqlite3";
 
     let embedder = BertEmbed::new(&embedder_path)?;
     let docstore = SqliteDocstore::new(&docstore_path).await.map_err(anyhow::Error::from)?;

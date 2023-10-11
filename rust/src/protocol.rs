@@ -7,7 +7,7 @@ pub(crate) mod oracle {
     #[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
     pub(crate) enum Message {
         User(String),
-        Assistant(String, Vec<String>),
+        Assistant(String, Vec<(String, String)>),
     }
 
     #[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]

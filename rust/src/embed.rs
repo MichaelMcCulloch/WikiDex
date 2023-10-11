@@ -105,7 +105,7 @@ impl BertEmbed {
         let model_path = model_path.as_ref();
         let device = candle_core::Device::Cuda(CudaDevice::new(0).unwrap());
 
-        let start = std::time::Instant::now();
+        let start = std::time::Instant::now(); 
 
         if !model_path.exists() {
             return Err(BertLoadError::FileNotFound(BertFile::Directory));

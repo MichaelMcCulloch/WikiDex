@@ -1,6 +1,5 @@
-use std::{path::Path, io::Read};
-use std::
-    fmt::{self, Display, Formatter, Debug};
+use std::fmt::{self, Debug, Display, Formatter};
+use std::{io::Read, path::Path};
 
 use flate2::read::GzDecoder;
 use sqlx::{sqlite::SqlitePool, Row};
@@ -16,8 +15,7 @@ pub enum DocstoreRetrieveError {
     InvalidDocument,
 }
 
-
-impl std::error::Error for DocstoreLoadError{}
+impl std::error::Error for DocstoreLoadError {}
 
 impl Display for DocstoreLoadError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
@@ -54,9 +52,9 @@ impl SqliteDocstore {
         if !docstore_path.exists() {
             return Err(DocstoreLoadError::FileNotFound);
         }
-        let pool =
-        SqlitePool::connect(&docstore_path.to_str().unwrap()).await
-                .map_err(|_| DocstoreLoadError::FileNotFound)?;
+        let pool = SqlitePool::connect(&docstore_path.to_str().unwrap())
+            .await
+            .map_err(|_| DocstoreLoadError::FileNotFound)?;
         log::info!("Load Docstore {:?}", start.elapsed());
         Ok(SqliteDocstore { pool })
     }
@@ -64,93 +62,112 @@ impl SqliteDocstore {
 #[async_trait::async_trait]
 pub trait Docstore {
     type E;
-    async fn retreive_batch(&self, indices: &Vec<Vec<i64>>) -> Result<Vec<Vec<(i64, String)>>, Self::E>;
-    async fn retreive(&self, indices: &Vec<i64>) -> Result<Vec<(i64, String)>, Self::E>;
+    async fn retreive_batch(
+        &self,
+        indices: &Vec<Vec<i64>>,
+    ) -> Result<Vec<Vec<(usize, String)>>, Self::E>;
+    async fn retreive(&self, indices: &Vec<i64>) -> Result<Vec<(usize, String)>, Self::E>;
 }
 
 #[async_trait::async_trait]
 impl Docstore for SqliteDocstore {
     type E = DocstoreRetrieveError;
 
-    async fn retreive_batch(&self, indices: &Vec<Vec<i64>>) -> Result<Vec<Vec<(i64, String)>>, DocstoreRetrieveError> {
-
+    async fn retreive_batch(
+        &self,
+        indices: &Vec<Vec<i64>>,
+    ) -> Result<Vec<Vec<(usize, String)>>, DocstoreRetrieveError> {
         let start = std::time::Instant::now();
         let flattened_indices: Vec<i64> = indices.into_iter().flatten().map(|i| *i).collect();
 
         // build dynamic query statement
-        let ids = flattened_indices 
+        let ids = flattened_indices
             .iter()
             .map(|x| x.to_string())
             .collect::<Vec<_>>()
             .join(",");
         let query = format!("SELECT id, doc FROM documents WHERE id IN ({})", ids);
-        let docs_rows = sqlx::query(&query).fetch_all(&self.pool).await
+        let docs_rows = sqlx::query(&query)
+            .fetch_all(&self.pool)
+            .await
             .map_err(|_| DocstoreRetrieveError::IndexOutOfRange)?;
 
         let docs: Vec<(i64, String)> = docs_rows
             .into_iter()
             .map(|row| {
-
                 let index = row.get::<i64, _>("id");
                 let binary_data = row.get::<Vec<u8>, _>("doc");
                 let mut gz = GzDecoder::new(&*binary_data);
                 let mut document = String::new();
-                gz.read_to_string(&mut document).map_err(|_| DocstoreRetrieveError::InvalidDocument).unwrap();
-                (
-                    index,
-                    document,
-                )
+                gz.read_to_string(&mut document)
+                    .map_err(|_| DocstoreRetrieveError::InvalidDocument)
+                    .unwrap();
+                (index, document)
             })
             .collect();
 
-        let result = indices.iter().map(|is| {
-            is.iter().map(|i| {
-                let doc = docs.iter().filter(|d|d.0 == *i).next().unwrap();
-                (doc.0, doc.1.clone())
-            }).collect::<Vec<(i64, String)>>()
-        }).collect::<Vec<Vec<(i64, String)>>>();
-      
+        let result = indices
+            .iter()
+            .map(|is| {
+                is.iter().enumerate()
+                .map(|(array_index, docstore_index)| {
+                        let doc = docs.iter().filter(|d| d.0 == *docstore_index).next().unwrap();
+                        (array_index, doc.1.clone())
+                    })
+                    .collect::<Vec<(usize, String)>>()
+            })
+            .collect::<Vec<Vec<(usize, String)>>>();
+
         log::debug!("SQL Query {:?}", start.elapsed());
 
-      
         Ok(result)
     }
 
-    async fn retreive(&self, indices: &Vec<i64>) -> Result<Vec<(i64, String)>, DocstoreRetrieveError> {
-
+    async fn retreive(
+        &self,
+        indices: &Vec<i64>,
+    ) -> Result<Vec<(usize, String)>, DocstoreRetrieveError> {
         let start = std::time::Instant::now();
 
         // build dynamic query statement
-        let ids = indices 
+        let ids = indices
             .iter()
             .map(|x| x.to_string())
             .collect::<Vec<_>>()
             .join(",");
         let query = format!("SELECT id, doc FROM documents WHERE id IN ({})", ids);
-        let docs_rows = sqlx::query(&query).fetch_all(&self.pool).await
+        let docs_rows = sqlx::query(&query)
+            .fetch_all(&self.pool)
+            .await
             .map_err(|_| DocstoreRetrieveError::IndexOutOfRange)?;
 
         let docs: Vec<(i64, String)> = docs_rows
             .into_iter()
             .map(|row| {
-
                 let index = row.get::<i64, _>("id");
                 let binary_data = row.get::<Vec<u8>, _>("doc");
                 let mut gz = GzDecoder::new(&*binary_data);
                 let mut document = String::new();
-                gz.read_to_string(&mut document).map_err(|_| DocstoreRetrieveError::InvalidDocument).unwrap();
-                (
-                    index,
-                    document,
-                )
+                gz.read_to_string(&mut document)
+                    .map_err(|_| DocstoreRetrieveError::InvalidDocument)
+                    .unwrap();
+                (index, document)
             })
             .collect();
 
-        let result = indices.iter().map(|i| {
-            let doc = docs.iter().filter(|d|d.0 == *i).next().unwrap();
-            (doc.0, doc.1.clone())
-        }).collect::<Vec<(i64, String)>>();
-      
+        let result = indices
+            .iter()
+            .enumerate()
+            .map(|(array_index, docstore_index)| {
+                let doc = docs
+                    .iter()
+                    .filter(|d| d.0 == *docstore_index)
+                    .next()
+                    .unwrap();
+                (array_index, doc.1.clone())
+            })
+            .collect::<Vec<(usize, String)>>();
+
         log::debug!("SQL Query {:?}", start.elapsed());
 
         Ok(result)

@@ -480,8 +480,9 @@ dependencies = [
 
 [[package]]
 name = "candle-core"
-version = "0.2.3"
-source = "git+https://github.com/huggingface/candle.git?rev=667f01c17323a5c28a9ae12d9f4512c36cc411b9#667f01c17323a5c28a9ae12d9f4512c36cc411b9"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d648a16c5e5a9ffa4a6630e13d32b6d7c106f6885fd6d8453e1d8b405c390322"
 dependencies = [
  "byteorder",
  "candle-gemm",
@@ -504,8 +505,9 @@ dependencies = [
 
 [[package]]
 name = "candle-flash-attn"
-version = "0.2.3"
-source = "git+https://github.com/huggingface/candle.git?rev=667f01c17323a5c28a9ae12d9f4512c36cc411b9#667f01c17323a5c28a9ae12d9f4512c36cc411b9"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09fc1c70cbe8bce4dcaba9dda071fcd569e1b1f21ea0f6d4db6ea537fdf52476"
 dependencies = [
  "anyhow",
  "candle-core",
@@ -641,8 +643,9 @@ dependencies = [
 
 [[package]]
 name = "candle-kernels"
-version = "0.2.3"
-source = "git+https://github.com/huggingface/candle.git?rev=667f01c17323a5c28a9ae12d9f4512c36cc411b9#667f01c17323a5c28a9ae12d9f4512c36cc411b9"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bffdde22a72c47ad2b54b9f9fa8bbb3a6cd2d5c96d835d4774ca400025d40286"
 dependencies = [
  "glob",
  "rayon",
@@ -650,8 +653,9 @@ dependencies = [
 
 [[package]]
 name = "candle-nn"
-version = "0.2.3"
-source = "git+https://github.com/huggingface/candle.git?rev=667f01c17323a5c28a9ae12d9f4512c36cc411b9#667f01c17323a5c28a9ae12d9f4512c36cc411b9"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "00e438605fbbd1235dbfc5b10beda5ebe4bb0a19969b864a85b922c97ac9f686"
 dependencies = [
  "candle-core",
  "half",
@@ -665,8 +669,9 @@ dependencies = [
 
 [[package]]
 name = "candle-transformers"
-version = "0.2.3"
-source = "git+https://github.com/huggingface/candle.git?rev=667f01c17323a5c28a9ae12d9f4512c36cc411b9#667f01c17323a5c28a9ae12d9f4512c36cc411b9"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "196742c5676b9af54c782304609f3e480c871e5588451d9806b2df8fc11e324c"
 dependencies = [
  "candle-core",
  "candle-flash-attn",
