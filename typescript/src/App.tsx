@@ -16,23 +16,23 @@ function App() {
     visible: boolean;
     x: number;
     y: number;
-  }>({ visible: false, x: 0, y: 0 });
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+    text: string;
+  }>({ visible: false, x: 0, y: 0, text: "" });
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [conversation]);
 
   function handleMouseEvents(
     event: React.MouseEvent<HTMLElement>,
-    index: number
+    text: string
   ) {
     const element = event.currentTarget.getBoundingClientRect();
     setTooltip({
       visible: !tooltip.visible,
       x: element.x,
       y: element.y,
+      text: text,
     });
-    setHoveredIndex(index);
   }
 
   async function submit() {
@@ -93,26 +93,25 @@ function App() {
                       <li key={urlIdx} style={{ listStyleType: "none" }}>
                         <div
                           className="link-bubble"
-                          onMouseEnter={(e) => handleMouseEvents(e, urlIdx)}
-                          onMouseLeave={(e) => handleMouseEvents(e, urlIdx)}
+                          onClick={(e) => handleMouseEvents(e, url[1])}
                         >
                           {url[0]}
                         </div>
-                        {tooltip.visible && hoveredIndex === urlIdx && (
-                          <div
-                            className="tooltip-text"
-                            style={{
-                              position: "absolute",
-                              top: tooltip.y + 100,
-                              left: tooltip.x,
-                            }}
-                          >
-                            {url[1]}
-                          </div>
-                        )}
                       </li>
                     ))}
                   </ul>
+                  {tooltip.visible && (
+                    <div
+                      className="tooltip-text"
+                      // style={{
+                      //   position: "absolute",
+                      //   top: tooltip.y + 100,
+                      //   left: tooltip.x,
+                      // }}
+                    >
+                      {tooltip.text}
+                    </div>
+                  )}
                 </div>
               );
             }
