@@ -1,0 +1,8 @@
+{
+    "rust-analyzer.server.extraEnv": {
+        "CUDA":"/opt/cuda",
+        "CC":"/opt/cuda/bin/gcc",
+        "CXX":"/opt/cuda/bin/g++",
+        "RUSTFLAGS":"-C target-cpu=native"
+    },
+}
