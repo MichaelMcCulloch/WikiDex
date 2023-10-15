@@ -45,6 +45,8 @@ class ChatAssistant:
         self.generator = ExLlamaV2StreamingGenerator(self.model, self.cache, self.tokenizer)
         if args.mode in {"llama", "codellama"}:
             self.generator.set_stop_conditions([self.tokenizer.eos_token_id])
+        elif args.mode == "mistral":
+            self.generator.set_stop_conditions([self.tokenizer.eos_token_id, """<|user|>""","""</s>"""])
         elif args.mode == "raw":
             self.generator.set_stop_conditions([args.username + ":", args.username[0:1] + ":", args.username.upper() + ":", args.username.lower() + ":", self.tokenizer.eos_token_id])
 
@@ -58,6 +60,16 @@ class ChatAssistant:
         if self.mode == "llama" or self.mode == "codellama":
             self.first_prompt = """[INST] <<SYS>>\n<|system_prompt|>\n<</SYS>>\n\n<|user_prompt|> [/INST]"""
             self.subs_prompt = """[INST] <|user_prompt|> [/INST]"""
+        elif self.mode == "mistral":
+            self.first_prompt = """<|system|>\n""" + \
+                                """<|system_prompt|>\n""" + \
+                                """</s>\n""" + \
+                                """<|user|>\n""" + \
+                                """<|user_prompt|></s>\n""" + \
+                                """<|assistant|>\n"""
+            self.subs_prompt =  """<|user|>\n""" + \
+                                """<|user_prompt|></s>\n""" + \
+                                """<|assistant|>\n"""
         elif self.mode == "raw":
             self.first_prompt = f"""<|system_prompt|>\n{self.username}: <|user_prompt|>\n{self.botname}:"""
             self.subs_prompt = f"""{self.username}: <|user_prompt|>\n{self.botname}:"""
@@ -72,7 +84,7 @@ class ChatAssistant:
     def encode_prompt(self, text):
         if self.mode in {"llama", "codellama"}:
             return self.tokenizer.encode(text, add_bos=True)
-        elif self.mode == "raw":
+        elif self.mode in {"raw", "mistral"}:
             return self.tokenizer.encode(text)
 
     def get_tokenized_context(self, json, max_len):
@@ -148,7 +160,7 @@ def conversation():
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Simple Llama2 chat example for ExLlamaV2")
-    parser.add_argument("-mode", "--mode", choices=["llama", "raw", "codellama"], help="Chat mode. Use llama for Llama 1/2 chat finetunes.")
+    parser.add_argument("-mode", "--mode", choices=["llama", "raw", "codellama","mistral"], help="Chat mode. Use llama for Llama 1/2 chat finetunes.")
     parser.add_argument("-un", "--username", type=str, default="User", help="Username when using raw chat mode")
     parser.add_argument("-bn", "--botname", type=str, default="Chatbort", help="Bot name when using raw chat mode")
 
