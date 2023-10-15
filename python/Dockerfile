@@ -13,8 +13,8 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
     python3 -m venv /build/venv && \
     . /build/venv/bin/activate && \
     pip3 install --upgrade pip wheel setuptools packaging && \
-    pip3 install torch==2.2.0.dev20230929+cu121 --extra-index-url https://download.pytorch.org/whl/nightly/cu121 && \
-    MAX_JOBS=6  pip3 install  torch==2.2.0.dev20230929+cu121  --extra-index-url https://download.pytorch.org/whl/nightly/cu121 flash-attn --no-build-isolation && \
+    pip3 install torch  && \
+    MAX_JOBS=6  pip3 install  torch flash-attn --no-build-isolation && \
     pip3 install flask flask_cors exllamav2
 
 
