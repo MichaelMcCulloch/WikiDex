@@ -17,7 +17,7 @@ embed_out = "/home/michael/Development/wikirip/embeddings.sqlitedb"
 document_count = 45551463
 model_name = "thenlper/gte-small"
 model_kwargs = {"device": "cuda"}
-encode_kwargs = {"normalize_embeddings": False, "device": "cuda:0", "batch_size": 512}
+encode_kwargs = {"normalize_embeddings": False, "device": "cuda:0", "batch_size": 640}
 
 hf = HuggingFaceEmbeddings(
     model_name=model_name,
@@ -31,12 +31,13 @@ class EmbedHandler(tornado.web.RequestHandler):
         # Get the JSON payload containing the list of sentences
         data = json.loads(self.request.body)
         sentences = data.get("sentences", [])
-        t1 = time.time()
         # Generate embeddings using the shared hf object
+        tokenized_batch = hf.client._first_module().tokenize(sentences)
+        for batch_item in tokenized_batch:
+            if len(batch_item) > 512:
+                logging.error(f"too long")
         embeddings = hf.embed_documents(sentences)
-        t2 = time.time()
 
-        logging.info(f"{len(sentences)} took {t2 -t2} seconds")
         # Return the embeddings as JSON
         self.write(json.dumps({"embeddings": embeddings}))
 
@@ -51,7 +52,9 @@ def make_app():
 
 if __name__ == "__main__":
     app = make_app()
-    app.listen(args.port)
+
+    app.listen(args.port, max_buffer_size=None)
+
     logging.basicConfig(level=logging.INFO)
 
     logging.info(f"Listening on :{args.port}/embed")
