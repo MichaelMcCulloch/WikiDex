@@ -17,7 +17,7 @@ use crate::{
     docstore::Docstore,
     protocol::{llama::*, oracle::*},
 };
-use crate::{docstore::SqliteDocstore, embed::BertEmbed, index::Index};
+use crate::{docstore::SqliteDocstore, embed::EmbedService, index::Index};
 
 #[derive(OpenApi)]
 #[openapi(
@@ -45,13 +45,13 @@ fn format_document(index: usize, document: &String) -> String {
 async fn query(
     Json(Query(question)): Json<Query>,
     index: Data<Arc<Index>>,
-    embed: Data<Arc<BertEmbed>>,
+    embed: Data<Arc<EmbedService>>,
     docstore: Data<Arc<SqliteDocstore>>,
 ) -> impl Responder {
     log::debug!("Query Received");
 
-    let embedding = embed.embed(&question).unwrap();
-    let result = index.search(&embedding, 4).unwrap();
+    let embedding = embed.embed(&[&question]).await.unwrap();
+    let result = index.search(&embedding.get(0).unwrap(), 4).unwrap();
     let documents = docstore.retreive(&result).await.unwrap();
     let response = documents
         .iter()
@@ -73,7 +73,7 @@ async fn query(
 async fn conversation(
     Json(Conversation(mut conversation)): Json<Conversation>,
     index: Data<Arc<Index>>,
-    embed: Data<Arc<BertEmbed>>,
+    embed: Data<Arc<EmbedService>>,
     docstore: Data<Arc<SqliteDocstore>>,
 ) -> impl Responder {
     log::debug!("Conversation Received");
@@ -81,8 +81,9 @@ async fn conversation(
 
     match conversation.last() {
         Some(Message::User(user_query)) => {
-            let embedding = embed.embed(&user_query).unwrap();
-            let result = index.search(&embedding, 4).unwrap();
+            let embedding = embed.embed(&[user_query]).await.unwrap();
+            let result = index.search(&embedding.get(0).unwrap(), 4).unwrap();
+            println!("{result:?}");
             let documents = docstore.retreive(&result).await.unwrap();
             let formatted_document_list = documents
                 .iter()
@@ -147,7 +148,7 @@ async fn conversation(
     }
 }
 
-pub fn run_server(index: Index, embed: BertEmbed, docstore: SqliteDocstore) -> Result<Server> {
+pub fn run_server(index: Index, embed: EmbedService, docstore: SqliteDocstore) -> Result<Server> {
     let openapi = ApiDoc::openapi();
 
     let index = Arc::new(index);

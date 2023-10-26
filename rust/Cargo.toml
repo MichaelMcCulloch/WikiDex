@@ -6,20 +6,15 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-faiss = { git = "https://github.com/MichaelMcCulloch/faiss-rs.git",branch = "latest+avx2", features = ["gpu", "static"] }
-candle-core = {version="0.3.0", features = ["cuda", "cudnn","mkl"]}
-candle-nn = {version="0.3.0", features = ["cuda","mkl"]}
-candle-transformers = {version="0.3.0", features = ["cuda","flash-attn","mkl"] }
-candle-flash-attn = {version="0.3.0"}
-intel-mkl-src = "0.8.1"
-safetensors = "0.3.3"
-serde = { version = "1.0.188"  }
-serde_json = { version = "1.0.107"}
-cudarc = "0.9.14"
+faiss = { git = "https://github.com/MichaelMcCulloch/faiss-rs.git", branch = "latest+avx2", features = [
+    # "gpu",
+    "static",
+] }
 
+serde = { version = "1.0.188" }
+serde_json = { version = "1.0.107" }
+url = "2.4.1"
 anyhow = "1.0.75"
-tokenizers = "0.14.0"
-hf-hub = "0.3.1"
 crossbeam = "0.8.2"
 actix-web = "4.4.0"
 actix-cors = "0.6.4"
@@ -29,12 +24,12 @@ log = "0.4.20"
 listenfd = "1.0.1"
 flate2 = "1.0.27"
 futures = "0.3.28"
-async-trait ="0.1.73"
+async-trait = "0.1.73"
 sqlx = { version = "0.7.2", features = ["sqlite", "runtime-tokio"] }
-tokio = { version = "1.32.0", features = ["rt", "macros"]}
+tokio = { version = "1.32.0", features = ["rt", "macros"] }
 utoipa = { version = "3.5.0", features = ["actix_extras"] }
 utoipa-redoc = { version = "0.1.0", features = ["actix-web"] }
-reqwest =  { version = "0.11.20", features = ["json"] }
+reqwest = { version = "0.11.20", features = ["json"] }
 
 [profile.release]
 lto = true
