@@ -1,10 +1,6 @@
 use reqwest::{Client, Url};
 use serde::Deserialize;
-use std::{
-    fmt::{self, Debug, Display, Formatter},
-    path::Path,
-    time::Duration,
-};
+use std::time::Duration;
 
 #[derive(Deserialize)]
 struct EmbeddingsResponse {

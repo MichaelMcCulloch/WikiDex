@@ -82,8 +82,7 @@ async fn conversation(
     match conversation.last() {
         Some(Message::User(user_query)) => {
             let embedding = embed.embed(&[user_query]).await.unwrap();
-            let result = index.search(&embedding.get(0).unwrap(), 4).unwrap();
-            println!("{result:?}");
+            let result = index.search(&embedding.get(0).unwrap(), 8).unwrap();
             let documents = docstore.retreive(&result).await.unwrap();
             let formatted_document_list = documents
                 .iter()
@@ -91,10 +90,10 @@ async fn conversation(
                 .collect::<Vec<String>>()
                 .join("\n\n");
 
-            let dummy0 = 0; //documents[0].0;
-            let dummy1 = 1; //documents[1].0;
-            let dummy2 = 2; //documents[2].0;
-            let dummy3 = 3; //documents[3].0;
+            let dummy0 = 0;
+            let dummy1 = 1;
+            let dummy2 = 2;
+            let dummy3 = 3;
 
             let input = LlmInput {
                 system: format!(

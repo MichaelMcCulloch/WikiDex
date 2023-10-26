@@ -86,11 +86,8 @@ impl Docstore for SqliteDocstore {
             .map(|x| x.to_string())
             .collect::<Vec<_>>()
             .join(",");
-        let query = format!("SELECT id, doc FROM documents WHERE id IN ({})", ids);
-        let docs_rows = sqlx::query(&query)
-            .fetch_all(&self.pool)
-            .await
-            .map_err(|_| DocstoreRetrieveError::IndexOutOfRange)?;
+        let query = format!("SELECT id, doc FROM document WHERE id IN ({})", ids);
+        let docs_rows = sqlx::query(&query).fetch_all(&self.pool).await.unwrap();
 
         let docs: Vec<(i64, String)> = docs_rows
             .into_iter()
@@ -109,9 +106,14 @@ impl Docstore for SqliteDocstore {
         let result = indices
             .iter()
             .map(|is| {
-                is.iter().enumerate()
-                .map(|(array_index, docstore_index)| {
-                        let doc = docs.iter().filter(|d| d.0 == *docstore_index).next().unwrap();
+                is.iter()
+                    .enumerate()
+                    .map(|(array_index, docstore_index)| {
+                        let doc = docs
+                            .iter()
+                            .filter(|d| d.0 == *docstore_index)
+                            .next()
+                            .unwrap();
                         (array_index, doc.1.clone())
                     })
                     .collect::<Vec<(usize, String)>>()
@@ -135,7 +137,7 @@ impl Docstore for SqliteDocstore {
             .map(|x| x.to_string())
             .collect::<Vec<_>>()
             .join(",");
-        let query = format!("SELECT id, doc FROM documents WHERE id IN ({})", ids);
+        let query = format!("SELECT id, doc FROM document WHERE id IN ({})", ids);
         let docs_rows = sqlx::query(&query)
             .fetch_all(&self.pool)
             .await
