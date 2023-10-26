@@ -13,8 +13,8 @@ use crate::{embed::EmbedService, index::Index};
 async fn main() -> anyhow::Result<()> {
     std::env::set_var("RUST_LOG", "info");
     env_logger::init();
-    let index_path = "/home/michael/Development/wikirip/safe_space/index.faiss";
-    let docstore_path = "/home/michael/Development/wikirip/safe_space/docstore.sqlitedb";
+    let index_path = "rust/db/thenlper/gte-small/index.faiss";
+    let docstore_path = "db/thenlper/gte-small/docstore.sqlite3";
 
     let embedder = EmbedService::new(&"http://localhost:9000/embed")?;
     let docstore = SqliteDocstore::new(&docstore_path)
