@@ -43,8 +43,24 @@ async fn query(
     Json(Query(question)): Json<Query>,
     query_engine: Data<Arc<Engine>>,
 ) -> impl Responder {
-    let response = query_engine.query(&question).await.unwrap();
-    HttpResponse::Ok().json(Answer(response))
+    match query_engine.query(&question).await {
+        Ok(message) => HttpResponse::Ok().json(Answer(message)),
+        Err(e) => {
+            log::error!("{e}");
+            match e {
+                QueryEngineError::LastMessageIsNotUser | QueryEngineError::EmptyConversation => {
+                    HttpResponse::BadRequest().into()
+                }
+                QueryEngineError::IndexOutOfRange
+                | QueryEngineError::InvalidAgentResponse
+                | QueryEngineError::UnableToLockIndex
+                | QueryEngineError::LlmError(_)
+                | QueryEngineError::IndexError(_)
+                | QueryEngineError::DocstoreError(_)
+                | QueryEngineError::EmbeddingError(_) => HttpResponse::InternalServerError().into(),
+            }
+        }
+    }
 }
 
 #[utoipa::path(
@@ -100,8 +116,8 @@ pub(crate) fn run_server(engine: Engine, config: EngineConfig) -> Result<Server,
 
     let url: Url = config.into();
 
-    let host = url.host().unwrap();
-    let port = url.port().unwrap();
+    let host = url.host().expect("Host is not valid");
+    let port = url.port().expect("Port is not valid");
     server = server.bind((host.to_string(), port))?;
     let s = server.run();
     Ok(s)

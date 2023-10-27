@@ -18,10 +18,15 @@ pub struct Embedder {
 
 impl Embedder {
     pub(crate) fn new(config: EmbedConfig) -> Result<Self, url::ParseError> {
+        let start = std::time::Instant::now();
+
         let host: Url = config.into();
         let client = Client::new();
 
-        Ok(Self { client, host })
+        let embedder = Self { client, host };
+
+        log::info!("Connect Embedder {:?}", start.elapsed());
+        Ok(embedder)
     }
 }
 
@@ -71,10 +76,13 @@ impl std::error::Error for EmbeddingServiceError {}
 impl Display for EmbeddingServiceError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            EmbeddingServiceError::Reqwuest(reqwest_error) => write!(f, "{:?}", reqwest_error),
-            EmbeddingServiceError::EmbeddingSizeMismatch(expected, received) => write!(
+            EmbeddingServiceError::Reqwuest(err) => {
+                write!(f, "EmbeddingService: {}", err)
+            }
+            EmbeddingServiceError::EmbeddingSizeMismatch(expected, actual) => write!(
                 f,
-                "Embedding count does not match query count, expected {expected}, received {received}."
+                "EmbeddingService: Embedding size mismatch. Expected: {}, Actual: {}",
+                expected, actual
             ),
         }
     }

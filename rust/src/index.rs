@@ -30,10 +30,10 @@ impl FaissIndex {
             return Err(IndexLoadError::FileNotFound);
         }
 
-        let index = faiss::read_index(index_path.to_str().unwrap())
-            .unwrap()
+        let index = faiss::read_index(index_path.to_str().expect("Index path is not a string"))
+            .map_err(|e| IndexLoadError::IndexReadError(e))?
             .into_pre_transform()
-            .unwrap();
+            .map_err(|e| IndexLoadError::IndexFormatError(e))?;
 
         let dims = faiss::Index::d(&index);
 
@@ -67,7 +67,10 @@ impl SearchService for FaissIndex {
             .then(|| query.into_iter().flatten().map(|f| *f).collect())
             .ok_or(IndexSearchError::IncorrectDimensions)?;
 
-        let rs = self.index.search(&flattened_query, neighbors).unwrap();
+        let rs = self
+            .index
+            .search(&flattened_query, neighbors)
+            .map_err(|d| IndexSearchError::IndexSearchError(d))?;
         let x: Vec<i64> = rs.labels.iter().map(|i| i.to_native()).collect();
         let indices = x.chunks_exact(neighbors).map(|v| v.to_vec()).collect();
         log::debug!("Index {:?}", start.elapsed());
@@ -103,11 +106,27 @@ impl std::error::Error for IndexSearchError {}
 
 impl Display for IndexLoadError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Index Load Error")
+        match self {
+            IndexLoadError::FileNotFound => write!(f, "SearchService: Index not found"),
+            IndexLoadError::IndexReadError(err) => {
+                write!(f, "SearchService: {}", err)
+            }
+            IndexLoadError::IndexFormatError(err) => {
+                write!(f, "SearchService: {}", err)
+            }
+        }
     }
 }
+
 impl Display for IndexSearchError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Index Load Error")
+        match self {
+            IndexSearchError::IncorrectDimensions => {
+                write!(f, "SearchService: Incorrect dimensions for search")
+            }
+            IndexSearchError::IndexSearchError(err) => {
+                write!(f, "SearchService: {}", err)
+            }
+        }
     }
 }

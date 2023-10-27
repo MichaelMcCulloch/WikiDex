@@ -104,37 +104,22 @@ impl Display for Config {
         let Config {
             engine:
                 EngineConfig {
-                    host: engine_host,
-                    port: engine_port,
                     index: engine_index,
                     docstore: engine_docstore,
                     conversation_path: engine_conversation_path,
                     query_path: engine_query_path,
-                    protocol: engine_protocol,
+                    ..
                 },
             embed:
                 EmbedConfig {
-                    host: embed_host,
-                    port: embed_port,
                     model: embed_model,
                     batch_size: embed_batch_size,
-                    path: embed_path,
-                    protocol: embed_protocol,
+                    ..
                 },
-            llm:
-                LlmConfig {
-                    host: llm_host,
-                    port: llm_port,
-                    path: llm_path,
-                    model: llm_model,
-                    protocol: llm_protocol,
-                },
-            ui:
-                UiConfig {
-                    host: ui_host,
-                    port: ui_port,
-                    protocol: ui_protocol,
-                },
+            llm: LlmConfig {
+                model: llm_model, ..
+            },
+            ..
         } = self;
 
         let engine_index = engine_index.display();
@@ -151,7 +136,7 @@ impl Display for Config {
 
         write!(
             f,
-            "Config:\nEngine running at {engine_url}.\n\tServing conversations on /{engine_conversation_path}.\n\tService queries on /{engine_query_path}.\n\tUsing index at {engine_index}.\n\tUsing docstore at {engine_docstore}.\nUsing embedding service at {embed_url}.\n\tUsing embedder {embed_model} with a batch size of {embed_batch_size}.\nUsing llm service at {llm_url}.\n\tUsing {llm_model}.\nUi running at {ui_url}.",
+            "Engine running at {engine_url}.\n\tServing conversations on /{engine_conversation_path}.\n\tService queries on /{engine_query_path}.\n\tUsing index at {engine_index}.\n\tUsing docstore at {engine_docstore}.\nUsing embedding service at {embed_url}.\n\tUsing embedder {embed_model} with a batch size of {embed_batch_size}.\nUsing llm service at {llm_url}.\n\tUsing {llm_model}.\nUi running at {ui_url}.",
         )
     }
 }

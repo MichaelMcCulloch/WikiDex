@@ -177,15 +177,27 @@ impl std::error::Error for QueryEngineError {}
 impl Display for QueryEngineError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            QueryEngineError::DocstoreError(e) => write!(f, "{e}"),
-            QueryEngineError::EmbeddingError(e) => write!(f, "{e}"),
-            QueryEngineError::EmptyConversation => write!(f, "Empty conversation history."),
-            QueryEngineError::IndexError(e) => write!(f, "{e}"),
-            QueryEngineError::IndexOutOfRange => write!(f, "Index Out of Range."),
-            QueryEngineError::InvalidAgentResponse => write!(f, "Invalid agent response."),
-            QueryEngineError::LastMessageIsNotUser => write!(f, "Last message is not User Role."),
-            QueryEngineError::LlmError(e) => write!(f, "{e}"),
-            QueryEngineError::UnableToLockIndex => write!(f, "Unable to lock index."),
+            QueryEngineError::DocstoreError(err) => {
+                write!(f, "{}", err)
+            }
+            QueryEngineError::EmbeddingError(err) => {
+                write!(f, "{}", err)
+            }
+            QueryEngineError::IndexError(err) => write!(f, "{}", err),
+            QueryEngineError::LlmError(err) => write!(f, "{}", err),
+            QueryEngineError::EmptyConversation => {
+                write!(f, "QueryEngine: Empty conversation error")
+            }
+            QueryEngineError::IndexOutOfRange => write!(f, "QueryEngine: Index out of range error"),
+            QueryEngineError::InvalidAgentResponse => {
+                write!(f, "QueryEngine: Invalid agent response error")
+            }
+            QueryEngineError::LastMessageIsNotUser => {
+                write!(f, "QueryEngine: Last message is not from a user error")
+            }
+            QueryEngineError::UnableToLockIndex => {
+                write!(f, "QueryEngine: Unable to lock index error")
+            }
         }
     }
 }

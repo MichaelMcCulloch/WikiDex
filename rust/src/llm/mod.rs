@@ -28,10 +28,10 @@ impl LlmService for Llm {
             .json(&request_body)
             .send()
             .await
-            .map_err(|e| LlmServiceError::RequestError(e))?
+            .map_err(|e| LlmServiceError::ReqwestError(e))?
             .json()
             .await
-            .map_err(|e| LlmServiceError::RequestError(e))?;
+            .map_err(|e| LlmServiceError::ReqwestError(e))?;
         Ok(response)
     }
 }
@@ -47,7 +47,7 @@ impl Llm {
 
 #[derive(Debug)]
 pub(crate) enum LlmServiceError {
-    RequestError(reqwest::Error),
+    ReqwestError(reqwest::Error),
     SerializationError,
 }
 
@@ -56,8 +56,8 @@ impl std::error::Error for LlmServiceError {}
 impl Display for LlmServiceError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            LlmServiceError::RequestError(e) => write!(f, "{e}"),
-            LlmServiceError::SerializationError => write!(f, "Error serializing message to LLM."),
+            LlmServiceError::ReqwestError(err) => write!(f, "LLMService: {}", err),
+            LlmServiceError::SerializationError => write!(f, "LLMService: Serialization error"),
         }
     }
 }

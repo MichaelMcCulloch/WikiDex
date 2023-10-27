@@ -21,7 +21,7 @@ async fn main() -> anyhow::Result<()> {
     let toml_str = std::fs::read_to_string("/home/michael/Development/oracle/Config.TOML")?;
     let config: Config = toml::from_str(&toml_str)?;
 
-    log::info!("{config}");
+    log::info!("\n{config}");
 
     let embedder = Embedder::new(config.embed)?;
     let docstore = SqliteDocstore::new(&config.engine.docstore).await?;
