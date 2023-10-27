@@ -1,12 +1,23 @@
 use std::{
     fmt::{Debug, Display, Formatter},
+    mem::{self, ManuallyDrop},
     path::{Path, PathBuf},
+    ptr,
 };
 
-use faiss::{ConcurrentIndex, FlatIndex};
+use faiss::{
+    index::{
+        flat::FlatIndexImpl,
+        pretransform::{PreTransformIndex, PreTransformIndexImpl},
+        FromInnerPtr, IndexImpl, NativeIndex, UpcastIndex,
+    },
+    index_factory,
+    vector_transform::{PCAMatrix, PCAMatrixImpl, VectorTransform},
+    ConcurrentIndex, FlatIndex, Index, MetricType,
+};
 
-pub struct Index {
-    index: FlatIndex,
+pub struct SearchIndex {
+    index: PreTransformIndexImpl<IndexImpl>,
     dims: u32,
 }
 
@@ -19,7 +30,7 @@ pub enum IndexLoadError {
 pub enum IndexSearchError {
     IncorrectDimensions,
 }
-impl std::error::Error for IndexLoadError{}
+impl std::error::Error for IndexLoadError {}
 impl Display for IndexLoadError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "Index Load Error")
@@ -42,7 +53,7 @@ impl Debug for IndexSearchError {
         write!(f, "{}", self)
     }
 }
-impl Index {
+impl SearchIndex {
     pub(crate) fn new<P: AsRef<Path>>(index_path: &P) -> Result<Self, IndexLoadError> {
         let start = std::time::Instant::now();
 
@@ -52,44 +63,53 @@ impl Index {
         }
 
         let index = faiss::read_index(index_path.to_str().unwrap())
-            .map_err(|e| IndexLoadError::IndexReadError(e))?
-            .into_flat()
-            .map_err(|e| IndexLoadError::IndexFormatError(e))?;
+            .unwrap()
+            .into_pre_transform()
+            .unwrap();
+
         let dims = faiss::Index::d(&index);
 
         log::info!("Load Index {:?}", start.elapsed());
-        Ok(Index { index, dims })
+        Ok(SearchIndex { index, dims })
     }
 }
 
 pub trait Search {
     type E;
-    fn search(&self, query: &Vec<f32>, neighbors: usize) -> Result<Vec<i64>, Self::E>;
-    fn batch_search(&self, query: &Vec<Vec<f32>>, neighbors: usize) -> Result<Vec<Vec<i64>>, Self::E>;
+    fn search(&mut self, query: &Vec<f32>, neighbors: usize) -> Result<Vec<i64>, Self::E>;
+    fn batch_search(
+        &mut self,
+        query: &Vec<Vec<f32>>,
+        neighbors: usize,
+    ) -> Result<Vec<Vec<i64>>, Self::E>;
 }
 
-impl Search for Index {
+impl Search for SearchIndex {
     type E = IndexSearchError;
 
-    fn batch_search(&self, query: &Vec<Vec<f32>>, neighbors: usize) -> Result<Vec<Vec<i64>>, IndexSearchError> {
+    fn batch_search(
+        &mut self,
+        query: &Vec<Vec<f32>>,
+        neighbors: usize,
+    ) -> Result<Vec<Vec<i64>>, IndexSearchError> {
         let start = std::time::Instant::now();
-        let flattened_query : Vec<f32> = query
+        let flattened_query: Vec<f32> = query
             .iter()
             .all(|q| q.len() == self.dims as usize)
-            .then(||query.into_iter().flatten().map(|f|*f).collect() )
+            .then(|| query.into_iter().flatten().map(|f| *f).collect())
             .ok_or(IndexSearchError::IncorrectDimensions)?;
 
-        let rs = self.index.search(&flattened_query, 4).unwrap();
-        let x : Vec<i64>= rs.labels.iter().map(|i| i.to_native()).collect();
-        let indices = x.chunks_exact(neighbors).map(|v|v.to_vec()).collect();
+        let rs = self.index.search(&flattened_query, neighbors).unwrap();
+        let x: Vec<i64> = rs.labels.iter().map(|i| i.to_native()).collect();
+        let indices = x.chunks_exact(neighbors).map(|v| v.to_vec()).collect();
         log::debug!("Index {:?}", start.elapsed());
         Ok(indices)
     }
 
-    fn search(&self, query: &Vec<f32>, neighbors: usize) -> Result<Vec<i64>, Self::E> {
+    fn search(&mut self, query: &Vec<f32>, neighbors: usize) -> Result<Vec<i64>, Self::E> {
         let start = std::time::Instant::now();
-        let rs = self.index.search(&query, 4).unwrap();
-        let indices : Vec<i64>= rs.labels.iter().map(|i| i.to_native()).collect();
+        let rs = self.index.search(&query, neighbors).unwrap();
+        let indices: Vec<i64> = rs.labels.iter().map(|i| i.to_native()).collect();
         log::debug!("Index {:?}", start.elapsed());
         Ok(indices)
     }
