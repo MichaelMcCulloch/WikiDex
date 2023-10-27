@@ -1,19 +1,10 @@
+use faiss::{
+    index::{pretransform::PreTransformIndexImpl, IndexImpl},
+    ConcurrentIndex, Index,
+};
 use std::{
     fmt::{Debug, Display, Formatter},
-    mem::{self, ManuallyDrop},
     path::{Path, PathBuf},
-    ptr,
-};
-
-use faiss::{
-    index::{
-        flat::FlatIndexImpl,
-        pretransform::{PreTransformIndex, PreTransformIndexImpl},
-        FromInnerPtr, IndexImpl, NativeIndex, UpcastIndex,
-    },
-    index_factory,
-    vector_transform::{PCAMatrix, PCAMatrixImpl, VectorTransform},
-    ConcurrentIndex, FlatIndex, Index, MetricType,
 };
 
 pub struct FaissIndex {

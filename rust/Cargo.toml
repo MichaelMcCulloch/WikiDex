@@ -10,7 +10,6 @@ faiss = { git = "https://github.com/MichaelMcCulloch/faiss-rs.git", branch = "la
     # "gpu",
     "static",
 ] }
-
 serde = "1.0.188"
 serde_json = "1.0.107"
 toml = "0.8.6"

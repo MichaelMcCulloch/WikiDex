@@ -1,24 +1,20 @@
 pub(crate) mod protocol;
 
-use actix_cors::Cors;
-use actix_web::{
-    dev::Server,
-    middleware, post,
-    web::{self, Data, Json},
-    App, HttpResponse, HttpServer, Responder,
-};
-use std::{
-    fmt::{self, Display, Formatter},
-    sync::Arc,
-};
-use url::Url;
-use utoipa::OpenApi;
-use utoipa_redoc::{Redoc, Servable};
-
 use self::protocol::*;
 use crate::engine::QueryEngine;
 use crate::engine::QueryEngineError;
 use crate::{config::EngineConfig, engine::Engine};
+use actix_cors::Cors;
+use actix_web::{
+    dev::Server,
+    middleware, post,
+    web::{Data, Json},
+    App, HttpResponse, HttpServer, Responder,
+};
+use std::sync::Arc;
+use url::Url;
+use utoipa::OpenApi;
+use utoipa_redoc::{Redoc, Servable};
 
 #[derive(OpenApi)]
 #[openapi(
