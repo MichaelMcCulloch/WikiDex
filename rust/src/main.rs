@@ -1,9 +1,9 @@
 mod docstore;
 mod embed;
+mod engine;
 mod index;
 mod protocol;
 mod server;
-
 use docstore::SqliteDocstore;
 use server::run_server;
 
@@ -13,8 +13,8 @@ use crate::{embed::EmbedService, index::SearchIndex};
 async fn main() -> anyhow::Result<()> {
     std::env::set_var("RUST_LOG", "info");
     env_logger::init();
-    let index_path = "/home/michael/Development/wikirip/safe_space/index.faiss";
-    let docstore_path = "/home/michael/Development/wikirip/safe_space/docstore.sqlitedb";
+    let index_path = "db/thenlper/gte-small/index_pca128_flat.faiss";
+    let docstore_path = "db/thenlper/gte-small/docstore.sqlitedb";
 
     let embedder = EmbedService::new(&"http://localhost:9000/embed")?;
     let docstore = SqliteDocstore::new(&docstore_path)

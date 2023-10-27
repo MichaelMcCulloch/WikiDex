@@ -1,5 +1,3 @@
-
-
 pub(crate) mod oracle {
 
     use serde::{Deserialize, Serialize};
@@ -26,14 +24,19 @@ pub(crate) mod llama {
     #[derive(Serialize, Deserialize, Clone, Debug)]
     pub(crate) struct LlmInput {
         pub(crate) system: String,
-        pub(crate) conversation: Vec<LlmMessage>
+        pub(crate) conversation: Vec<LlmMessage>,
     }
+    #[derive(Serialize, Deserialize, Clone, Debug)]
 
+    pub(crate) enum LlmRole {
+        #[serde(alias = "assistant")]
+        Assistant,
+        User,
+    }
 
     #[derive(Serialize, Deserialize, Clone, Debug)]
     pub(crate) struct LlmMessage {
-        pub(crate) role: String,
+        pub(crate) role: LlmRole,
         pub(crate) message: String,
     }
-
 }

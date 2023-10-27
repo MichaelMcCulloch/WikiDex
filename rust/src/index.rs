@@ -21,38 +21,6 @@ pub struct SearchIndex {
     dims: u32,
 }
 
-pub enum IndexLoadError {
-    FileNotFound,
-    IndexReadError(faiss::error::Error),
-    IndexFormatError(faiss::error::Error),
-}
-
-pub enum IndexSearchError {
-    IncorrectDimensions,
-}
-impl std::error::Error for IndexLoadError {}
-impl Display for IndexLoadError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Index Load Error")
-    }
-}
-impl Display for IndexSearchError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Index Load Error")
-    }
-}
-
-impl Debug for IndexLoadError {
-    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-        write!(f, "{}", self)
-    }
-}
-
-impl Debug for IndexSearchError {
-    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-        write!(f, "{}", self)
-    }
-}
 impl SearchIndex {
     pub(crate) fn new<P: AsRef<Path>>(index_path: &P) -> Result<Self, IndexLoadError> {
         let start = std::time::Instant::now();
@@ -108,9 +76,38 @@ impl Search for SearchIndex {
 
     fn search(&mut self, query: &Vec<f32>, neighbors: usize) -> Result<Vec<i64>, Self::E> {
         let start = std::time::Instant::now();
-        let rs = self.index.search(&query, neighbors).unwrap();
+        let rs = self
+            .index
+            .search(&query, neighbors)
+            .map_err(|d| IndexSearchError::IndexSearchError(d))?;
         let indices: Vec<i64> = rs.labels.iter().map(|i| i.to_native()).collect();
         log::debug!("Index {:?}", start.elapsed());
         Ok(indices)
+    }
+}
+
+#[derive(Debug)]
+pub enum IndexLoadError {
+    FileNotFound,
+    IndexReadError(faiss::error::Error),
+    IndexFormatError(faiss::error::Error),
+}
+
+#[derive(Debug)]
+pub enum IndexSearchError {
+    IncorrectDimensions,
+    IndexSearchError(faiss::error::Error),
+}
+impl std::error::Error for IndexLoadError {}
+impl std::error::Error for IndexSearchError {}
+
+impl Display for IndexLoadError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Index Load Error")
+    }
+}
+impl Display for IndexSearchError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Index Load Error")
     }
 }
