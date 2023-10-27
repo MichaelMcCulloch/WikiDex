@@ -76,8 +76,9 @@ impl DocumentService for SqliteDocstore {
                 is.iter()
                     .enumerate()
                     .filter_map(|(array_index, docstore_index)| {
-                        let doc = docs.iter().filter(|d| d.0 == *docstore_index).next()?;
-                        Some((array_index, doc.1.clone()))
+                        let (_, doc_text) =
+                            docs.iter().filter(|d| d.0 == *docstore_index).next()?;
+                        Some((array_index, doc_text.clone())) // Multiple independent queries may have returned the same document, must be cloned.
                     })
                     .collect::<Vec<(usize, String)>>()
             })
@@ -119,8 +120,8 @@ impl DocumentService for SqliteDocstore {
             .iter()
             .enumerate()
             .filter_map(|(array_index, docstore_index)| {
-                let doc = docs.iter().filter(|d| d.0 == *docstore_index).next()?;
-                Some((array_index, doc.1.clone()))
+                let (_, doc_text) = docs.iter().filter(|d| d.0 == *docstore_index).next()?;
+                Some((array_index, doc_text.clone())) // No excuse but being lazy. Docs will always be a set, and it's one to one with the query.
             })
             .collect::<Vec<(usize, String)>>();
 
