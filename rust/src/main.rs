@@ -1,26 +1,35 @@
+mod config;
 mod docstore;
 mod embed;
 mod engine;
 mod index;
-mod protocol;
+mod llm;
 mod server;
+
+use config::Config;
 use docstore::SqliteDocstore;
 use server::run_server;
+use std::sync::Mutex;
 
-use crate::{embed::EmbedService, index::SearchIndex};
+use crate::{embed::Embedder, engine::Engine, index::FaissIndex, llm::Llm};
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
     std::env::set_var("RUST_LOG", "info");
     env_logger::init();
-    let index_path = "db/thenlper/gte-small/index_pca128_flat.faiss";
-    let docstore_path = "db/thenlper/gte-small/docstore.sqlitedb";
 
-    let embedder = EmbedService::new(&"http://localhost:9000/embed")?;
-    let docstore = SqliteDocstore::new(&docstore_path)
-        .await
-        .map_err(anyhow::Error::from)?;
-    let index = SearchIndex::new(&index_path).map_err(anyhow::Error::from)?;
-    let server = run_server(index, embedder, docstore)?;
+    let toml_str = std::fs::read_to_string("/home/michael/Development/oracle/Config.TOML")?;
+    let config: Config = toml::from_str(&toml_str)?;
+
+    log::info!("{config}");
+
+    let embedder = Embedder::new(config.embed)?;
+    let docstore = SqliteDocstore::new(&config.engine.docstore).await?;
+    let index = FaissIndex::new(&config.engine.index)?;
+    let llm = Llm::new(config.llm)?;
+
+    let engine = Engine::new(Mutex::new(index), embedder, docstore, llm);
+
+    let server = run_server(engine, config.engine)?;
     server.await.map_err(anyhow::Error::from)
 }

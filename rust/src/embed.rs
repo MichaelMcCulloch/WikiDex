@@ -5,31 +5,34 @@ use std::{
     time::Duration,
 };
 
+use crate::config::EmbedConfig;
+
 #[derive(Deserialize)]
 struct EmbeddingsResponse {
     pub(crate) embeddings: Vec<Vec<f32>>,
 }
-pub struct EmbedService {
+pub struct Embedder {
     client: Client,
     host: Url,
 }
 
-impl EmbedService {
-    pub fn new<S: AsRef<str>>(host: &S) -> Result<Self, url::ParseError> {
+impl Embedder {
+    pub(crate) fn new(config: EmbedConfig) -> Result<Self, url::ParseError> {
+        let host: Url = config.into();
         let client = Client::new();
-        let host = Url::parse(host.as_ref())?;
+
         Ok(Self { client, host })
     }
 }
 
 #[async_trait::async_trait]
-pub(crate) trait Embed {
+pub(crate) trait EmbedService {
     type E;
     async fn embed(&self, str: &[&str]) -> Result<Vec<Vec<f32>>, Self::E>;
 }
 
 #[async_trait::async_trait]
-impl Embed for EmbedService {
+impl EmbedService for Embedder {
     type E = EmbeddingServiceError;
     async fn embed(&self, query: &[&str]) -> Result<Vec<Vec<f32>>, Self::E> {
         let payload = serde_json::json!({

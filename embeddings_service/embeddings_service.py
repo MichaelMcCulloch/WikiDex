@@ -3,7 +3,6 @@ import tornado.web
 import json
 import logging
 import argparse
-import time
 from langchain.embeddings import HuggingFaceEmbeddings
 
 
@@ -12,8 +11,6 @@ parser.add_argument("--port", type=int, default=8888, help="Port to listen on.")
 args = parser.parse_args()
 
 # Initialize the HuggingFaceEmbeddings object once
-docstore_in = "/home/michael/Development/wikirip/safe_space/docstore.sqlitedb"
-embed_out = "/home/michael/Development/wikirip/embeddings.sqlitedb"
 document_count = 45551463
 model_name = "thenlper/gte-small"
 model_kwargs = {"device": "cuda"}
@@ -32,10 +29,6 @@ class EmbedHandler(tornado.web.RequestHandler):
         data = json.loads(self.request.body)
         sentences = data.get("sentences", [])
         # Generate embeddings using the shared hf object
-        tokenized_batch = hf.client._first_module().tokenize(sentences)
-        for batch_item in tokenized_batch:
-            if len(batch_item) > 512:
-                logging.error(f"too long")
         embeddings = hf.embed_documents(sentences)
 
         # Return the embeddings as JSON

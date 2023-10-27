@@ -16,12 +16,12 @@ use faiss::{
     ConcurrentIndex, FlatIndex, Index, MetricType,
 };
 
-pub struct SearchIndex {
+pub struct FaissIndex {
     index: PreTransformIndexImpl<IndexImpl>,
     dims: u32,
 }
 
-impl SearchIndex {
+impl FaissIndex {
     pub(crate) fn new<P: AsRef<Path>>(index_path: &P) -> Result<Self, IndexLoadError> {
         let start = std::time::Instant::now();
 
@@ -38,11 +38,11 @@ impl SearchIndex {
         let dims = faiss::Index::d(&index);
 
         log::info!("Load Index {:?}", start.elapsed());
-        Ok(SearchIndex { index, dims })
+        Ok(FaissIndex { index, dims })
     }
 }
 
-pub trait Search {
+pub trait SearchService {
     type E;
     fn search(&mut self, query: &Vec<f32>, neighbors: usize) -> Result<Vec<i64>, Self::E>;
     fn batch_search(
@@ -52,7 +52,7 @@ pub trait Search {
     ) -> Result<Vec<Vec<i64>>, Self::E>;
 }
 
-impl Search for SearchIndex {
+impl SearchService for FaissIndex {
     type E = IndexSearchError;
 
     fn batch_search(

@@ -1,24 +1,24 @@
-use std::sync::{Arc, Mutex};
+pub(crate) mod protocol;
 
 use actix_cors::Cors;
 use actix_web::{
     dev::Server,
     middleware, post,
-    web::{Data, Json},
+    web::{self, Data, Json},
     App, HttpResponse, HttpServer, Responder,
 };
-use anyhow::Result;
+use std::{
+    fmt::{self, Display, Formatter},
+    sync::Arc,
+};
+use url::Url;
 use utoipa::OpenApi;
 use utoipa_redoc::{Redoc, Servable};
 
-use crate::{
-    docstore::Docstore,
-    engine::{self, QueryEngineError},
-    protocol::{llama::*, oracle::*},
-};
-use crate::{docstore::SqliteDocstore, embed::EmbedService, index::SearchIndex};
-use crate::{embed::Embed, engine::Engine};
-use crate::{engine::QueryEngine, index::Search};
+use self::protocol::*;
+use crate::engine::QueryEngine;
+use crate::engine::QueryEngineError;
+use crate::{config::EngineConfig, engine::Engine};
 
 #[derive(OpenApi)]
 #[openapi(
@@ -74,8 +74,7 @@ async fn conversation(
                 QueryEngineError::IndexOutOfRange
                 | QueryEngineError::InvalidAgentResponse
                 | QueryEngineError::UnableToLockIndex
-                | QueryEngineError::SerializationError
-                | QueryEngineError::RequestError(_)
+                | QueryEngineError::LlmError(_)
                 | QueryEngineError::IndexError(_)
                 | QueryEngineError::DocstoreError(_)
                 | QueryEngineError::EmbeddingError(_) => HttpResponse::InternalServerError().into(),
@@ -84,17 +83,10 @@ async fn conversation(
     }
 }
 
-pub fn run_server(
-    index: SearchIndex,
-    embed: EmbedService,
-    docstore: SqliteDocstore,
-) -> Result<Server> {
+pub(crate) fn run_server(engine: Engine, config: EngineConfig) -> Result<Server, std::io::Error> {
     let openapi = ApiDoc::openapi();
 
-    let index: Mutex<SearchIndex> = Mutex::new(index);
-    let embed: EmbedService = embed;
-    let docstore: SqliteDocstore = docstore;
-    let engine = Arc::new(Engine::new(index, embed, docstore));
+    let engine = Arc::new(engine);
 
     let mut server = HttpServer::new(move || {
         App::new()
@@ -105,7 +97,12 @@ pub fn run_server(
             .service(query)
             .service(Redoc::with_url("/api-doc", openapi.clone()))
     });
-    server = server.bind("0.0.0.0:5000")?;
+
+    let url: Url = config.into();
+
+    let host = url.host().unwrap();
+    let port = url.port().unwrap();
+    server = server.bind((host.to_string(), port))?;
     let s = server.run();
     Ok(s)
 }

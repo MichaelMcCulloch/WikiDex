@@ -22,7 +22,7 @@ impl SqliteDocstore {
     }
 }
 #[async_trait::async_trait]
-pub trait Docstore {
+pub trait DocumentService {
     type E;
     async fn retreive_batch(
         &self,
@@ -32,7 +32,7 @@ pub trait Docstore {
 }
 
 #[async_trait::async_trait]
-impl Docstore for SqliteDocstore {
+impl DocumentService for SqliteDocstore {
     type E = DocstoreRetrieveError;
 
     async fn retreive_batch(

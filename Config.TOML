@@ -1,0 +1,28 @@
+[engine]
+protocol = "http"
+host = "0.0.0.0"
+port = 5000
+index = "db/thenlper/gte-small/index_pca128_flat.faiss"
+docstore = "db/thenlper/gte-small/docstore.sqlitedb"
+conversation_path = "conversation"
+query_path = "query"
+
+[embed]
+protocol = "http"
+host = "0.0.0.0"
+port = 9000
+model = "thenlper/gte-small"
+batch_size = 640
+path = "embed"
+
+[llm]
+protocol = "http"
+host = "0.0.0.0"
+port = 5050
+path = "conversation"
+model = "zephyr-7B-alpha-GPTQ"
+
+[ui]
+protocol = "http"
+host = "0.0.0.0"
+port = 3000

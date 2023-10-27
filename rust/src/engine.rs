@@ -4,19 +4,21 @@ use std::{
 };
 
 use crate::{
-    docstore::{Docstore, DocstoreRetrieveError, SqliteDocstore},
-    embed::{Embed, EmbedService, EmbeddingServiceError},
-    index::{IndexSearchError, Search, SearchIndex},
-    protocol::{
-        llama::{LlmInput, LlmMessage, LlmRole},
-        oracle::{Conversation, Message},
+    docstore::{DocstoreRetrieveError, DocumentService, SqliteDocstore},
+    embed::{EmbedService, Embedder, EmbeddingServiceError},
+    index::{FaissIndex, IndexSearchError, SearchService},
+    llm::{
+        protocol::{LlmInput, LlmMessage, LlmRole},
+        Llm, LlmService, LlmServiceError,
     },
+    server::protocol::*,
 };
 
 pub struct Engine {
-    index: Mutex<SearchIndex>,
-    embed: EmbedService,
+    index: Mutex<FaissIndex>,
+    embed: Embedder,
     docstore: SqliteDocstore,
+    llm: Llm,
 }
 
 #[async_trait::async_trait]
@@ -25,6 +27,7 @@ pub(crate) trait QueryEngine {
     async fn query(&self, question: &str) -> Result<String, Self::E>;
     async fn conversation(&self, conversation: &Conversation) -> Result<Message, Self::E>;
 }
+
 #[async_trait::async_trait]
 impl QueryEngine for Engine {
     type E = QueryEngineError;
@@ -63,8 +66,6 @@ impl QueryEngine for Engine {
         &self,
         Conversation(message_history): &Conversation,
     ) -> Result<Message, Self::E> {
-        let url = "http://0.0.0.0:5050/conversation";
-
         match message_history.last() {
             Some(Message::User(user_query)) => {
                 let embedding = self
@@ -108,21 +109,14 @@ impl QueryEngine for Engine {
                     }],
                 };
 
-                let request_body = serde_json::to_string(&input)
-                    .map_err(|_| QueryEngineError::SerializationError)?;
-
                 let LlmInput {
                     system: _,
                     conversation: con,
-                } = reqwest::Client::new()
-                    .post(url)
-                    .json(&request_body)
-                    .send()
+                } = self
+                    .llm
+                    .get_llm_answer(input)
                     .await
-                    .map_err(|e| QueryEngineError::RequestError(e))?
-                    .json()
-                    .await
-                    .map_err(|e| QueryEngineError::RequestError(e))?;
+                    .map_err(|e| QueryEngineError::LlmError(e))?;
 
                 match con.last() {
                     Some(LlmMessage {
@@ -147,14 +141,16 @@ impl QueryEngine for Engine {
 
 impl Engine {
     pub(crate) fn new(
-        index: Mutex<SearchIndex>,
-        embed: EmbedService,
+        index: Mutex<FaissIndex>,
+        embed: Embedder,
         docstore: SqliteDocstore,
+        llm: Llm,
     ) -> Self {
         Self {
             index,
             embed,
             docstore,
+            llm,
         }
     }
 }
@@ -165,16 +161,15 @@ fn format_document(index: usize, document: &String) -> String {
 
 #[derive(Debug)]
 pub(crate) enum QueryEngineError {
+    DocstoreError(DocstoreRetrieveError),
+    EmbeddingError(EmbeddingServiceError),
+    EmptyConversation,
+    IndexError(IndexSearchError),
     IndexOutOfRange,
     InvalidAgentResponse,
     LastMessageIsNotUser,
-    EmptyConversation,
+    LlmError(LlmServiceError),
     UnableToLockIndex,
-    SerializationError,
-    RequestError(reqwest::Error),
-    IndexError(IndexSearchError),
-    DocstoreError(DocstoreRetrieveError),
-    EmbeddingError(EmbeddingServiceError),
 }
 
 impl std::error::Error for QueryEngineError {}
@@ -182,16 +177,15 @@ impl std::error::Error for QueryEngineError {}
 impl Display for QueryEngineError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
+            QueryEngineError::DocstoreError(e) => write!(f, "{e}"),
+            QueryEngineError::EmbeddingError(e) => write!(f, "{e}"),
+            QueryEngineError::EmptyConversation => write!(f, "Empty conversation history."),
+            QueryEngineError::IndexError(e) => write!(f, "{e}"),
             QueryEngineError::IndexOutOfRange => write!(f, "Index Out of Range."),
             QueryEngineError::InvalidAgentResponse => write!(f, "Invalid agent response."),
             QueryEngineError::LastMessageIsNotUser => write!(f, "Last message is not User Role."),
-            QueryEngineError::EmptyConversation => write!(f, "Empty conversation history."),
+            QueryEngineError::LlmError(e) => write!(f, "{e}"),
             QueryEngineError::UnableToLockIndex => write!(f, "Unable to lock index."),
-            QueryEngineError::IndexError(e) => write!(f, "{e}"),
-            QueryEngineError::DocstoreError(e) => write!(f, "{e}"),
-            QueryEngineError::EmbeddingError(e) => write!(f, "{e}"),
-            QueryEngineError::SerializationError => write!(f, "Unable to serialize llm message."),
-            QueryEngineError::RequestError(e) => write!(f, "{e}"),
         }
     }
 }
