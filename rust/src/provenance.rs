@@ -43,17 +43,38 @@ mod test {
 
     #[test]
     fn wiki_mla() {
+        let expected = r#""Austrian German" Wikipedia, Wikimedia Foundation, 1 October 2023, https://en.wikipedia.org/wiki/Austrian_German. Accessed 1 October 2023."#;
+
         let provenance = Provenance::Wikipedia(
             "Austrian German".to_string(),
             NaiveDate::from_ymd_opt(2023, 10, 01).unwrap(),
             NaiveDate::from_ymd_opt(2023, 10, 01).unwrap(),
         );
 
-        let f = provenance.format(CitationStyle::Chigago);
-        println!("{f}");
-        let f = provenance.format(CitationStyle::MLA);
-        println!("{f}");
-        let f = provenance.format(CitationStyle::APA);
-        println!("{f}")
+        assert_eq!(expected, provenance.format(CitationStyle::MLA))
+    }
+    #[test]
+    fn wiki_apa() {
+        let expected = r#"Austrian German. 2023, October 1. In Wikipedia. Retrieved October 1, 2023, from https://en.wikipedia.org/wiki/Austrian_German"#;
+
+        let provenance = Provenance::Wikipedia(
+            "Austrian German".to_string(),
+            NaiveDate::from_ymd_opt(2023, 10, 01).unwrap(),
+            NaiveDate::from_ymd_opt(2023, 10, 01).unwrap(),
+        );
+
+        assert_eq!(expected, provenance.format(CitationStyle::APA))
+    }
+    #[test]
+    fn wiki_chicago() {
+        let expected = r#""Austrian German" Wikipedia. Last modified 1 October 2023, Accessed 1 October 2023, https://en.wikipedia.org/wiki/Austrian_German."#;
+
+        let provenance = Provenance::Wikipedia(
+            "Austrian German".to_string(),
+            NaiveDate::from_ymd_opt(2023, 10, 01).unwrap(),
+            NaiveDate::from_ymd_opt(2023, 10, 01).unwrap(),
+        );
+
+        assert_eq!(expected, provenance.format(CitationStyle::Chigago))
     }
 }
