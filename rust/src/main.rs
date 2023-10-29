@@ -2,8 +2,10 @@ mod config;
 mod docstore;
 mod embed;
 mod engine;
+mod formatter;
 mod index;
 mod llm;
+mod provenance;
 mod server;
 
 use config::Config;

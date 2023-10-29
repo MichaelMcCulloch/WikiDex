@@ -31,6 +31,8 @@ utoipa = { version = "4.0.0", features = ["actix_extras"] }
 utoipa-redoc = { version = "1.0.0", features = ["actix-web"] }
 reqwest = { version = "0.11.20", features = ["json"] }
 colored = "2.0.4"
+chrono = "0.4.31"
+polymorphic_enum = "0.1.5"
 [profile.release]
 lto = true
 strip = true

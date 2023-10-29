@@ -43,10 +43,11 @@ impl EmbedService for Embedder {
         let payload = serde_json::json!({
             "sentences": query
         });
+
         let response: EmbeddingsResponse = self
             .client
             .post(self.host.clone())
-            .timeout(Duration::from_secs(360))
+            .timeout(Duration::from_secs(180))
             .json(&payload)
             .send()
             .await
@@ -54,6 +55,7 @@ impl EmbedService for Embedder {
             .json()
             .await
             .map_err(|e| EmbeddingServiceError::Reqwuest(e))?;
+
         if response.embeddings.len() != query.len() {
             Err(EmbeddingServiceError::EmbeddingSizeMismatch(
                 query.len(),
