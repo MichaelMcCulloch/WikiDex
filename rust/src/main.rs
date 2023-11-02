@@ -13,7 +13,9 @@ use docstore::SqliteDocstore;
 use server::run_server;
 use std::sync::Mutex;
 
-use crate::{embed::Embedder, engine::Engine, index::FaissIndex, llm::Llm};
+use crate::{
+    embed::Embedder, engine::Engine, index::FaissIndex, llm::exllama_service::ExLlamaExampleService,
+};
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
@@ -28,7 +30,7 @@ async fn main() -> anyhow::Result<()> {
     let embedder = Embedder::new(config.embed)?;
     let docstore = SqliteDocstore::new(&config.engine.docstore).await?;
     let index = FaissIndex::new(&config.engine.index)?;
-    let llm = Llm::new(config.llm)?;
+    let llm = ExLlamaExampleService::new(config.llm)?;
 
     let engine = Engine::new(Mutex::new(index), embedder, docstore, llm);
 
