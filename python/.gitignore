@@ -1,8 +1,0 @@
-/venv
-models/llm/**/**/**/config.json
-models/llm/**/**/**/model.safetensors
-models/llm/**/**/**/tokenizer.json
-models/llm/**/**/**/tokenizer.model
-models/llm/**/**/**/quantize_config.json 
-models/llm/**/**/**/special_tokens_map.json 
-models/llm/**/**/**/tokenizer_config.json

@@ -1,7 +1,0 @@
-https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ/resolve/gptq-4bit-32g-actorder_True/model.safetensors
-https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ/resolve/gptq-4bit-32g-actorder_True/config.json
-https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ/resolve/gptq-4bit-32g-actorder_True/quantize_config.json
-https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ/resolve/gptq-4bit-32g-actorder_True/special_tokens_map.json
-https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ/resolve/gptq-4bit-32g-actorder_True/tokenizer.json
-https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ/resolve/gptq-4bit-32g-actorder_True/tokenizer.model
-https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ/resolve/gptq-4bit-32g-actorder_True/tokenizer_config.json
