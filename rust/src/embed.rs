@@ -5,7 +5,7 @@ use std::{
     time::Duration,
 };
 
-use crate::config::EmbedConfig;
+use crate::config::{ConfigUrl, EmbedConfig};
 
 #[derive(Deserialize)]
 struct EmbeddingsResponse {
@@ -20,7 +20,7 @@ impl Embedder {
     pub(crate) fn new(config: EmbedConfig) -> Result<Self, url::ParseError> {
         let start = std::time::Instant::now();
 
-        let host: Url = config.into();
+        let host = config.url().join(&config.path)?;
         let client = Client::new();
 
         let embedder = Self { client, host };

@@ -1,7 +1,7 @@
 use reqwest::Client;
 use url::Url;
 
-use crate::config::LlmConfig;
+use crate::config::{ConfigUrl, LlmConfig};
 
 use super::{protocol::LlmInput, LlmService, LlmServiceError};
 
@@ -32,7 +32,7 @@ impl LlmService for ExLlamaExampleService {
 
 impl ExLlamaExampleService {
     pub(crate) fn new(config: LlmConfig) -> Result<Self, url::ParseError> {
-        let host: Url = config.into();
+        let host = config.url().join(&config.path)?;
         let client = Client::new();
 
         Ok(Self { client, host })

@@ -45,49 +45,50 @@ pub(crate) struct UiConfig {
     pub(crate) port: u16,
 }
 
-impl Into<Url> for EngineConfig {
-    fn into(self) -> Url {
+pub(crate) trait ConfigUrl {
+    fn url(&self) -> Url;
+}
+
+impl ConfigUrl for EngineConfig {
+    fn url(&self) -> Url {
         let EngineConfig {
-            protocol,
             host,
             port,
-            conversation_path,
+            protocol,
             ..
         } = self;
 
-        Url::parse(&format!("{protocol}://{host}:{port}/{conversation_path}")).unwrap()
+        Url::parse(&format!("{protocol}://{host}:{port}/")).unwrap()
     }
 }
 
-impl Into<Url> for LlmConfig {
-    fn into(self) -> Url {
+impl ConfigUrl for LlmConfig {
+    fn url(&self) -> Url {
         let LlmConfig {
             host,
             port,
-            path,
             protocol,
             ..
         } = self;
 
-        Url::parse(&format!("{protocol}://{host}:{port}/{path}")).unwrap()
+        Url::parse(&format!("{protocol}://{host}:{port}/")).unwrap()
     }
 }
-impl Into<Url> for EmbedConfig {
-    fn into(self) -> Url {
+impl ConfigUrl for EmbedConfig {
+    fn url(&self) -> Url {
         let EmbedConfig {
             host,
             port,
-            path,
             protocol,
             ..
         } = self;
 
-        Url::parse(&format!("{protocol}://{host}:{port}/{path}")).unwrap()
+        Url::parse(&format!("{protocol}://{host}:{port}/")).unwrap()
     }
 }
 
-impl Into<Url> for UiConfig {
-    fn into(self) -> Url {
+impl ConfigUrl for UiConfig {
+    fn url(&self) -> Url {
         let UiConfig {
             host,
             port,
@@ -95,7 +96,7 @@ impl Into<Url> for UiConfig {
             ..
         } = self;
 
-        Url::parse(&format!("{protocol}://{host}:{port}")).unwrap()
+        Url::parse(&format!("{protocol}://{host}:{port}/")).unwrap()
     }
 }
 
@@ -125,13 +126,13 @@ impl Display for Config {
         let engine_index = engine_index.display();
         let engine_docstore = engine_docstore.display();
 
-        let engine_url: Url = self.engine.clone().into();
+        let engine_url: Url = self.engine.url();
         let engine_url = engine_url.as_str().yellow();
-        let embed_url: Url = self.embed.clone().into();
+        let embed_url: Url = self.embed.url();
         let embed_url = embed_url.as_str().yellow();
-        let llm_url: Url = self.llm.clone().into();
+        let llm_url: Url = self.llm.url();
         let llm_url = llm_url.as_str().yellow();
-        let ui_url: Url = self.ui.clone().into();
+        let ui_url: Url = self.ui.url();
         let ui_url = ui_url.as_str().yellow();
 
         write!(

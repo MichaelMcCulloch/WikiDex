@@ -9,8 +9,8 @@ use crate::{
     formatter::document::{DocumentFormatter, TextFormatter},
     index::{FaissIndex, IndexSearchError, SearchService},
     llm::{
-        exllama_service::ExLlamaExampleService,
         protocol::{LlmInput, LlmMessage, LlmRole},
+        vllm::VllmService,
         LlmService, LlmServiceError,
     },
     server::protocol::*,
@@ -20,7 +20,7 @@ pub struct Engine {
     index: Mutex<FaissIndex>,
     embed: Embedder,
     docstore: SqliteDocstore,
-    llm: ExLlamaExampleService,
+    llm: VllmService,
 }
 
 #[async_trait::async_trait]
@@ -159,7 +159,7 @@ impl Engine {
         index: Mutex<FaissIndex>,
         embed: Embedder,
         docstore: SqliteDocstore,
-        llm: ExLlamaExampleService,
+        llm: VllmService,
     ) -> Self {
         Self {
             index,

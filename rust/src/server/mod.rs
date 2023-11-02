@@ -1,6 +1,7 @@
 pub(crate) mod protocol;
 
 use self::protocol::*;
+use crate::config::ConfigUrl;
 use crate::engine::QueryEngine;
 use crate::engine::QueryEngineError;
 use crate::{config::EngineConfig, engine::Engine};
@@ -110,7 +111,7 @@ pub(crate) fn run_server(engine: Engine, config: EngineConfig) -> Result<Server,
             .service(Redoc::with_url("/api-doc", openapi.clone()))
     });
 
-    let url: Url = config.into();
+    let url = config.url();
 
     let host = url.host().expect("Host is not valid");
     let port = url.port().expect("Port is not valid");
