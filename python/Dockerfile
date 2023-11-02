@@ -13,6 +13,7 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
     python3 -m venv /build/venv && \
     . /build/venv/bin/activate && \
     pip3 install --upgrade pip wheel setuptools packaging && \
+    pip3 install torch && \
     MAX_JOBS=6 pip3 install torch flash-attn --no-build-isolation flask flask_cors exllamav2
 
 
