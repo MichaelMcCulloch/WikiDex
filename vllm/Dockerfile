@@ -1,0 +1,17 @@
+FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update && \
+    apt-get install --no-install-recommends -y git vim build-essential python3-dev python3-venv ninja-build && \
+    rm -rf /var/lib/apt/lists/*
+
+ARG TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST:-8.6}"
+RUN --mount=type=cache,target=/root/.cache/pip,rw \
+    python3 -m venv /venv && \
+    . /venv/bin/activate && \
+    pip3 install --upgrade pip wheel setuptools packaging && \
+    MAX_JOBS=6 pip3 install vllm
+
+
+
+EXPOSE "${HOST_API_PORT:-5050}:${CONTAINER_API_PORT:-5050}"
+CMD . /venv/bin/activate && python -m vllm.entrypoints.openai.api_server --model "${MODEL_NAME:-TheBloke/zephyr-7B-beta-AWQ}" --host 0.0.0.0 --port "${CONTAINER_API_PORT:-5050}" --quantization "${QUANTIZATION:-awq}" --dtype half --max-model-len "${MAX_MODEL_LEN:-8192}"

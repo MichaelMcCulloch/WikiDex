@@ -1,0 +1,23 @@
+version: "3.3"
+
+services:
+  vllm_inference_server:
+    ipc: host
+    build:
+      context: .
+      args:
+        TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST:-8.6}
+        MODEL_NAME: ${MODEL_NAME:-TheBloke/zephyr-7B-beta-AWQ}
+        QUANTIZATION: ${QUANTIZATION:-awq}
+        MAX_MODEL_LEN: ${MAX_MODEL_LEN:-8192}
+    ports:
+      - "${HOST_API_PORT:-5050}:${CONTAINER_API_PORT:-5050}"
+    stdin_open: true
+    tty: true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["0"]
+              capabilities: [gpu]
