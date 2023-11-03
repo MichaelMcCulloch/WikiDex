@@ -1,0 +1,17 @@
+FROM nvidia/cuda:12.2.2-runtime-ubuntu22.04
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update && \
+    apt-get install --no-install-recommends -y git vim build-essential python3-dev python3-venv ninja-build && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY . .
+
+ARG TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST:-8.6}"
+RUN --mount=type=cache,target=/root/.cache/pip,rw \
+    python3 -m venv /venv && \
+    . /venv/bin/activate && \ 
+    pip3 install --upgrade pip wheel setuptools packaging && \
+    pip3 install -r requirements.txt
+
+EXPOSE "${HOST_API_PORT:-9000}:${CONTAINER_API_PORT:-9000}"
+CMD . /venv/bin/activate && python3 embeddings_service.py --port "${CONTAINER_API_PORT:-9000}"
