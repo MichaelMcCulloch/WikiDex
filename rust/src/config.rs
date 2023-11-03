@@ -114,6 +114,7 @@ impl Display for Config {
                 EmbedConfig {
                     model: embed_model,
                     batch_size: embed_batch_size,
+                    path: embed_path,
                     ..
                 },
             llm: LlmConfig {
@@ -125,18 +126,22 @@ impl Display for Config {
         let engine_index = engine_index.display();
         let engine_docstore = engine_docstore.display();
 
-        let engine_url: Url = self.engine.url();
-        let engine_url = engine_url.as_str().yellow();
-        let embed_url: Url = self.embed.url();
-        let embed_url = embed_url.as_str().yellow();
-        let llm_url: Url = self.llm.url();
-        let llm_url = llm_url.as_str().yellow();
-        let ui_url: Url = self.ui.url();
-        let ui_url = ui_url.as_str().yellow();
+        let engine_url = self.engine.url();
+
+        let [engine_conversation_path, engine_query_path, engine_api_doc_path, embed_url, llm_url, ui_url] =
+            [
+                engine_url.join(&engine_conversation_path).unwrap(),
+                engine_url.join(&engine_query_path).unwrap(),
+                engine_url.join("api-doc").unwrap(),
+                self.embed.url().join(&embed_path).unwrap(),
+                self.llm.url().join("v1").unwrap(),
+                self.ui.url(),
+            ]
+            .map(|url| url.as_str().yellow());
 
         write!(
             f,
-            "Engine running at {engine_url}.\n\tServing conversations on /{engine_conversation_path}.\n\tService queries on /{engine_query_path}.\n\tUsing index at {engine_index}.\n\tUsing docstore at {engine_docstore}.\nUsing embedding service at {embed_url}.\n\tUsing embedder {embed_model} with a batch size of {embed_batch_size}.\nUsing llm service at {llm_url}.\n\tUsing {llm_model}.\nUi running at {ui_url}.",
+            "Engine running.\n\tServing conversations on {engine_conversation_path}.\n\tService queries on {engine_query_path}.\n\tServing OpenAPI documentation on {engine_api_doc_path}.\n\tUsing index at {engine_index}.\n\tUsing docstore at {engine_docstore}.\nUsing Huggingface embedding service at {embed_url}.\n\tUsing embedder {embed_model} with a batch size of {embed_batch_size}.\nUsing vLLM service at {llm_url}.\n\tUsing {llm_model}.\nUi running at {ui_url}.",
         )
     }
 }

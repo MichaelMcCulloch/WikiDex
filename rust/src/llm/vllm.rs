@@ -68,9 +68,9 @@ impl LlmService for VllmService {
             LlmRole::from(&response.message.role),
             response.message.content,
         ) {
-            (_, None) => Err(LlmServiceError::EmptyResponse),
             (LlmRole::System, _) => Err(LlmServiceError::UnexpectedRole(LlmRole::System)),
             (LlmRole::Function, _) => Err(LlmServiceError::UnexpectedRole(LlmRole::Function)),
+            (_, None) => Err(LlmServiceError::EmptyResponse),
             (role, Some(message)) => Ok(LlmMessage { role, message }),
         }?;
 
