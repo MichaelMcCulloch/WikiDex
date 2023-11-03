@@ -34,8 +34,6 @@ pub(crate) trait QueryEngine {
 impl QueryEngine for Engine {
     type E = QueryEngineError;
     async fn query(&self, question: &str) -> Result<String, Self::E> {
-        log::debug!("Query Received");
-
         let embedding = self
             .embed
             .embed(&[&question])

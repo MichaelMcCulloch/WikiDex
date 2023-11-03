@@ -1,9 +1,8 @@
 pub(crate) mod protocol;
 
-use self::protocol::LlmInput;
+use self::protocol::{LlmInput, LlmRole};
 use std::fmt::{self, Display, Formatter};
 
-pub(crate) mod exllama_service;
 pub(crate) mod vllm;
 
 #[async_trait::async_trait]
@@ -14,11 +13,9 @@ pub(crate) trait LlmService {
 
 #[derive(Debug)]
 pub(crate) enum LlmServiceError {
-    ReqwestError(reqwest::Error),
     OpenAIError(async_openai::error::OpenAIError),
     EmptyResponse,
-    SerializationError,
-    UnexpectedResponse,
+    UnexpectedRole(LlmRole),
 }
 
 impl std::error::Error for LlmServiceError {}
@@ -26,12 +23,10 @@ impl std::error::Error for LlmServiceError {}
 impl Display for LlmServiceError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            LlmServiceError::ReqwestError(err) => write!(f, "LLMService: {}", err),
             LlmServiceError::OpenAIError(err) => write!(f, "LLMService: {}", err),
-            LlmServiceError::SerializationError => write!(f, "LLMService: Serialization error"),
             LlmServiceError::EmptyResponse => write!(f, "LLMService: Empty Response from service"),
-            LlmServiceError::UnexpectedResponse => {
-                write!(f, "LLMService: Unexpected Response from service")
+            LlmServiceError::UnexpectedRole(r) => {
+                write!(f, "LLMService: Unexpected role '{r}' from service.")
             }
         }
     }

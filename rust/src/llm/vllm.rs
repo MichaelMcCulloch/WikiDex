@@ -1,12 +1,8 @@
 use async_openai::{
-    config::{Config, OpenAIConfig},
-    types::{
-        ChatCompletionRequestMessageArgs, CreateChatCompletionRequestArgs,
-        CreateCompletionRequestArgs, Role,
-    },
+    config::OpenAIConfig,
+    types::{ChatCompletionRequestMessageArgs, CreateChatCompletionRequestArgs, Role},
     Client,
 };
-use url::Url;
 
 use crate::config::{ConfigUrl, LlmConfig};
 
@@ -35,28 +31,17 @@ impl LlmService for VllmService {
             .build()
             .map_err(|e| LlmServiceError::OpenAIError(e))?;
 
-        let mut message_openai_compat = vec![];
-        message_openai_compat.push(system_openai_compat);
+        let mut message_openai_compat = vec![system_openai_compat];
+
         for message in conversation.iter() {
-            let m = match message {
-                LlmMessage {
-                    role: LlmRole::Assistant,
-                    message,
-                } => ChatCompletionRequestMessageArgs::default()
-                    .role(Role::Assistant)
-                    .content(message)
-                    .build()
-                    .map_err(|e| LlmServiceError::OpenAIError(e))?,
-                LlmMessage {
-                    role: LlmRole::User,
-                    message,
-                } => ChatCompletionRequestMessageArgs::default()
-                    .role(Role::User)
-                    .content(message)
-                    .build()
-                    .map_err(|e| LlmServiceError::OpenAIError(e))?,
-            };
-            message_openai_compat.push(m);
+            let LlmMessage { role, message } = message;
+            let role: Role = role.into();
+            let msg = ChatCompletionRequestMessageArgs::default()
+                .role(role)
+                .content(message)
+                .build()
+                .map_err(|e| LlmServiceError::OpenAIError(e))?;
+            message_openai_compat.push(msg);
         }
 
         let request = CreateChatCompletionRequestArgs::default()
@@ -65,6 +50,7 @@ impl LlmService for VllmService {
             .messages(message_openai_compat)
             .build()
             .map_err(|e| LlmServiceError::OpenAIError(e))?;
+
         let response = self
             .client
             .chat()
@@ -77,19 +63,19 @@ impl LlmService for VllmService {
             .into_iter()
             .next()
             .ok_or(LlmServiceError::EmptyResponse)?;
+
         let response = match (response.message.role, response.message.content) {
-            (Role::User, Some(message)) => Ok(LlmMessage {
-                role: LlmRole::User,
+            (_, None) => Err(LlmServiceError::EmptyResponse),
+            (Role::System, _) => Err(LlmServiceError::UnexpectedRole(LlmRole::System)),
+            (Role::Function, _) => Err(LlmServiceError::UnexpectedRole(LlmRole::Function)),
+            (role, Some(message)) => Ok(LlmMessage {
+                role: LlmRole::from(&role),
                 message,
             }),
-            (Role::Assistant, Some(message)) => Ok(LlmMessage {
-                role: LlmRole::Assistant,
-                message,
-            }),
-            _ => Err(LlmServiceError::UnexpectedResponse),
         }?;
 
         conversation.push(response);
+
         Ok(LlmInput {
             system,
             conversation,
