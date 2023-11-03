@@ -64,14 +64,14 @@ impl LlmService for VllmService {
             .next()
             .ok_or(LlmServiceError::EmptyResponse)?;
 
-        let response = match (response.message.role, response.message.content) {
+        let response = match (
+            LlmRole::from(&response.message.role),
+            response.message.content,
+        ) {
             (_, None) => Err(LlmServiceError::EmptyResponse),
-            (Role::System, _) => Err(LlmServiceError::UnexpectedRole(LlmRole::System)),
-            (Role::Function, _) => Err(LlmServiceError::UnexpectedRole(LlmRole::Function)),
-            (role, Some(message)) => Ok(LlmMessage {
-                role: LlmRole::from(&role),
-                message,
-            }),
+            (LlmRole::System, _) => Err(LlmServiceError::UnexpectedRole(LlmRole::System)),
+            (LlmRole::Function, _) => Err(LlmServiceError::UnexpectedRole(LlmRole::Function)),
+            (role, Some(message)) => Ok(LlmMessage { role, message }),
         }?;
 
         conversation.push(response);
