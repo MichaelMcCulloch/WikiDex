@@ -1,6 +1,6 @@
 [engine]
 protocol = "http"
-host = "0.0.0.0"
+host = "omnipedia"
 port = 5000
 index = "/db/thenlper/gte-small/index_pca64_flat.faiss"
 docstore = "/db/thenlper/gte-small/docstore.sqlitedb"
@@ -9,7 +9,7 @@ query_path = "query"
 
 [embed]
 protocol = "http"
-host = "0.0.0.0"
+host = "embeddings"
 port = 9000
 model = "thenlper/gte-small"
 batch_size = 640
@@ -17,11 +17,11 @@ path = "embed"
 
 [llm]
 protocol = "http"
-host = "0.0.0.0"
+host = "vllm"
 port = 5050
 model = "TheBloke/zephyr-7B-beta-AWQ"
 
 [ui]
 protocol = "http"
-host = "0.0.0.0"
+host = "ui"
 port = 3000
