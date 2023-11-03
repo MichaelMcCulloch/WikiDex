@@ -20,7 +20,7 @@ async fn main() -> anyhow::Result<()> {
     std::env::set_var("RUST_LOG", "info");
     env_logger::init();
 
-    let toml_str = std::fs::read_to_string("/home/michael/Development/oracle/Config.TOML")?;
+    let toml_str = std::fs::read_to_string("/Config.TOML")?;
     let config: Config = toml::from_str(&toml_str)?;
 
     log::info!("\n{config}");

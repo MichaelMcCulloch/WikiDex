@@ -29,16 +29,25 @@ services:
       - "${HOST_API_PORT:-3000}:${CONTAINER_API_PORT:-3000}"
     stdin_open: true
     tty: true
-  # omnipedia:
-  #   ipc: host
-  #   build:
-  #     context: ./rust
-  #   ports:
-  #     - "${HOST_API_PORT:-5000}:${CONTAINER_API_PORT:-5000}"
-  #   stdin_open: true
-  #   tty: true
-  #   volumes:
-  #     - /db:/db
+  omnipedia:
+    ipc: host
+    build:
+      context: ./rust
+      args:
+        TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST:-8.6}
+    ports:
+      - "${HOST_API_PORT:-5000}:${CONTAINER_API_PORT:-5000}"
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./rust/db:/db
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["0"]
+              capabilities: [gpu]
   embeddings:
     ipc: host
     build:

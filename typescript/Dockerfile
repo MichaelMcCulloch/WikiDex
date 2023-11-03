@@ -16,6 +16,3 @@ COPY --from=builder /app/build .
 
 EXPOSE "${HOST_API_PORT:-3000}:${CONTAINER_API_PORT:-3000}"
 CMD busybox httpd -f -v -p "${CONTAINER_API_PORT:-3000}"
-
-
-

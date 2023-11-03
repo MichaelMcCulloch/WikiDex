@@ -2,8 +2,8 @@
 protocol = "http"
 host = "0.0.0.0"
 port = 5000
-index = "db/thenlper/gte-small/index_pca64_flat.faiss"
-docstore = "db/thenlper/gte-small/docstore.sqlitedb"
+index = "/db/thenlper/gte-small/index_pca64_flat.faiss"
+docstore = "/db/thenlper/gte-small/docstore.sqlitedb"
 conversation_path = "conversation"
 query_path = "query"
 
