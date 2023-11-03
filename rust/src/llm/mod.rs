@@ -1,9 +1,8 @@
 pub(crate) mod protocol;
+pub(crate) mod vllm;
 
 use self::protocol::{LlmInput, LlmRole};
 use std::fmt::{self, Display, Formatter};
-
-pub(crate) mod vllm;
 
 #[async_trait::async_trait]
 pub(crate) trait LlmService {

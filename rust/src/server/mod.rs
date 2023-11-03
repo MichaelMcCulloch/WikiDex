@@ -13,7 +13,6 @@ use actix_web::{
     App, HttpResponse, HttpServer, Responder,
 };
 use std::sync::Arc;
-use url::Url;
 use utoipa::OpenApi;
 use utoipa_redoc::{Redoc, Servable};
 

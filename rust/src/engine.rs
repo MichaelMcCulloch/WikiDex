@@ -99,7 +99,7 @@ impl QueryEngine for Engine {
 
                 let formatted_document_list = documents
                     .iter()
-                    .map(|(index, document, provenance)| {
+                    .map(|(index, document, _provenance)| {
                         DocumentFormatter::format_document(*index, document)
                     })
                     .collect::<Vec<String>>()
