@@ -1,7 +1,7 @@
 version: "3.3"
 
 services:
-  vllm_inference_server:
+  vllm:
     ipc: host
     build:
       context: ./vllm
@@ -21,3 +21,11 @@ services:
             - driver: nvidia
               device_ids: ["0"]
               capabilities: [gpu]
+  oracle_ui:
+    ipc: host
+    build:
+      context: ./typescript
+    ports:
+      - "${HOST_API_PORT:-3000}:${CONTAINER_API_PORT:-3000}"
+    stdin_open: true
+    tty: true
