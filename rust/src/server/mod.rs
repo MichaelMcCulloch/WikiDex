@@ -58,11 +58,12 @@ async fn query(
         }
     }
 }
+//request_body(content = Conversation, content_type = "application/json", example = json!([{"User":"What is the capital of France?"},{"Assistant":["The capital of france is Paris![0]",["https://en.wikipedia.org/wiki/France"]]},{"User":"And who is the current prime minister of france, and where were they born?"}])),
 
 #[utoipa::path(
-    request_body(content = Conversation, content_type = "application/json", example = json!([{"User":"What is the capital of France?"},{"Assistant":["The capital of france is Paris![0]",["https://en.wikipedia.org/wiki/France"]]},{"User":"And who is the current prime minister of france, and where were they born?"}])),
+    request_body(content = Conversation, content_type = "application/json"),
     responses(
-        (status = 200, description = "AI Response", body = Conversation, content_type = "application/json",example = json!([{"User":"What is the capital of France?"},{"Assistant":["The capital of france is Paris![0]",["https://en.wikipedia.org/wiki/France"]]},{"User":"And who is the current prime minister of france, and where were they born?"},{"Assistant":["The president of the French Republic as of 2023 is Emmanuel Macron![0] and he was born in Amiens, Somme, France[1]",["https://en.wikipedia.org/wiki/President_of_France","https://en.wikipedia.org/wiki/Emmanuel_Macron"]]}])),
+        (status = 200, description = "AI Response", body = Conversation, content_type = "application/json"),
         (status = 204, description = "No user input"),
         (status = 400, description = "Empty Request")
     )

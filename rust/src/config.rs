@@ -35,7 +35,6 @@ pub(crate) struct LlmConfig {
     pub(crate) protocol: String,
     pub(crate) host: String,
     pub(crate) port: u16,
-    pub(crate) path: String,
     pub(crate) model: String,
 }
 #[derive(Deserialize, Debug, Clone)]
