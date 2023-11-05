@@ -1,6 +1,7 @@
 pub(crate) mod protocol;
 
 use self::protocol::*;
+use crate::config::Config;
 use crate::config::ConfigUrl;
 use crate::engine::QueryEngine;
 use crate::engine::QueryEngineError;
@@ -96,7 +97,11 @@ async fn conversation(
     }
 }
 
-pub(crate) fn run_server(engine: Engine, config: EngineConfig) -> Result<Server, std::io::Error> {
+pub(crate) fn run_server<S: AsRef<str>>(
+    engine: Engine,
+    host: S,
+    port: u16,
+) -> Result<Server, std::io::Error> {
     let openapi = ApiDoc::openapi();
 
     let engine = Arc::new(engine);
@@ -111,11 +116,7 @@ pub(crate) fn run_server(engine: Engine, config: EngineConfig) -> Result<Server,
             .service(Redoc::with_url("/api-doc", openapi.clone()))
     });
 
-    let url = config.url();
-
-    let host = url.host().expect("Host is not valid");
-    let port = url.port().expect("Port is not valid");
-    server = server.bind((host.to_string(), port))?;
+    server = server.bind((host.as_ref(), port))?;
     let s = server.run();
     Ok(s)
 }

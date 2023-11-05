@@ -3,8 +3,7 @@ use async_openai::{
     types::{ChatCompletionRequestMessageArgs, CreateChatCompletionRequestArgs, Role},
     Client,
 };
-
-use crate::config::{ConfigUrl, LlmConfig};
+use url::Url;
 
 use super::{
     protocol::{LlmInput, LlmMessage, LlmRole},
@@ -84,14 +83,11 @@ impl LlmService for VllmService {
 }
 
 impl VllmService {
-    pub(crate) fn new(config: LlmConfig) -> Result<Self, url::ParseError> {
-        let openai_config = OpenAIConfig::new().with_api_base(config.url().join("v1")?);
+    pub(crate) fn new<S: AsRef<str>>(host: Url, model_name: S) -> Result<Self, url::ParseError> {
+        let openai_config = OpenAIConfig::new().with_api_base(host.join("v1")?);
 
         let client = Client::with_config(openai_config);
-
-        Ok(Self {
-            client,
-            model_name: config.model,
-        })
+        let model_name = model_name.as_ref().to_string();
+        Ok(Self { client, model_name })
     }
 }

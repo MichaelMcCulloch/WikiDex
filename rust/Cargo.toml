@@ -17,6 +17,7 @@ toml = "0.8.6"
 url = "2.4.1"
 anyhow = "1.0.75"
 crossbeam = "0.8.2"
+clap = { version = "4.4.7", features = ["derive"] }
 actix-web = "4.4.0"
 actix-cors = "0.6.4"
 actix-rt = "2.9.0"

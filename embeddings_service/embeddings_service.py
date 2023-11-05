@@ -38,7 +38,7 @@ class EmbedHandler(tornado.web.RequestHandler):
 def make_app():
     return tornado.web.Application(
         [
-            (r"/embed", EmbedHandler),
+            (r"/", EmbedHandler),
         ]
     )
 
@@ -50,5 +50,5 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
 
-    logging.info(f"Listening on :{args.port}/embed")
+    logging.info(f"Listening on :{args.port}/")
     tornado.ioloop.IOLoop.current().start()

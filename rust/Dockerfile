@@ -6,13 +6,14 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update  &
 WORKDIR /usr/src/omnipedia
 COPY ./Cargo.toml ./Cargo.toml
 COPY ./src ./src
-RUN cargo install --path . --root ./build
+RUN cargo install --debug --path . --root ./build
 
 FROM nvidia/cuda:12.2.2-runtime-ubuntu22.04
-ARG TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST:-8.6}"
+ARG TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST}"
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update  && \
     apt-get install -y pkg-config libssl-dev liblapack-dev libblas-dev libgomp1 && \
     rm -rf /var/lib/apt/lists/*
 COPY --from=builder /usr/src/omnipedia/build/bin/omnipedia /usr/local/bin/omnipedia
-COPY ./Config.TOML /Config.TOML
-CMD ["omnipedia"]
+
+
+CMD omnipedia --index "${INDEX_PATH}" --docstore "${DOCSTORE_PATH}" --model-name "${LLM_MODEL_NAME}" --host 0.0.0.0 --port "${OMNIPEDIA_CONT_PORT}"
