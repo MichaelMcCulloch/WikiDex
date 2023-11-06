@@ -6,7 +6,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update  &
 WORKDIR /usr/src/omnipedia
 COPY ./Cargo.toml ./Cargo.toml
 COPY ./src ./src
-RUN cargo install --debug --path . --root ./build
+RUN  --mount=type=cache,target=/usr/src/omnipedia/target,sharing=locked,rw cargo install --path . --root ./build
 
 FROM nvidia/cuda:12.2.2-runtime-ubuntu22.04
 ARG TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST}"
