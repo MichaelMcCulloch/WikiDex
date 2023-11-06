@@ -13,4 +13,7 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
     pip3 install --upgrade pip wheel setuptools packaging && \
     pip3 install -r requirements.txt
 
-CMD . /venv/bin/activate && python3 embeddings_service.py --port "${CONTAINER_API_PORT:-9000}"
+CMD . /venv/bin/activate && python3 embeddings_service.py \
+    --port "${EMBED_CONT_PORT}" \
+    --model "${SBERT_MODEL_NAME}" \
+    --batch "${SBERT_BATCH_SIZE}"

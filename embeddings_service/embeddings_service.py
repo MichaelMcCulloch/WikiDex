@@ -7,14 +7,14 @@ from langchain.embeddings import HuggingFaceEmbeddings
 
 
 parser = argparse.ArgumentParser(description="Start the Tornado server.")
-parser.add_argument("--port", type=int, default=8888, help="Port to listen on.")
+parser.add_argument("--port", type=int, default=9000, help="Port to listen on.")
+parser.add_argument("--model", type=str, default="thenlper/gte-small", help="Sentence Bert model to use.")
+parser.add_argument("--batch", type=int, default=640, help="Maximum size of an embedding batch.")
 args = parser.parse_args()
 
-# Initialize the HuggingFaceEmbeddings object once
-document_count = 45551463
-model_name = "thenlper/gte-small"
+model_name = args.model
 model_kwargs = {"device": "cuda"}
-encode_kwargs = {"normalize_embeddings": False, "device": "cuda:0", "batch_size": 640}
+encode_kwargs = {"normalize_embeddings": False, "device": "cuda:0", "batch_size": args.batch}
 
 hf = HuggingFaceEmbeddings(
     model_name=model_name,
