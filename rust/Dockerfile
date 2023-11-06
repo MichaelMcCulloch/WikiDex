@@ -1,12 +1,14 @@
 FROM rust:1.73.0-bookworm as builder
 
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update  && \
+RUN \
+    --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update  && \
     apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev && \
     rm -rf /var/lib/apt/lists/*
 WORKDIR /usr/src/omnipedia
 COPY ./Cargo.toml ./Cargo.toml
 COPY ./src ./src
-RUN  --mount=type=cache,target=/usr/src/omnipedia/target,sharing=locked,rw cargo install --path . --root ./build
+RUN  \
+    --mount=type=cache,target=/usr/src/omnipedia/target,sharing=locked,rw cargo install --path . --root ./build
 
 FROM nvidia/cuda:12.2.2-runtime-ubuntu22.04
 ARG TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST}"
@@ -16,4 +18,11 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update  &
 COPY --from=builder /usr/src/omnipedia/build/bin/omnipedia /usr/local/bin/omnipedia
 
 
-CMD omnipedia --index "${INDEX_PATH}" --docstore "${DOCSTORE_PATH}" --model-name "${LLM_MODEL_NAME}" --host 0.0.0.0 --port "${OMNIPEDIA_CONT_PORT}"
+CMD omnipedia \
+    --index "${INDEX_PATH}" \
+    --docstore "${DOCSTORE_PATH}" \
+    --model-name "${LLM_MODEL_NAME}" \
+    --host 0.0.0.0 \
+    --port "${OMNIPEDIA_CONT_PORT}" \
+    --embed-url "http://embeddings:${EMBED_CONT_PORT}" \
+    --vllm-url "http://vllm:${VLLM_CONT_PORT}/v1"

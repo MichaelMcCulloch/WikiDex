@@ -1,3 +1,4 @@
+mod cli_args;
 mod config;
 mod docstore;
 mod embed;
@@ -12,45 +13,11 @@ use clap::Parser;
 use config::Config;
 use docstore::SqliteDocstore;
 use server::run_server;
-use std::{path::PathBuf, sync::Mutex};
-use url::Url;
+use std::sync::Mutex;
 
-use crate::{embed::Embedder, engine::Engine, index::FaissIndex, llm::vllm::VllmService};
-
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct Args {
-    #[arg(short = 'a' , long, default_value_t = String::from("0.0.0.0"))]
-    host: String,
-    #[arg(short, long, default_value_t = 5000)]
-    port: u16,
-    #[arg(short, long)]
-    index: PathBuf,
-    #[arg(short, long)]
-    docstore: PathBuf,
-
-    #[arg(short, long, default_value_t = Url::parse("http://embeddings:9000").unwrap())]
-    embed_url: Url,
-    #[arg(short, long, default_value_t = Url::parse("http://vllm:5050").unwrap())]
-    vllm_url: Url,
-    #[arg(short = 'm', long)]
-    model_name: PathBuf,
-}
-
-impl From<Args> for Config {
-    fn from(value: Args) -> Self {
-        Config {
-            protocol: "http".to_string(),
-            host: value.host,
-            port: value.port,
-            index: value.index,
-            docstore: value.docstore,
-            model: value.model_name,
-            embed_url: value.embed_url,
-            llm_url: value.vllm_url,
-        }
-    }
-}
+use crate::{
+    cli_args::Args, embed::Embedder, engine::Engine, index::FaissIndex, llm::vllm::VllmService,
+};
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
@@ -63,7 +30,7 @@ async fn main() -> anyhow::Result<()> {
 
     log::info!("\n{config}");
 
-    let embedder = Embedder::new(config.embed_url)?;
+    let embedder: Embedder = Embedder::new(config.embed_url)?;
     let docstore = SqliteDocstore::new(&config.docstore).await?;
     let index = FaissIndex::new(&config.index)?;
     let llm = VllmService::new(config.llm_url, config.model.to_str().unwrap().to_string())?;

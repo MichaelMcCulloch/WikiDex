@@ -84,7 +84,8 @@ impl LlmService for VllmService {
 
 impl VllmService {
     pub(crate) fn new<S: AsRef<str>>(host: Url, model_name: S) -> Result<Self, url::ParseError> {
-        let openai_config = OpenAIConfig::new().with_api_base(host.join("v1")?);
+        let openai_config = OpenAIConfig::new().with_api_base(host);
+        // let openai_config = OpenAIConfig::new().with_api_base(host.join("v1")?);
 
         let client = Client::with_config(openai_config);
         let model_name = model_name.as_ref().to_string();
