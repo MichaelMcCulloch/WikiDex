@@ -1,6 +1,6 @@
 use faiss::{
     index::{pretransform::PreTransformIndexImpl, IndexImpl},
-    ConcurrentIndex, Index,
+    Index,
 };
 use std::{
     fmt::{Debug, Display, Formatter},

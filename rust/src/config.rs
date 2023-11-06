@@ -40,9 +40,6 @@ impl Display for Config {
         let Config {
             index,
             docstore,
-            protocol,
-            host,
-            port,
             model,
             embed_url,
             llm_url,
