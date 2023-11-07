@@ -1,62 +1,91 @@
 version: "3.3"
 
+x-base_service: &base_service
+  stop_signal: SIGKILL
+  tty: true
+  stdin_open: true
+  env_file: .env
+  ipc: host
+  profiles: ["nvidia"]
+  deploy:
+    resources:
+      reservations:
+        devices:
+            - driver: nvidia
+              device_ids: ['0']
+
+
+x-base_service_amd:
+  &base_service_amd
+  stop_signal: SIGINT
+  tty: true
+  stdin_open: true
+  env_file: .env
+  ipc: host
+  profiles: ["amd"]
+  group_add:
+    - video
+  devices:
+    - "/dev/dri"
+    - "/dev/kfd"
+
 services:
   ui:
-    ipc: host
+    <<: *base_service
     build:
       context: ./typescript
-    env_file: .env
     ports:
       - "${UI_HOST_PORT}:${UI_CONT_PORT}"
-    stdin_open: true
-    tty: true
+    
   vllm:
-    ipc: host
+    <<: *base_service
     build:
       context: ./vllm
-    env_file: .env
     ports:
       - "${VLLM_HOST_PORT}:${VLLM_CONT_PORT}"
-    stdin_open: true
-    tty: true
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              device_ids: ["0"]
-              capabilities: [gpu]
+
   omnipedia:
-    ipc: host
+    <<: *base_service
     build:
       context: ./rust
-    env_file: .env
     ports:
       - "${OMNIPEDIA_HOST_PORT}:${OMNIPEDIA_CONT_PORT}"
-    stdin_open: true
-    tty: true
     volumes:
       - ./rust/db:/db
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              device_ids: ["0"]
-              capabilities: [gpu]
+
   embeddings:
-    ipc: host
+    <<: *base_service
     build:
       context: ./embeddings_service
-    env_file: .env
     ports:
       - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
-    stdin_open: true
-    tty: true
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              device_ids: ["0"]
-              capabilities: [gpu]
+
+  ui-amd:
+    <<: *base_service_amd
+    build:
+      context: ./typescript
+    ports:
+      - "${UI_HOST_PORT}:${UI_CONT_PORT}"
+    
+  vllm-amd:
+    <<: *base_service_amd
+    build:
+      context: ./vllm-amd
+    ports:
+      - "${VLLM_HOST_PORT}:${VLLM_CONT_PORT}"
+
+  omnipedia-amd:
+    <<: *base_service_amd
+    build:
+      context: ./rust-amd
+    ports:
+      - "${OMNIPEDIA_HOST_PORT}:${OMNIPEDIA_CONT_PORT}"
+    volumes:
+      - ./rust/db:/db
+
+  embeddings-amd:
+    <<: *base_service_amd
+    build:
+      context: ./embeddings_service-amd
+    ports:
+      - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
