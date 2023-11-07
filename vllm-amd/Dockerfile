@@ -1,14 +1,17 @@
-FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04
+FROM rocm/dev-ubuntu-22.04:5.7-complete
+
+ENV ROCM_HOME=/opt/rocm
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update && \
     apt-get install --no-install-recommends -y git vim build-essential python3-dev python3-venv ninja-build && \
     rm -rf /var/lib/apt/lists/*
 
-ARG TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST}"
+ARG HSA_OVERRIDE_GFX_VERSION="${HSA_OVERRIDE_GFX_VERSION}"
 RUN --mount=type=cache,target=/root/.cache/pip,rw \
     python3 -m venv /venv && \
     . /venv/bin/activate && \
     pip3 install --upgrade pip wheel setuptools packaging && \
+    pip3 install --pre torch --index-url https://download.pytorch.org/whl/nightly/rocm5.7 && \
     MAX_JOBS=6 pip3 install vllm fschat[model_worker,webui] bitsnbytes
 
 
