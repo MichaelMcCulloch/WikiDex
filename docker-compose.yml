@@ -37,7 +37,7 @@ services:
     ports:
       - "${UI_HOST_PORT}:${UI_CONT_PORT}"
 
-  vllm:
+  vllm-nv:
     <<: *base_service_nvidia
     build:
       dockerfile: Dockerfile_NVIDIA
@@ -45,7 +45,7 @@ services:
     ports:
       - "${VLLM_HOST_PORT}:${VLLM_CONT_PORT}"
 
-  omnipedia:
+  omnipedia-nv:
     <<: *base_service_nvidia
     build:
       dockerfile: Dockerfile_NVIDIA
@@ -55,7 +55,7 @@ services:
     volumes:
       - ./rust/db:/db
 
-  embeddings:
+  embeddings-nv:
     <<: *base_service_nvidia
     build:
       dockerfile: Dockerfile_NVIDIA
