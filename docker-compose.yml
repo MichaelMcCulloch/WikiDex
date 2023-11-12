@@ -9,7 +9,7 @@ x-base_service: &base_service
 
 x-base_service_nvidia: &base_service_nvidia
   <<: *base_service
-  stop_signal: SIGKILL
+  stop_signal: SIGTERM
   profiles: ["nvidia"]
   deploy:
     resources:
@@ -21,7 +21,7 @@ x-base_service_nvidia: &base_service_nvidia
 
 x-base_service_amd: &base_service_amd
   <<: *base_service
-  stop_signal: SIGINT
+  stop_signal: SIGTERM
   profiles: ["amd"]
   group_add:
     - video
