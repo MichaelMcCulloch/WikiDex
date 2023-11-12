@@ -10,5 +10,16 @@
     "CC": "/opt/cuda/bin/gcc",
     "CXX": "/opt/cuda/bin/g++",
     "RUSTFLAGS": "-C target-cpu=native"
-  }
+  },
+  "rust-analyzer.runnables.extraEnv": [
+    {
+      // "mask": null, // null mask means that this rule will be applied for all runnables
+      "env": {
+        "CUDA": "/opt/cuda",
+        "CC": "/opt/cuda/bin/gcc",
+        "CXX": "/opt/cuda/bin/g++",
+        "RUSTFLAGS": "-C target-cpu=native"
+      }
+    }
+  ]
 }
