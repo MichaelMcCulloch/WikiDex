@@ -1,9 +1,9 @@
+pub(crate) mod engine;
 pub(crate) mod protocol;
+use crate::server::engine::{Engine, QueryEngine, QueryEngineError};
 
 use self::protocol::*;
-use crate::engine::Engine;
-use crate::engine::QueryEngine;
-use crate::engine::QueryEngineError;
+
 use actix_cors::Cors;
 use actix_web::{
     dev::Server,

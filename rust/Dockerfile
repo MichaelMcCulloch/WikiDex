@@ -19,6 +19,7 @@ COPY --from=builder /usr/src/omnipedia/build/bin/omnipedia /usr/local/bin/omnipe
 
 
 CMD omnipedia \
+    server \
     --index "${INDEX_PATH}" \
     --docstore "${DOCSTORE_PATH}" \
     --model-name "${LLM_MODEL_NAME}" \

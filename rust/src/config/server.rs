@@ -1,8 +1,9 @@
 use std::{fmt::Display, path::PathBuf};
 
 use colored::Colorize;
-use serde::Deserialize;
 use url::Url;
+
+use crate::cli_args::ServerArgs;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Config {
@@ -15,8 +16,6 @@ pub(crate) struct Config {
     pub(crate) embed_url: Url,
     pub(crate) llm_url: Url,
 }
-#[derive(Deserialize, Debug, Clone)]
-pub(crate) struct EngineConfig {}
 
 pub(crate) trait ConfigUrl {
     fn url(&self) -> Url;
@@ -32,6 +31,21 @@ impl ConfigUrl for Config {
         } = self;
 
         Url::parse(&format!("{protocol}://{host}:{port}")).unwrap()
+    }
+}
+
+impl From<ServerArgs> for Config {
+    fn from(value: ServerArgs) -> Self {
+        Config {
+            protocol: "http".to_string(),
+            host: value.host,
+            port: value.port,
+            index: value.index,
+            docstore: value.docstore,
+            model: value.model_name,
+            embed_url: value.embed_url,
+            llm_url: value.vllm_url,
+        }
     }
 }
 

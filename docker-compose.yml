@@ -11,13 +11,11 @@ x-base_service: &base_service
     resources:
       reservations:
         devices:
-            - driver: nvidia
-              device_ids: ['0']
-              capabilities: [gpu]
+          - driver: nvidia
+            device_ids: ["0"]
+            capabilities: [gpu]
 
-
-x-base_service_amd:
-  &base_service_amd
+x-base_service_amd: &base_service_amd
   stop_signal: SIGINT
   tty: true
   stdin_open: true
@@ -37,7 +35,7 @@ services:
       context: ./typescript
     ports:
       - "${UI_HOST_PORT}:${UI_CONT_PORT}"
-    
+
   vllm:
     <<: *base_service
     build:
@@ -67,7 +65,7 @@ services:
       context: ./typescript
     ports:
       - "${UI_HOST_PORT}:${UI_CONT_PORT}"
-    
+
   vllm-amd:
     <<: *base_service_amd
     build:
