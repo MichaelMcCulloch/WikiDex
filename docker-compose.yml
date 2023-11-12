@@ -1,11 +1,15 @@
 version: "3.3"
 
 x-base_service: &base_service
-  stop_signal: SIGKILL
+  stop_signal: SIGTERM
+  profiles: ["nvidia", "amd"]
   tty: true
   stdin_open: true
   env_file: .env
   ipc: host
+
+x-base_service_nvidia: &base_service_nvidia
+  <<: *base_service
   profiles: ["nvidia"]
   deploy:
     resources:
@@ -16,11 +20,7 @@ x-base_service: &base_service
             capabilities: [gpu]
 
 x-base_service_amd: &base_service_amd
-  stop_signal: SIGINT
-  tty: true
-  stdin_open: true
-  env_file: .env
-  ipc: host
+  <<: *base_service
   profiles: ["amd"]
   group_add:
     - video
@@ -32,51 +32,50 @@ services:
   ui:
     <<: *base_service
     build:
+      dockerfile: Dockerfile
       context: ./typescript
     ports:
       - "${UI_HOST_PORT}:${UI_CONT_PORT}"
 
-  vllm:
-    <<: *base_service
+  vllm-nv:
+    <<: *base_service_nvidia
     build:
+      dockerfile: Dockerfile_NVIDIA
       context: ./vllm
     ports:
       - "${VLLM_HOST_PORT}:${VLLM_CONT_PORT}"
 
-  omnipedia:
-    <<: *base_service
+  omnipedia-nv:
+    <<: *base_service_nvidia
     build:
+      dockerfile: Dockerfile_NVIDIA
       context: ./rust
     ports:
       - "${OMNIPEDIA_HOST_PORT}:${OMNIPEDIA_CONT_PORT}"
     volumes:
       - ./rust/db:/db
 
-  embeddings:
-    <<: *base_service
+  embeddings-nv:
+    <<: *base_service_nvidia
     build:
+      dockerfile: Dockerfile_NVIDIA
       context: ./embeddings_service
     ports:
       - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
 
-  ui-amd:
-    <<: *base_service_amd
-    build:
-      context: ./typescript
-    ports:
-      - "${UI_HOST_PORT}:${UI_CONT_PORT}"
-
   vllm-amd:
     <<: *base_service_amd
     build:
-      context: ./vllm-amd
+      dockerfile: Dockerfile_AMD
+      context: ./vllm
     ports:
       - "${VLLM_HOST_PORT}:${VLLM_CONT_PORT}"
 
   omnipedia-amd:
     <<: *base_service_amd
     build:
-      context: ./rust-amd
+      dockerfile: Dockerfile_AMD
+      context: ./rust
     ports:
       - "${OMNIPEDIA_HOST_PORT}:${OMNIPEDIA_CONT_PORT}"
     volumes:
@@ -85,6 +84,7 @@ services:
   embeddings-amd:
     <<: *base_service_amd
     build:
-      context: ./embeddings_service-amd
+      dockerfile: Dockerfile_AMD
+      context: ./embeddings_service
     ports:
       - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
