@@ -13,6 +13,7 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
 
 
 CMD . /venv/bin/activate && python -m vllm.entrypoints.openai.api_server \
+    --disable-log-requests \
     --model "${LLM_MODEL_NAME}" \
     --host 0.0.0.0 \
     --port "${VLLM_CONT_PORT}" \
