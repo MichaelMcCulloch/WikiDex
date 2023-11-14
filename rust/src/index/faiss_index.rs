@@ -3,18 +3,20 @@ use faiss::{
     Index,
 };
 use std::{
-    fmt::{Debug, Display, Formatter},
     path::{Path, PathBuf},
+    time::Instant,
 };
 
-pub struct FaissIndex {
+use super::{IndexLoadError, IndexSearchError, SearchService};
+
+pub(crate) struct FaissIndex {
     index: PreTransformIndexImpl<IndexImpl>,
     dims: u32,
 }
 
 impl FaissIndex {
     pub(crate) fn new<P: AsRef<Path>>(index_path: &P) -> Result<Self, IndexLoadError> {
-        let start = std::time::Instant::now();
+        let start = Instant::now();
 
         let index_path = PathBuf::from(index_path.as_ref());
         if !index_path.exists() {
@@ -26,21 +28,11 @@ impl FaissIndex {
             .into_pre_transform()
             .map_err(|e| IndexLoadError::IndexFormatError(e))?;
 
-        let dims = faiss::Index::d(&index);
+        let dims = Index::d(&index);
 
         log::info!("Load Index {:?}", start.elapsed());
         Ok(FaissIndex { index, dims })
     }
-}
-
-pub trait SearchService {
-    type E;
-    fn search(&mut self, query: &Vec<f32>, neighbors: usize) -> Result<Vec<i64>, Self::E>;
-    fn batch_search(
-        &mut self,
-        query: &Vec<Vec<f32>>,
-        neighbors: usize,
-    ) -> Result<Vec<Vec<i64>>, Self::E>;
 }
 
 impl SearchService for FaissIndex {
@@ -51,7 +43,7 @@ impl SearchService for FaissIndex {
         query: &Vec<Vec<f32>>,
         neighbors: usize,
     ) -> Result<Vec<Vec<i64>>, IndexSearchError> {
-        let start = std::time::Instant::now();
+        let start = Instant::now();
         let flattened_query: Vec<f32> = query
             .iter()
             .all(|q| q.len() == self.dims as usize)
@@ -69,7 +61,7 @@ impl SearchService for FaissIndex {
     }
 
     fn search(&mut self, query: &Vec<f32>, neighbors: usize) -> Result<Vec<i64>, Self::E> {
-        let start = std::time::Instant::now();
+        let start = Instant::now();
         let rs = self
             .index
             .search(&query, neighbors)
@@ -77,47 +69,5 @@ impl SearchService for FaissIndex {
         let indices: Vec<i64> = rs.labels.iter().map(|i| i.to_native()).collect();
         log::debug!("Index {:?}", start.elapsed());
         Ok(indices)
-    }
-}
-
-#[derive(Debug)]
-pub enum IndexLoadError {
-    FileNotFound,
-    IndexReadError(faiss::error::Error),
-    IndexFormatError(faiss::error::Error),
-}
-
-#[derive(Debug)]
-pub enum IndexSearchError {
-    IncorrectDimensions,
-    IndexSearchError(faiss::error::Error),
-}
-impl std::error::Error for IndexLoadError {}
-impl std::error::Error for IndexSearchError {}
-
-impl Display for IndexLoadError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            IndexLoadError::FileNotFound => write!(f, "SearchService: Index not found"),
-            IndexLoadError::IndexReadError(err) => {
-                write!(f, "SearchService: {}", err)
-            }
-            IndexLoadError::IndexFormatError(err) => {
-                write!(f, "SearchService: {}", err)
-            }
-        }
-    }
-}
-
-impl Display for IndexSearchError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            IndexSearchError::IncorrectDimensions => {
-                write!(f, "SearchService: Incorrect dimensions for search")
-            }
-            IndexSearchError::IndexSearchError(err) => {
-                write!(f, "SearchService: {}", err)
-            }
-        }
     }
 }

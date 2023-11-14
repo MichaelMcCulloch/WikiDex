@@ -1,33 +1,23 @@
-use std::{
-    fmt::{self, Display, Formatter},
-    sync::Mutex,
-};
+use std::sync::Mutex;
 
 use crate::{
-    docstore::{DocstoreRetrieveError, DocumentService, SqliteDocstore},
-    embed::{EmbedService, Embedder, EmbeddingServiceError},
-    formatter::document::{DocumentFormatter, TextFormatter},
-    index::{FaissIndex, IndexSearchError, SearchService},
+    docstore::{DocumentService, SqliteDocstore},
+    embed::{EmbedService, Embedder},
+    formatter::{DocumentFormatter, TextFormatter},
+    index::{FaissIndex, SearchService},
     llm::{
-        protocol::{LlmInput, LlmMessage, LlmRole},
-        vllm::VllmService,
-        LlmService, LlmServiceError,
+        LlmService, OpenAiService, {LlmInput, LlmMessage, LlmRole},
     },
-    server::protocol::*,
+    server::{Conversation, Message},
 };
+
+use super::{QueryEngine, QueryEngineError};
 
 pub struct Engine {
     index: Mutex<FaissIndex>,
     embed: Embedder,
     docstore: SqliteDocstore,
-    llm: VllmService,
-}
-
-#[async_trait::async_trait]
-pub(crate) trait QueryEngine {
-    type E;
-    async fn query(&self, question: &str) -> Result<String, Self::E>;
-    async fn conversation(&self, conversation: &Conversation) -> Result<Message, Self::E>;
+    llm: OpenAiService,
 }
 
 #[async_trait::async_trait]
@@ -157,56 +147,13 @@ impl Engine {
         index: Mutex<FaissIndex>,
         embed: Embedder,
         docstore: SqliteDocstore,
-        llm: VllmService,
+        llm: OpenAiService,
     ) -> Self {
         Self {
             index,
             embed,
             docstore,
             llm,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub(crate) enum QueryEngineError {
-    DocstoreError(DocstoreRetrieveError),
-    EmbeddingError(EmbeddingServiceError),
-    EmptyConversation,
-    IndexError(IndexSearchError),
-    IndexOutOfRange,
-    InvalidAgentResponse,
-    LastMessageIsNotUser,
-    LlmError(LlmServiceError),
-    UnableToLockIndex,
-}
-
-impl std::error::Error for QueryEngineError {}
-
-impl Display for QueryEngineError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            QueryEngineError::DocstoreError(err) => {
-                write!(f, "{}", err)
-            }
-            QueryEngineError::EmbeddingError(err) => {
-                write!(f, "{}", err)
-            }
-            QueryEngineError::IndexError(err) => write!(f, "{}", err),
-            QueryEngineError::LlmError(err) => write!(f, "{}", err),
-            QueryEngineError::EmptyConversation => {
-                write!(f, "QueryEngine: Empty conversation error")
-            }
-            QueryEngineError::IndexOutOfRange => write!(f, "QueryEngine: Index out of range error"),
-            QueryEngineError::InvalidAgentResponse => {
-                write!(f, "QueryEngine: Invalid agent response error")
-            }
-            QueryEngineError::LastMessageIsNotUser => {
-                write!(f, "QueryEngine: Last message is not from a user error")
-            }
-            QueryEngineError::UnableToLockIndex => {
-                write!(f, "QueryEngine: Unable to lock index error")
-            }
         }
     }
 }

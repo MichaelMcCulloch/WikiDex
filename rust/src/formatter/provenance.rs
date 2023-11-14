@@ -1,4 +1,5 @@
-use crate::formatter::{citation::Cite, style::CitationStyle};
+use super::{CitationStyle, Cite};
+
 use chrono::NaiveDate;
 
 type WikipediaArticleTitle = String;

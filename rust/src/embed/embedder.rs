@@ -1,14 +1,9 @@
 use reqwest::{Client, Url};
 use serde::Deserialize;
-use std::{
-    fmt::{self, Display, Formatter},
-    time::Duration,
-};
+use std::time::Duration;
 
-#[derive(Deserialize)]
-struct EmbeddingsResponse {
-    pub(crate) embeddings: Vec<Vec<f32>>,
-}
+use super::{EmbedService, EmbeddingServiceError};
+
 pub struct Embedder {
     client: Client,
     host: Url,
@@ -27,10 +22,9 @@ impl Embedder {
     }
 }
 
-#[async_trait::async_trait]
-pub(crate) trait EmbedService {
-    type E;
-    async fn embed(&self, str: &[&str]) -> Result<Vec<Vec<f32>>, Self::E>;
+#[derive(Deserialize)]
+struct EmbeddingsResponse {
+    pub(crate) embeddings: Vec<Vec<f32>>,
 }
 
 #[async_trait::async_trait]
@@ -60,29 +54,6 @@ impl EmbedService for Embedder {
             ))
         } else {
             Ok(response.embeddings)
-        }
-    }
-}
-
-#[derive(Debug)]
-pub(crate) enum EmbeddingServiceError {
-    Reqwuest(reqwest::Error),
-    EmbeddingSizeMismatch(usize, usize),
-}
-
-impl std::error::Error for EmbeddingServiceError {}
-
-impl Display for EmbeddingServiceError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            EmbeddingServiceError::Reqwuest(err) => {
-                write!(f, "EmbeddingService: {}", err)
-            }
-            EmbeddingServiceError::EmbeddingSizeMismatch(expected, actual) => write!(
-                f,
-                "EmbeddingService: Embedding size mismatch. Expected: {}, Actual: {}",
-                expected, actual
-            ),
         }
     }
 }
