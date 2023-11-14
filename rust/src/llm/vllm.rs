@@ -5,18 +5,15 @@ use async_openai::{
 };
 use url::Url;
 
-use super::{
-    protocol::{LlmInput, LlmMessage, LlmRole},
-    LlmService, LlmServiceError,
-};
+use super::{LlmInput, LlmMessage, LlmRole, LlmService, LlmServiceError};
 
-pub(crate) struct VllmService {
+pub(crate) struct OpenAiService {
     client: Client<OpenAIConfig>,
     model_name: String,
 }
 
 #[async_trait::async_trait]
-impl LlmService for VllmService {
+impl LlmService for OpenAiService {
     type E = LlmServiceError;
     async fn get_llm_answer(&self, input: LlmInput) -> Result<LlmInput, Self::E> {
         let LlmInput {
@@ -82,11 +79,11 @@ impl LlmService for VllmService {
     }
 }
 
-impl VllmService {
-    pub(crate) fn new<S: AsRef<str>>(host: Url, model_name: S) -> Result<Self, url::ParseError> {
+impl OpenAiService {
+    pub(crate) fn new<S: AsRef<str>>(host: Url, model_name: S) -> Self {
         let openai_config = OpenAIConfig::new().with_api_base(host);
         let client = Client::with_config(openai_config);
         let model_name = model_name.as_ref().to_string();
-        Ok(Self { client, model_name })
+        Self { client, model_name }
     }
 }

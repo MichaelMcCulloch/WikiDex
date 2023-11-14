@@ -1,12 +1,13 @@
-use std::fmt::{self, Debug, Display, Formatter};
-use std::{io::Read, path::Path};
-
-use chrono::NaiveDate;
+use crate::formatter::Provenance;
 use flate2::read::GzDecoder;
 use sqlx::{sqlite::SqlitePool, Row};
+use std::{io::Read, path::Path};
 
-use crate::provenance::Provenance;
-
+use super::{
+    replace_me_asap_wikipedia_article_access_date,
+    replace_me_asap_wikipedia_article_modification_date, DocstoreLoadError, DocstoreRetrieveError,
+    DocumentService,
+};
 pub struct SqliteDocstore {
     pool: SqlitePool,
 }
@@ -28,13 +29,6 @@ impl SqliteDocstore {
         log::info!("Load Docstore {:?}", start.elapsed());
         Ok(SqliteDocstore { pool })
     }
-}
-#[async_trait::async_trait]
-pub(crate) trait DocumentService {
-    type E;
-    type R;
-    async fn retreive_batch(&self, indices: &Vec<Vec<i64>>) -> Result<Vec<Self::R>, Self::E>;
-    async fn retreive(&self, indices: &Vec<i64>) -> Result<Self::R, Self::E>;
 }
 
 #[async_trait::async_trait]
@@ -155,52 +149,5 @@ impl DocumentService for SqliteDocstore {
         log::debug!("SQL Query {:?}", start.elapsed());
 
         Ok(result)
-    }
-}
-
-// TODO, store the date of the dump/source in the db.
-fn replace_me_asap_wikipedia_article_access_date() -> NaiveDate {
-    NaiveDate::from_ymd_opt(2023, 10, 01).unwrap()
-}
-// TODO, store the last date of modification in the db.
-fn replace_me_asap_wikipedia_article_modification_date() -> NaiveDate {
-    NaiveDate::from_ymd_opt(2023, 10, 01).unwrap()
-}
-
-#[derive(Debug)]
-pub enum DocstoreLoadError {
-    FileNotFound,
-}
-#[derive(Debug)]
-pub enum DocstoreRetrieveError {
-    IndexOutOfRange,
-    InvalidDocument,
-    SqlxError(sqlx::error::Error),
-}
-
-impl std::error::Error for DocstoreLoadError {}
-impl std::error::Error for DocstoreRetrieveError {}
-
-impl Display for DocstoreLoadError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            DocstoreLoadError::FileNotFound => write!(f, "DocumentService: File not found"),
-        }
-    }
-}
-
-impl Display for DocstoreRetrieveError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            DocstoreRetrieveError::IndexOutOfRange => {
-                write!(f, "DocumentService: Index out of range")
-            }
-            DocstoreRetrieveError::InvalidDocument => {
-                write!(f, "DocumentService: Invalid document")
-            }
-            DocstoreRetrieveError::SqlxError(e) => {
-                write!(f, "DocumentService: {e}")
-            }
-        }
     }
 }

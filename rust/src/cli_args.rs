@@ -3,8 +3,6 @@ use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 use url::Url;
 
-use crate::config::server::Config;
-
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 #[command(propagate_version = true)]

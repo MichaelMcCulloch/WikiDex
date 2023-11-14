@@ -4,9 +4,9 @@ mod docstore;
 mod embed;
 mod formatter;
 mod index;
+mod inference;
 mod ingest;
 mod llm;
-mod provenance;
 mod server;
 
 use clap::Parser;
@@ -15,7 +15,12 @@ use docstore::SqliteDocstore;
 use server::run_server;
 use std::sync::Mutex;
 
-use crate::{cli_args::Cli, embed::Embedder, index::FaissIndex, llm::vllm::VllmService};
+use ingest::Ingest;
+
+use crate::{
+    cli_args::Cli, embed::Embedder, index::FaissIndex, inference::Engine as InferenceEngine,
+    ingest::Engine as IngestEngine, llm::OpenAiService,
+};
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
@@ -31,9 +36,10 @@ async fn main() -> anyhow::Result<()> {
             let embedder: Embedder = Embedder::new(config.embed_url)?;
             let docstore = SqliteDocstore::new(&config.docstore).await?;
             let index = FaissIndex::new(&config.index)?;
-            let llm = VllmService::new(config.llm_url, config.model.to_str().unwrap().to_string())?;
+            let llm =
+                OpenAiService::new(config.llm_url, config.model.to_str().unwrap().to_string());
 
-            let engine = server::engine::Engine::new(Mutex::new(index), embedder, docstore, llm);
+            let engine = InferenceEngine::new(Mutex::new(index), embedder, docstore, llm);
 
             let server = run_server(engine, config.host, config.port)?;
             server.await.map_err(anyhow::Error::from)
@@ -42,8 +48,11 @@ async fn main() -> anyhow::Result<()> {
             let config = config::ingest::Config::from(ingest_args);
 
             let embedder: Embedder = Embedder::new(config.embed_url)?;
-            let llm = VllmService::new(config.llm_url, config.model.to_str().unwrap().to_string())?;
+            let llm =
+                OpenAiService::new(config.llm_url, config.model.to_str().unwrap().to_string());
+            let engine = IngestEngine::new(embedder, llm);
 
+            engine.ingest(&config.wiki_xml, &config.output_directory)?;
             Ok(())
         }
     }
