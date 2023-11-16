@@ -1,6 +1,12 @@
 use async_openai::{
     config::OpenAIConfig,
-    types::{ChatCompletionRequestMessageArgs, CreateChatCompletionRequestArgs, Role},
+    error::OpenAIError,
+    types::{
+        ChatCompletionRequestAssistantMessageArgs, ChatCompletionRequestFunctionMessageArgs,
+        ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs,
+        ChatCompletionRequestToolMessageArgs, ChatCompletionRequestUserMessageArgs,
+        CreateChatCompletionRequestArgs,
+    },
     Client,
 };
 use url::Url;
@@ -21,21 +27,15 @@ impl LlmService for OpenAiService {
             mut conversation,
         } = input;
 
-        let system_openai_compat = ChatCompletionRequestMessageArgs::default()
-            .role(Role::System)
-            .content(system.clone())
-            .build()
-            .map_err(|e| LlmServiceError::OpenAIError(e))?;
+        let system_openai_compat =
+            role_message_to_request_message(&LlmRole::System, system.as_str())
+                .map_err(|e| LlmServiceError::OpenAIError(e))?;
 
         let mut message_openai_compat = vec![system_openai_compat];
 
         for message in conversation.iter() {
             let LlmMessage { role, message } = message;
-            let role: Role = role.into();
-            let msg = ChatCompletionRequestMessageArgs::default()
-                .role(role)
-                .content(message)
-                .build()
+            let msg: ChatCompletionRequestMessage = role_message_to_request_message(&role, message)
                 .map_err(|e| LlmServiceError::OpenAIError(e))?;
             message_openai_compat.push(msg);
         }
@@ -85,5 +85,36 @@ impl OpenAiService {
         let client = Client::with_config(openai_config);
         let model_name = model_name.as_ref().to_string();
         Self { client, model_name }
+    }
+}
+
+fn role_message_to_request_message(
+    role: &LlmRole,
+    message: &str,
+) -> Result<ChatCompletionRequestMessage, OpenAIError> {
+    match role {
+        LlmRole::System => ChatCompletionRequestSystemMessageArgs::default()
+            .content(message)
+            .build()
+            .map(|e| ChatCompletionRequestMessage::System(e)),
+        LlmRole::User => ChatCompletionRequestUserMessageArgs::default()
+            .content(message)
+            .build()
+            .map(|e| ChatCompletionRequestMessage::User(e)),
+
+        LlmRole::Assistant => ChatCompletionRequestAssistantMessageArgs::default()
+            .content(message)
+            .build()
+            .map(|e| ChatCompletionRequestMessage::Assistant(e)),
+
+        LlmRole::Tool => ChatCompletionRequestToolMessageArgs::default()
+            .content(message)
+            .build()
+            .map(|e| ChatCompletionRequestMessage::Tool(e)),
+
+        LlmRole::Function => ChatCompletionRequestFunctionMessageArgs::default()
+            .content(message)
+            .build()
+            .map(|e| ChatCompletionRequestMessage::Function(e)),
     }
 }
