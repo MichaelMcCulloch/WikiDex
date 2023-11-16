@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use async_openai::types::Role;
+use async_openai::types::{ChatCompletionRequestMessage, Role};
 use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub(crate) struct LlmInput {
@@ -15,6 +15,7 @@ pub(crate) enum LlmRole {
     User,
     System,
     Function,
+    Tool,
 }
 
 impl Display for LlmRole {
@@ -24,6 +25,7 @@ impl Display for LlmRole {
             LlmRole::User => write!(f, "user"),
             LlmRole::System => write!(f, "system"),
             LlmRole::Function => write!(f, "function"),
+            LlmRole::Tool => write!(f, "tool"),
         }
     }
 }
@@ -34,17 +36,6 @@ pub(crate) struct LlmMessage {
     pub(crate) message: String,
 }
 
-impl Into<Role> for &LlmRole {
-    fn into(self) -> Role {
-        match *self {
-            LlmRole::Assistant => Role::Assistant,
-            LlmRole::User => Role::User,
-            LlmRole::System => Role::System,
-            LlmRole::Function => Role::Function,
-        }
-    }
-}
-
 impl From<&Role> for LlmRole {
     fn from(value: &Role) -> Self {
         match value {
@@ -52,6 +43,7 @@ impl From<&Role> for LlmRole {
             Role::Assistant => LlmRole::Assistant,
             Role::System => LlmRole::System,
             Role::Function => LlmRole::Function,
+            Role::Tool => LlmRole::Tool,
         }
     }
 }
