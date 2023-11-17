@@ -1,10 +1,10 @@
 use std::{error::Error, path::Path};
-
+#[async_trait::async_trait]
 pub(crate) trait Ingest {
     type E: Error;
-    fn ingest_wikipedia<P: AsRef<Path>>(
+    async fn ingest_wikipedia(
         self,
-        input_xml: &P,
-        output_directory: &P,
+        input_xml: &Path,
+        output_directory: &Path,
     ) -> Result<usize, Self::E>;
 }

@@ -3,7 +3,7 @@ use std::{fmt::Display, path::PathBuf};
 use colored::Colorize;
 use url::Url;
 
-use crate::cli_args::IngestArgs;
+use crate::cli_args::WikipediaIngestArgs;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Config {
@@ -13,8 +13,8 @@ pub(crate) struct Config {
     pub(crate) embed_url: Url,
     pub(crate) llm_url: Url,
 }
-impl From<IngestArgs> for Config {
-    fn from(value: IngestArgs) -> Self {
+impl From<WikipediaIngestArgs> for Config {
+    fn from(value: WikipediaIngestArgs) -> Self {
         Config {
             wiki_xml: value.wiki_xml,
             output_directory: value.output_directory,

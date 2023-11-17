@@ -14,14 +14,14 @@ use crate::{
     embed::Embedder,
     index::FaissIndex,
     inference::Engine as InferenceEngine,
-    ingest::Engine as IngestEngine,
+    ingest::wikipedia::Engine as WikipediaIngestEngine,
     llm::OpenAiService,
 };
 use clap::Parser;
 use docstore::SqliteDocstore;
 use indicatif::MultiProgress;
 use indicatif_log_bridge::LogWrapper;
-use ingest::Ingest;
+use ingest::wikipedia::Ingest;
 use server::run_server;
 use std::sync::Mutex;
 
@@ -47,7 +47,7 @@ async fn main() -> anyhow::Result<()> {
             let server = run_server(engine, config.host, config.port)?;
             server.await.map_err(anyhow::Error::from)
         }
-        Commands::Ingest(ingest_args) => {
+        Commands::Wikipedia(ingest_args) => {
             let logger =
                 env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
                     .build();
@@ -62,9 +62,12 @@ async fn main() -> anyhow::Result<()> {
             let embedder: Embedder = Embedder::new(config.embed_url)?;
             let llm =
                 OpenAiService::new(config.llm_url, config.model.to_str().unwrap().to_string());
-            let engine = IngestEngine::new(embedder, llm, multi_progress);
 
-            engine.ingest_wikipedia(&config.wiki_xml, &config.output_directory)?;
+            let engine = WikipediaIngestEngine::new(embedder, llm, multi_progress);
+
+            engine
+                .ingest_wikipedia(&config.wiki_xml, &config.output_directory)
+                .await?;
             Ok(())
         }
     }

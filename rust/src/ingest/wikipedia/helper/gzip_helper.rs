@@ -11,7 +11,7 @@ pub(crate) fn compress_text(text: &str) -> Result<Vec<u8>, io::Error> {
     Ok(text_compress)
 }
 
-pub(crate) fn decompress_text(text_compressed: &Vec<u8>) -> Result<String, io::Error> {
+pub(crate) fn decompress_text(text_compressed: Vec<u8>) -> Result<String, io::Error> {
     let mut text = String::new();
     {
         let mut decoder = GzDecoder::new(&text_compressed[..]);

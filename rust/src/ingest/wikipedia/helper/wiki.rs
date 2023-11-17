@@ -1,12 +1,18 @@
 use super::{
-    super::{Engine, Ingest, IngestError::*},
-    gzip_helper::compress_text,
+    super::{
+        markup_processor::{self, Process},
+        Engine, Ingest,
+        IngestError::*,
+    },
+    gzip_helper::{compress_text, decompress_text},
 };
+use actix_web::rt;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use indicatif::ProgressBar;
+use markup_processor::WikiMarkupProcessor;
 use parse_mediawiki_dump_reboot::{schema::Namespace, Page};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use std::{fs::File, io::BufReader, path::Path};
+use std::{fs::File, io::BufReader, path::Path, sync::Arc};
 
 pub(crate) fn get_date_from_xml_name<P: AsRef<Path>>(
     file_name: &P,
@@ -65,6 +71,7 @@ pub(crate) fn get_eligible_pages(file: BufReader<File>, progress_bar: &ProgressB
     let eligible_pages = parse
         .filter_map(Result::ok)
         .filter(page_filter)
+        .take(1000)
         .map(|page| {
             progress_bar.inc(1);
             page
@@ -74,7 +81,28 @@ pub(crate) fn get_eligible_pages(file: BufReader<File>, progress_bar: &ProgressB
     eligible_pages
 }
 
-pub(crate) type CompressedPage = (Vec<u8>, String);
+pub(crate) struct CompressedPage {
+    pub(crate) gzipped_text: Vec<u8>,
+    pub(crate) article_title: String,
+}
+
+pub(crate) struct CompressedPageWithAccessDate {
+    pub(crate) gzipped_text: Vec<u8>,
+    pub(crate) article_title: String,
+    pub(crate) access_date: NaiveDateTime,
+}
+
+pub(crate) struct DescribedTable {
+    pub(crate) description: String,
+    pub(crate) table: String,
+}
+pub(crate) struct Document {
+    pub(crate) document: String,
+    pub(crate) table: Vec<DescribedTable>,
+    pub(crate) article_title: String,
+    pub(crate) access_date: NaiveDateTime,
+    pub(crate) modification_datae: NaiveDateTime,
+}
 
 pub(crate) fn compress_articles(
     eligible_pages: Vec<Page>,
@@ -87,11 +115,60 @@ pub(crate) fn compress_articles(
             progress_bar.inc(1);
 
             match compress_text(&text) {
-                Ok(compressed) => Some((compressed, title)),
+                Ok(gzipped_text) => Some(CompressedPage {
+                    gzipped_text,
+                    article_title: title,
+                }),
                 Err(_) => None,
             }
         })
         .collect::<Vec<_>>();
     progress_bar.set_message("Compressing Markup...DONE");
     pages_compressed
+}
+
+pub(crate) async fn decompress_articles_into_documents_and_tables(
+    compressed_pages: Vec<CompressedPageWithAccessDate>,
+    progress_bar: &ProgressBar,
+    markup_processor: &WikiMarkupProcessor,
+) -> Vec<Document> {
+    progress_bar.set_message("Decompressing Markup...");
+
+    let documents = compressed_pages
+        .into_iter()
+        .map(
+            |CompressedPageWithAccessDate {
+                 gzipped_text,
+                 article_title,
+                 access_date,
+             }| {
+                let progress_bar = progress_bar.clone();
+                let markup_processor = markup_processor.clone();
+                actix_rt::spawn(async move {
+                    let markup = decompress_text(gzipped_text).ok()?;
+
+                    // let (text, tables) = markup_processor.process(&markup).await.ok()?;
+
+                    progress_bar.inc(1);
+                    Some(Document {
+                        document: String::new(),
+                        table: vec![],
+                        article_title,
+                        access_date,
+                        modification_datae: access_date,
+                    })
+                })
+            },
+        )
+        .collect::<Vec<_>>();
+
+    progress_bar.set_message("Decompressing Markup...DONE");
+    // documents
+    let documents = futures::future::join_all(documents)
+        .await
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter_map(|e| e)
+        .collect::<Vec<_>>();
+    documents
 }
