@@ -5,17 +5,19 @@ use std::{
     path::PathBuf,
 };
 
+use crate::llm::LlmServiceError;
+
 #[derive(Debug)]
 pub(crate) enum WikiMarkupProcessingError {
-    XmlNotFound(PathBuf),
+    LlmError(LlmServiceError),
 }
 
 impl Error for WikiMarkupProcessingError {}
 impl Display for WikiMarkupProcessingError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
-            WikiMarkupProcessingError::XmlNotFound(path) => {
-                write!(f, "IngestEngine: Input XML '{}' not found", path.display())
+            WikiMarkupProcessingError::LlmError(e) => {
+                write!(f, "{e}")
             }
         }
     }

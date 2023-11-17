@@ -96,7 +96,7 @@ impl Ingest for Engine {
                 let markup_pool = h::sql::get_sqlite_pool(&markup_db_path).map_err(R2D2Error)?;
 
                 if !h::sql::database_is_complete(&markup_pool)? {
-                    log::info!("Preparing Markup DB...");
+                    log::info!("Preparing markup DB...");
                     self.create_markup_database(&input_xml, &markup_pool)?;
                 }
                 log::info!("Markup DB is ready at {}", markup_db_path.display());
@@ -110,7 +110,7 @@ impl Ingest for Engine {
                     self.create_docstore_database(&markup_pool, &docstore_pool)
                         .await?;
                 }
-                log::info!("docstore DB is ready at {}", docstore_db_path.display());
+                log::info!("Docstore DB is ready at {}", docstore_db_path.display());
 
                 Ok(1)
             }

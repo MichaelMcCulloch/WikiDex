@@ -6,12 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-
 actix-cors = "0.6.4"
 actix-rt = "2.9.0"
 actix-web = "4.4.0"
 anyhow = "1.0.75"
 async-openai = "0.16.2"
+async-recursion = "1.0.5"
 async-trait = "0.1.73"
 chrono = "0.4.31"
 clap = { version = "4.4.7", features = ["derive"] }
@@ -31,6 +31,7 @@ log = "0.4.20"
 parse_mediawiki_dump_reboot = "1.0.1"
 parse_wiki_text = "0.1.5"
 polymorphic_enum = "0.1.5"
+regex = "1.9.6"
 r2d2 = "0.8.10"
 r2d2_sqlite = "0.22.0"
 rayon = "1.8.0"

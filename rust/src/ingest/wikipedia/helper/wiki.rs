@@ -92,9 +92,75 @@ pub(crate) struct CompressedPageWithAccessDate {
     pub(crate) access_date: NaiveDateTime,
 }
 
+pub(crate) struct UnlabledDocument {
+    pub(crate) document: String,
+    pub(crate) table: Vec<DescribedTable>,
+}
+
 pub(crate) struct DescribedTable {
     pub(crate) description: String,
     pub(crate) table: String,
+}
+
+impl UnlabledDocument {
+    pub(crate) fn trim(self) -> Self {
+        let Self { document, table } = self;
+        Self {
+            document: document.trim().to_string(),
+            table: table,
+        }
+    }
+
+    pub(crate) fn from_str(document: String) -> UnlabledDocument {
+        Self {
+            document,
+            table: vec![],
+        }
+    }
+
+    pub(crate) fn from_str_and_vec(
+        document: String,
+        table: Vec<DescribedTable>,
+    ) -> UnlabledDocument {
+        Self { document, table }
+    }
+    pub(crate) fn new() -> Self {
+        Self {
+            document: String::new(),
+            table: vec![],
+        }
+    }
+    pub(crate) fn prepend(self, string: &str) -> Self {
+        let Self { document, table } = self;
+        Self {
+            document: format!("{string}{document}"),
+            table: table,
+        }
+    }
+    pub(crate) fn append(self, string: &str) -> Self {
+        let Self { document, table } = self;
+        Self {
+            document: format!("{document}{string}"),
+            table: table,
+        }
+    }
+    pub(crate) fn join_all(documents: Vec<Self>, separator: &str) -> Self {
+        let mut joined_document = String::new();
+        let mut combined_table = Vec::new();
+
+        for (i, doc) in documents.into_iter().enumerate() {
+            if i > 0 {
+                joined_document.push_str(separator); // Add a space or any other separator
+            }
+            joined_document.push_str(&doc.document);
+            combined_table.extend(doc.table);
+        }
+
+        UnlabledDocument {
+            document: joined_document,
+            table: combined_table,
+        }
+    }
 }
 pub(crate) struct Document {
     pub(crate) document: String,
@@ -147,12 +213,12 @@ pub(crate) async fn decompress_articles_into_documents_and_tables(
                 actix_rt::spawn(async move {
                     let markup = decompress_text(gzipped_text).ok()?;
 
-                    // let (text, tables) = markup_processor.process(&markup).await.ok()?;
+                    let document = markup_processor.process(&markup).await.ok()?;
 
                     progress_bar.inc(1);
                     Some(Document {
-                        document: String::new(),
-                        table: vec![],
+                        document: document.document,
+                        table: document.table,
                         article_title,
                         access_date,
                         modification_datae: access_date,
