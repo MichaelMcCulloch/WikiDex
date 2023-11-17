@@ -2,12 +2,7 @@ mod error;
 mod processor;
 mod service;
 
-mod deflist;
-mod listitems;
-mod nodes;
-mod regexes;
-mod tables;
-mod template_params;
+mod parse;
 
 pub(crate) use error::WikiMarkupProcessingError;
 pub(crate) use processor::WikiMarkupProcessor;

@@ -1,19 +1,21 @@
-use super::{
-    deflist::definition_list_items_to_string,
-    error::WikiMarkupProcessingError::LlmError,
-    listitems::{ordered_list_items_to_string, unordered_list_items_to_string},
-    processor::process_table_to_llm,
-    regexes::Regexes,
-    tables::{table_captions_to_string, table_rows_to_string},
-    template_params::refn_parameters_to_string,
-    Process, WikiMarkupProcessingError, WikiMarkupProcessor,
-};
-use crate::{
-    ingest::wikipedia::helper::wiki::{DescribedTable, UnlabledDocument},
-    llm::OpenAiService,
-};
 use parse_wiki_text::Node;
 use std::ops::Deref;
+
+use super::{
+    super::WikiMarkupProcessingError::LlmError,
+    deflist::definition_list_items_to_string,
+    listitems::{ordered_list_items_to_string, unordered_list_items_to_string},
+    llm::process_table_to_llm,
+    tables::{table_captions_to_string, table_rows_to_string},
+    template_params::refn_parameters_to_string,
+    Regexes,
+};
+use crate::{
+    ingest::wikipedia::{
+        helper::wiki::UnlabledDocument, markup_processor::Process, WikiMarkupProcessor,
+    },
+    llm::OpenAiService,
+};
 
 pub(crate) const STOP_PHRASES: [&str; 5] = [
     "References",

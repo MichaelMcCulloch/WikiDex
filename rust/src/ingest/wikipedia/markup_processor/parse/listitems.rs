@@ -1,13 +1,13 @@
-use super::{
-    nodes::nodes_to_string, regexes::Regexes, Process, WikiMarkupProcessingError,
-    WikiMarkupProcessor,
-};
+use parse_wiki_text::*;
+
 use crate::{
-    ingest::wikipedia::helper::wiki::{DescribedTable, UnlabledDocument},
+    ingest::wikipedia::{
+        helper::wiki::UnlabledDocument, markup_processor::Process, WikiMarkupProcessor,
+    },
     llm::OpenAiService,
 };
-use parse_wiki_text::*;
-use std::collections::HashSet;
+
+use super::{nodes::nodes_to_string, Regexes};
 
 pub(super) async fn unordered_list_items_to_string(
     list_items: &Vec<ListItem<'_>>,

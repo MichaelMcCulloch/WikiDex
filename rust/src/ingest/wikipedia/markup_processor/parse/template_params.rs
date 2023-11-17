@@ -1,17 +1,14 @@
-use std::{collections::HashSet, ops::Deref};
-
-use async_openai::{config::OpenAIConfig, Client};
-use parse_wiki_text::*;
+use parse_wiki_text::Parameter;
 
 use crate::{
-    ingest::wikipedia::helper::wiki::{DescribedTable, UnlabledDocument},
+    ingest::wikipedia::{
+        helper::wiki::UnlabledDocument, markup_processor::Process, WikiMarkupProcessor,
+    },
     llm::OpenAiService,
 };
 
-use super::{
-    nodes::nodes_to_string, regexes::Regexes, Process, WikiMarkupProcessingError,
-    WikiMarkupProcessor,
-};
+use super::{nodes::nodes_to_string, Regexes};
+
 pub(super) async fn template_parameters_to_string(
     parameters: &[Parameter<'_>],
     regexes: &Regexes,

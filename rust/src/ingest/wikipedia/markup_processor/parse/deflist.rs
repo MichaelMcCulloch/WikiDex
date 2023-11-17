@@ -1,8 +1,13 @@
 use parse_wiki_text::*;
 
-use crate::{ingest::wikipedia::helper::wiki::UnlabledDocument, llm::OpenAiService};
+use crate::{
+    ingest::wikipedia::{
+        helper::wiki::UnlabledDocument, markup_processor::Process, WikiMarkupProcessor,
+    },
+    llm::OpenAiService,
+};
 
-use super::{nodes::nodes_to_string, regexes::Regexes, Process, WikiMarkupProcessor};
+use super::{nodes::nodes_to_string, Regexes};
 
 pub(super) fn definition_list_item_type_to_string(
     definition_list_item_type: &DefinitionListItemType,

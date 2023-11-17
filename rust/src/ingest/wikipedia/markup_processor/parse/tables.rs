@@ -1,17 +1,14 @@
-use std::collections::HashSet;
-
-use async_openai::{config::OpenAIConfig, Client};
-use parse_wiki_text::*;
+use parse_wiki_text::{TableCaption, TableCell, TableCellType, TableRow};
 
 use crate::{
-    ingest::wikipedia::helper::wiki::{DescribedTable, UnlabledDocument},
+    ingest::wikipedia::{
+        helper::wiki::UnlabledDocument, markup_processor::Process, WikiMarkupProcessor,
+    },
     llm::OpenAiService,
 };
 
-use super::{
-    nodes::nodes_to_string, regexes::Regexes, Process, WikiMarkupProcessingError,
-    WikiMarkupProcessor,
-};
+use super::{nodes::nodes_to_string, Regexes};
+
 pub(super) async fn table_captions_to_string(
     table_captions: &Vec<TableCaption<'_>>,
     regexes: &Regexes,
