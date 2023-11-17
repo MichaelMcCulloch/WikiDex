@@ -6,35 +6,41 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+
+actix-cors = "0.6.4"
+actix-rt = "2.9.0"
+actix-web = "4.4.0"
+anyhow = "1.0.75"
+async-openai = "0.16.2"
+async-trait = "0.1.73"
+chrono = "0.4.31"
+clap = { version = "4.4.7", features = ["derive"] }
+colored = "2.0.4"
+crossbeam = "0.8.2"
+env_logger = "0.10.0"
 faiss = { git = "https://github.com/MichaelMcCulloch/faiss-rs.git", branch = "latest+avx2", features = [
     # "gpu",
     "static",
 ] }
-async-openai = "0.16.2"
-serde = "1.0.188"
-serde_json = "1.0.107"
-toml = "0.8.6"
-url = "2.4.1"
-anyhow = "1.0.75"
-crossbeam = "0.8.2"
-clap = { version = "4.4.7", features = ["derive"] }
-actix-web = "4.4.0"
-actix-cors = "0.6.4"
-actix-rt = "2.9.0"
-env_logger = "0.10.0"
-log = "0.4.20"
-listenfd = "1.0.1"
 flate2 = "1.0.27"
 futures = "0.3.28"
-async-trait = "0.1.73"
+listenfd = "1.0.1"
+log = "0.4.20"
+parse_mediawiki_dump_reboot = "1.0.1"
+parse_wiki_text = "0.1.5"
+polymorphic_enum = "0.1.5"
+r2d2 = "0.8.10"
+r2d2_sqlite = "0.22.0"
+rayon = "1.8.0"
+reqwest = { version = "0.11.20", features = ["json"] }
+serde = "1.0.188"
+serde_json = "1.0.107"
 sqlx = { version = "0.7.2", features = ["sqlite", "runtime-tokio"] }
 tokio = { version = "1.32.0", features = ["rt", "macros"] }
+toml = "0.8.6"
+url = "2.4.1"
 utoipa = { version = "4.0.0", features = ["actix_extras"] }
 utoipa-redoc = { version = "1.0.0", features = ["actix-web"] }
-reqwest = { version = "0.11.20", features = ["json"] }
-colored = "2.0.4"
-chrono = "0.4.31"
-polymorphic_enum = "0.1.5"
 [profile.release]
 lto = true
 strip = true

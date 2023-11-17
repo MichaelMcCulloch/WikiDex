@@ -9,18 +9,19 @@ mod ingest;
 mod llm;
 mod server;
 
+use crate::{
+    cli_args::{Cli, Commands},
+    embed::Embedder,
+    index::FaissIndex,
+    inference::Engine as InferenceEngine,
+    ingest::Engine as IngestEngine,
+    llm::OpenAiService,
+};
 use clap::Parser;
-use cli_args::Commands;
 use docstore::SqliteDocstore;
+use ingest::Ingest;
 use server::run_server;
 use std::sync::Mutex;
-
-use ingest::Ingest;
-
-use crate::{
-    cli_args::Cli, embed::Embedder, index::FaissIndex, inference::Engine as InferenceEngine,
-    ingest::Engine as IngestEngine, llm::OpenAiService,
-};
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
@@ -52,7 +53,7 @@ async fn main() -> anyhow::Result<()> {
                 OpenAiService::new(config.llm_url, config.model.to_str().unwrap().to_string());
             let engine = IngestEngine::new(embedder, llm);
 
-            engine.ingest(&config.wiki_xml, &config.output_directory)?;
+            engine.ingest_wikipedia(&config.wiki_xml, &config.output_directory)?;
             Ok(())
         }
     }

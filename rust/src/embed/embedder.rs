@@ -11,13 +11,8 @@ pub struct Embedder {
 
 impl Embedder {
     pub(crate) fn new(host: Url) -> Result<Self, url::ParseError> {
-        let start = std::time::Instant::now();
-
         let client = Client::new();
-
         let embedder = Self { client, host };
-
-        log::info!("Connect Embedder {:?}", start.elapsed());
         Ok(embedder)
     }
 }
