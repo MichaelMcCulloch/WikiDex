@@ -1,8 +1,3 @@
-use super::Engine;
-use chrono::NaiveDateTime;
-use indicatif::ProgressBar;
-use r2d2::{Pool, PooledConnection};
-use r2d2_sqlite::SqliteConnectionManager;
 use std::{error::Error, path::Path};
 
 pub(crate) trait Ingest {

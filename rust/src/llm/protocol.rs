@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use async_openai::types::{ChatCompletionRequestMessage, Role};
+use async_openai::types::Role;
 use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub(crate) struct LlmInput {
