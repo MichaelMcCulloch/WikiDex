@@ -1,19 +1,21 @@
+use super::{
+    Ingest,
+    IngestError::{self, *},
+};
+use crate::{embed::Embedder, llm::OpenAiService};
 use actix_web::cookie::time::format_description::modifier::Year;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use flate2::{read::GzDecoder, write::GzEncoder};
+use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use parse_mediawiki_dump_reboot::{schema::Namespace, Page};
 use r2d2::{Pool, PooledConnection};
 use r2d2_sqlite::{
     rusqlite::{params, DatabaseName},
     SqliteConnectionManager,
 };
-use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
-
-use super::{
-    Ingest,
-    IngestError::{self, *},
+use rayon::iter::{
+    IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
 };
-use crate::{embed::Embedder, llm::OpenAiService};
 use std::{
     fs::File,
     io::{self, BufReader, Read, Write},
@@ -54,47 +56,22 @@ impl Engine {
     fn create_markup_database<P: AsRef<Path>>(
         &self,
         input_xml: &P,
-        output_directory: &P,
+        connection: &PooledConnection<SqliteConnectionManager>,
+        multi_progress: MultiProgress,
     ) -> Result<usize, <Self as Ingest>::E> {
         let access_date = Self::get_date_from_xml_name(input_xml)?;
-        log::info!("{access_date}");
         let file = BufReader::with_capacity(
             2 * 1024 * 1024,
             File::open(input_xml.as_ref()).map_err(IoError)?,
         );
+        let eligible_pages = Self::get_eligible_pages(file, &multi_progress);
 
-        let eligible_pages = Self::get_eligible_pages(file);
-        let pool = Self::get_markup_sqlite_pool(&output_directory.as_ref().join(MARKUP_DB_NAME))?;
-        let pool_connection = pool.get().map_err(R2D2Error)?;
-
-        let pages_compressed = eligible_pages
-            .into_par_iter()
-            .filter_map(|Page { text, title, .. }| {
-                let compressed = Self::compress_text(&text).ok();
-                Some((compressed, title))
-            })
-            .collect::<Vec<_>>();
-
-        Self::pool_execute(&pool_connection, "BEGIN;")?;
-
+        let pages_compressed = Self::compress_articles(eligible_pages, &multi_progress);
         let article_count = pages_compressed.len();
-        for (i, (text, title)) in pages_compressed.into_iter().enumerate() {
-            pool_connection
-                .execute(
-                    "INSERT INTO wiki_markup (title, text, access_date) VALUES ($1, $2, $3)",
-                    (&title, &text, access_date.timestamp_millis()),
-                )
-                .map_err(RuSqliteError)?;
-
-            if i % 1000 == 0 {
-                log::info!("Processed {i} of approximately 7M",);
-            }
-        }
-        Self::pool_execute(&pool_connection, "COMMIT;")?;
+        Self::populate_markup_db(connection, pages_compressed, access_date, &multi_progress)?;
 
         let naive_utc = chrono::Utc::now().naive_utc();
-        pool.get()
-            .map_err(R2D2Error)?
+        connection
             .execute(
                 MARKUP_TABLE_MARK_COMPLETE_QUERY,
                 [naive_utc.timestamp_millis(), article_count as i64],
@@ -121,9 +98,19 @@ impl Ingest for Engine {
             )),
             (false, _) => Err(XmlNotFound(input_xml.as_ref().to_path_buf())),
             (true, true) => {
-                if !Self::markup_database_is_complete(output_directory)? {
-                    self.create_markup_database(input_xml, output_directory)?;
+                let multi_progress = MultiProgress::new();
+
+                let markup_db_path = output_directory.as_ref().join(MARKUP_DB_NAME);
+
+                let connection = Self::get_sqlite_pool(&markup_db_path)
+                    .map_err(R2D2Error)?
+                    .get()
+                    .map_err(R2D2Error)?;
+                if !Self::markup_database_is_complete(&connection)? {
+                    log::info!("Preparing Markup DB...");
+                    self.create_markup_database(input_xml, &connection, multi_progress)?;
                 }
+                log::info!("Markup DB is ready at {}", markup_db_path.display());
 
                 Ok(1)
             }
@@ -132,29 +119,72 @@ impl Ingest for Engine {
 }
 
 impl Engine {
-    fn markup_database_is_complete<P: AsRef<Path>>(
-        output_directory: &P,
-    ) -> Result<bool, IngestError> {
-        let path = output_directory.as_ref().join(MARKUP_DB_NAME);
-        if !path.exists() {
-            return Ok(false);
-        }
-        let pool = Self::get_sqlite_pool(&path).map_err(R2D2Error)?;
-        let pool_connection = pool.get().map_err(R2D2Error)?;
-        let mut stmt_read_completed_on = pool_connection
-            .prepare(MARKUP_TABLE_IS_COMPLETE_QUERY)
-            .map_err(RuSqliteError)?;
-        let mapped = stmt_read_completed_on
-            .query_map(params![], |row| {
-                let completed_timestamp: usize = row.get("db_date")?;
-                Ok(completed_timestamp)
+    fn compress_articles(
+        eligible_pages: Vec<Page>,
+        multi_progress: &MultiProgress,
+    ) -> Vec<(Vec<u8>, String)> {
+        let progress_bar_compress_text =
+            multi_progress.add(ProgressBar::new(eligible_pages.len() as u64));
+
+        let pages_compressed = eligible_pages
+            .into_par_iter()
+            .enumerate()
+            .filter_map(|(i, Page { text, title, .. })| {
+                if i % 1000 == 0 {
+                    progress_bar_compress_text.inc(1000);
+                }
+
+                match Self::compress_text(&text) {
+                    Ok(compressed) => Some((compressed, title)),
+                    Err(_) => None,
+                }
             })
-            .map_err(RuSqliteError)?
-            .filter_map(|f| f.ok())
             .collect::<Vec<_>>();
-        pool_connection.flush_prepared_statement_cache();
-        log::info!("{}", mapped.len());
-        Ok(mapped.len() == 1)
+        let article_count = pages_compressed.len();
+        pages_compressed
+    }
+    fn populate_markup_db(
+        connection: &PooledConnection<SqliteConnectionManager>,
+        pages_compressed: Vec<(Vec<u8>, String)>,
+        access_date: NaiveDateTime,
+        multi_progress: &MultiProgress,
+    ) -> Result<(), <Engine as Ingest>::E> {
+        let progress_bar = multi_progress.add(ProgressBar::new(pages_compressed.len() as u64));
+        Self::pool_execute(&connection, "BEGIN;")?;
+        Self::init_markup_sqlite_pool(&connection)?;
+        for (i, (text, title)) in pages_compressed.into_iter().enumerate() {
+            connection
+                .execute(
+                    "INSERT INTO wiki_markup (title, text, access_date) VALUES ($1, $2, $3)",
+                    (&title, &text, access_date.timestamp_millis()),
+                )
+                .map_err(RuSqliteError)?;
+
+            if i % 1000 == 0 {
+                progress_bar.inc(1000);
+            }
+        }
+        Self::pool_execute(&connection, "COMMIT;")?;
+        Ok(())
+    }
+    fn markup_database_is_complete(
+        connection: &PooledConnection<SqliteConnectionManager>,
+    ) -> Result<bool, IngestError> {
+        let stmt_read_completed_on = connection.prepare(MARKUP_TABLE_IS_COMPLETE_QUERY);
+        match stmt_read_completed_on {
+            Ok(mut stmt_read_completed_on) => {
+                let mapped = stmt_read_completed_on
+                    .query_map(params![], |row| {
+                        let completed_timestamp: usize = row.get("db_date")?;
+                        Ok(completed_timestamp)
+                    })
+                    .map_err(RuSqliteError)?
+                    .filter_map(|f| f.ok())
+                    .collect::<Vec<_>>();
+                Ok(mapped.len() == 1)
+            }
+            Err(_) => Ok(false),
+        }
     }
 
     // All this to not write XmlDateReadError so many times
@@ -202,25 +232,21 @@ impl Engine {
         path: &P,
     ) -> Result<Pool<SqliteConnectionManager>, r2d2::Error> {
         let manager = SqliteConnectionManager::file(path);
-        r2d2::Pool::builder().max_size(32).build(manager)
+        r2d2::Pool::builder().max_size(1).build(manager)
     }
 
-    fn get_markup_sqlite_pool<P: AsRef<Path>>(
-        path: &P,
-    ) -> Result<Pool<SqliteConnectionManager>, <Self as Ingest>::E> {
-        let pool = Self::get_sqlite_pool(path).map_err(R2D2Error)?;
-
-        let pool_connection = pool.get().map_err(R2D2Error)?;
+    fn init_markup_sqlite_pool(
+        connection: &PooledConnection<SqliteConnectionManager>,
+    ) -> Result<(), <Self as Ingest>::E> {
         for query in MARKUP_TABLE_CREATE_QUERIES.iter() {
-            Self::pool_execute(&pool_connection, query)?;
+            Self::pool_execute(&connection, query)?;
         }
 
-        pool.get()
-            .map_err(R2D2Error)?
+        connection
             .pragma_update(Some(DatabaseName::Main), "journal_mode", "WAL")
             .map_err(RuSqliteError)?;
 
-        Ok(pool)
+        Ok(())
     }
 
     fn pool_execute(
@@ -241,7 +267,9 @@ impl Engine {
             && !(page.text.starts_with("#REDIRECT") || page.text.starts_with("#redirect"))
     }
 
-    fn get_eligible_pages(file: BufReader<File>) -> Vec<Page> {
+    fn get_eligible_pages(file: BufReader<File>, multi_progress: &MultiProgress) -> Vec<Page> {
+        let progress_bar = multi_progress.add(ProgressBar::new(10000));
+
         let parse = parse_mediawiki_dump_reboot::parse(file);
         let eligible_pages = parse
             .filter_map(Result::ok)
@@ -249,8 +277,8 @@ impl Engine {
             .take(10001)
             .enumerate()
             .map(|(i, page)| {
-                if i % 10000 == 0 {
-                    log::info!("Collected {i} of approximately 7M")
+                if i % 1000 == 0 {
+                    progress_bar.inc(1000);
                 }
                 page
             })

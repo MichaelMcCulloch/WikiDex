@@ -24,6 +24,7 @@ faiss = { git = "https://github.com/MichaelMcCulloch/faiss-rs.git", branch = "la
 ] }
 flate2 = "1.0.27"
 futures = "0.3.28"
+indicatif = "0.17.7"
 listenfd = "1.0.1"
 log = "0.4.20"
 parse_mediawiki_dump_reboot = "1.0.1"
