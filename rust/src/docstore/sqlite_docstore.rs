@@ -14,7 +14,6 @@ pub struct SqliteDocstore {
 
 impl SqliteDocstore {
     pub async fn new<P: AsRef<Path>>(docstore_path: &P) -> Result<Self, DocstoreLoadError> {
-        let start = std::time::Instant::now();
         let docstore_path = docstore_path.as_ref();
         if !docstore_path.exists() {
             return Err(DocstoreLoadError::FileNotFound);
@@ -26,7 +25,6 @@ impl SqliteDocstore {
         )
         .await
         .map_err(|_| DocstoreLoadError::FileNotFound)?;
-        log::info!("Load Docstore {:?}", start.elapsed());
         Ok(SqliteDocstore { pool })
     }
 }
