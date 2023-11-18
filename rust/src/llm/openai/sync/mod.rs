@@ -2,11 +2,13 @@ mod client;
 mod error;
 
 use async_openai::config::OpenAIConfig;
-pub(crate) use error::OpenAiClientError;
+pub(crate) use error::SynchronousOpenAiClientError;
 
 use backoff::{retry, Error, ExponentialBackoff};
 use client::{OpenAIClient, SyncOpenAiClient};
 use url::Url;
+
+use crate::llm::{protocol::OpenAiJsonFormat, LlmMessage, LlmRole};
 
 use super::super::{LlmInput, LlmServiceError, SyncLlmService};
 
@@ -22,8 +24,27 @@ impl SyncLlmService for SyncOpenAiService {
         &self,
         input: LlmInput,
         max_new_tokens: Option<u16>,
-    ) -> Result<LlmInput, Self::E> {
-        Ok(input)
+    ) -> Result<LlmMessage, Self::E> {
+        let compat: Result<OpenAiJsonFormat, <SyncOpenAiService as SyncLlmService>::E> =
+            input.into();
+        let response = self
+            .client
+            .get_completion_for_conversation(
+                compat?,
+                &self.model_name,
+                max_new_tokens.unwrap_or(2048u16),
+            )
+            .map_err(LlmServiceError::SyncOpenAiError)?;
+
+        Ok(LlmMessage {
+            role: LlmRole::Assistant,
+            content: response
+                .choices
+                .into_iter()
+                .next()
+                .ok_or(LlmServiceError::EmptyResponse)?
+                .text,
+        })
     }
     fn wait_for_service(&self) -> Result<(), LlmServiceError> {
         let op = || self.client.test(&self.model_name).map_err(Error::transient);

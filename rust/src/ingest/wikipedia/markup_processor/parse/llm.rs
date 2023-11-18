@@ -26,25 +26,19 @@ pub(crate) async fn process_table_to_llm(
     let message = LlmInput {
         system,
         conversation: vec![LlmMessage {
-            message: table_str_chars[0..lim].into_iter().collect::<String>(),
+            content: table_str_chars[0..lim].into_iter().collect::<String>(),
             role: LlmRole::User,
         }],
     };
 
     let output = client.get_llm_answer(message, Some(2048));
 
-    let output = output?;
-    let response = output
-        .conversation
-        .into_iter()
-        .last()
-        .and_then(|m| Some(m.message))
-        .ok_or(LlmServiceError::EmptyResponse)?;
+    let description = output.and_then(|m| Ok(m.content))?;
 
     Ok(UnlabledDocument::from_str_and_vec(
         String::new(),
         vec![DescribedTable {
-            description: response,
+            description,
             table: table.to_string(),
         }],
     ))

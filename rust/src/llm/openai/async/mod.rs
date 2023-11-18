@@ -26,38 +26,25 @@ impl AsyncLlmService for AsyncOpenAiService {
         &self,
         input: LlmInput,
         max_new_tokens: Option<u16>,
-    ) -> Result<LlmInput, Self::E> {
-        let LlmInput {
-            system,
-            mut conversation,
-        } = input;
-
-        let system_openai_compat =
-            role_message_to_request_message(&LlmRole::System, system.as_str())
-                .map_err(|e| LlmServiceError::OpenAIError(e))?;
-
-        let mut message_openai_compat = vec![system_openai_compat];
-
-        for message in conversation.iter() {
-            let LlmMessage { role, message } = message;
-            let msg: ChatCompletionRequestMessage = role_message_to_request_message(&role, message)
-                .map_err(|e| LlmServiceError::OpenAIError(e))?;
-            message_openai_compat.push(msg);
-        }
+    ) -> Result<LlmMessage, Self::E> {
+        let message_openai_compat: Result<
+            Vec<ChatCompletionRequestMessage>,
+            <AsyncOpenAiService as AsyncLlmService>::E,
+        > = input.into();
 
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(max_new_tokens.unwrap_or(2048u16))
             .model(self.model_name.clone())
-            .messages(message_openai_compat)
+            .messages(message_openai_compat?)
             .build()
-            .map_err(|e| LlmServiceError::OpenAIError(e))?;
+            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
 
         let response = self
             .client
             .chat()
             .create(request)
             .await
-            .map_err(|e| LlmServiceError::OpenAIError(e))?;
+            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
 
         let response = response
             .choices
@@ -65,22 +52,15 @@ impl AsyncLlmService for AsyncOpenAiService {
             .next()
             .ok_or(LlmServiceError::EmptyResponse)?;
 
-        let response = match (
+        match (
             LlmRole::from(&response.message.role),
             response.message.content,
         ) {
             (LlmRole::System, _) => Err(LlmServiceError::UnexpectedRole(LlmRole::System)),
             (LlmRole::Function, _) => Err(LlmServiceError::UnexpectedRole(LlmRole::Function)),
             (_, None) => Err(LlmServiceError::EmptyResponse),
-            (role, Some(message)) => Ok(LlmMessage { role, message }),
-        }?;
-
-        conversation.push(response);
-
-        Ok(LlmInput {
-            system,
-            conversation,
-        })
+            (role, Some(content)) => Ok(LlmMessage { role, content }),
+        }
     }
 
     async fn wait_for_service(&self) -> Result<(), LlmServiceError> {
@@ -89,13 +69,13 @@ impl AsyncLlmService for AsyncOpenAiService {
             .model(self.model_name.clone())
             .messages(vec![])
             .build()
-            .map_err(|e| LlmServiceError::OpenAIError(e))?;
+            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
 
         retry(ExponentialBackoff::default(), || async {
             Ok(self.client.chat().create(request.clone()).await?)
         })
         .await
-        .map_err(LlmServiceError::OpenAIError)?;
+        .map_err(LlmServiceError::AsyncOpenAiError)?;
 
         Ok(())
     }

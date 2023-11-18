@@ -2,7 +2,7 @@ use std::error::Error;
 
 use url::Url;
 
-use super::{AsyncOpenAiService, LlmInput, SyncOpenAiService};
+use super::{AsyncOpenAiService, LlmInput, LlmMessage, SyncOpenAiService};
 
 pub(crate) trait LlmServiceImpl {}
 
@@ -13,7 +13,7 @@ pub(crate) trait AsyncLlmService {
         &self,
         input: LlmInput,
         max_new_tokens: Option<u16>,
-    ) -> Result<LlmInput, Self::E>;
+    ) -> Result<LlmMessage, Self::E>;
     async fn wait_for_service(&self) -> Result<(), Self::E>;
 }
 
@@ -23,7 +23,7 @@ pub(crate) trait SyncLlmService {
         &self,
         input: LlmInput,
         max_new_tokens: Option<u16>,
-    ) -> Result<LlmInput, Self::E>;
+    ) -> Result<LlmMessage, Self::E>;
 
     fn wait_for_service(&self) -> Result<(), Self::E>;
 }

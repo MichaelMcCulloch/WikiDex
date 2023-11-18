@@ -108,31 +108,24 @@ impl QueryEngine for Engine {
                     system,
                     conversation: vec![LlmMessage {
                         role: LlmRole::User,
-                        message: format!("{}", user_query),
+                        content: format!("{}", user_query),
                     }],
                 };
 
-                let LlmInput {
-                    system: _,
-                    conversation,
-                } = self
+                let LlmMessage { role, content } = self
                     .llm
                     .get_llm_answer(input, None)
                     .await
                     .map_err(|e| QueryEngineError::LlmError(e))?;
 
-                match conversation.last() {
-                    Some(LlmMessage {
-                        role: LlmRole::Assistant,
-                        message,
-                    }) => Ok(Message::Assistant(
-                        message.to_string(),
+                match role {
+                    LlmRole::Assistant => Ok(Message::Assistant(
+                        content.to_string(),
                         documents
                             .iter()
                             .map(|(i, d, _)| (format!("{i}"), format!("{d}")))
                             .collect(),
                     )),
-
                     _ => Err(QueryEngineError::InvalidAgentResponse)?,
                 }
             }
