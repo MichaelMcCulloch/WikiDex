@@ -62,7 +62,7 @@ impl Engine {
         Ok(article_count)
     }
 
-    async fn create_docstore_database(
+    fn create_docstore_database(
         &self,
         markup_pool: &Pool<SqliteConnectionManager>,
         docstore_pool: &Pool<SqliteConnectionManager>,
@@ -77,8 +77,7 @@ impl Engine {
             pages,
             &pages_decompressed_bar,
             &self.markup_processor,
-        )
-        .await;
+        );
         //process it in parrallel
 
         //write it to the database
@@ -86,15 +85,10 @@ impl Engine {
     }
 }
 
-#[async_trait::async_trait]
 impl Ingest for Engine {
     type E = IngestError;
 
-    async fn ingest_wikipedia(
-        self,
-        input_xml: &Path,
-        output_directory: &Path,
-    ) -> Result<usize, Self::E> {
+    fn ingest_wikipedia(self, input_xml: &Path, output_directory: &Path) -> Result<usize, Self::E> {
         match (input_xml.exists(), output_directory.exists()) {
             (true, false) => Err(OutputDirectoryNotFound(output_directory.to_path_buf())),
             (false, _) => Err(XmlNotFound(input_xml.to_path_buf())),
@@ -114,8 +108,7 @@ impl Ingest for Engine {
 
                 if !h::sql::database_is_complete(&docstore_pool)? {
                     log::info!("Preparing docstore DB...");
-                    self.create_docstore_database(&markup_pool, &docstore_pool)
-                        .await?;
+                    self.create_docstore_database(&markup_pool, &docstore_pool)?;
                 }
                 log::info!("Docstore DB is ready at {}", docstore_db_path.display());
 

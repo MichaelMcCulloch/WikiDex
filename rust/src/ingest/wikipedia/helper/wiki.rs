@@ -192,7 +192,7 @@ pub(crate) fn compress_articles(
     pages_compressed
 }
 
-pub(crate) async fn decompress_articles_into_documents_and_tables(
+pub(crate) fn decompress_articles_into_documents_and_tables(
     compressed_pages: Vec<CompressedPageWithAccessDate>,
     progress_bar: &ProgressBar,
     markup_processor: &WikiMarkupProcessor,
