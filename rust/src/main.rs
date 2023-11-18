@@ -15,7 +15,7 @@ use crate::{
     index::FaissIndex,
     inference::Engine as InferenceEngine,
     ingest::wikipedia::Engine as WikipediaIngestEngine,
-    llm::{AsyncOpenAiService, SyncLlmService, SyncOpenAiService},
+    llm::{AsyncOpenAiService, SyncOpenAiService},
 };
 use clap::Parser;
 use docstore::SqliteDocstore;

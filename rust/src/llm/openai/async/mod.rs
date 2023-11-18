@@ -1,13 +1,7 @@
 use super::super::{AsyncLlmService, LlmInput, LlmMessage, LlmRole, LlmServiceError};
 use async_openai::{
     config::OpenAIConfig,
-    error::OpenAIError,
-    types::{
-        ChatCompletionRequestAssistantMessageArgs, ChatCompletionRequestFunctionMessageArgs,
-        ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs,
-        ChatCompletionRequestToolMessageArgs, ChatCompletionRequestUserMessageArgs,
-        CreateChatCompletionRequestArgs,
-    },
+    types::{ChatCompletionRequestMessage, CreateChatCompletionRequestArgs},
     Client,
 };
 use backoff::future::retry;

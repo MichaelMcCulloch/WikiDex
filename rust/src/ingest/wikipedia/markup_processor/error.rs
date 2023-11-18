@@ -1,8 +1,6 @@
 use std::{
     error::Error,
     fmt::{Display, Formatter, Result},
-    io,
-    path::PathBuf,
 };
 
 use crate::llm::LlmServiceError;

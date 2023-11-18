@@ -6,7 +6,6 @@ pub(crate) use error::SynchronousOpenAiClientError;
 
 use backoff::{retry, Error, ExponentialBackoff};
 use client::{OpenAIClient, SyncOpenAiClient};
-use serde_json::Value;
 use url::Url;
 
 use crate::llm::{LlmMessage, LlmRole};

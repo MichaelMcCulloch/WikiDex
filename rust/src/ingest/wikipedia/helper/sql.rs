@@ -9,8 +9,8 @@ use r2d2_sqlite::{
     rusqlite::{params, DatabaseName},
     SqliteConnectionManager,
 };
-use rayon::iter::{IntoParallelIterator, ParallelBridge};
-use std::{path::Path, sync::Arc};
+
+use std::path::Path;
 
 pub(crate) const COMPLETION_TABLE_NAME: &str = "completed_on";
 pub(crate) const MARKUP_DB_WIKI_MARKUP_TABLE_NAME: &str = "wiki_markup";

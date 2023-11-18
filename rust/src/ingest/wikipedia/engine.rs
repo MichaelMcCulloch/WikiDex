@@ -3,14 +3,11 @@ use super::{
     IngestError::{self, *},
     WikiMarkupProcessor,
 };
-use crate::{
-    embed::Embedder,
-    llm::{AsyncOpenAiService, SyncOpenAiService},
-};
+use crate::{embed::Embedder, llm::SyncOpenAiService};
 use indicatif::MultiProgress;
-use r2d2::{Pool, PooledConnection};
+use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
-use std::{fs::File, io::BufReader, path::Path, sync::Arc};
+use std::{fs::File, io::BufReader, path::Path};
 
 const MARKUP_DB_NAME: &str = "wikipedia_markup.sqlite";
 const DOCSTORE_DB_NAME: &str = "wikipedia_docstore.sqlite";
@@ -65,7 +62,7 @@ impl Engine {
     fn create_docstore_database(
         &self,
         markup_pool: &Pool<SqliteConnectionManager>,
-        docstore_pool: &Pool<SqliteConnectionManager>,
+        _docstore_pool: &Pool<SqliteConnectionManager>,
     ) -> Result<usize, <Self as Ingest>::E> {
         //Obtain markup
         let obtain_markup_bar = h::progress::new_progress_bar(&self.multi_progress, 7000000 as u64);
@@ -76,7 +73,7 @@ impl Engine {
         self.markup_processor
             .wait_for_ready()
             .map_err(LlmServiceError)?;
-        let documents = h::wiki::decompress_articles_into_documents_and_tables(
+        let _documents = h::wiki::decompress_articles_into_documents_and_tables(
             pages,
             &pages_decompressed_bar,
             &self.markup_processor,

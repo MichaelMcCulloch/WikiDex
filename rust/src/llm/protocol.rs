@@ -9,7 +9,6 @@ use async_openai::{
     },
 };
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
 
 use super::{
     AsyncLlmService, AsyncOpenAiService, LlmServiceError, SyncLlmService, SyncOpenAiService,

@@ -3,7 +3,7 @@ use std::{error::Error, time::Duration};
 use async_openai::config::{Config, OpenAIConfig};
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::json;
 
 use crate::llm::LlmMessage;
 

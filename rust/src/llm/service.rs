@@ -1,8 +1,6 @@
 use std::error::Error;
 
-use url::Url;
-
-use super::{AsyncOpenAiService, LlmInput, LlmMessage, SyncOpenAiService};
+use super::{LlmInput, LlmMessage};
 
 pub(crate) trait LlmServiceImpl {}
 
