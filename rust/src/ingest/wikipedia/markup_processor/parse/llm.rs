@@ -6,7 +6,7 @@ use crate::{
 };
 
 const ESTIMATED_CONTROL_TOKENS_IN_PROMPT: usize = 30;
-const ROOM_FOR_SUMMARY: usize = 2048;
+const ROOM_FOR_SUMMARY: usize = 512;
 
 pub(crate) fn process_table_to_llm(
     table: &str,
@@ -32,7 +32,7 @@ pub(crate) fn process_table_to_llm(
     };
 
     let description = client
-        .get_llm_answer(message, Some(2048))
+        .get_llm_answer(message, Some(ROOM_FOR_SUMMARY as u16))
         .and_then(|m| {
             if m.content.is_empty() || m.content == "\n" {
                 log::error!("{}", LlmServiceError::EmptyResponse);
