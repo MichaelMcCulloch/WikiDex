@@ -4,7 +4,7 @@ use crate::{
     ingest::wikipedia::{
         helper::wiki::UnlabledDocument, markup_processor::Process, WikiMarkupProcessor,
     },
-    llm::OpenAiService,
+    llm::SyncOpenAiService,
 };
 
 use super::{nodes::nodes_to_string, Regexes};
@@ -12,7 +12,7 @@ use super::{nodes::nodes_to_string, Regexes};
 pub(super) async fn template_parameters_to_string(
     parameters: &[Parameter<'_>],
     regexes: &Regexes,
-    client: &OpenAiService,
+    client: &SyncOpenAiService,
 ) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
     let mut documents = vec![];
     for p in parameters.iter() {
@@ -24,7 +24,7 @@ pub(super) async fn template_parameters_to_string(
 pub(super) async fn refn_parameters_to_string(
     parameters: &[Parameter<'_>],
     regexes: &Regexes,
-    client: &OpenAiService,
+    client: &SyncOpenAiService,
 ) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
     let mut documents = vec![];
     for p in parameters.iter() {
@@ -35,14 +35,14 @@ pub(super) async fn refn_parameters_to_string(
 pub(super) async fn refn_parameter_to_string(
     Parameter { value, .. }: &Parameter<'_>,
     regexes: &Regexes,
-    client: &OpenAiService,
+    client: &SyncOpenAiService,
 ) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
     nodes_to_string(value, regexes, client).await
 }
 pub(super) async fn template_parameter_to_string(
     Parameter { name, value, .. }: &Parameter<'_>,
     regexes: &Regexes,
-    client: &OpenAiService,
+    client: &SyncOpenAiService,
 ) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
     let value = nodes_to_string(value, regexes, client).await?;
     let name = match name {

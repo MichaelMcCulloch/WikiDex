@@ -15,7 +15,7 @@ use crate::{
     index::FaissIndex,
     inference::Engine as InferenceEngine,
     ingest::wikipedia::Engine as WikipediaIngestEngine,
-    llm::OpenAiService,
+    llm::{AsyncOpenAiService, SyncLlmService, SyncOpenAiService},
 };
 use clap::Parser;
 use docstore::SqliteDocstore;
@@ -39,7 +39,7 @@ async fn main() -> anyhow::Result<()> {
             let embedder: Embedder = Embedder::new(config.embed_url)?;
             let docstore = SqliteDocstore::new(&config.docstore).await?;
             let index = FaissIndex::new(&config.index)?;
-            let llm = OpenAiService::new(
+            let llm = AsyncOpenAiService::new(
                 config.llm_url,
                 config.model.to_str().unwrap().to_string(),
                 config.model_context_length,
@@ -66,13 +66,13 @@ async fn main() -> anyhow::Result<()> {
             log::info!("\n{config}");
 
             let embedder: Embedder = Embedder::new(config.embed_url)?;
-            let llm = OpenAiService::new(
+            let llm = SyncOpenAiService::new(
                 config.llm_url,
                 config.model.to_str().unwrap().to_string(),
                 config.model_context_length,
             );
 
-            llm.wait_for_service().await?;
+            llm.wait_for_service()?;
             let engine = WikipediaIngestEngine::new(embedder, llm, multi_progress);
 
             engine

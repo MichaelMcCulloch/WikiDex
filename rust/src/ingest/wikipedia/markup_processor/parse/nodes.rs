@@ -14,7 +14,7 @@ use crate::{
     ingest::wikipedia::{
         helper::wiki::UnlabledDocument, markup_processor::Process, WikiMarkupProcessor,
     },
-    llm::OpenAiService,
+    llm::SyncOpenAiService,
 };
 
 pub(crate) const STOP_PHRASES: [&str; 5] = [
@@ -27,7 +27,7 @@ pub(crate) const STOP_PHRASES: [&str; 5] = [
 pub(crate) async fn process_to_article(
     nodes: &[Node<'_>],
     regexes: &Regexes,
-    client: &OpenAiService,
+    client: &SyncOpenAiService,
 ) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
     nodes_to_string(&nodes, regexes, client).await
 }
@@ -36,7 +36,7 @@ pub(crate) async fn process_to_article(
 pub(super) async fn nodes_to_string(
     nodes: &[Node<'_>],
     regexes: &Regexes,
-    client: &OpenAiService,
+    client: &SyncOpenAiService,
 ) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
     let mut documents = vec![];
     for n in nodes.iter() {
@@ -61,7 +61,7 @@ pub(super) async fn nodes_to_string(
 pub(super) async fn node_to_string(
     node: &Node<'_>,
     regexes: &Regexes,
-    client: &OpenAiService,
+    client: &SyncOpenAiService,
 ) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
     match node {
         Node::Bold { .. }

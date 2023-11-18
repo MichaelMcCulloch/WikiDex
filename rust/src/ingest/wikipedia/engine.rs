@@ -3,7 +3,10 @@ use super::{
     IngestError::{self, *},
     WikiMarkupProcessor,
 };
-use crate::{embed::Embedder, llm::OpenAiService};
+use crate::{
+    embed::Embedder,
+    llm::{AsyncOpenAiService, SyncOpenAiService},
+};
 use indicatif::MultiProgress;
 use r2d2::{Pool, PooledConnection};
 use r2d2_sqlite::SqliteConnectionManager;
@@ -20,7 +23,11 @@ pub(crate) struct Engine {
 }
 
 impl Engine {
-    pub(crate) fn new(embed: Embedder, llm: OpenAiService, multi_progress: MultiProgress) -> Self {
+    pub(crate) fn new(
+        embed: Embedder,
+        llm: SyncOpenAiService,
+        multi_progress: MultiProgress,
+    ) -> Self {
         let markup_processor = WikiMarkupProcessor::new(llm);
 
         Self {

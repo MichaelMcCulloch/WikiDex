@@ -6,7 +6,7 @@ use crate::{
     formatter::{DocumentFormatter, TextFormatter},
     index::{FaissIndex, SearchService},
     llm::{
-        LlmService, OpenAiService, {LlmInput, LlmMessage, LlmRole},
+        AsyncLlmService, AsyncOpenAiService, {LlmInput, LlmMessage, LlmRole},
     },
     server::{Conversation, Message},
 };
@@ -17,7 +17,7 @@ pub struct Engine {
     index: Mutex<FaissIndex>,
     embed: Embedder,
     docstore: SqliteDocstore,
-    llm: OpenAiService,
+    llm: AsyncOpenAiService,
 }
 
 #[async_trait::async_trait]
@@ -147,7 +147,7 @@ impl Engine {
         index: Mutex<FaissIndex>,
         embed: Embedder,
         docstore: SqliteDocstore,
-        llm: OpenAiService,
+        llm: AsyncOpenAiService,
     ) -> Self {
         Self {
             index,

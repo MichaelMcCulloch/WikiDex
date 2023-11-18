@@ -1,5 +1,4 @@
-use std::{thread, time::Duration};
-
+use super::super::{AsyncLlmService, LlmInput, LlmMessage, LlmRole, LlmServiceError};
 use async_openai::{
     config::OpenAIConfig,
     error::OpenAIError,
@@ -11,18 +10,17 @@ use async_openai::{
     },
     Client,
 };
+use backoff::future::retry;
+use backoff::ExponentialBackoff;
 use url::Url;
-
-use super::{LlmInput, LlmMessage, LlmRole, LlmService, LlmServiceError};
-
-pub(crate) struct OpenAiService {
+pub(crate) struct AsyncOpenAiService {
     client: Client<OpenAIConfig>,
     model_name: String,
     pub(crate) model_context_length: usize,
 }
 
 #[async_trait::async_trait]
-impl LlmService for OpenAiService {
+impl AsyncLlmService for AsyncOpenAiService {
     type E = LlmServiceError;
     async fn get_llm_answer(
         &self,
@@ -84,9 +82,25 @@ impl LlmService for OpenAiService {
             conversation,
         })
     }
+
+    async fn wait_for_service(&self) -> Result<(), LlmServiceError> {
+        let request = CreateChatCompletionRequestArgs::default()
+            .max_tokens(1u16)
+            .model(self.model_name.clone())
+            .messages(vec![])
+            .build()
+            .map_err(|e| LlmServiceError::OpenAIError(e))?;
+
+        retry(ExponentialBackoff::default(), || async {
+            Ok(self.client.chat().create(request.clone()).await?)
+        })
+        .await;
+
+        Ok(())
+    }
 }
 
-impl OpenAiService {
+impl AsyncOpenAiService {
     pub(crate) fn new<S: AsRef<str>>(
         host: Url,
         model_name: S,
@@ -100,27 +114,6 @@ impl OpenAiService {
             model_name,
             model_context_length,
         }
-    }
-
-    pub(crate) async fn wait_for_service(&self) -> Result<(), LlmServiceError> {
-        let request = CreateChatCompletionRequestArgs::default()
-            .max_tokens(1u16)
-            .model(self.model_name.clone())
-            .messages(vec![])
-            .build()
-            .map_err(|e| LlmServiceError::OpenAIError(e))?;
-        let mut i = 1;
-        loop {
-            match self.client.chat().create(request.clone()).await {
-                Ok(_) => break,
-                _ => {
-                    thread::sleep(Duration::from_secs(i));
-                    i *= 2;
-                }
-            };
-        }
-
-        Ok(())
     }
 }
 

@@ -2,7 +2,10 @@ use std::cmp::min;
 
 use crate::{
     ingest::wikipedia::helper::wiki::{DescribedTable, UnlabledDocument},
-    llm::{LlmInput, LlmMessage, LlmRole, LlmService, LlmServiceError, OpenAiService},
+    llm::{
+        AsyncLlmService, LlmInput, LlmMessage, LlmRole, LlmService, LlmServiceError,
+        SyncOpenAiService,
+    },
 };
 
 const ESTIMATED_CONTROL_TOKENS_IN_PROMPT: usize = 10;
@@ -10,7 +13,7 @@ const ROOM_FOR_SUMMARY: usize = 2048;
 
 pub(crate) async fn process_table_to_llm(
     table: &str,
-    client: &OpenAiService,
+    client: &SyncOpenAiService,
 ) -> Result<UnlabledDocument, LlmServiceError> {
     let system = String::from("Interpret and summarize the following (possibly truncated) HTML table in a concise, plain English description.");
 
@@ -31,7 +34,7 @@ pub(crate) async fn process_table_to_llm(
         }],
     };
 
-    let output = client.get_llm_answer(message, Some(2048)).await;
+    let output = client.get_llm_answer(message, Some(2048));
 
     let output = output?;
     let response = output

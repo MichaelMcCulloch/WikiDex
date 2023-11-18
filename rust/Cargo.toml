@@ -13,6 +13,7 @@ anyhow = "1.0.75"
 async-openai = "0.16.2"
 async-recursion = "1.0.5"
 async-trait = "0.1.73"
+backoff = "0.4.0"
 chrono = "0.4.31"
 clap = { version = "4.4.7", features = ["derive"] }
 colored = "2.0.4"
@@ -35,7 +36,7 @@ regex = "1.9.6"
 r2d2 = "0.8.10"
 r2d2_sqlite = "0.22.0"
 rayon = "1.8.0"
-reqwest = { version = "0.11.20", features = ["json"] }
+reqwest = { version = "0.11.20", features = ["json", "blocking"] }
 serde = "1.0.188"
 serde_json = "1.0.107"
 sqlx = { version = "0.7.2", features = ["sqlite", "runtime-tokio"] }

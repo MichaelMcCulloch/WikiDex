@@ -1,4 +1,4 @@
-use crate::llm::{LlmInput, LlmServiceError, OpenAiService};
+use crate::llm::{AsyncOpenAiService, LlmInput, LlmServiceError, SyncOpenAiService};
 
 use super::{
     super::{configurations::WIKIPEDIA_CONFIGURATION, helper::wiki::UnlabledDocument},
@@ -11,10 +11,10 @@ use std::sync::Arc;
 
 #[derive(Clone)]
 pub(crate) struct WikiMarkupProcessor {
-    llm: Arc<OpenAiService>,
+    llm: Arc<SyncOpenAiService>,
 }
 impl WikiMarkupProcessor {
-    pub(crate) fn new(llm: OpenAiService) -> Self {
+    pub(crate) fn new(llm: SyncOpenAiService) -> Self {
         Self { llm: Arc::new(llm) }
     }
 }
