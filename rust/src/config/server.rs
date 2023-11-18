@@ -13,6 +13,7 @@ pub(crate) struct Config {
     pub(crate) index: PathBuf,
     pub(crate) docstore: PathBuf,
     pub(crate) model: PathBuf,
+    pub(crate) model_context_length: usize,
     pub(crate) embed_url: Url,
     pub(crate) llm_url: Url,
 }
@@ -43,6 +44,7 @@ impl From<ServerArgs> for Config {
             index: value.index,
             docstore: value.docstore,
             model: value.model_name,
+            model_context_length: value.model_length,
             embed_url: value.embed_url,
             llm_url: value.vllm_url,
         }

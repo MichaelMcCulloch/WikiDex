@@ -39,8 +39,11 @@ async fn main() -> anyhow::Result<()> {
             let embedder: Embedder = Embedder::new(config.embed_url)?;
             let docstore = SqliteDocstore::new(&config.docstore).await?;
             let index = FaissIndex::new(&config.index)?;
-            let llm =
-                OpenAiService::new(config.llm_url, config.model.to_str().unwrap().to_string());
+            let llm = OpenAiService::new(
+                config.llm_url,
+                config.model.to_str().unwrap().to_string(),
+                config.model_context_length,
+            );
 
             let engine = InferenceEngine::new(Mutex::new(index), embedder, docstore, llm);
 
@@ -59,10 +62,17 @@ async fn main() -> anyhow::Result<()> {
                 .unwrap();
 
             let config = config::ingest::Config::from(ingest_args);
-            let embedder: Embedder = Embedder::new(config.embed_url)?;
-            let llm =
-                OpenAiService::new(config.llm_url, config.model.to_str().unwrap().to_string());
 
+            log::info!("\n{config}");
+
+            let embedder: Embedder = Embedder::new(config.embed_url)?;
+            let llm = OpenAiService::new(
+                config.llm_url,
+                config.model.to_str().unwrap().to_string(),
+                config.model_context_length,
+            );
+
+            llm.wait_for_service().await?;
             let engine = WikipediaIngestEngine::new(embedder, llm, multi_progress);
 
             engine

@@ -16,13 +16,15 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update  &
     apt-get install -y pkg-config libssl-dev liblapack-dev libblas-dev libgomp1 && \
     rm -rf /var/lib/apt/lists/*
 COPY --from=builder /usr/src/omnipedia/build/bin/omnipedia /usr/local/bin/omnipedia
-
+ 
 
 CMD omnipedia \
+    server \
     --index "${INDEX_PATH}" \
     --docstore "${DOCSTORE_PATH}" \
     --model-name "${LLM_MODEL_NAME}" \
     --host 0.0.0.0 \
     --port "${OMNIPEDIA_CONT_PORT}" \
-    --embed-url "http://embeddings:${EMBED_CONT_PORT}" \
-    --vllm-url "http://vllm:${VLLM_CONT_PORT}/v1"
+    --embed-url "http://embeddings-amd:${EMBED_CONT_PORT}" \
+    --vllm-url "http://vllm-amd:${VLLM_CONT_PORT}/v1" \
+    --model-length "${MAX_MODEL_LEN}"

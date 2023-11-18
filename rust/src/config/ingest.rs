@@ -10,6 +10,7 @@ pub(crate) struct Config {
     pub(crate) wiki_xml: PathBuf,
     pub(crate) output_directory: PathBuf,
     pub(crate) model: PathBuf,
+    pub(crate) model_context_length: usize,
     pub(crate) embed_url: Url,
     pub(crate) llm_url: Url,
 }
@@ -19,6 +20,7 @@ impl From<WikipediaIngestArgs> for Config {
             wiki_xml: value.wiki_xml,
             output_directory: value.output_directory,
             model: value.model_name,
+            model_context_length: value.model_length,
             embed_url: value.embed_url,
             llm_url: value.vllm_url,
         }
@@ -32,6 +34,7 @@ impl Display for Config {
             model,
             embed_url,
             llm_url,
+            ..
         } = self;
 
         let wiki_xml = wiki_xml.display();

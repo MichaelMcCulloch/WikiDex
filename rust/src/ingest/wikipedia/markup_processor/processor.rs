@@ -1,4 +1,4 @@
-use crate::llm::{LlmInput, LlmService, LlmServiceError, OpenAiService};
+use crate::llm::{LlmInput, LlmServiceError, OpenAiService};
 
 use super::{
     super::{configurations::WIKIPEDIA_CONFIGURATION, helper::wiki::UnlabledDocument},
@@ -26,6 +26,6 @@ impl Process for WikiMarkupProcessor {
         let configuration = Configuration::new(WIKIPEDIA_CONFIGURATION);
         let parse = configuration.parse(markup).nodes;
         let process = process_to_article(&parse, &regexes, &self.llm).await;
-        todo!()
+        process
     }
 }

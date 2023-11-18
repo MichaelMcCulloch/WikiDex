@@ -117,7 +117,7 @@ impl QueryEngine for Engine {
                     conversation,
                 } = self
                     .llm
-                    .get_llm_answer(input)
+                    .get_llm_answer(input, None)
                     .await
                     .map_err(|e| QueryEngineError::LlmError(e))?;
 

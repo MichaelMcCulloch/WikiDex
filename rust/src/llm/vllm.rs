@@ -1,3 +1,5 @@
+use std::{thread, time::Duration};
+
 use async_openai::{
     config::OpenAIConfig,
     error::OpenAIError,
@@ -16,12 +18,17 @@ use super::{LlmInput, LlmMessage, LlmRole, LlmService, LlmServiceError};
 pub(crate) struct OpenAiService {
     client: Client<OpenAIConfig>,
     model_name: String,
+    pub(crate) model_context_length: usize,
 }
 
 #[async_trait::async_trait]
 impl LlmService for OpenAiService {
     type E = LlmServiceError;
-    async fn get_llm_answer(&self, input: LlmInput) -> Result<LlmInput, Self::E> {
+    async fn get_llm_answer(
+        &self,
+        input: LlmInput,
+        max_new_tokens: Option<u16>,
+    ) -> Result<LlmInput, Self::E> {
         let LlmInput {
             system,
             mut conversation,
@@ -41,7 +48,7 @@ impl LlmService for OpenAiService {
         }
 
         let request = CreateChatCompletionRequestArgs::default()
-            .max_tokens(2048u16)
+            .max_tokens(max_new_tokens.unwrap_or(2048u16))
             .model(self.model_name.clone())
             .messages(message_openai_compat)
             .build()
@@ -80,11 +87,40 @@ impl LlmService for OpenAiService {
 }
 
 impl OpenAiService {
-    pub(crate) fn new<S: AsRef<str>>(host: Url, model_name: S) -> Self {
+    pub(crate) fn new<S: AsRef<str>>(
+        host: Url,
+        model_name: S,
+        model_context_length: usize,
+    ) -> Self {
         let openai_config = OpenAIConfig::new().with_api_base(host);
         let client = Client::with_config(openai_config);
         let model_name = model_name.as_ref().to_string();
-        Self { client, model_name }
+        Self {
+            client,
+            model_name,
+            model_context_length,
+        }
+    }
+
+    pub(crate) async fn wait_for_service(&self) -> Result<(), LlmServiceError> {
+        let request = CreateChatCompletionRequestArgs::default()
+            .max_tokens(1u16)
+            .model(self.model_name.clone())
+            .messages(vec![])
+            .build()
+            .map_err(|e| LlmServiceError::OpenAIError(e))?;
+        let mut i = 1;
+        loop {
+            match self.client.chat().create(request.clone()).await {
+                Ok(_) => break,
+                _ => {
+                    thread::sleep(Duration::from_secs(i));
+                    i *= 2;
+                }
+            };
+        }
+
+        Ok(())
     }
 }
 

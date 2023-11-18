@@ -6,13 +6,12 @@ use super::{
     },
     gzip_helper::{compress_text, decompress_text},
 };
-use actix_web::rt;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use indicatif::ProgressBar;
 use markup_processor::WikiMarkupProcessor;
 use parse_mediawiki_dump_reboot::{schema::Namespace, Page};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use std::{fs::File, io::BufReader, path::Path, sync::Arc};
+use std::{fs::File, io::BufReader, path::Path};
 
 pub(crate) fn get_date_from_xml_name<P: AsRef<Path>>(
     file_name: &P,
@@ -71,7 +70,7 @@ pub(crate) fn get_eligible_pages(file: BufReader<File>, progress_bar: &ProgressB
     let eligible_pages = parse
         .filter_map(Result::ok)
         .filter(page_filter)
-        .take(1000)
+        .take(40000)
         .map(|page| {
             progress_bar.inc(1);
             page

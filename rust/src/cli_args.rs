@@ -31,6 +31,8 @@ pub(crate) struct WikipediaIngestArgs {
     pub(crate) vllm_url: Url,
     #[arg(short, long)]
     pub(crate) model_name: PathBuf,
+    #[arg(short, long)]
+    pub(crate) model_length: usize,
 }
 
 #[derive(Parser, Debug)]
@@ -51,4 +53,6 @@ pub(crate) struct ServerArgs {
     pub(crate) vllm_url: Url,
     #[arg(short, long)]
     pub(crate) model_name: PathBuf,
+    #[arg(short, long)]
+    pub(crate) model_length: usize,
 }
