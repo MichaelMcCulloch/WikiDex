@@ -2,10 +2,7 @@ use std::cmp::min;
 
 use crate::{
     ingest::wikipedia::helper::wiki::{DescribedTable, UnlabledDocument},
-    llm::{
-        AsyncLlmService, LlmInput, LlmMessage, LlmRole, LlmService, LlmServiceError,
-        SyncOpenAiService,
-    },
+    llm::{LlmInput, LlmMessage, LlmRole, LlmServiceError, SyncLlmService, SyncOpenAiService},
 };
 
 const ESTIMATED_CONTROL_TOKENS_IN_PROMPT: usize = 10;
