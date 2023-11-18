@@ -5,14 +5,14 @@ use crate::{
     llm::{LlmInput, LlmMessage, LlmRole, LlmServiceError, SyncLlmService, SyncOpenAiService},
 };
 
-const ESTIMATED_CONTROL_TOKENS_IN_PROMPT: usize = 10;
+const ESTIMATED_CONTROL_TOKENS_IN_PROMPT: usize = 30;
 const ROOM_FOR_SUMMARY: usize = 2048;
 
 pub(crate) fn process_table_to_llm(
     table: &str,
     client: &SyncOpenAiService,
 ) -> Result<UnlabledDocument, LlmServiceError> {
-    let system = String::from("Interpret and summarize the following (possibly truncated) HTML table in a concise, plain English description.");
+    let system = format!("You are a helpful assistant that translates HTML formatted tables or table fragments into a concise, complete and coherent paragraph of facts. Rewrite the table provided by the user into a concise paragraph, containing all the facts enumerated by the table.");
 
     let table_str_chars = table.chars().collect::<Vec<_>>();
 
@@ -31,9 +31,21 @@ pub(crate) fn process_table_to_llm(
         }],
     };
 
-    let output = client.get_llm_answer(message, Some(2048));
-
-    let description = output.and_then(|m| Ok(m.content))?;
+    let description = client
+        .get_llm_answer(message, Some(2048))
+        .and_then(|m| {
+            if m.content.is_empty() || m.content == "\n" {
+                log::error!("{}", LlmServiceError::EmptyResponse);
+                Err(LlmServiceError::EmptyResponse)
+            } else {
+                log::info!("{}", m.content);
+                Ok(m.content)
+            }
+        })
+        .map_err(|e| {
+            log::error!("{e}");
+            e
+        })?;
 
     Ok(UnlabledDocument::from_str_and_vec(
         String::new(),

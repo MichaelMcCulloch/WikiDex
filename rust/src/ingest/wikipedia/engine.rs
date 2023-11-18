@@ -73,6 +73,9 @@ impl Engine {
 
         let pages_decompressed_bar =
             h::progress::new_progress_bar(&self.multi_progress, pages.len() as u64);
+        self.markup_processor
+            .wait_for_ready()
+            .map_err(LlmServiceError)?;
         let documents = h::wiki::decompress_articles_into_documents_and_tables(
             pages,
             &pages_decompressed_bar,
@@ -108,6 +111,7 @@ impl Ingest for Engine {
 
                 if !h::sql::database_is_complete(&docstore_pool)? {
                     log::info!("Preparing docstore DB...");
+
                     self.create_docstore_database(&markup_pool, &docstore_pool)?;
                 }
                 log::info!("Docstore DB is ready at {}", docstore_db_path.display());

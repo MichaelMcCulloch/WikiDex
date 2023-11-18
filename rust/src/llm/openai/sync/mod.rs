@@ -6,9 +6,10 @@ pub(crate) use error::SynchronousOpenAiClientError;
 
 use backoff::{retry, Error, ExponentialBackoff};
 use client::{OpenAIClient, SyncOpenAiClient};
+use serde_json::Value;
 use url::Url;
 
-use crate::llm::{protocol::OpenAiJsonFormat, LlmMessage, LlmRole};
+use crate::llm::{LlmMessage, LlmRole};
 
 use super::super::{LlmInput, LlmServiceError, SyncLlmService};
 
@@ -25,7 +26,7 @@ impl SyncLlmService for SyncOpenAiService {
         input: LlmInput,
         max_new_tokens: Option<u16>,
     ) -> Result<LlmMessage, Self::E> {
-        let compat: Result<OpenAiJsonFormat, <SyncOpenAiService as SyncLlmService>::E> =
+        let compat: Result<Vec<LlmMessage>, <SyncOpenAiService as SyncLlmService>::E> =
             input.into();
         let response = self
             .client
@@ -43,7 +44,8 @@ impl SyncLlmService for SyncOpenAiService {
                 .into_iter()
                 .next()
                 .ok_or(LlmServiceError::EmptyResponse)?
-                .text,
+                .message
+                .content,
         })
     }
     fn wait_for_service(&self) -> Result<(), LlmServiceError> {

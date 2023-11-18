@@ -1,11 +1,11 @@
-use std::error::Error;
+use std::{error::Error, time::Duration};
 
 use async_openai::config::{Config, OpenAIConfig};
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use serde_json::{json, Value};
 
-use crate::llm::protocol::OpenAiJsonFormat;
+use crate::llm::LlmMessage;
 
 use super::SynchronousOpenAiClientError::{self, ReqwestError};
 
@@ -18,8 +18,7 @@ pub(crate) struct LlmResponseUsage {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub(crate) struct LlmResponseChoices {
     pub(crate) index: usize,
-    pub(crate) text: String,
-    pub(crate) logprobs: Option<Vec<f32>>,
+    pub(crate) message: LlmMessage,
     pub(crate) finish_reason: String,
 }
 
@@ -41,7 +40,10 @@ pub(crate) struct SyncOpenAiClient {
 impl SyncOpenAiClient {
     pub(crate) fn with_config(config: OpenAIConfig) -> Self {
         Self {
-            client: Client::new(),
+            client: Client::builder()
+                .timeout(Duration::from_secs(360))
+                .build()
+                .unwrap(),
             config,
         }
     }
@@ -52,7 +54,7 @@ pub(crate) trait OpenAIClient {
     fn test(&self, model: &str) -> Result<(), Self::E>;
     fn get_completion_for_conversation(
         &self,
-        input: OpenAiJsonFormat,
+        input: Vec<LlmMessage>,
         model: &str,
         max_tokens: u16,
     ) -> Result<LlmResponse, Self::E>;
@@ -89,7 +91,7 @@ impl OpenAIClient for SyncOpenAiClient {
 
     fn get_completion_for_conversation(
         &self,
-        input: OpenAiJsonFormat,
+        input: Vec<LlmMessage>,
         model: &str,
         max_tokens: u16,
     ) -> Result<LlmResponse, Self::E> {
@@ -98,9 +100,12 @@ impl OpenAIClient for SyncOpenAiClient {
             .post(self.config.url("/chat/completions"))
             .json(&json!({
                 "model": model,
-                "messages": input.messages,
+                "messages": input,
                 "max_tokens": max_tokens,
-                "temperature": 0
+                "temperature": 1,
+                "top_p": 1,
+                "frequency_penalty": 0,
+                "presence_penalty": 0
             }))
             .headers(self.config.headers())
             .send()

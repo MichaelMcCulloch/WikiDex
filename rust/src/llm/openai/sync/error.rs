@@ -11,9 +11,14 @@ impl std::error::Error for SynchronousOpenAiClientError {}
 impl Display for SynchronousOpenAiClientError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
-            SynchronousOpenAiClientError::ReqwestError(err) => write!(f, "OpenAiClient: {}", err),
+            SynchronousOpenAiClientError::ReqwestError(err) => {
+                write!(f, "SynchronousOpenAiClientError: {}", err)
+            }
             SynchronousOpenAiClientError::EmptyResponse => {
-                write!(f, "OpenAiClient: Empty Response from service")
+                write!(
+                    f,
+                    "SynchronousOpenAiClientError: Empty Response from service"
+                )
             }
         }
     }

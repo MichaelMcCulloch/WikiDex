@@ -1,4 +1,4 @@
-use crate::llm::{AsyncOpenAiService, LlmInput, LlmServiceError, SyncOpenAiService};
+use crate::llm::{LlmServiceError, SyncLlmService, SyncOpenAiService};
 
 use super::{
     super::{configurations::WIKIPEDIA_CONFIGURATION, helper::wiki::UnlabledDocument},
@@ -17,8 +17,11 @@ impl WikiMarkupProcessor {
     pub(crate) fn new(llm: SyncOpenAiService) -> Self {
         Self { llm: Arc::new(llm) }
     }
+
+    pub(crate) fn wait_for_ready(&self) -> Result<(), LlmServiceError> {
+        self.llm.wait_for_service()
+    }
 }
-#[async_trait::async_trait]
 impl Process for WikiMarkupProcessor {
     type E = WikiMarkupProcessingError;
     fn process(&self, markup: &str) -> Result<UnlabledDocument, Self::E> {

@@ -9,6 +9,7 @@ use async_openai::{
     },
 };
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 
 use super::{
     AsyncLlmService, AsyncOpenAiService, LlmServiceError, SyncLlmService, SyncOpenAiService,
@@ -29,12 +30,8 @@ pub(crate) enum LlmRole {
     Tool,
 }
 
-pub(crate) struct OpenAiJsonFormat {
-    pub(crate) messages: String,
-}
-
-impl Into<Result<OpenAiJsonFormat, <SyncOpenAiService as SyncLlmService>::E>> for LlmInput {
-    fn into(self) -> Result<OpenAiJsonFormat, <SyncOpenAiService as SyncLlmService>::E> {
+impl Into<Result<Vec<LlmMessage>, <SyncOpenAiService as SyncLlmService>::E>> for LlmInput {
+    fn into(self) -> Result<Vec<LlmMessage>, <SyncOpenAiService as SyncLlmService>::E> {
         let Self {
             system,
             conversation,
@@ -46,10 +43,7 @@ impl Into<Result<OpenAiJsonFormat, <SyncOpenAiService as SyncLlmService>::E>> fo
         }];
 
         messages.extend(conversation);
-        Ok(OpenAiJsonFormat {
-            messages: serde_json::to_string(&messages)
-                .map_err(LlmServiceError::SerializeConversation)?,
-        })
+        Ok(messages)
     }
 }
 impl Into<Result<Vec<ChatCompletionRequestMessage>, <AsyncOpenAiService as AsyncLlmService>::E>>
@@ -163,9 +157,9 @@ mod test {
             ],
         };
 
-        let compat: Result<OpenAiJsonFormat, <AsyncOpenAiService as AsyncLlmService>::E> =
+        let compat: Result<Vec<LlmMessage>, <AsyncOpenAiService as AsyncLlmService>::E> =
             input.into();
 
-        println!("{}", compat.unwrap().messages)
+        println!("{}", serde_json::to_string(&compat.unwrap()).unwrap())
     }
 }

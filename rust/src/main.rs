@@ -72,7 +72,6 @@ async fn main() -> anyhow::Result<()> {
                 config.model_context_length,
             );
 
-            llm.wait_for_service()?;
             let engine = WikipediaIngestEngine::new(embedder, llm, multi_progress);
 
             engine.ingest_wikipedia(&config.wiki_xml, &config.output_directory)?;

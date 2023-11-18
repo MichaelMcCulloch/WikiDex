@@ -5,6 +5,8 @@ use std::{
     path::PathBuf,
 };
 
+use crate::llm::LlmServiceError;
+
 #[derive(Debug)]
 pub(crate) enum IngestError {
     XmlNotFound(PathBuf),
@@ -13,6 +15,7 @@ pub(crate) enum IngestError {
     R2D2Error(r2d2::Error),
     XmlDateReadError,
     RuSqliteError(r2d2_sqlite::rusqlite::Error),
+    LlmServiceError(LlmServiceError),
 }
 
 impl Error for IngestError {}
@@ -41,6 +44,7 @@ impl Display for IngestError {
             IngestError::XmlDateReadError => {
                 write!(f, "IngestEngine: Unable to read data from XML File Name.",)
             }
+            IngestError::LlmServiceError(error) => write!(f, "{error}"),
         }
     }
 }
