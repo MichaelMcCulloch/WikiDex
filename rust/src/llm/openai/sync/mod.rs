@@ -26,7 +26,7 @@ impl SyncLlmService for SyncOpenAiService {
         Ok(input)
     }
     fn wait_for_service(&self) -> Result<(), LlmServiceError> {
-        let op = || self.client.test().map_err(Error::transient);
+        let op = || self.client.test(&self.model_name).map_err(Error::transient);
 
         let _ = retry(ExponentialBackoff::default(), op);
 

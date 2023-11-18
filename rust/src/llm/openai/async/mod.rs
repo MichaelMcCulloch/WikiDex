@@ -94,7 +94,8 @@ impl AsyncLlmService for AsyncOpenAiService {
         retry(ExponentialBackoff::default(), || async {
             Ok(self.client.chat().create(request.clone()).await?)
         })
-        .await;
+        .await
+        .map_err(LlmServiceError::OpenAIError)?;
 
         Ok(())
     }

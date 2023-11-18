@@ -2,6 +2,7 @@ use std::error::Error;
 
 use async_openai::config::{Config, OpenAIConfig};
 use reqwest::blocking::Client;
+use serde_json::json;
 
 use super::OpenAiClientError::{self, ReqwestError};
 
@@ -21,18 +22,24 @@ impl SyncOpenAiClient {
 
 pub(crate) trait OpenAIClient {
     type E: Error;
-    fn test(&self) -> Result<(), Self::E>;
+    fn test(&self, model: &str) -> Result<(), Self::E>;
 }
 
 impl OpenAIClient for SyncOpenAiClient {
     type E = OpenAiClientError;
-    fn test(&self) -> Result<(), Self::E> {
+    fn test(&self, model: &str) -> Result<(), Self::E> {
         self.client
-            .head(self.config.api_base())
+            .post(self.config.url("/completions"))
+            .json(&json!({
+                "model": model,
+                "prompt": "Faux Head Request.",
+                "max_tokens": 1,
+                "temperature": 0
+            }))
             .headers(self.config.headers())
             .send()
             .map_err(ReqwestError)?
-            .text()
+            .bytes()
             .map_err(ReqwestError)?;
 
         Ok(())
