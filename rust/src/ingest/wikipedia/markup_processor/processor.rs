@@ -21,11 +21,11 @@ impl WikiMarkupProcessor {
 #[async_trait::async_trait]
 impl Process for WikiMarkupProcessor {
     type E = WikiMarkupProcessingError;
-    async fn process(&self, markup: &str) -> Result<UnlabledDocument, Self::E> {
+    fn process(&self, markup: &str) -> Result<UnlabledDocument, Self::E> {
         let regexes = Regexes::new();
         let configuration = Configuration::new(WIKIPEDIA_CONFIGURATION);
         let parse = configuration.parse(markup).nodes;
-        let process = process_to_article(&parse, &regexes, &self.llm).await;
+        let process = process_to_article(&parse, &regexes, &self.llm);
         process
     }
 }

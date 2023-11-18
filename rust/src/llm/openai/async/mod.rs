@@ -97,34 +97,3 @@ impl AsyncOpenAiService {
         }
     }
 }
-
-fn role_message_to_request_message(
-    role: &LlmRole,
-    message: &str,
-) -> Result<ChatCompletionRequestMessage, OpenAIError> {
-    match role {
-        LlmRole::System => ChatCompletionRequestSystemMessageArgs::default()
-            .content(message)
-            .build()
-            .map(|e| ChatCompletionRequestMessage::System(e)),
-        LlmRole::User => ChatCompletionRequestUserMessageArgs::default()
-            .content(message)
-            .build()
-            .map(|e| ChatCompletionRequestMessage::User(e)),
-
-        LlmRole::Assistant => ChatCompletionRequestAssistantMessageArgs::default()
-            .content(message)
-            .build()
-            .map(|e| ChatCompletionRequestMessage::Assistant(e)),
-
-        LlmRole::Tool => ChatCompletionRequestToolMessageArgs::default()
-            .content(message)
-            .build()
-            .map(|e| ChatCompletionRequestMessage::Tool(e)),
-
-        LlmRole::Function => ChatCompletionRequestFunctionMessageArgs::default()
-            .content(message)
-            .build()
-            .map(|e| ChatCompletionRequestMessage::Function(e)),
-    }
-}

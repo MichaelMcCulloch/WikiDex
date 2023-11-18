@@ -9,48 +9,48 @@ use crate::{
 
 use super::{nodes::nodes_to_string, Regexes};
 
-pub(super) async fn table_captions_to_string(
+pub(super) fn table_captions_to_string(
     table_captions: &Vec<TableCaption<'_>>,
     regexes: &Regexes,
     client: &SyncOpenAiService,
 ) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
     let mut documents = vec![];
     for tc in table_captions.iter() {
-        documents.push(table_caption_to_string(tc, regexes, client).await?)
+        documents.push(table_caption_to_string(tc, regexes, client)?)
     }
     Ok(UnlabledDocument::join_all(documents, &""))
 }
 
-pub(super) async fn table_rows_to_string(
+pub(super) fn table_rows_to_string(
     table_rows: &Vec<TableRow<'_>>,
     regexes: &Regexes,
     client: &SyncOpenAiService,
 ) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
     let mut documents = vec![];
     for tr in table_rows.iter() {
-        documents.push(table_row_to_string(tr, regexes, client).await?)
+        documents.push(table_row_to_string(tr, regexes, client)?)
     }
     Ok(UnlabledDocument::join_all(documents, &""))
 }
 
-pub(super) async fn table_cells_to_string(
+pub(super) fn table_cells_to_string(
     table_cells: &Vec<TableCell<'_>>,
     regexes: &Regexes,
     client: &SyncOpenAiService,
 ) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
     let mut documents: Vec<UnlabledDocument> = vec![];
     for tc in table_cells.iter() {
-        documents.push(table_cell_to_string(tc, regexes, client).await?)
+        documents.push(table_cell_to_string(tc, regexes, client)?)
     }
     Ok(UnlabledDocument::join_all(documents, &""))
 }
 
-pub(super) async fn table_cell_to_string(
+pub(super) fn table_cell_to_string(
     TableCell { content, type_, .. }: &TableCell<'_>,
     regexes: &Regexes,
     client: &SyncOpenAiService,
 ) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
-    let content = nodes_to_string(content, regexes, client).await?;
+    let content = nodes_to_string(content, regexes, client)?;
     let content = content.trim();
     if content.document.is_empty() {
         Ok(UnlabledDocument::new())
@@ -65,12 +65,12 @@ pub(super) async fn table_cell_to_string(
         ))
     }
 }
-pub(super) async fn table_row_to_string(
+pub(super) fn table_row_to_string(
     TableRow { cells, .. }: &TableRow<'_>,
     regexes: &Regexes,
     client: &SyncOpenAiService,
 ) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
-    let cells = table_cells_to_string(cells, regexes, client).await?;
+    let cells = table_cells_to_string(cells, regexes, client)?;
     if cells.document.is_empty() {
         Ok(UnlabledDocument::new())
     } else {
@@ -80,10 +80,10 @@ pub(super) async fn table_row_to_string(
         ))
     }
 }
-pub(super) async fn table_caption_to_string(
+pub(super) fn table_caption_to_string(
     TableCaption { content, .. }: &TableCaption<'_>,
     regexes: &Regexes,
     client: &SyncOpenAiService,
 ) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
-    nodes_to_string(content, regexes, client).await
+    nodes_to_string(content, regexes, client)
 }

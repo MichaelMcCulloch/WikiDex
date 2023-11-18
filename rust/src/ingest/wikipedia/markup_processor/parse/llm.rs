@@ -8,7 +8,7 @@ use crate::{
 const ESTIMATED_CONTROL_TOKENS_IN_PROMPT: usize = 10;
 const ROOM_FOR_SUMMARY: usize = 2048;
 
-pub(crate) async fn process_table_to_llm(
+pub(crate) fn process_table_to_llm(
     table: &str,
     client: &SyncOpenAiService,
 ) -> Result<UnlabledDocument, LlmServiceError> {

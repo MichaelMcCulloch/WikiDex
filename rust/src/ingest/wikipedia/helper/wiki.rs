@@ -200,40 +200,29 @@ pub(crate) async fn decompress_articles_into_documents_and_tables(
     progress_bar.set_message("Decompressing Markup...");
 
     let documents = compressed_pages
-        .into_iter()
-        .map(
+        .into_par_iter()
+        .filter_map(
             |CompressedPageWithAccessDate {
                  gzipped_text,
                  article_title,
                  access_date,
              }| {
-                let progress_bar = progress_bar.clone();
-                let markup_processor = markup_processor.clone();
-                actix_rt::spawn(async move {
-                    let markup = decompress_text(gzipped_text).ok()?;
+                let markup = decompress_text(gzipped_text).ok()?;
 
-                    let document = markup_processor.process(&markup).await.ok()?;
+                let document = markup_processor.process(&markup).ok()?;
 
-                    progress_bar.inc(1);
-                    Some(Document {
-                        document: document.document,
-                        table: document.table,
-                        article_title,
-                        access_date,
-                        modification_datae: access_date,
-                    })
+                progress_bar.inc(1);
+                Some(Document {
+                    document: document.document,
+                    table: document.table,
+                    article_title,
+                    access_date,
+                    modification_datae: access_date,
                 })
             },
         )
         .collect::<Vec<_>>();
 
     progress_bar.set_message("Decompressing Markup...DONE");
-    // documents
-    let documents = futures::future::join_all(documents)
-        .await
-        .into_iter()
-        .filter_map(Result::ok)
-        .filter_map(|e| e)
-        .collect::<Vec<_>>();
     documents
 }
