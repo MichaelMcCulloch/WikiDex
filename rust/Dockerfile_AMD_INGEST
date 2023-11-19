@@ -22,7 +22,7 @@ CMD omnipedia \
     wikipedia \
     --wiki-xml "/wikidump/enwiki-20231101-pages-articles-multistream.xml" \
     --output-directory "/wikidump" \
-    --model-name "TheBloke/zephyr-7B-alpha-AWQ" \
+    --model-name "${LLM_MODEL_NAME}" \
     --embed-url "http://embeddings-amd:${EMBED_CONT_PORT}" \
     --vllm-url "http://vllm-amd:${VLLM_CONT_PORT}/v1" \
     --model-length "${MAX_MODEL_LEN}"
