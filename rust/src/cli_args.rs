@@ -14,12 +14,12 @@ pub(crate) struct Cli {
 #[derive(Subcommand)]
 pub(crate) enum Commands {
     Server(ServerArgs),
-    Ingest(IngestArgs),
+    Wikipedia(WikipediaIngestArgs),
 }
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
-pub(crate) struct IngestArgs {
+pub(crate) struct WikipediaIngestArgs {
     #[arg(short, long)]
     pub(crate) wiki_xml: PathBuf,
     #[arg(short, long)]
@@ -31,6 +31,8 @@ pub(crate) struct IngestArgs {
     pub(crate) vllm_url: Url,
     #[arg(short, long)]
     pub(crate) model_name: PathBuf,
+    #[arg(short, long)]
+    pub(crate) model_length: usize,
 }
 
 #[derive(Parser, Debug)]
@@ -51,4 +53,6 @@ pub(crate) struct ServerArgs {
     pub(crate) vllm_url: Url,
     #[arg(short, long)]
     pub(crate) model_name: PathBuf,
+    #[arg(short, long)]
+    pub(crate) model_length: usize,
 }

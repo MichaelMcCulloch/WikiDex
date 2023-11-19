@@ -1,9 +1,27 @@
 use std::error::Error;
 
-use super::LlmInput;
+use super::{LlmInput, LlmMessage};
+
+pub(crate) trait LlmServiceImpl {}
 
 #[async_trait::async_trait]
-pub(crate) trait LlmService {
+pub(crate) trait AsyncLlmService {
     type E: Error;
-    async fn get_llm_answer(&self, input: LlmInput) -> Result<LlmInput, Self::E>;
+    async fn get_llm_answer(
+        &self,
+        input: LlmInput,
+        max_new_tokens: Option<u16>,
+    ) -> Result<LlmMessage, Self::E>;
+    async fn wait_for_service(&self) -> Result<(), Self::E>;
+}
+
+pub(crate) trait SyncLlmService {
+    type E: Error;
+    fn get_llm_answer(
+        &self,
+        input: LlmInput,
+        max_new_tokens: Option<u16>,
+    ) -> Result<LlmMessage, Self::E>;
+
+    fn wait_for_service(&self) -> Result<(), Self::E>;
 }

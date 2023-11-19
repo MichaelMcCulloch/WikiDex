@@ -2,7 +2,6 @@ version: "3.3"
 
 x-base_service: &base_service
   stop_signal: SIGTERM
-  profiles: ["nvidia", "amd"]
   tty: true
   stdin_open: true
   env_file: .env
@@ -10,7 +9,7 @@ x-base_service: &base_service
 
 x-base_service_nvidia: &base_service_nvidia
   <<: *base_service
-  profiles: ["nvidia"]
+  profiles: ["nvidia", "nvidia_ingest"]
   deploy:
     resources:
       reservations:
@@ -21,70 +20,105 @@ x-base_service_nvidia: &base_service_nvidia
 
 x-base_service_amd: &base_service_amd
   <<: *base_service
-  profiles: ["amd"]
+  profiles: ["amd", "amd_ingest"]
   group_add:
     - video
   devices:
     - "/dev/dri"
     - "/dev/kfd"
 
+x-base_service_vllm: &base_vllm
+  ports:
+    - "${VLLM_HOST_PORT}:${VLLM_CONT_PORT}"
+
+x-base_service_omnipedia: &base_omnipedia
+  ports:
+    - "${OMNIPEDIA_HOST_PORT}:${OMNIPEDIA_CONT_PORT}"
+  volumes:
+    - ./rust/db:/db
+
+x-base_service_omnipedia_ingest: &base_omnipedia_ingest
+  ports:
+    - "${OMNIPEDIA_HOST_PORT}:${OMNIPEDIA_CONT_PORT}"
+  volumes:
+    - ./wikidump:/wikidump
+
+x-base_service_embeddings: &base_embeddings
+  ports:
+    - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
+
 services:
   ui:
-    <<: *base_service
+    <<:
+      - *base_service
     build:
       dockerfile: Dockerfile
       context: ./typescript
-    ports:
-      - "${UI_HOST_PORT}:${UI_CONT_PORT}"
 
   vllm-nv:
-    <<: *base_service_nvidia
+    <<:
+      - *base_service_nvidia
+      - *base_vllm
     build:
       dockerfile: Dockerfile_NVIDIA
       context: ./vllm
-    ports:
-      - "${VLLM_HOST_PORT}:${VLLM_CONT_PORT}"
 
   omnipedia-nv:
-    <<: *base_service_nvidia
+    <<:
+      - *base_service_nvidia
+      - *base_omnipedia
+    profiles: ["nvidia"]
     build:
       dockerfile: Dockerfile_NVIDIA
       context: ./rust
-    ports:
-      - "${OMNIPEDIA_HOST_PORT}:${OMNIPEDIA_CONT_PORT}"
-    volumes:
-      - ./rust/db:/db
+
+  omnipedia-ingest-nv:
+    <<:
+      - *base_service_nvidia
+      - *base_omnipedia_ingest
+    profiles: ["nvidia_ingest"]
+    build:
+      dockerfile: Dockerfile_NVIDIA_INGEST
+      context: ./rust
 
   embeddings-nv:
-    <<: *base_service_nvidia
+    <<:
+      - *base_service_nvidia
+      - *base_embeddings
     build:
       dockerfile: Dockerfile_NVIDIA
       context: ./embeddings_service
-    ports:
-      - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
 
   vllm-amd:
-    <<: *base_service_amd
+    <<:
+      - *base_service_amd
+      - *base_vllm
     build:
       dockerfile: Dockerfile_AMD
       context: ./vllm
-    ports:
-      - "${VLLM_HOST_PORT}:${VLLM_CONT_PORT}"
 
   omnipedia-amd:
-    <<: *base_service_amd
+    <<:
+      - *base_service_amd
+      - *base_omnipedia
+    profiles: ["amd"]
     build:
       dockerfile: Dockerfile_AMD
       context: ./rust
-    ports:
-      - "${OMNIPEDIA_HOST_PORT}:${OMNIPEDIA_CONT_PORT}"
-    volumes:
-      - ./rust/db:/db
+
+  omnipedia-ingest-amd:
+    <<:
+      - *base_service_amd
+      - *base_omnipedia_ingest
+    profiles: ["amd_ingest"]
+    build:
+      dockerfile: Dockerfile_AMD_INGEST
+      context: ./rust
 
   embeddings-amd:
-    <<: *base_service_amd
+    <<:
+      - *base_service_amd
+      - *base_embeddings
     build:
       dockerfile: Dockerfile_AMD
       context: ./embeddings_service
-    ports:
-      - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"

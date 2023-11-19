@@ -19,12 +19,10 @@ COPY --from=builder /usr/src/omnipedia/build/bin/omnipedia /usr/local/bin/omnipe
 
 
 CMD omnipedia \
-    server \
-    --index "${INDEX_PATH}" \
-    --docstore "${DOCSTORE_PATH}" \
+    wikipedia \
+    --wiki-xml "/wikidump/enwiki-20231101-pages-articles-multistream.xml" \
+    --output-directory "/wikidump" \
     --model-name "${LLM_MODEL_NAME}" \
-    --host 0.0.0.0 \
-    --port "${OMNIPEDIA_CONT_PORT}" \
-    --embed-url "http://embeddings-nv:${EMBED_CONT_PORT}" \
-    --vllm-url "http://vllm-nv:${VLLM_CONT_PORT}/v1" \
+    --embed-url "http://embeddings-amd:${EMBED_CONT_PORT}" \
+    --vllm-url "http://vllm-amd:${VLLM_CONT_PORT}/v1" \
     --model-length "${MAX_MODEL_LEN}"
