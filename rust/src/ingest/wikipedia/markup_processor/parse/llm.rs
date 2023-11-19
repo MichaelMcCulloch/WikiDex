@@ -12,7 +12,7 @@ pub(crate) fn process_table_to_llm(
     table: &str,
     client: &SyncOpenAiService,
 ) -> Result<UnlabledDocument, LlmServiceError> {
-    let system = format!("You are a helpful assistant that translates HTML formatted tables or table fragments into a concise, complete and coherent paragraph of facts. Rewrite the table provided by the user into a concise paragraph, containing all the facts enumerated by the table.");
+    let system = format!("You are a helpful assistant that transforms the data provided into a concise summary paragraph of text coveying only the purpose of the data.");
 
     let table_str_chars = table.chars().collect::<Vec<_>>();
 
