@@ -12,7 +12,9 @@ use super::{
 };
 use crate::{
     ingest::wikipedia::{
-        helper::wiki::UnlabledDocument, markup_processor::Process, WikiMarkupProcessor,
+        helper::wiki::{DescribedTable, UnlabledDocument},
+        markup_processor::Process,
+        WikiMarkupProcessor,
     },
     llm::SyncOpenAiService,
 };
@@ -24,11 +26,14 @@ pub(crate) const STOP_PHRASES: [&str; 5] = [
     "Further reading",
     "External links",
 ];
+
+pub(crate) type ParseResult = Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E>;
+
 pub(crate) fn process_to_article(
     nodes: &[Node<'_>],
     regexes: &Regexes,
     client: &SyncOpenAiService,
-) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
+) -> ParseResult {
     nodes_to_string(&nodes, regexes, client)
 }
 
@@ -36,7 +41,7 @@ pub(super) fn nodes_to_string(
     nodes: &[Node<'_>],
     regexes: &Regexes,
     client: &SyncOpenAiService,
-) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
+) -> ParseResult {
     let mut documents = vec![];
     for n in nodes.iter() {
         match n {
@@ -61,7 +66,7 @@ pub(super) fn node_to_string(
     node: &Node<'_>,
     regexes: &Regexes,
     client: &SyncOpenAiService,
-) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
+) -> ParseResult {
     match node {
         Node::Bold { .. }
         | Node::BoldItalic { .. }
@@ -108,16 +113,36 @@ pub(super) fn node_to_string(
         // Node::Table { .. } => String::new(),
         Node::Table { captions, rows, .. } => {
             let captions = table_captions_to_string(captions, regexes, client)?;
-            let rows = table_rows_to_string(rows, regexes, client)?;
-            let table = if captions.document.is_empty() {
-                format!("\n<table>\n{}</table>\n", rows.document)
+
+            if let Some((rows, rows_for_summary)) = table_rows_to_string(rows, regexes, client)? {
+                let table = if captions.document.is_empty() {
+                    format!("\n<table>\n{}</table>\n", rows.document)
+                } else {
+                    format!(
+                        "\n<table caption='{}'>\n{}</table>\n",
+                        captions.document, rows.document
+                    )
+                };
+                let table_for_summary = if captions.document.is_empty() {
+                    format!("\n<table>\n{}</table>\n", rows_for_summary.document)
+                } else {
+                    format!(
+                        "\n<table caption='{}'>\n{}</table>\n",
+                        captions.document, rows_for_summary.document
+                    )
+                };
+                let description =
+                    process_table_to_llm(&table_for_summary, client).map_err(LlmError)?;
+                Ok(UnlabledDocument::from_str_and_vec(
+                    String::new(),
+                    vec![DescribedTable {
+                        description,
+                        table: table.to_string(),
+                    }],
+                ))
             } else {
-                format!(
-                    "\n<table caption='{}'>\n{}</table>\n",
-                    captions.document, rows.document
-                )
-            };
-            process_table_to_llm(&table, client).map_err(LlmError)
+                Ok(UnlabledDocument::new())
+            }
         }
         Node::Template {
             name, parameters, ..

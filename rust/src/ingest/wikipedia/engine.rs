@@ -47,9 +47,11 @@ impl Engine {
 
         let eligible_pages_bar = h::progress::new_progress_bar(&self.multi_progress, 7000000);
         let eligible_pages = h::wiki::get_eligible_pages(file, &eligible_pages_bar);
+
         let pages_compressed_bar =
             h::progress::new_progress_bar(&self.multi_progress, eligible_pages.len() as u64);
         let pages_compressed = h::wiki::compress_articles(eligible_pages, &pages_compressed_bar);
+
         let article_count = pages_compressed.len();
         let markup_written_bar =
             h::progress::new_progress_bar(&self.multi_progress, article_count as u64);

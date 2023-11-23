@@ -91,11 +91,12 @@ pub(crate) struct CompressedPageWithAccessDate {
     pub(crate) access_date: NaiveDateTime,
 }
 
+#[derive(Clone)]
 pub(crate) struct UnlabledDocument {
     pub(crate) document: String,
     pub(crate) table: Vec<DescribedTable>,
 }
-
+#[derive(Clone)]
 pub(crate) struct DescribedTable {
     pub(crate) description: String,
     pub(crate) table: String,

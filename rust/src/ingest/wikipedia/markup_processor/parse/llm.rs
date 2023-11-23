@@ -1,8 +1,7 @@
-use std::cmp::min;
+use std::{cmp::min, time::Instant};
 
-use crate::{
-    ingest::wikipedia::helper::wiki::{DescribedTable, UnlabledDocument},
-    llm::{LlmInput, LlmMessage, LlmRole, LlmServiceError, SyncLlmService, SyncOpenAiService},
+use crate::llm::{
+    LlmInput, LlmMessage, LlmRole, LlmServiceError, SyncLlmService, SyncOpenAiService,
 };
 
 const ESTIMATED_CONTROL_TOKENS_IN_PROMPT: usize = 30;
@@ -11,8 +10,9 @@ const ROOM_FOR_SUMMARY: usize = 512;
 pub(crate) fn process_table_to_llm(
     table: &str,
     client: &SyncOpenAiService,
-) -> Result<UnlabledDocument, LlmServiceError> {
-    let system = format!("You are a helpful assistant that transforms the data provided into a concise summary paragraph of text coveying only the purpose of the data.");
+) -> Result<String, LlmServiceError> {
+    // let system = format!("You are a helpful assistant that transforms the data provided into a concise summary paragraph conveying only the purpose of the data, based on the header and the first three rows. This table is incomplete.");
+    let system = format!("You are a helpful assistant that describes the purpose of the table based on the headers and a random subset of rows from the table.");
 
     let table_str_chars = table.chars().collect::<Vec<_>>();
 
@@ -23,6 +23,7 @@ pub(crate) fn process_table_to_llm(
             - system.len()
             - ESTIMATED_CONTROL_TOKENS_IN_PROMPT,
     );
+
     let message = LlmInput {
         system,
         conversation: vec![LlmMessage {
@@ -31,6 +32,8 @@ pub(crate) fn process_table_to_llm(
         }],
     };
 
+    let start = Instant::now();
+
     let description = client
         .get_llm_answer(message, Some(ROOM_FOR_SUMMARY as u16))
         .and_then(|m| {
@@ -38,7 +41,7 @@ pub(crate) fn process_table_to_llm(
                 log::error!("{}", LlmServiceError::EmptyResponse);
                 Err(LlmServiceError::EmptyResponse)
             } else {
-                log::info!("{}", m.content);
+                log::info!("{:?} :: {} :: {}", start.elapsed(), table, m.content);
                 Ok(m.content)
             }
         })
@@ -47,11 +50,5 @@ pub(crate) fn process_table_to_llm(
             e
         })?;
 
-    Ok(UnlabledDocument::from_str_and_vec(
-        String::new(),
-        vec![DescribedTable {
-            description,
-            table: table.to_string(),
-        }],
-    ))
+    Ok(description)
 }
