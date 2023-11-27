@@ -45,7 +45,8 @@ async fn main() -> anyhow::Result<()> {
                 config.model_context_length,
             );
 
-            let engine = InferenceEngine::new(Mutex::new(index), embedder, docstore, llm);
+            let engine =
+                InferenceEngine::new(Mutex::new(index), embedder, docstore, llm, config.prompt);
 
             let server = run_server(engine, config.host, config.port)?;
             server.await.map_err(anyhow::Error::from)

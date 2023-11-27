@@ -31,11 +31,16 @@ x-base_service_vllm: &base_vllm
   ports:
     - "${VLLM_HOST_PORT}:${VLLM_CONT_PORT}"
 
+x-base_service_ui: &base_ui
+  ports:
+    - "${UI_HOST_PORT}:${UI_CONT_PORT}"
+
 x-base_service_omnipedia: &base_omnipedia
   ports:
     - "${OMNIPEDIA_HOST_PORT}:${OMNIPEDIA_CONT_PORT}"
   volumes:
     - ./rust/db:/db
+    - ./rust/prompt:/prompt
 
 x-base_service_omnipedia_ingest: &base_omnipedia_ingest
   ports:
@@ -51,6 +56,7 @@ services:
   ui:
     <<:
       - *base_service
+      - *base_ui
     build:
       dockerfile: Dockerfile
       context: ./typescript
