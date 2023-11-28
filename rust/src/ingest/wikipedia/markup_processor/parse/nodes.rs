@@ -2,19 +2,15 @@ use parse_wiki_text::Node;
 use std::ops::Deref;
 
 use super::{
-    super::WikiMarkupProcessingError::LlmError,
     deflist::definition_list_items_to_string,
     listitems::{ordered_list_items_to_string, unordered_list_items_to_string},
-    llm::process_table_to_llm,
-    tables::{table_captions_to_string, table_rows_to_string},
+    tables::table_to_string,
     template_params::refn_parameters_to_string,
     Regexes,
 };
 use crate::{
     ingest::wikipedia::{
-        helper::wiki::{DescribedTable, UnlabledDocument},
-        markup_processor::Process,
-        WikiMarkupProcessor,
+        helper::wiki::UnlabledDocument, markup_processor::Process, WikiMarkupProcessor,
     },
     llm::SyncOpenAiService,
 };
@@ -110,40 +106,7 @@ pub(super) fn node_to_string(
         }
         Node::UnorderedList { items, .. } => unordered_list_items_to_string(items, regexes, client),
         Node::OrderedList { items, .. } => ordered_list_items_to_string(items, regexes, client),
-        // Node::Table { .. } => String::new(),
-        Node::Table { captions, rows, .. } => {
-            let captions = table_captions_to_string(captions, regexes, client)?;
-
-            if let Some((rows, rows_for_summary)) = table_rows_to_string(rows, regexes, client)? {
-                let table = if captions.document.is_empty() {
-                    format!("\n<table>\n{}</table>\n", rows.document)
-                } else {
-                    format!(
-                        "\n<table caption='{}'>\n{}</table>\n",
-                        captions.document, rows.document
-                    )
-                };
-                let table_for_summary = if captions.document.is_empty() {
-                    format!("\n<table>\n{}</table>\n", rows_for_summary.document)
-                } else {
-                    format!(
-                        "\n<table caption='{}'>\n{}</table>\n",
-                        captions.document, rows_for_summary.document
-                    )
-                };
-                let description =
-                    process_table_to_llm(&table_for_summary, client).map_err(LlmError)?;
-                Ok(UnlabledDocument::from_str_and_vec(
-                    String::new(),
-                    vec![DescribedTable {
-                        description,
-                        table: table.to_string(),
-                    }],
-                ))
-            } else {
-                Ok(UnlabledDocument::new())
-            }
-        }
+        Node::Table { captions, rows, .. } => table_to_string(captions, regexes, client, rows),
         Node::Template {
             name, parameters, ..
         } => {

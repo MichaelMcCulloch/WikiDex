@@ -4,15 +4,57 @@ use parse_wiki_text::{TableCaption, TableCell, TableCellType, TableRow};
 
 use crate::{
     ingest::wikipedia::{
-        helper::wiki::UnlabledDocument, markup_processor::Process, WikiMarkupProcessor,
+        helper::wiki::{DescribedTable, UnlabledDocument},
+        markup_processor::{Process, WikiMarkupProcessingError::LlmError},
+        WikiMarkupProcessor,
     },
     llm::SyncOpenAiService,
 };
 
 use super::{
+    llm::process_table_to_llm,
     nodes::{nodes_to_string, ParseResult},
     Regexes,
 };
+
+pub(super) fn table_to_string(
+    captions: &Vec<parse_wiki_text::TableCaption<'_>>,
+    regexes: &Regexes,
+    client: &SyncOpenAiService,
+    rows: &Vec<parse_wiki_text::TableRow<'_>>,
+) -> Result<UnlabledDocument, crate::ingest::wikipedia::markup_processor::WikiMarkupProcessingError>
+{
+    let captions = table_captions_to_string(captions, regexes, client)?;
+
+    if let Some((rows, rows_for_summary)) = table_rows_to_string(rows, regexes, client)? {
+        let table = if captions.document.is_empty() {
+            format!("\n<table>\n{}</table>\n", rows.document)
+        } else {
+            format!(
+                "\n<table caption='{}'>\n{}</table>\n",
+                captions.document, rows.document
+            )
+        };
+        let table_for_summary = if captions.document.is_empty() {
+            format!("\n<table>\n{}</table>\n", rows_for_summary.document)
+        } else {
+            format!(
+                "\n<table caption='{}'>\n{}</table>\n",
+                captions.document, rows_for_summary.document
+            )
+        };
+        let description = process_table_to_llm(&table_for_summary, client).map_err(LlmError)?;
+        Ok(UnlabledDocument::from_str_and_vec(
+            String::new(),
+            vec![DescribedTable {
+                description,
+                table: table.to_string(),
+            }],
+        ))
+    } else {
+        Ok(UnlabledDocument::new())
+    }
+}
 
 pub(super) fn table_captions_to_string(
     table_captions: &Vec<TableCaption<'_>>,
