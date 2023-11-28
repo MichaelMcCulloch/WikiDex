@@ -100,8 +100,6 @@ impl QueryEngine for Engine {
                     .replace("###DOCUMENT_LIST###", &formatted_document_list)
                     .replace("###USER_QUERY###", user_query);
 
-                println!("{system}");
-
                 let input = LlmInput {
                     system,
                     conversation: vec![LlmMessage {
