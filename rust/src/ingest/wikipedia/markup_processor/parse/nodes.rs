@@ -100,3 +100,65 @@ pub(super) fn node_to_string(node: &Node<'_>, regexes: &Regexes) -> ParseResult 
         Node::Text { value, .. } => Ok(String::from(*value)),
     }
 }
+
+#[cfg(test)]
+mod tests_node_to_string {
+    use std::{
+        fs::File,
+        io::{Read, Write},
+    };
+
+    use parse_wiki_text::Configuration;
+
+    use crate::ingest::wikipedia::{
+        configurations::WIKIPEDIA_CONFIGURATION, markup_processor::parse::Regexes,
+    };
+
+    use super::process_to_article;
+
+    #[test]
+    fn read_document_file_to_string() {
+        std::env::set_var("RUST_LOG", "info");
+        env_logger::init();
+        let configuration = Configuration::new(WIKIPEDIA_CONFIGURATION);
+
+        let document_name = &"List of United States Supreme Court cases, volume 129";
+        let document_name_safe = document_name.replace('/', "FWD_SLSH");
+
+        let document_text = std::fs::read_to_string(format!(
+            "/home/michael/Development/Omnipedia Inc./wikirip/really_really_bad/{document_name_safe}"
+        ))
+        .unwrap();
+
+        let directory = format!("debug_parse/{document_name_safe}");
+        let parse = configuration.parse(&document_text).nodes;
+        let regex = Regexes::new();
+
+        let process = process_to_article(&parse, &regex).unwrap();
+
+        let _ = std::fs::remove_file(format!("{directory}/text.txt"));
+        let _ = std::fs::remove_file(format!("{directory}/parse.txt"));
+        let _ = std::fs::remove_file(format!("{directory}/process.txt"));
+        std::fs::create_dir_all(&directory).unwrap();
+        File::options()
+            .write(true)
+            .create(true)
+            .open(format!("{directory}/text.txt"))
+            .and_then(|mut file| write!(file, "{document_text}"))
+            .unwrap();
+
+        File::options()
+            .write(true)
+            .create(true)
+            .open(format!("{directory}/parse.txt"))
+            .and_then(|mut file| write!(file, "{parse:#?}"))
+            .unwrap();
+
+        File::options()
+            .write(true)
+            .create(true)
+            .open(format!("{directory}/process.txt"))
+            .and_then(|mut file| write!(file, "{process}"))
+            .unwrap();
+    }
+}

@@ -21,10 +21,10 @@ pub(super) fn table_to_string(
     let captions = table_captions_to_string(captions, regexes)?;
 
     if let Some(rows) = table_rows_to_string(rows, regexes)? {
-        let table = if captions.is_empty() {
-            format!("\n<table>\n{}</table>\n", rows)
-        } else {
+        let table = if let Some(captions) = captions {
             format!("\ncaption='{}'\n{}\n", captions, rows)
+        } else {
+            format!("\n<table>\n{}</table>\n", rows)
         };
 
         Ok(table.to_string())
@@ -36,18 +36,22 @@ pub(super) fn table_to_string(
 pub(super) fn table_captions_to_string(
     table_captions: &Vec<TableCaption<'_>>,
     regexes: &Regexes,
-) -> ParseResult {
-    let mut documents = vec![];
-    for tc in table_captions.iter() {
-        documents.push(table_caption_to_string(tc, regexes)?)
+) -> Result<Option<String>, WikiMarkupProcessingError> {
+    if table_captions.is_empty() {
+        return Ok(None);
+    } else {
+        let mut documents = vec![];
+        for tc in table_captions.iter() {
+            documents.push(table_caption_to_string(tc, regexes)?)
+        }
+        Ok(Some(documents.join("")))
     }
-    Ok(documents.join(""))
 }
 
 pub(super) fn table_rows_to_string(
     table_rows: &Vec<TableRow<'_>>,
     regexes: &Regexes,
-) -> Result<Option<String>, <WikiMarkupProcessor as Process>::E> {
+) -> Result<Option<String>, WikiMarkupProcessingError> {
     if table_rows.is_empty() {
         Ok(None)
     } else {
@@ -63,18 +67,22 @@ pub(super) fn table_rows_to_string(
 pub(super) fn table_cells_to_string(
     table_cells: &Vec<TableCell<'_>>,
     regexes: &Regexes,
-) -> ParseResult {
-    let tag = match table_cells.first().unwrap().type_ {
-        TableCellType::Heading => "||",
-        TableCellType::Ordinary => "|",
-    };
+) -> Result<Option<String>, WikiMarkupProcessingError> {
+    if table_cells.is_empty() {
+        return Ok(None);
+    } else {
+        let tag = match table_cells.first().unwrap().type_ {
+            TableCellType::Heading => "||",
+            TableCellType::Ordinary => "|",
+        };
 
-    let mut documents: Vec<String> = vec![];
-    for tc in table_cells.iter() {
-        documents.push(table_cell_to_string(tc, regexes)?)
+        let mut documents: Vec<String> = vec![];
+        for tc in table_cells.iter() {
+            documents.push(table_cell_to_string(tc, regexes)?)
+        }
+
+        Ok(Some(format!("{tag}{}{tag}", documents.join(tag))))
     }
-
-    Ok(format!("{tag}{}{tag}", documents.join(tag)))
 }
 
 pub(super) fn table_cell_to_string(
@@ -94,10 +102,10 @@ pub(super) fn table_row_to_string(
     regexes: &Regexes,
 ) -> ParseResult {
     let cells = table_cells_to_string(cells, regexes)?;
-    if cells.is_empty() {
-        Ok(String::new())
+    if let Some(cells) = cells {
+        Ok(cells)
     } else {
-        Ok(format!("{cells}"))
+        Ok(String::new())
     }
 }
 pub(super) fn table_caption_to_string(
@@ -216,7 +224,9 @@ mod tests_table_cells_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_cells_to_string(&vec![input, input2], &regex).unwrap();
+        let extraction = table_cells_to_string(&vec![input, input2], &regex)
+            .unwrap()
+            .unwrap();
         assert_eq!(
             format!("|{cell_content_text}|{cell_content_text}|"),
             extraction
@@ -263,7 +273,9 @@ mod tests_table_cells_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_cells_to_string(&vec![input, input2], &regex).unwrap();
+        let extraction = table_cells_to_string(&vec![input, input2], &regex)
+            .unwrap()
+            .unwrap();
         assert_eq!(
             format!("||{cell_content_text}||{cell_content_text}||"),
             extraction
