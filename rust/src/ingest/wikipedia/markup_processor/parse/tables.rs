@@ -24,7 +24,7 @@ pub(super) fn table_to_string(
         let table = if captions.is_empty() {
             format!("\n<table>\n{}</table>\n", rows)
         } else {
-            format!("\n<table caption='{}'>\n{}</table>\n", captions, rows)
+            format!("\ncaption='{}'\n{}\n", captions, rows)
         };
 
         Ok(table.to_string())
@@ -56,7 +56,7 @@ pub(super) fn table_rows_to_string(
             documents.push(table_row_to_string(tr, regexes)?)
         }
 
-        Ok(Some(documents.join("")))
+        Ok(Some(documents.join("\n")))
     }
 }
 
@@ -64,15 +64,21 @@ pub(super) fn table_cells_to_string(
     table_cells: &Vec<TableCell<'_>>,
     regexes: &Regexes,
 ) -> ParseResult {
+    let tag = match table_cells.first().unwrap().type_ {
+        TableCellType::Heading => "||",
+        TableCellType::Ordinary => "|",
+    };
+
     let mut documents: Vec<String> = vec![];
     for tc in table_cells.iter() {
         documents.push(table_cell_to_string(tc, regexes)?)
     }
-    Ok(documents.join(""))
+
+    Ok(format!("{tag}{}{tag}", documents.join(tag)))
 }
 
 pub(super) fn table_cell_to_string(
-    TableCell { content, type_, .. }: &TableCell<'_>,
+    TableCell { content, .. }: &TableCell<'_>,
     regexes: &Regexes,
 ) -> ParseResult {
     let content = nodes_to_string(content, regexes)?;
@@ -80,11 +86,7 @@ pub(super) fn table_cell_to_string(
     if content.is_empty() {
         Ok(String::new())
     } else {
-        let tag = match type_ {
-            TableCellType::Heading => "th",
-            TableCellType::Ordinary => "td",
-        };
-        Ok(format!("\t\t<{tag}>{}</{tag}>\n", content))
+        Ok(content.to_string())
     }
 }
 pub(super) fn table_row_to_string(
@@ -95,7 +97,7 @@ pub(super) fn table_row_to_string(
     if cells.is_empty() {
         Ok(String::new())
     } else {
-        Ok(format!("\t<tr>\n{}\t</tr>\n", cells))
+        Ok(format!("{cells}"))
     }
 }
 pub(super) fn table_caption_to_string(
@@ -136,7 +138,7 @@ mod tests_table_cell_to_string {
         let regex = Regexes::new();
 
         let extraction = table_cell_to_string(&input, &regex).unwrap();
-        assert_eq!(format!("<td>{cell_content_text}</td>"), extraction)
+        assert_eq!(format!("{cell_content_text}"), extraction)
     }
     #[test]
     fn table_cell_to_string__heading__text() {
@@ -163,7 +165,7 @@ mod tests_table_cell_to_string {
         let regex = Regexes::new();
 
         let extraction = table_cell_to_string(&input, &regex).unwrap();
-        assert_eq!(format!("<th>{cell_content_text}</th>"), extraction)
+        assert_eq!(format!("{cell_content_text}"), extraction)
     }
 }
 
@@ -216,7 +218,7 @@ mod tests_table_cells_to_string {
 
         let extraction = table_cells_to_string(&vec![input, input2], &regex).unwrap();
         assert_eq!(
-            format!("<td>{cell_content_text}</td> <td>{cell_content_text}</td>"),
+            format!("|{cell_content_text}|{cell_content_text}|"),
             extraction
         )
     }
@@ -263,7 +265,7 @@ mod tests_table_cells_to_string {
 
         let extraction = table_cells_to_string(&vec![input, input2], &regex).unwrap();
         assert_eq!(
-            format!("<th>{cell_content_text}</th> <th>{cell_content_text}</th>"),
+            format!("||{cell_content_text}||{cell_content_text}||"),
             extraction
         )
     }
@@ -315,7 +317,7 @@ mod tests_table_row_to_string {
         let regex = Regexes::new();
 
         let extraction = table_row_to_string(&input, &regex).unwrap();
-        assert_eq!(format!("<tr><th>{cell_content_text}</th></tr>"), extraction)
+        assert_eq!(format!("||{cell_content_text}||"), extraction)
     }
 }
 
@@ -373,7 +375,7 @@ mod tests_table_rows_to_string {
         let row_cell2 = TableCell {
             attributes: Some(vec![cell_attribute2]),
             content: vec![cell_content2],
-            type_: TableCellType::Heading,
+            type_: TableCellType::Ordinary,
             end: 0,
             start: 0,
         };
@@ -396,7 +398,7 @@ mod tests_table_rows_to_string {
             .unwrap()
             .unwrap();
         assert_eq!(
-            format!("<tr><th>{cell_content_text}</th></tr> <tr><th>{cell_content_text}</th></tr>"),
+            format!("||{cell_content_text}||\n|{cell_content_text}|"),
             extraction
         )
     }
@@ -471,7 +473,7 @@ mod tests_table_to_string {
 
         let extraction = table_to_string(&regex, &vec![caption], &vec![row]).unwrap();
         assert_eq!(
-            format!("<table caption='{caption_content_text}'><tr><td>{row_content_text}</td></tr></table>"),
+            format!("\ncaption='{caption_content_text}'\n|{row_content_text}|\n"),
             extraction
         )
     }
