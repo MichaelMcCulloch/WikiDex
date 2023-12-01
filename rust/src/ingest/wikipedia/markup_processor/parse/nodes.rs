@@ -83,7 +83,7 @@ pub(super) fn node_to_string(node: &Node<'_>, regexes: &Regexes) -> ParseResult 
         Node::DefinitionList { items, .. } => definition_list_items_to_string(items, regexes),
         Node::UnorderedList { items, .. } => unordered_list_items_to_string(items, regexes),
         Node::OrderedList { items, .. } => ordered_list_items_to_string(items, regexes),
-        Node::Table { captions, rows, .. } => table_to_string(captions, regexes, rows),
+        Node::Table { captions, rows, .. } => table_to_string(regexes, captions, rows),
         Node::Template {
             name, parameters, ..
         } => {
