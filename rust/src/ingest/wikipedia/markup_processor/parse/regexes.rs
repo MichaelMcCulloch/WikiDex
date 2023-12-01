@@ -13,7 +13,11 @@ const WEB_REGEX: &str = "(W|w)eb";
 const REFN_REGEX: &str = "(R|r)efn";
 const LANGUAGE_REGEX: &str = "(L|l)ang";
 const LINKTEXT_REGEX: &str = "(L|l)inktext";
-const TWO_MORE_NEWLINES: &str = "(\n{2,})";
+const THREE_OR_MORE_NEWLINES: &str = "(\\s{3,})";
+const TWO_OR_MORE_WHITESPACES: &str = "([ ]{2,})";
+const SPACE_COMMA: &str = "([ ]*,)";
+const SPACE_PERIOD: &str = "([ ]*\\.)";
+const PILCROW: &str = "([ ]*¶[ ]*)";
 
 #[derive(Clone)]
 pub(crate) struct Regexes {
@@ -29,7 +33,11 @@ pub(crate) struct Regexes {
     pub(crate) refn: Regex,
     pub(crate) language: Regex,
     pub(crate) linktext: Regex,
-    pub(crate) _newlines: Regex,
+    pub(crate) threelines: Regex,
+    pub(crate) twospace: Regex,
+    pub(crate) space_coma: Regex,
+    pub(crate) space_period: Regex,
+    pub(crate) pilcrow: Regex,
 }
 
 impl Regexes {
@@ -47,7 +55,11 @@ impl Regexes {
             refn: Regex::new(REFN_REGEX).unwrap(),
             language: Regex::new(LANGUAGE_REGEX).unwrap(),
             linktext: Regex::new(LINKTEXT_REGEX).unwrap(),
-            _newlines: Regex::new(TWO_MORE_NEWLINES).unwrap(),
+            threelines: Regex::new(THREE_OR_MORE_NEWLINES).unwrap(),
+            twospace: Regex::new(TWO_OR_MORE_WHITESPACES).unwrap(),
+            space_coma: Regex::new(SPACE_COMMA).unwrap(),
+            space_period: Regex::new(SPACE_PERIOD).unwrap(),
+            pilcrow: Regex::new(PILCROW).unwrap(),
         }
     }
 }

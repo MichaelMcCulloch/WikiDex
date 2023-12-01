@@ -78,7 +78,12 @@ pub(super) fn table_cells_to_string(
 
         let mut documents: Vec<String> = vec![];
         for tc in table_cells.iter() {
-            documents.push(table_cell_to_string(tc, regexes)?)
+            let cell_text = table_cell_to_string(tc, regexes)?;
+            if cell_text.is_empty() {
+                documents.push(" ".to_string())
+            } else {
+                documents.push(cell_text)
+            }
         }
 
         Ok(Some(format!("{tag}{}{tag}", documents.join(tag))))

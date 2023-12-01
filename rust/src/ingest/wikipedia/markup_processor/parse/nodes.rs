@@ -22,7 +22,34 @@ pub(crate) const STOP_PHRASES: [&str; 6] = [
 pub(crate) type ParseResult = Result<String, <WikiMarkupProcessor as Process>::E>;
 
 pub(crate) fn process_to_article(nodes: &[Node<'_>], regexes: &Regexes) -> ParseResult {
-    nodes_to_string(&nodes, regexes)
+    let output = nodes_to_string(&nodes, regexes)?;
+
+    let output = regexes
+        .twospace
+        .split(&output)
+        .collect::<Vec<_>>()
+        .join(" ");
+    let output = regexes
+        .space_coma
+        .split(&output)
+        .collect::<Vec<_>>()
+        .join(",");
+    let output = regexes
+        .space_period
+        .split(&output)
+        .collect::<Vec<_>>()
+        .join(".");
+    let output = regexes
+        .pilcrow
+        .split(&output)
+        .collect::<Vec<_>>()
+        .join("\n");
+    let output = regexes
+        .threelines
+        .split(&output)
+        .collect::<Vec<_>>()
+        .join("\n\n");
+    Ok(output)
 }
 
 pub(super) fn nodes_to_string(nodes: &[Node<'_>], regexes: &Regexes) -> ParseResult {
@@ -43,7 +70,7 @@ pub(super) fn nodes_to_string(nodes: &[Node<'_>], regexes: &Regexes) -> ParseRes
             _ => documents.push(node_to_string(n, regexes)?),
         }
     }
-    Ok(documents.join(""))
+    Ok(documents.join(" ").trim().to_string())
 }
 
 pub(super) fn node_to_string(node: &Node<'_>, regexes: &Regexes) -> ParseResult {
@@ -60,9 +87,14 @@ pub(super) fn node_to_string(node: &Node<'_>, regexes: &Regexes) -> ParseResult 
         | Node::Tag { .. }
         | Node::Image { .. }
         | Node::StartTag { .. } => Ok(String::new()),
-        Node::ParagraphBreak { .. } => Ok(String::from("\n\n")),
+        Node::ParagraphBreak { .. } => Ok(String::from("¶")), //fight me
+        Node::Heading {
+            nodes,
+            level: 1 | 2,
+            ..
+        } => nodes_to_string(nodes, regexes).map(|heading| format!("\n\n{heading}")),
         Node::Heading { nodes, .. } => {
-            nodes_to_string(nodes, regexes).map(|heading| format!("\n\n{heading}"))
+            nodes_to_string(nodes, regexes).map(|heading| format!("\n{heading}\n"))
         }
 
         Node::ExternalLink { nodes, .. } => {
@@ -107,7 +139,6 @@ pub(super) fn node_to_string(node: &Node<'_>, regexes: &Regexes) -> ParseResult 
 
 #[cfg(test)]
 mod tests_node_to_string {
-    use std::{fs::File, io::Write};
 
     use parse_wiki_text::Configuration;
 
@@ -131,6 +162,6 @@ mod tests_node_to_string {
 
         let process = process_to_article(&parse, &regex).unwrap();
 
-        log::info!("{process}")
+        println!("{process}")
     }
 }
