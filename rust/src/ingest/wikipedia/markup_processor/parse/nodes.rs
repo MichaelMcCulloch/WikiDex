@@ -2,11 +2,9 @@ use parse_wiki_text::Node;
 use std::ops::Deref;
 
 use super::{
-    super::WikiMarkupProcessingError::LlmError,
     deflist::definition_list_items_to_string,
     listitems::{ordered_list_items_to_string, unordered_list_items_to_string},
-    llm::process_table_to_llm,
-    tables::{table_captions_to_string, table_rows_to_string},
+    tables::table_to_string,
     template_params::refn_parameters_to_string,
     Regexes,
 };
@@ -24,11 +22,14 @@ pub(crate) const STOP_PHRASES: [&str; 5] = [
     "Further reading",
     "External links",
 ];
+
+pub(crate) type ParseResult = Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E>;
+
 pub(crate) fn process_to_article(
     nodes: &[Node<'_>],
     regexes: &Regexes,
     client: &SyncOpenAiService,
-) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
+) -> ParseResult {
     nodes_to_string(&nodes, regexes, client)
 }
 
@@ -36,7 +37,7 @@ pub(super) fn nodes_to_string(
     nodes: &[Node<'_>],
     regexes: &Regexes,
     client: &SyncOpenAiService,
-) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
+) -> ParseResult {
     let mut documents = vec![];
     for n in nodes.iter() {
         match n {
@@ -61,7 +62,7 @@ pub(super) fn node_to_string(
     node: &Node<'_>,
     regexes: &Regexes,
     client: &SyncOpenAiService,
-) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
+) -> ParseResult {
     match node {
         Node::Bold { .. }
         | Node::BoldItalic { .. }
@@ -105,20 +106,7 @@ pub(super) fn node_to_string(
         }
         Node::UnorderedList { items, .. } => unordered_list_items_to_string(items, regexes, client),
         Node::OrderedList { items, .. } => ordered_list_items_to_string(items, regexes, client),
-        // Node::Table { .. } => String::new(),
-        Node::Table { captions, rows, .. } => {
-            let captions = table_captions_to_string(captions, regexes, client)?;
-            let rows = table_rows_to_string(rows, regexes, client)?;
-            let table = if captions.document.is_empty() {
-                format!("\n<table>\n{}</table>\n", rows.document)
-            } else {
-                format!(
-                    "\n<table caption='{}'>\n{}</table>\n",
-                    captions.document, rows.document
-                )
-            };
-            process_table_to_llm(&table, client).map_err(LlmError)
-        }
+        Node::Table { captions, rows, .. } => table_to_string(captions, regexes, client, rows),
         Node::Template {
             name, parameters, ..
         } => {

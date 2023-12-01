@@ -17,37 +17,37 @@ const TWO_MORE_NEWLINES: &str = "(\n{2,})";
 
 #[derive(Clone)]
 pub(crate) struct Regexes {
-    pub(crate) citation: Regex,
-    pub(crate) sfn: Regex,
-    pub(crate) sfnm: Regex,
-    pub(crate) book: Regex,
-    pub(crate) encyclopedia: Regex,
-    pub(crate) journal: Regex,
-    pub(crate) magazine: Regex,
-    pub(crate) news: Regex,
-    pub(crate) web: Regex,
+    pub(crate) _citation: Regex,
+    pub(crate) _sfn: Regex,
+    pub(crate) _sfnm: Regex,
+    pub(crate) _book: Regex,
+    pub(crate) _encyclopedia: Regex,
+    pub(crate) _journal: Regex,
+    pub(crate) _magazine: Regex,
+    pub(crate) _news: Regex,
+    pub(crate) _web: Regex,
     pub(crate) refn: Regex,
     pub(crate) language: Regex,
     pub(crate) linktext: Regex,
-    pub(crate) newlines: Regex,
+    pub(crate) _newlines: Regex,
 }
 
 impl Regexes {
     pub(crate) fn new() -> Regexes {
         Regexes {
-            citation: Regex::new(CITATION_REGEX).unwrap(),
-            sfn: Regex::new(SFN_REGEX).unwrap(),
-            sfnm: Regex::new(SFNM_REGEX).unwrap(),
-            book: Regex::new(BOOK_REGEX).unwrap(),
-            encyclopedia: Regex::new(ENCYCLOPEDIA_REGEX).unwrap(),
-            journal: Regex::new(JOURNAL_REGEX).unwrap(),
-            magazine: Regex::new(MAGAZINE_REGEX).unwrap(),
-            news: Regex::new(NEWS_REGEX).unwrap(),
-            web: Regex::new(WEB_REGEX).unwrap(),
+            _citation: Regex::new(CITATION_REGEX).unwrap(),
+            _sfn: Regex::new(SFN_REGEX).unwrap(),
+            _sfnm: Regex::new(SFNM_REGEX).unwrap(),
+            _book: Regex::new(BOOK_REGEX).unwrap(),
+            _encyclopedia: Regex::new(ENCYCLOPEDIA_REGEX).unwrap(),
+            _journal: Regex::new(JOURNAL_REGEX).unwrap(),
+            _magazine: Regex::new(MAGAZINE_REGEX).unwrap(),
+            _news: Regex::new(NEWS_REGEX).unwrap(),
+            _web: Regex::new(WEB_REGEX).unwrap(),
             refn: Regex::new(REFN_REGEX).unwrap(),
             language: Regex::new(LANGUAGE_REGEX).unwrap(),
             linktext: Regex::new(LINKTEXT_REGEX).unwrap(),
-            newlines: Regex::new(TWO_MORE_NEWLINES).unwrap(),
+            _newlines: Regex::new(TWO_MORE_NEWLINES).unwrap(),
         }
     }
 }

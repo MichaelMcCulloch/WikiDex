@@ -1,19 +1,17 @@
 use parse_wiki_text::*;
 
-use crate::{
-    ingest::wikipedia::{
-        helper::wiki::UnlabledDocument, markup_processor::Process, WikiMarkupProcessor,
-    },
-    llm::SyncOpenAiService,
-};
+use crate::{ingest::wikipedia::helper::wiki::UnlabledDocument, llm::SyncOpenAiService};
 
-use super::{nodes::nodes_to_string, Regexes};
+use super::{
+    nodes::{nodes_to_string, ParseResult},
+    Regexes,
+};
 
 pub(super) fn unordered_list_items_to_string(
     list_items: &Vec<ListItem<'_>>,
     regexes: &Regexes,
     client: &SyncOpenAiService,
-) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
+) -> ParseResult {
     let mut documents = vec![];
     for li in list_items.iter() {
         let document = list_item_to_string(&li, regexes, client)?;
@@ -27,7 +25,7 @@ pub(super) fn ordered_list_items_to_string(
     list_items: &Vec<ListItem<'_>>,
     regexes: &Regexes,
     client: &SyncOpenAiService,
-) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
+) -> ParseResult {
     let mut documents = vec![];
     for (c, li) in list_items.iter().enumerate() {
         let document = list_item_to_string(&li, regexes, client)?;
@@ -41,6 +39,6 @@ pub(super) fn list_item_to_string(
     ListItem { nodes, .. }: &ListItem<'_>,
     regexes: &Regexes,
     client: &SyncOpenAiService,
-) -> Result<UnlabledDocument, <WikiMarkupProcessor as Process>::E> {
+) -> ParseResult {
     nodes_to_string(nodes, regexes, client)
 }
