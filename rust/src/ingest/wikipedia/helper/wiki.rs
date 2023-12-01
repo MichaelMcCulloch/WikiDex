@@ -95,7 +95,7 @@ pub(crate) struct Document {
     pub(crate) document: String,
     pub(crate) article_title: String,
     pub(crate) access_date: NaiveDateTime,
-    pub(crate) modification_datae: NaiveDateTime,
+    pub(crate) modification_date: NaiveDateTime,
 }
 
 pub(crate) fn compress_articles(
@@ -145,7 +145,7 @@ pub(crate) fn decompress_articles_into_documents_and_tables(
                     document,
                     article_title,
                     access_date,
-                    modification_datae: access_date,
+                    modification_date: access_date,
                 })
             },
         )
