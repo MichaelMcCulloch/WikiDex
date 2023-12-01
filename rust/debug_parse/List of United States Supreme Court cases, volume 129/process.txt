@@ -1,0 +1,101 @@
+
+
+
+
+
+This is a list of cases reported in volume 129 of United States Reports, decided by the Supreme Court of the United States in 1889.Justices of the Supreme Court at the time of volume 129 U.S.
+
+The Supreme Court is established by Article III, Section 1 of the Constitution of the United States, which says: "The judicial Power of the United States, shall be vested in one supreme Court . . .". The size of the Court is not specified; the Constitution leaves it to Congress to set the number of justices. Under the Judiciary Act of 1789 Congress originally fixed the number of justices at six (one chief justice and five associate justices). Since 1789 Congress has varied the size of the Court from six to seven, nine, ten, and back to nine justices (always including one chief justice).
+
+When the cases in volume 129 U.S. were decided the Court comprised the following nine members:
+||Portrait||Justice||Office||Home State||Succeeded||Date confirmed by the Senate(Vote)||Tenure on Supreme Court||
+||Melville Fuller|Chief Justice|Illinois|Morrison Waite|July 20, 1888(41–20)|October 8, 1888–July 4, 1910(Died)|
+||Samuel Freeman Miller|Associate Justice|Iowa|Peter Vivian Daniel|July 16, 1862(Acclamation)|July 21, 1862–October 13, 1890(Died)|
+||Stephen Johnson Field|Associate Justice|California|newly-created seat|March 10, 1863(Acclamation)|May 10, 1863–December 1, 1897(Retired)|
+||Joseph P. Bradley|Associate Justice|New Jersey|newly-created seat|March 21, 1870(46–9)|March 23, 1870–January 22, 1892(Died)|
+||John Marshall Harlan|Associate Justice|Kentucky|David Davis|November 29, 1877(Acclamation)|December 10, 1877–October 14, 1911(Died)|
+||Stanley Matthews|Associate Justice|Ohio|Noah Haynes Swayne|May 12, 1881(24–23)|May 17, 1881–March 22, 1889(Died)|
+||Horace Gray|Associate Justice|Massachusetts|Nathan Clifford|December 20, 1881(51–5)|January 9, 1882–September 15, 1902(Died)|
+||Samuel Blatchford|Associate Justice|New York|Ward Hunt|March 22, 1882(Acclamation)|April 3, 1882–July 7, 1893(Died)|
+||Lucius Quintus Cincinnatus Lamar|Associate Justice|Mississippi|William Burnham Woods|January 16, 1888(32–28)|January 18, 1888–January 23, 1893(Died)|
+
+Notable Case in 129 U.S.Dent v. West VirginiaIn Dent v. West Virginia,       129 U.S. 114 (1889), the Supreme Court upheld a state physician licensing law. A practitioner with insufficient credentials to obtain a medical license sued West Virginia, claiming a violation of his rights under the due process clause of the 14th Amendment. The Supreme Court upheld the statute noting that, while each citizen had a right to follow any lawful calling, they were subject to reasonable state restrictions. Because of the nature of medical training, the large amount of knowledge required, and the life-and-death circumstances with which physicians dealt, patients needed to rely on the assurance of a license requiring physicians to meet a minimum set of standards.Citation style
+Under the Judiciary Act of 1789 the federal court structure at the time comprised District Courts, which had general trial jurisdiction; Circuit Courts, which had mixed trial and appellate (from the US District Courts) jurisdiction; and the United States Supreme Court, which had appellate jurisdiction over the federal District and Circuit courts—and for certain issues over state courts. The Supreme Court also had limited original jurisdiction (i.e., in which cases could be filed directly with the Supreme Court without first having been heard by a lower federal or state court). There were one or more federal District Courts and/or Circuit Courts in each state, territory, or other geographical region.
+
+Bluebook citation style is used for case names, citations, and jurisdictions. - "C.C.D." = United States Circuit Court for the District of . . . - e.g.,"C.C.D.N.J." = United States Circuit Court for the District of New Jersey
+ - "D." = United States District Court for the District of . . . - e.g.,"D. Mass." = United States District Court for the District of Massachusetts
+ - "E." = Eastern; "M." = Middle; "N." = Northern; "S." = Southern; "W." = Western - e.g.,"C.C.S.D.N.Y." = United States Circuit Court for the Southern District of New York
+ - e.g.,"M.D. Ala." = United States District Court for the Middle District of Alabama
+ - "Ct. Cl." = United States Court of Claims
+ - The abbreviation of a state's name alone indicates the highest appellate court in that state's judiciary at the time. - e.g.,"Pa." = Supreme Court of Pennsylvania
+ - e.g.,"Me." = Supreme Judicial Court of MaineList of cases in volume 129 U.S.
+||Case Name||Page & year||Opinion of the Court||Concurring opinion(s)||Dissenting opinion(s)||Lower Court||Disposition||
+|McCormick v. Graham's Adm'r|1 (1889)|Blatchford|none|none|C.C.N.D. Ill.|reversed|
+|Sargent v. Burgess|19 (1889)|Blatchford|none|none|C.C.E.D. Pa.|affirmed|
+|Minneapolis et al. Ry. Co. v. Beckwith|26 (1889)|Field|none|none|Kossuth Cnty. Cir. Ct.|affirmed|
+|City of Shreveport v. Cole|36 (1889)|Fuller|none|none|C.C.W.D. La.|reversed|
+|City of Shreveport v. United States ex rel. Jacobs|44 (1889)|Fuller|none|none|C.C.W.D. La.|reversed|
+|City of New Orleans v. Louisiana C. Co.|45 (1889)|Fuller|none|none|C.C.E.D. La.|dismissal denied|
+|Rosenwasser v. Spieth|47 (1889)|Gray|none|none|C.C.D. Me.|affirmed|
+|Baldwin v. Kansas|52 (1889)|Blatchford|none|Harlan|Kan.|dismissed|
+|Wallace v. Johnstone|58 (1889)|Lamar|none|none|C.C.S.D. Iowa|affirmed|
+|Noble v. Hammond & B.|65 (1889)|Lamar|none|none|Vt.|reversed|
+|Anderson v. H.T. Miller & Co.|70 (1889)|Lamar|none|none|C.C.E.D. Va.|affirmed|
+|Camden v. Mayhew|73 (1889)|Harlan|none|none|C.C.D.W. Va.|affirmed|
+|Arrowsmith v. Gleason|86 (1889)|Harlan|none|none|C.C.N.D. Ohio|reversed|
+|Tillson v. United States|101 (1889)|Gray|none|none|Ct. Cl.|affirmed|
+|Farnsworth v. Montana|104 (1889)|Blatchford|none|none|Sup. Ct. Terr. Mont.|dismissed|
+|Dent v. West Virginia|114 (1889)|Field|none|none|W. Va.|affirmed|
+|Inman S. & Co. v. South Carolina Ry. Co.|128 (1889)|Fuller|none|none|C.C.D.S.C.|reversed|
+|Stoutenburgh v. Hennick|141 (1889)|Fuller|none|Miller|Sup. Ct. D.C.|affirmed|
+|Bate R. Co. v. G.H. Hammond Co.|151 (1889)|Blatchford|none|none|C.C.D. Mass.|reversed|
+|Hill v. Chicago & E.R.R. Co.|170 (1889)|Blatchford|none|none|C.C.N.D. Ill.|dismissal denied|
+|Hanover F. Ins. Co. v. Kinneard|176 (1889)|Fuller|none|none|C.C.D. Kan.|dismissed|
+|Marrow v. Brinkley|178 (1889)|Fuller|none|none|Va.|dismissed|
+|Probst v. Domestic Missions|182 (1889)|Miller|none|none|Sup. Ct. Terr. N.M.|reversed|
+|Seibert v. United States ex rel. Harshman|192 (1889)|Field|none|none|C.C.E.D. Mo.|affirmed|
+|Galigher v. Jones|193 (1889)|Bradley|none|none|Sup. Ct. Terr. Utah|reversed|
+|Wade v. Metcalf|202 (1889)|Gray|none|none|C.C.D. Mass.|affirmed|
+|In re Farmers' L. & T. Co.|206 (1889)|Miller|Bradley|none|C.C.N.D. Tex.|mandamus granted|
+|Kimmish v. Ball|217 (1889)|Field|none|none|C.C.S.D. Iowa|reversed|
+|National S. Bank v. Butler|223 (1889)|Blatchford|none|none|C.C.D. Mass.|affirmed|
+|Robertson v. Perkins|233 (1889)|Blatchford|none|none|C.C.S.D.N.Y.|reversed|
+|Brown v. Sutton|238 (1889)|Miller|none|none|C.C.E.D. Wis.|affirmed|
+|Barton v. United States|249 (1889)|Fuller|none|none|Ct. Cl.|affirmed|
+|Carr v. Hamilton|252 (1889)|Bradley|none|none|C.C.W.D. La.|affirmed|
+|Morley S.M. Co v. Lancaster|263 (1889)|Blatchford|none|none|C.C.D. Mass.|reversed|
+|Ely v. New Mexico et al. R.R. Co.|291 (1889)|Gray|none|none|Sup. Ct. Terr. Ariz.|reversed|
+|Pattee P. Co. v. Kingman|294 (1889)|Fuller|none|none|C.C.E.D. Mo.|affirmed|
+|Union P. Ry. Co. v. McAlpine|305 (1889)|Field|none|none|C.C.D. Kan.|affirmed|
+|Morris v. Gilmer|315 (1889)|Harlan|none|none|C.C.M.D. Ala.|reversed|
+|White v. Cotzhausen|329 (1889)|Harlan|none|none|C.C.N.D. Ill.|reversed|
+|Pinkerton v. Ledoux|346 (1889)|Bradley|none|none|Sup. Ct. Terr. N.M.|affirmed|
+|Walworth v. J.L. Harris & Co.|355 (1889)|Miller|none|none|C.C.E.D. Ark.|affirmed|
+|Harris v. Barber|366  (1889)|Gray|none|none|Sup. Ct. D.C.|affirmed|
+|Bank of Ft. Madison v. Alden|372 (1889)|Field|none|none|C.C.N.D. Ill.|affirmed|
+|United States v. Corwin|381 (1889)|Lamar|none|none|C.C.W.D. Tex.|affirmed|
+|Ruckman v. Cory|387 (1889)|Harlan|none|none|C.C.S.D. Ill.|affirmed|
+|Eastern R.R. Co. v. United States|391 (1889)|Harlan|none|none|Ct. Cl.|affirmed|
+|Liverpool et al. Co. v. Phenix Ins. Co.|397 (1889)|Gray|none|none|C.C.E.D.N.Y.|affirmed|
+|Liverpool et al. Co. v. Insurance Co.|464 (1889)|per curiam|none|none|C.C.E.D.N.Y.|affirmed|
+|Allen v. Smith|465 (1889)|Blatchford|none|none|C.C.E.D. Ark.|affirmed|
+|United States ex rel. Levey v. Stockslager|470 (1889)|Blatchford|none|none|Sup. Ct. D.C.|affirmed|
+|Norton v. City of Brownsville I|479 (1889)|Fuller|none|none|C.C.W.D. Tenn.|affirmed|
+|City of Brownsville v. Loague|493 (1889)|Fuller|none|none|C.C.W.D. Tenn.|reversed|
+|Norton v. City of Brownsville II|505 (1889)|Fuller|none|none|C.C.W.D. Tenn.|dismissed|
+|McKenna v. Simpson|506 (1889)|Field|none|none|Tenn.|dismissed|
+|Kimberly v. Arms|512 (1889)|Field|none|none|C.C.N.D. Ohio|reversed|
+|Peters v. Active Mfg. Co.|530 (1889)|Blatchford|none|none|C.C.S.D. Ohio|affirmed|
+|Peters v. Hanson|541 (1889)|Blatchford|none|none|C.C.D. Ind.|affirmed|
+|City Nat'l Bank v. Hunter et al. Co.|557 (1889)|Fuller|none|none|C.C.N.D. Tex.|reversed|
+|United States v. Marshall S.M. Co.|579 (1889)|Miller|none|none|C.C.D. Colo.|affirmed|
+|Shotwell v. Moore|590 (1889)|Miller|none|none|Ohio|affirmed|
+|Goodwin v. Fox|601 (1889)|Blatchford|none|none|C.C.N.D. Ill.|reversed|
+|Insurance Co. v. Guardiola|642 (1889)|Gray|none|none|C.C.S.D.N.Y.|reversed|
+|Woodstock I. Co. v. Richmond et al. Co.|643 (1889)|Field|none|none|C.C.N.D. Ala.|reversed|
+|Ralston v. Turpin|663 (1889)|Harlan|none|none|C.C.S.D. Ga.|affirmed|
+|Chapman v. Barney|677 (1889)|Lamar|none|none|C.C.N.D. Ill.|reversed|
+|Béné v. Jeantet|683 (1889)|Lamar|none|none|C.C.S.D.N.Y.|affirmed|
+|Schraeder et al. Co. v. Packer|688 (1889)|Lamar|none|none|C.C.W.D. Pa.|affirmed|
+
+Notes and references

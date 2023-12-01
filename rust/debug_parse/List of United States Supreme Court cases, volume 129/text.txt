@@ -1,4 +1,4 @@
-pub(crate) const SUPREME_COURT_VOL_129: &str = r###"{{short description|None}}
+{{short description|None}}
 
 {{Use American English|date=September 2020}}
 {{Use mdy dates|date=March 2021}}
@@ -709,4 +709,4 @@ Under the [[Judiciary Act of 1789]] the federal court structure at the time comp
 {{SCOTUScaselists}}
 
 {{DEFAULTSORT:United States Supreme Court cases by volume}}
-[[Category:1889 in United States case law]]"###;
+[[Category:1889 in United States case law]]

@@ -24,7 +24,7 @@ pub(super) fn table_to_string(
         let table = if let Some(captions) = captions {
             format!("\ncaption='{}'\n{}\n", captions, rows)
         } else {
-            format!("\n<table>\n{}</table>\n", rows)
+            format!("\n{}\n", rows)
         };
 
         Ok(table.to_string())
