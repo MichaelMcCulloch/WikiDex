@@ -1,6 +1,6 @@
 use parse_wiki_text::*;
 
-use crate::{ingest::wikipedia::helper::wiki::UnlabledDocument, llm::SyncOpenAiService};
+use crate::llm::SyncOpenAiService;
 
 use super::{
     nodes::{nodes_to_string, ParseResult},
@@ -13,12 +13,12 @@ pub(super) fn unordered_list_items_to_string(
     client: &SyncOpenAiService,
 ) -> ParseResult {
     let mut documents = vec![];
+
     for li in list_items.iter() {
-        let document = list_item_to_string(&li, regexes, client)?;
-        let document = document.prepend(" - ");
-        documents.push(document)
+        documents.push(format!(" - {}", list_item_to_string(&li, regexes, client)?))
     }
-    Ok(UnlabledDocument::join_all(documents, &"\n"))
+
+    Ok(documents.join("\n"))
 }
 
 pub(super) fn ordered_list_items_to_string(
@@ -27,12 +27,14 @@ pub(super) fn ordered_list_items_to_string(
     client: &SyncOpenAiService,
 ) -> ParseResult {
     let mut documents = vec![];
+
     for (c, li) in list_items.iter().enumerate() {
-        let document = list_item_to_string(&li, regexes, client)?;
-        let document = document.prepend(format!(" {c}. ").as_str());
-        documents.push(document)
+        documents.push(format!(
+            " {c}. {}",
+            list_item_to_string(&li, regexes, client)?
+        ))
     }
-    Ok(UnlabledDocument::join_all(documents, &"\n"))
+    Ok(documents.join("\n"))
 }
 
 pub(super) fn list_item_to_string(

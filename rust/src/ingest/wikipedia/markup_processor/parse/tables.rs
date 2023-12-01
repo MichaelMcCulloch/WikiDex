@@ -4,15 +4,16 @@ use parse_wiki_text::{TableCaption, TableCell, TableCellType, TableRow};
 
 use crate::{
     ingest::wikipedia::{
-        helper::wiki::{DescribedTable, UnlabledDocument},
-        markup_processor::{Process, WikiMarkupProcessingError::LlmError},
+        markup_processor::{
+            Process,
+            WikiMarkupProcessingError::{self, LlmError},
+        },
         WikiMarkupProcessor,
     },
     llm::SyncOpenAiService,
 };
 
 use super::{
-    llm::process_table_to_llm,
     nodes::{nodes_to_string, ParseResult},
     Regexes,
 };
@@ -22,37 +23,19 @@ pub(super) fn table_to_string(
     regexes: &Regexes,
     client: &SyncOpenAiService,
     rows: &Vec<parse_wiki_text::TableRow<'_>>,
-) -> Result<UnlabledDocument, crate::ingest::wikipedia::markup_processor::WikiMarkupProcessingError>
-{
+) -> Result<String, WikiMarkupProcessingError> {
     let captions = table_captions_to_string(captions, regexes, client)?;
 
-    if let Some((rows, rows_for_summary)) = table_rows_to_string(rows, regexes, client)? {
-        let table = if captions.document.is_empty() {
-            format!("\n<table>\n{}</table>\n", rows.document)
+    if let Some(rows) = table_rows_to_string(rows, regexes, client)? {
+        let table = if captions.is_empty() {
+            format!("\n<table>\n{}</table>\n", rows)
         } else {
-            format!(
-                "\n<table caption='{}'>\n{}</table>\n",
-                captions.document, rows.document
-            )
+            format!("\n<table caption='{}'>\n{}</table>\n", captions, rows)
         };
-        let table_for_summary = if captions.document.is_empty() {
-            format!("\n<table>\n{}</table>\n", rows_for_summary.document)
-        } else {
-            format!(
-                "\n<table caption='{}'>\n{}</table>\n",
-                captions.document, rows_for_summary.document
-            )
-        };
-        let description = process_table_to_llm(&table_for_summary, client).map_err(LlmError)?;
-        Ok(UnlabledDocument::from_str_and_vec(
-            String::new(),
-            vec![DescribedTable {
-                description,
-                table: table.to_string(),
-            }],
-        ))
+
+        Ok(table.to_string())
     } else {
-        Ok(UnlabledDocument::new())
+        Ok(String::new())
     }
 }
 
@@ -65,14 +48,14 @@ pub(super) fn table_captions_to_string(
     for tc in table_captions.iter() {
         documents.push(table_caption_to_string(tc, regexes, client)?)
     }
-    Ok(UnlabledDocument::join_all(documents, &""))
+    Ok(documents.join(""))
 }
 
 pub(super) fn table_rows_to_string(
     table_rows: &Vec<TableRow<'_>>,
     regexes: &Regexes,
     client: &SyncOpenAiService,
-) -> Result<Option<(UnlabledDocument, UnlabledDocument)>, <WikiMarkupProcessor as Process>::E> {
+) -> Result<Option<String>, <WikiMarkupProcessor as Process>::E> {
     if table_rows.is_empty() {
         Ok(None)
     } else {
@@ -81,12 +64,7 @@ pub(super) fn table_rows_to_string(
             documents.push(table_row_to_string(tr, regexes, client)?)
         }
 
-        let lim: usize = min(documents.len(), 50);
-        let docs_for_summary = documents[0..lim].to_vec();
-        Ok(Some((
-            UnlabledDocument::join_all(documents, &""),
-            UnlabledDocument::join_all(docs_for_summary, &""),
-        )))
+        Ok(Some(documents.join("")))
     }
 }
 
@@ -95,11 +73,11 @@ pub(super) fn table_cells_to_string(
     regexes: &Regexes,
     client: &SyncOpenAiService,
 ) -> ParseResult {
-    let mut documents: Vec<UnlabledDocument> = vec![];
+    let mut documents: Vec<String> = vec![];
     for tc in table_cells.iter() {
         documents.push(table_cell_to_string(tc, regexes, client)?)
     }
-    Ok(UnlabledDocument::join_all(documents, &""))
+    Ok(documents.join(""))
 }
 
 pub(super) fn table_cell_to_string(
@@ -109,17 +87,14 @@ pub(super) fn table_cell_to_string(
 ) -> ParseResult {
     let content = nodes_to_string(content, regexes, client)?;
     let content = content.trim();
-    if content.document.is_empty() {
-        Ok(UnlabledDocument::new())
+    if content.is_empty() {
+        Ok(String::new())
     } else {
         let tag = match type_ {
             TableCellType::Heading => "th",
             TableCellType::Ordinary => "td",
         };
-        Ok(UnlabledDocument::from_str_and_vec(
-            format!("\t\t<{tag}>{}</{tag}>\n", content.document),
-            content.table,
-        ))
+        Ok(format!("\t\t<{tag}>{}</{tag}>\n", content))
     }
 }
 pub(super) fn table_row_to_string(
@@ -128,13 +103,10 @@ pub(super) fn table_row_to_string(
     client: &SyncOpenAiService,
 ) -> ParseResult {
     let cells = table_cells_to_string(cells, regexes, client)?;
-    if cells.document.is_empty() {
-        Ok(UnlabledDocument::new())
+    if cells.is_empty() {
+        Ok(String::new())
     } else {
-        Ok(UnlabledDocument::from_str_and_vec(
-            format!("\t<tr>\n{}\t</tr>\n", cells.document),
-            cells.table,
-        ))
+        Ok(format!("\t<tr>\n{}\t</tr>\n", cells))
     }
 }
 pub(super) fn table_caption_to_string(
