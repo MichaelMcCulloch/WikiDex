@@ -10,11 +10,10 @@ use super::{
 pub(super) fn _template_parameters_to_string(
     parameters: &[Parameter<'_>],
     regexes: &Regexes,
-    client: &SyncOpenAiService,
 ) -> ParseResult {
     let mut documents = vec![];
     for p in parameters.iter() {
-        documents.push(_template_parameter_to_string(p, regexes, client)?)
+        documents.push(_template_parameter_to_string(p, regexes)?)
     }
     Ok(documents.join(""))
 }
@@ -22,29 +21,26 @@ pub(super) fn _template_parameters_to_string(
 pub(super) fn refn_parameters_to_string(
     parameters: &[Parameter<'_>],
     regexes: &Regexes,
-    client: &SyncOpenAiService,
 ) -> ParseResult {
     let mut documents = vec![];
     for p in parameters.iter() {
-        documents.push(refn_parameter_to_string(p, regexes, client)?)
+        documents.push(refn_parameter_to_string(p, regexes)?)
     }
     Ok(documents.join(""))
 }
 pub(super) fn refn_parameter_to_string(
     Parameter { value, .. }: &Parameter<'_>,
     regexes: &Regexes,
-    client: &SyncOpenAiService,
 ) -> ParseResult {
-    nodes_to_string(value, regexes, client)
+    nodes_to_string(value, regexes)
 }
 pub(super) fn _template_parameter_to_string(
     Parameter { name, value, .. }: &Parameter<'_>,
     regexes: &Regexes,
-    client: &SyncOpenAiService,
 ) -> ParseResult {
-    let value = nodes_to_string(value, regexes, client)?;
+    let value = nodes_to_string(value, regexes)?;
     let name = match name {
-        Some(name) => nodes_to_string(name, regexes, client)?,
+        Some(name) => nodes_to_string(name, regexes)?,
         None => String::new(),
     };
     Ok(vec![name, value].join(": "))

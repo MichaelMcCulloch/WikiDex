@@ -10,12 +10,11 @@ use super::{
 pub(super) fn unordered_list_items_to_string(
     list_items: &Vec<ListItem<'_>>,
     regexes: &Regexes,
-    client: &SyncOpenAiService,
 ) -> ParseResult {
     let mut documents = vec![];
 
     for li in list_items.iter() {
-        documents.push(format!(" - {}", list_item_to_string(&li, regexes, client)?))
+        documents.push(format!(" - {}", list_item_to_string(&li, regexes)?))
     }
 
     Ok(documents.join("\n"))
@@ -24,15 +23,11 @@ pub(super) fn unordered_list_items_to_string(
 pub(super) fn ordered_list_items_to_string(
     list_items: &Vec<ListItem<'_>>,
     regexes: &Regexes,
-    client: &SyncOpenAiService,
 ) -> ParseResult {
     let mut documents = vec![];
 
     for (c, li) in list_items.iter().enumerate() {
-        documents.push(format!(
-            " {c}. {}",
-            list_item_to_string(&li, regexes, client)?
-        ))
+        documents.push(format!(" {c}. {}", list_item_to_string(&li, regexes)?))
     }
     Ok(documents.join("\n"))
 }
@@ -40,7 +35,6 @@ pub(super) fn ordered_list_items_to_string(
 pub(super) fn list_item_to_string(
     ListItem { nodes, .. }: &ListItem<'_>,
     regexes: &Regexes,
-    client: &SyncOpenAiService,
 ) -> ParseResult {
-    nodes_to_string(nodes, regexes, client)
+    nodes_to_string(nodes, regexes)
 }

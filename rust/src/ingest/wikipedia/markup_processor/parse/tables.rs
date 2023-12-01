@@ -21,12 +21,12 @@ use super::{
 pub(super) fn table_to_string(
     captions: &Vec<parse_wiki_text::TableCaption<'_>>,
     regexes: &Regexes,
-    client: &SyncOpenAiService,
+
     rows: &Vec<parse_wiki_text::TableRow<'_>>,
 ) -> Result<String, WikiMarkupProcessingError> {
-    let captions = table_captions_to_string(captions, regexes, client)?;
+    let captions = table_captions_to_string(captions, regexes)?;
 
-    if let Some(rows) = table_rows_to_string(rows, regexes, client)? {
+    if let Some(rows) = table_rows_to_string(rows, regexes)? {
         let table = if captions.is_empty() {
             format!("\n<table>\n{}</table>\n", rows)
         } else {
@@ -42,11 +42,10 @@ pub(super) fn table_to_string(
 pub(super) fn table_captions_to_string(
     table_captions: &Vec<TableCaption<'_>>,
     regexes: &Regexes,
-    client: &SyncOpenAiService,
 ) -> ParseResult {
     let mut documents = vec![];
     for tc in table_captions.iter() {
-        documents.push(table_caption_to_string(tc, regexes, client)?)
+        documents.push(table_caption_to_string(tc, regexes)?)
     }
     Ok(documents.join(""))
 }
@@ -54,14 +53,13 @@ pub(super) fn table_captions_to_string(
 pub(super) fn table_rows_to_string(
     table_rows: &Vec<TableRow<'_>>,
     regexes: &Regexes,
-    client: &SyncOpenAiService,
 ) -> Result<Option<String>, <WikiMarkupProcessor as Process>::E> {
     if table_rows.is_empty() {
         Ok(None)
     } else {
         let mut documents = vec![];
         for tr in table_rows.iter() {
-            documents.push(table_row_to_string(tr, regexes, client)?)
+            documents.push(table_row_to_string(tr, regexes)?)
         }
 
         Ok(Some(documents.join("")))
@@ -71,11 +69,10 @@ pub(super) fn table_rows_to_string(
 pub(super) fn table_cells_to_string(
     table_cells: &Vec<TableCell<'_>>,
     regexes: &Regexes,
-    client: &SyncOpenAiService,
 ) -> ParseResult {
     let mut documents: Vec<String> = vec![];
     for tc in table_cells.iter() {
-        documents.push(table_cell_to_string(tc, regexes, client)?)
+        documents.push(table_cell_to_string(tc, regexes)?)
     }
     Ok(documents.join(""))
 }
@@ -83,9 +80,8 @@ pub(super) fn table_cells_to_string(
 pub(super) fn table_cell_to_string(
     TableCell { content, type_, .. }: &TableCell<'_>,
     regexes: &Regexes,
-    client: &SyncOpenAiService,
 ) -> ParseResult {
-    let content = nodes_to_string(content, regexes, client)?;
+    let content = nodes_to_string(content, regexes)?;
     let content = content.trim();
     if content.is_empty() {
         Ok(String::new())
@@ -100,9 +96,8 @@ pub(super) fn table_cell_to_string(
 pub(super) fn table_row_to_string(
     TableRow { cells, .. }: &TableRow<'_>,
     regexes: &Regexes,
-    client: &SyncOpenAiService,
 ) -> ParseResult {
-    let cells = table_cells_to_string(cells, regexes, client)?;
+    let cells = table_cells_to_string(cells, regexes)?;
     if cells.is_empty() {
         Ok(String::new())
     } else {
@@ -112,7 +107,6 @@ pub(super) fn table_row_to_string(
 pub(super) fn table_caption_to_string(
     TableCaption { content, .. }: &TableCaption<'_>,
     regexes: &Regexes,
-    client: &SyncOpenAiService,
 ) -> ParseResult {
-    nodes_to_string(content, regexes, client)
+    nodes_to_string(content, regexes)
 }

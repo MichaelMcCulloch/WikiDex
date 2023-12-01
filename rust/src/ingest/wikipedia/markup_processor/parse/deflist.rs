@@ -19,21 +19,19 @@ pub(super) fn definition_list_item_type_to_string(
 pub(super) fn definition_list_item_to_string(
     DefinitionListItem { type_, nodes, .. }: &DefinitionListItem<'_>,
     regexes: &Regexes,
-    client: &SyncOpenAiService,
 ) -> ParseResult {
     let type_ = definition_list_item_type_to_string(type_)?;
-    let nodes = nodes_to_string(nodes, regexes, client)?;
+    let nodes = nodes_to_string(nodes, regexes)?;
     Ok(vec![type_, nodes].join(""))
 }
 
 pub(super) fn definition_list_items_to_string(
     definition_list_items: &Vec<DefinitionListItem<'_>>,
     regexes: &Regexes,
-    client: &SyncOpenAiService,
 ) -> ParseResult {
     let mut documents = vec![];
     for dli in definition_list_items.iter() {
-        documents.push(definition_list_item_to_string(&dli, regexes, client)?)
+        documents.push(definition_list_item_to_string(&dli, regexes)?)
     }
     Ok(documents.join("\n"))
 }

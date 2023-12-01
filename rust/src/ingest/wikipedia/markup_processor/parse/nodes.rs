@@ -23,19 +23,11 @@ pub(crate) const STOP_PHRASES: [&str; 5] = [
 
 pub(crate) type ParseResult = Result<String, <WikiMarkupProcessor as Process>::E>;
 
-pub(crate) fn process_to_article(
-    nodes: &[Node<'_>],
-    regexes: &Regexes,
-    client: &SyncOpenAiService,
-) -> ParseResult {
-    nodes_to_string(&nodes, regexes, client)
+pub(crate) fn process_to_article(nodes: &[Node<'_>], regexes: &Regexes) -> ParseResult {
+    nodes_to_string(&nodes, regexes)
 }
 
-pub(super) fn nodes_to_string(
-    nodes: &[Node<'_>],
-    regexes: &Regexes,
-    client: &SyncOpenAiService,
-) -> ParseResult {
+pub(super) fn nodes_to_string(nodes: &[Node<'_>], regexes: &Regexes) -> ParseResult {
     let mut documents = vec![];
     for n in nodes.iter() {
         match n {
@@ -43,24 +35,20 @@ pub(super) fn nodes_to_string(
                 nodes: heading_nodes,
                 ..
             } => {
-                let heading_name = nodes_to_string(heading_nodes, regexes, client)?;
+                let heading_name = nodes_to_string(heading_nodes, regexes)?;
                 if STOP_PHRASES.contains(&heading_name.as_str()) {
                     break;
                 } else {
-                    documents.push(node_to_string(n, regexes, client)?)
+                    documents.push(node_to_string(n, regexes)?)
                 }
             }
-            _ => documents.push(node_to_string(n, regexes, client)?),
+            _ => documents.push(node_to_string(n, regexes)?),
         }
     }
     Ok(documents.join(""))
 }
 
-pub(super) fn node_to_string(
-    node: &Node<'_>,
-    regexes: &Regexes,
-    client: &SyncOpenAiService,
-) -> ParseResult {
+pub(super) fn node_to_string(node: &Node<'_>, regexes: &Regexes) -> ParseResult {
     match node {
         Node::Bold { .. }
         | Node::BoldItalic { .. }
@@ -77,38 +65,36 @@ pub(super) fn node_to_string(
         Node::ParagraphBreak { .. } | Node::Heading { .. } => Ok(String::from("\n\n")),
 
         Node::ExternalLink { nodes, .. } => {
-            let document = nodes_to_string(nodes, regexes, client)?;
+            let document = nodes_to_string(nodes, regexes)?;
             let str = document.deref().split(' ').collect::<Vec<_>>()[1..].join(" ");
             Ok(str)
         }
-        Node::Preformatted { nodes, .. } => nodes_to_string(nodes, regexes, client),
+        Node::Preformatted { nodes, .. } => nodes_to_string(nodes, regexes),
 
         Node::CharacterEntity { character, .. } => Ok(String::from(*character)),
 
-        Node::Link { text, .. } => nodes_to_string(text, regexes, client),
+        Node::Link { text, .. } => nodes_to_string(text, regexes),
         Node::Parameter { default, name, .. } => {
-            let name = nodes_to_string(name, regexes, client)?;
+            let name = nodes_to_string(name, regexes)?;
             let default = match default {
-                Some(default) => nodes_to_string(default, regexes, client)?,
+                Some(default) => nodes_to_string(default, regexes)?,
                 None => String::new(),
             };
             Ok(vec![name, default].join(": "))
         }
 
-        Node::DefinitionList { items, .. } => {
-            definition_list_items_to_string(items, regexes, client)
-        }
-        Node::UnorderedList { items, .. } => unordered_list_items_to_string(items, regexes, client),
-        Node::OrderedList { items, .. } => ordered_list_items_to_string(items, regexes, client),
-        Node::Table { captions, rows, .. } => table_to_string(captions, regexes, client, rows),
+        Node::DefinitionList { items, .. } => definition_list_items_to_string(items, regexes),
+        Node::UnorderedList { items, .. } => unordered_list_items_to_string(items, regexes),
+        Node::OrderedList { items, .. } => ordered_list_items_to_string(items, regexes),
+        Node::Table { captions, rows, .. } => table_to_string(captions, regexes, rows),
         Node::Template {
             name, parameters, ..
         } => {
-            let name = nodes_to_string(name, regexes, client)?;
+            let name = nodes_to_string(name, regexes)?;
             if regexes.refn.is_match(&name) || regexes.linktext.is_match(&name) {
-                refn_parameters_to_string(&parameters, regexes, client)
+                refn_parameters_to_string(&parameters, regexes)
             } else if regexes.language.is_match(&name) && !parameters.is_empty() {
-                refn_parameters_to_string(&parameters[1..], regexes, client)
+                refn_parameters_to_string(&parameters[1..], regexes)
             } else {
                 Ok(String::new())
             }
