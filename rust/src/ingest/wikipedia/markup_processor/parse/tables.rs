@@ -1,16 +1,11 @@
-use std::cmp::min;
-
 use parse_wiki_text::{TableCaption, TableCell, TableCellType, TableRow};
 
-use crate::{
-    ingest::wikipedia::{
-        markup_processor::{
-            Process,
-            WikiMarkupProcessingError::{self, LlmError},
-        },
-        WikiMarkupProcessor,
+use crate::ingest::wikipedia::{
+    markup_processor::{
+        Process,
+        WikiMarkupProcessingError::{self},
     },
-    llm::SyncOpenAiService,
+    WikiMarkupProcessor,
 };
 
 use super::{

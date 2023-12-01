@@ -8,10 +8,7 @@ use super::{
     template_params::refn_parameters_to_string,
     Regexes,
 };
-use crate::{
-    ingest::wikipedia::{markup_processor::Process, WikiMarkupProcessor},
-    llm::SyncOpenAiService,
-};
+use crate::ingest::wikipedia::{markup_processor::Process, WikiMarkupProcessor};
 
 pub(crate) const STOP_PHRASES: [&str; 5] = [
     "References",

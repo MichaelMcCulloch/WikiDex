@@ -1,7 +1,5 @@
 use parse_wiki_text::Parameter;
 
-use crate::llm::SyncOpenAiService;
-
 use super::{
     nodes::{nodes_to_string, ParseResult},
     Regexes,
