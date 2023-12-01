@@ -20,12 +20,8 @@ pub(crate) struct Engine {
 }
 
 impl Engine {
-    pub(crate) fn new(
-        embed: Embedder,
-        llm: SyncOpenAiService,
-        multi_progress: MultiProgress,
-    ) -> Self {
-        let markup_processor = WikiMarkupProcessor::new(llm);
+    pub(crate) fn new(embed: Embedder, multi_progress: MultiProgress) -> Self {
+        let markup_processor = WikiMarkupProcessor::new();
 
         Self {
             embed,
@@ -72,9 +68,7 @@ impl Engine {
 
         let pages_decompressed_bar =
             h::progress::new_progress_bar(&self.multi_progress, pages.len() as u64);
-        self.markup_processor
-            .wait_for_ready()
-            .map_err(LlmServiceError)?;
+
         let _documents = h::wiki::decompress_articles_into_documents_and_tables(
             pages,
             &pages_decompressed_bar,

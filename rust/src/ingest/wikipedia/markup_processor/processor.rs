@@ -10,16 +10,10 @@ use parse_wiki_text::Configuration;
 use std::sync::Arc;
 
 #[derive(Clone)]
-pub(crate) struct WikiMarkupProcessor {
-    llm: Arc<SyncOpenAiService>,
-}
+pub(crate) struct WikiMarkupProcessor;
 impl WikiMarkupProcessor {
-    pub(crate) fn new(llm: SyncOpenAiService) -> Self {
-        Self { llm: Arc::new(llm) }
-    }
-
-    pub(crate) fn wait_for_ready(&self) -> Result<(), LlmServiceError> {
-        self.llm.wait_for_service()
+    pub(crate) fn new() -> Self {
+        Self
     }
 }
 impl Process for WikiMarkupProcessor {

@@ -67,13 +67,8 @@ async fn main() -> anyhow::Result<()> {
             log::info!("\n{config}");
 
             let embedder: Embedder = Embedder::new(config.embed_url)?;
-            let llm = SyncOpenAiService::new(
-                config.llm_url,
-                config.model.to_str().unwrap().to_string(),
-                config.model_context_length,
-            );
 
-            let engine = WikipediaIngestEngine::new(embedder, llm, multi_progress);
+            let engine = WikipediaIngestEngine::new(embedder, multi_progress);
 
             engine.ingest_wikipedia(&config.wiki_xml, &config.output_directory)?;
             Ok(())
