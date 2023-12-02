@@ -1,24 +1,23 @@
 use std::collections::VecDeque;
 
-pub struct RecursiveCharacterTextSplitter {
+pub struct RecursiveCharacterTextSplitter<'a> {
     chunk_size: usize,
     chunk_overlap: usize,
-    separators: Vec<String>,
+    separators: Vec<&'a str>,
     keep_separator: bool,
 }
 
-impl RecursiveCharacterTextSplitter {
+impl<'a> RecursiveCharacterTextSplitter<'a> {
     pub fn new(
         chunk_size: usize,
         chunk_overlap: usize,
-        separators: Option<Vec<String>>,
+        separators: Option<Vec<&'a str>>,
         keep_separator: bool,
     ) -> Self {
         RecursiveCharacterTextSplitter {
             chunk_size,
             chunk_overlap,
-            separators: separators
-                .unwrap_or_else(|| vec!["\n\n".into(), "\n".into(), " ".into(), "".into()]),
+            separators: separators.unwrap_or_else(|| vec![&"\n\n", &"\n", &" ", &""]),
             keep_separator,
         }
     }
