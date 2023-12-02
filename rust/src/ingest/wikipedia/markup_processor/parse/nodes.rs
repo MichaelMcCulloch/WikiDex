@@ -142,9 +142,12 @@ mod tests_node_to_string {
 
     use parse_wiki_text::Configuration;
 
-    use crate::ingest::wikipedia::{
-        configurations::WIKIPEDIA_CONFIGURATION,
-        markup_processor::parse::{test_data::SUPREME_COURT_VOL_129, Regexes},
+    use crate::{
+        ingest::wikipedia::{
+            configurations::WIKIPEDIA_CONFIGURATION, helper::text::RecursiveCharacterTextSplitter,
+            markup_processor::parse::Regexes,
+        },
+        test_data::SUPREME_COURT_VOL_129,
     };
 
     use super::process_to_article;
@@ -161,7 +164,6 @@ mod tests_node_to_string {
         let regex = Regexes::new();
 
         let process = process_to_article(&parse, &regex).unwrap();
-
         println!("{process}")
     }
 }

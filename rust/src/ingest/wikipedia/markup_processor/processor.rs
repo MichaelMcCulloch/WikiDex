@@ -1,5 +1,3 @@
-use crate::llm::{LlmServiceError, SyncLlmService, SyncOpenAiService};
-
 use super::{
     super::configurations::WIKIPEDIA_CONFIGURATION,
     parse::{process_to_article, Regexes},
@@ -7,7 +5,6 @@ use super::{
 };
 
 use parse_wiki_text::Configuration;
-use std::sync::Arc;
 
 #[derive(Clone)]
 pub(crate) struct WikiMarkupProcessor;

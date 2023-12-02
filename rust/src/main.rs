@@ -9,13 +9,16 @@ mod ingest;
 mod llm;
 mod server;
 
+#[cfg(test)]
+mod test_data;
+
 use crate::{
     cli_args::{Cli, Commands},
     embed::Embedder,
     index::FaissIndex,
     inference::Engine as InferenceEngine,
     ingest::wikipedia::Engine as WikipediaIngestEngine,
-    llm::{AsyncOpenAiService, SyncOpenAiService},
+    llm::AsyncOpenAiService,
 };
 use clap::Parser;
 use docstore::SqliteDocstore;

@@ -7,6 +7,3 @@ mod template_params;
 
 pub(super) use nodes::process_to_article;
 pub(super) use regexes::Regexes;
-
-#[cfg(test)]
-mod test_data;
