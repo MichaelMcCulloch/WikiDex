@@ -72,6 +72,7 @@ pub(crate) fn populate_markup_db(
     progress_bar.set_message("Writing Compressed Markup to DB...DONE");
     Ok(article_count.fetch_add(0, Ordering::SeqCst))
 }
+
 pub(crate) fn populate_docstore_db(
     connection: &Pool<SqliteConnectionManager>,
     pages_compressed: Vec<DocumentFragments>,
@@ -102,8 +103,6 @@ pub(crate) fn populate_docstore_db(
 
         for document in documents {
             let document_id = document_count.fetch_add(1, Ordering::Relaxed);
-
-            let document = compress_text(&document).map_err(IoError)?;
 
             connection
             .execute(

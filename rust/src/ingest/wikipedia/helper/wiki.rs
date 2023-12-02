@@ -12,7 +12,14 @@ use indicatif::ProgressBar;
 use markup_processor::WikiMarkupProcessor;
 use parse_mediawiki_dump_reboot::{schema::Namespace, Page};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use std::{fs::File, io::BufReader, path::Path};
+use std::{
+    fs::File,
+    io::BufReader,
+    path::Path,
+    sync::{mpsc::channel, Arc},
+    thread,
+    time::Duration,
+};
 
 pub(crate) fn get_date_from_xml_name<P: AsRef<Path>>(
     file_name: &P,
@@ -99,7 +106,7 @@ pub(crate) struct Document {
 }
 
 pub(crate) struct DocumentFragments {
-    pub(crate) documents: Vec<String>,
+    pub(crate) documents: Vec<Vec<u8>>,
     pub(crate) article_title: String,
     pub(crate) access_date: NaiveDateTime,
     pub(crate) modification_date: NaiveDateTime,
@@ -136,6 +143,8 @@ pub(crate) fn decompress_articles_into_documents(
 ) -> Vec<DocumentFragments> {
     progress_bar.set_message("Decompressing Markup...");
 
+    let markup_processor = Arc::new(markup_processor.clone());
+
     let documents = compressed_pages
         .into_par_iter()
         .filter_map(
@@ -144,15 +153,32 @@ pub(crate) fn decompress_articles_into_documents(
                  article_title,
                  access_date,
              }| {
+                let markup_processor = markup_processor.clone();
                 let markup = decompress_text(gzipped_text).ok()?;
+                let (tx, rx) = channel();
+                thread::spawn(move || {
+                    let document = markup_processor.process(&markup);
 
-                let document = markup_processor.process(&markup).ok()?;
+                    tx.send(document).unwrap();
+                });
+
+                let document = match rx.recv_timeout(Duration::from_secs(30)) {
+                    Ok(Ok(document)) => Ok(document),
+                    Ok(Err(e)) => Err(MarkupError(e)),
+                    Err(_) => {
+                        let timeout = Timeout(article_title.clone());
+                        log::warn!("{timeout}");
+                        Err(timeout)
+                    }
+                }
+                .ok()?;
 
                 progress_bar.inc(1);
                 Some(DocumentFragments {
                     documents: splitter
                         .split_text(&document)
                         .into_iter()
+                        .filter_map(|document| compress_text(&document).map_err(IoError).ok())
                         .collect::<Vec<_>>(),
                     article_title,
                     access_date,

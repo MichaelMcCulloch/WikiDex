@@ -7,6 +7,8 @@ use std::{
 
 use crate::llm::LlmServiceError;
 
+use super::markup_processor::WikiMarkupProcessingError;
+
 #[derive(Debug)]
 pub(crate) enum IngestError {
     XmlNotFound(PathBuf),
@@ -16,6 +18,8 @@ pub(crate) enum IngestError {
     XmlDateReadError,
     RuSqliteError(r2d2_sqlite::rusqlite::Error),
     LlmServiceError(LlmServiceError),
+    Timeout(String),
+    MarkupError(WikiMarkupProcessingError),
 }
 
 impl Error for IngestError {}
@@ -45,6 +49,12 @@ impl Display for IngestError {
                 write!(f, "IngestEngine: Unable to read data from XML File Name.",)
             }
             IngestError::LlmServiceError(error) => write!(f, "{error}"),
+            IngestError::Timeout(s) => {
+                write!(f, "IngestEngine: Timeout processing '{s}'")
+            }
+            IngestError::MarkupError(e) => {
+                write!(f, "{e}")
+            }
         }
     }
 }
