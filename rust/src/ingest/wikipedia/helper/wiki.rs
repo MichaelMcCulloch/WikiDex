@@ -5,6 +5,7 @@ use super::{
         IngestError::*,
     },
     gzip_helper::{compress_text, decompress_text},
+    text::RecursiveCharacterTextSplitter,
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use indicatif::ProgressBar;
@@ -70,7 +71,6 @@ pub(crate) fn get_eligible_pages(file: BufReader<File>, progress_bar: &ProgressB
     let eligible_pages = parse
         .filter_map(Result::ok)
         .filter(page_filter)
-        .take(40000)
         .map(|page| {
             progress_bar.inc(1);
             page
@@ -93,6 +93,13 @@ pub(crate) struct CompressedPageWithAccessDate {
 
 pub(crate) struct Document {
     pub(crate) document: String,
+    pub(crate) article_title: String,
+    pub(crate) access_date: NaiveDateTime,
+    pub(crate) modification_date: NaiveDateTime,
+}
+
+pub(crate) struct DocumentFragments {
+    pub(crate) documents: Vec<String>,
     pub(crate) article_title: String,
     pub(crate) access_date: NaiveDateTime,
     pub(crate) modification_date: NaiveDateTime,
@@ -121,11 +128,12 @@ pub(crate) fn compress_articles(
     pages_compressed
 }
 
-pub(crate) fn decompress_articles_into_documents_and_tables(
+pub(crate) fn decompress_articles_into_documents(
     compressed_pages: Vec<CompressedPageWithAccessDate>,
     progress_bar: &ProgressBar,
     markup_processor: &WikiMarkupProcessor,
-) -> Vec<Document> {
+    splitter: &RecursiveCharacterTextSplitter,
+) -> Vec<DocumentFragments> {
     progress_bar.set_message("Decompressing Markup...");
 
     let documents = compressed_pages
@@ -141,8 +149,11 @@ pub(crate) fn decompress_articles_into_documents_and_tables(
                 let document = markup_processor.process(&markup).ok()?;
 
                 progress_bar.inc(1);
-                Some(Document {
-                    document,
+                Some(DocumentFragments {
+                    documents: splitter
+                        .split_text(&document)
+                        .into_iter()
+                        .collect::<Vec<_>>(),
                     article_title,
                     access_date,
                     modification_date: access_date,

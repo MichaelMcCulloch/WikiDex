@@ -1,5 +1,6 @@
 use super::{
-    helper as h, Ingest,
+    helper::{self as h, text::RecursiveCharacterTextSplitter},
+    Ingest,
     IngestError::{self, *},
     WikiMarkupProcessor,
 };
@@ -7,6 +8,7 @@ use crate::{embed::Embedder, llm::SyncOpenAiService};
 use indicatif::MultiProgress;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::{fs::File, io::BufReader, path::Path};
 
 const MARKUP_DB_NAME: &str = "wikipedia_markup.sqlite";
@@ -16,17 +18,29 @@ const VECTOR_DB_NAME: &str = "wikipedia_index.faiss";
 pub(crate) struct Engine {
     embed: Embedder,
     markup_processor: WikiMarkupProcessor,
+    text_splitter: RecursiveCharacterTextSplitter<'static>,
     multi_progress: MultiProgress,
 }
 
 impl Engine {
-    pub(crate) fn new(embed: Embedder, multi_progress: MultiProgress) -> Self {
+    pub(crate) fn new(
+        embed: Embedder,
+        multi_progress: MultiProgress,
+        chunk_size: usize,
+        chunk_overlap: usize,
+    ) -> Self {
         let markup_processor = WikiMarkupProcessor::new();
 
         Self {
             embed,
             markup_processor,
             multi_progress,
+            text_splitter: RecursiveCharacterTextSplitter::new(
+                chunk_size,
+                chunk_overlap,
+                None,
+                true,
+            ),
         }
     }
 
@@ -51,16 +65,17 @@ impl Engine {
         let article_count = pages_compressed.len();
         let markup_written_bar =
             h::progress::new_progress_bar(&self.multi_progress, article_count as u64);
-        h::sql::populate_markup_db(pool, pages_compressed, access_date, &markup_written_bar)?;
+        let articles_written =
+            h::sql::populate_markup_db(pool, pages_compressed, access_date, &markup_written_bar)?;
 
-        h::sql::write_completion_timestamp(pool, article_count)?;
+        h::sql::write_completion_timestamp(pool, articles_written)?;
         Ok(article_count)
     }
 
     fn create_docstore_database(
         &self,
         markup_pool: &Pool<SqliteConnectionManager>,
-        _docstore_pool: &Pool<SqliteConnectionManager>,
+        docstore_pool: &Pool<SqliteConnectionManager>,
     ) -> Result<usize, <Self as Ingest>::E> {
         //Obtain markup
         let obtain_markup_bar = h::progress::new_progress_bar(&self.multi_progress, 7000000 as u64);
@@ -68,16 +83,21 @@ impl Engine {
 
         let pages_decompressed_bar =
             h::progress::new_progress_bar(&self.multi_progress, pages.len() as u64);
-
-        let _documents = h::wiki::decompress_articles_into_documents_and_tables(
+        let documents = h::wiki::decompress_articles_into_documents(
             pages,
             &pages_decompressed_bar,
             &self.markup_processor,
+            &self.text_splitter,
         );
-        //process it in parrallel
 
+        let docstore_written_bar =
+            h::progress::new_progress_bar(&self.multi_progress, documents.len() as u64);
+        let documents_written =
+            h::sql::populate_docstore_db(docstore_pool, documents, &docstore_written_bar)?;
+        //process it in parrallel
+        h::sql::write_completion_timestamp(docstore_pool, documents_written)?;
         //write it to the database
-        Ok(1)
+        Ok(documents_written)
     }
 }
 

@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 
+#[derive(Clone)]
 pub struct RecursiveCharacterTextSplitter<'a> {
     chunk_size: usize,
     chunk_overlap: usize,
@@ -115,7 +116,7 @@ mod tests_text_splitter {
 
         let processor = WikiMarkupProcessor::new();
         let process = processor.process(&document_text).unwrap();
-        let split = RecursiveCharacterTextSplitter::new(1024, 128, None, false);
+        let split = RecursiveCharacterTextSplitter::new(1024, 128, None, true);
         let splits = split.split_text(&process);
         println!("{splits:#?}")
     }

@@ -1,3 +1,5 @@
+use crate::ingest::wikipedia::helper::text::RecursiveCharacterTextSplitter;
+
 use super::{
     super::configurations::WIKIPEDIA_CONFIGURATION,
     parse::{process_to_article, Regexes},

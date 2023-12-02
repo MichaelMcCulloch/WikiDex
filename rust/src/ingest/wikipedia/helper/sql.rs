@@ -1,6 +1,7 @@
 use super::{
     super::{Engine, Ingest, IngestError::*},
-    wiki::{CompressedPage, CompressedPageWithAccessDate},
+    gzip_helper::compress_text,
+    wiki::{CompressedPage, CompressedPageWithAccessDate, Document, DocumentFragments},
 };
 use chrono::NaiveDateTime;
 use indicatif::ProgressBar;
@@ -10,7 +11,10 @@ use r2d2_sqlite::{
     SqliteConnectionManager,
 };
 
-use std::path::Path;
+use std::{
+    path::Path,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 
 pub(crate) const COMPLETION_TABLE_NAME: &str = "completed_on";
 pub(crate) const MARKUP_DB_WIKI_MARKUP_TABLE_NAME: &str = "wiki_markup";
@@ -41,20 +45,24 @@ pub(crate) fn populate_markup_db(
     pages_compressed: Vec<CompressedPage>,
     access_date: NaiveDateTime,
     progress_bar: &ProgressBar,
-) -> Result<(), <Engine as Ingest>::E> {
+) -> Result<usize, <Engine as Ingest>::E> {
     progress_bar.set_message("Writing Compressed Markup to DB...");
     let connection = connection.get().map_err(R2D2Error)?;
     pool_execute(&connection, "BEGIN;")?;
     init_markup_sqlite_pool(&connection)?;
+
+    let article_count = AtomicUsize::new(0);
+
     for CompressedPage {
         gzipped_text,
         article_title,
     } in pages_compressed.into_iter()
     {
+        let article_id: usize = article_count.fetch_add(1, Ordering::Relaxed);
         connection
             .execute(
-                format!("INSERT INTO {MARKUP_DB_WIKI_MARKUP_TABLE_NAME} (title, text, access_date) VALUES ($1, $2, $3)").as_str(),
-                (&article_title, &gzipped_text, access_date.timestamp_millis()),
+                format!("INSERT INTO {MARKUP_DB_WIKI_MARKUP_TABLE_NAME} (id, title, text, access_date) VALUES ($1, $2, $3, $4)").as_str(),
+                (&article_id, &article_title, &gzipped_text, access_date.timestamp_millis()),
             )
             .map_err(RuSqliteError)?;
 
@@ -62,7 +70,54 @@ pub(crate) fn populate_markup_db(
     }
     pool_execute(&connection, "COMMIT;")?;
     progress_bar.set_message("Writing Compressed Markup to DB...DONE");
-    Ok(())
+    Ok(article_count.fetch_add(0, Ordering::SeqCst))
+}
+pub(crate) fn populate_docstore_db(
+    connection: &Pool<SqliteConnectionManager>,
+    pages_compressed: Vec<DocumentFragments>,
+    progress_bar: &ProgressBar,
+) -> Result<usize, <Engine as Ingest>::E> {
+    progress_bar.set_message("Writing Docstore to DB...");
+    let connection = connection.get().map_err(R2D2Error)?;
+    pool_execute(&connection, "BEGIN;")?;
+    init_docstore_sqlite_pool(&connection)?;
+
+    let article_count = AtomicUsize::new(0);
+    let document_count = AtomicUsize::new(0);
+
+    for DocumentFragments {
+        documents,
+        article_title,
+        access_date,
+        modification_date,
+    } in pages_compressed.into_iter()
+    {
+        let article_id = article_count.fetch_add(1, Ordering::Relaxed);
+        connection
+            .execute(
+                format!("INSERT INTO {DOCSTORE_DB_ARTICLE_TABLE_NAME} (id , title, access_date, modification_date) VALUES ($1, $2, $3, $4)").as_str(),
+                (&article_id, &article_title, &access_date.timestamp_millis(), modification_date.timestamp_millis()),
+            )
+        .map_err(RuSqliteError)?;
+
+        for document in documents {
+            let document_id = document_count.fetch_add(1, Ordering::Relaxed);
+
+            let document = compress_text(&document).map_err(IoError)?;
+
+            connection
+            .execute(
+                format!("INSERT INTO {DOCSTORE_DB_DOCUMENT_TABLE_NAME} (id, text, article) VALUES ($1, $2, $3)").as_str(),
+                (&document_id, &document, &article_id),
+            )
+            .map_err(RuSqliteError)?;
+        }
+
+        progress_bar.inc(1);
+    }
+    pool_execute(&connection, "COMMIT;")?;
+    progress_bar.set_message("Writing Docstore to DB...DONE");
+    Ok(document_count.fetch_add(0, Ordering::SeqCst))
 }
 
 pub(crate) fn database_is_complete(
@@ -149,8 +204,8 @@ pub(crate) fn init_docstore_sqlite_pool(
             format!("DROP TABLE IF EXISTS {COMPLETION_TABLE_NAME};").as_str(),
             format!("DROP TABLE IF EXISTS {DOCSTORE_DB_DOCUMENT_TABLE_NAME};").as_str(),
             format!("DROP TABLE IF EXISTS {DOCSTORE_DB_ARTICLE_TABLE_NAME};").as_str(),
-            format!("CREATE TABLE IF NOT EXISTS {DOCSTORE_DB_ARTICLE_TABLE_NAME} ( id INTEGER PRIMARY KEY NOT NULL, title BLOB NOT NULL, access_date INTEGER, modification_date INTEGER );").as_str(),
-            format!("CREATE TABLE IF NOT EXISTS {DOCSTORE_DB_DOCUMENT_TABLE_NAME} ( id INTEGER PRIMARY KEY NOT NULL, text BLOB NOT NULL, article INTEGER, FOREIGN KEY(article) REFERENCES {DOCSTORE_DB_ARTICLE_TABLE_NAME}(title)  );").as_str(),
+            format!("CREATE TABLE IF NOT EXISTS {DOCSTORE_DB_ARTICLE_TABLE_NAME} ( id INTEGER PRIMARY KEY NOT NULL, title TEXT NOT NULL, access_date INTEGER, modification_date INTEGER );").as_str(),
+            format!("CREATE TABLE IF NOT EXISTS {DOCSTORE_DB_DOCUMENT_TABLE_NAME} ( id INTEGER PRIMARY KEY NOT NULL, text BLOB NOT NULL, article INTEGER, FOREIGN KEY(article) REFERENCES {DOCSTORE_DB_ARTICLE_TABLE_NAME}(id)  );").as_str(),
             format!("CREATE TABLE IF NOT EXISTS {COMPLETION_TABLE_NAME} ( db_date INTEGER, article_count INTEGER);").as_str(),
         ] {
             pool_execute(&connection, query)?;

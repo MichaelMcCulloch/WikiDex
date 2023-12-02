@@ -71,7 +71,7 @@ async fn main() -> anyhow::Result<()> {
 
             let embedder: Embedder = Embedder::new(config.embed_url)?;
 
-            let engine = WikipediaIngestEngine::new(embedder, multi_progress);
+            let engine = WikipediaIngestEngine::new(embedder, multi_progress, 1024, 128);
 
             engine.ingest_wikipedia(&config.wiki_xml, &config.output_directory)?;
             Ok(())
