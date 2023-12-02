@@ -53,39 +53,39 @@ x-base_service_embeddings: &base_embeddings
     - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
 
 services:
-  ui:
-    <<:
-      - *base_service
-      - *base_ui
-    build:
-      dockerfile: Dockerfile
-      context: ./typescript
+  # ui:
+  #   <<:
+  #     - *base_service
+  #     - *base_ui
+  #   build:
+  #     dockerfile: Dockerfile
+  #     context: ./typescript
 
-  vllm-nv:
-    <<:
-      - *base_service_nvidia
-      - *base_vllm
-    build:
-      dockerfile: Dockerfile_NVIDIA
-      context: ./vllm
+  # vllm-nv:
+  #   <<:
+  #     - *base_service_nvidia
+  #     - *base_vllm
+  #   build:
+  #     dockerfile: Dockerfile_NVIDIA
+  #     context: ./vllm
 
-  omnipedia-nv:
-    <<:
-      - *base_service_nvidia
-      - *base_omnipedia
-    profiles: ["nvidia"]
-    build:
-      dockerfile: Dockerfile_NVIDIA
-      context: ./rust
+  # omnipedia-nv:
+  #   <<:
+  #     - *base_service_nvidia
+  #     - *base_omnipedia
+  #   profiles: ["nvidia"]
+  #   build:
+  #     dockerfile: Dockerfile_NVIDIA
+  #     context: ./rust
 
-  omnipedia-ingest-nv:
-    <<:
-      - *base_service_nvidia
-      - *base_omnipedia_ingest
-    profiles: ["nvidia_ingest"]
-    build:
-      dockerfile: Dockerfile_NVIDIA_INGEST
-      context: ./rust
+  # omnipedia-ingest-nv:
+  #   <<:
+  #     - *base_service_nvidia
+  #     - *base_omnipedia_ingest
+  #   profiles: ["nvidia_ingest"]
+  #   build:
+  #     dockerfile: Dockerfile_NVIDIA_INGEST
+  #     context: ./rust
 
   embeddings-nv:
     <<:
@@ -95,36 +95,36 @@ services:
       dockerfile: Dockerfile_NVIDIA
       context: ./embeddings_service
 
-  vllm-amd:
-    <<:
-      - *base_service_amd
-      - *base_vllm
-    build:
-      dockerfile: Dockerfile_AMD
-      context: ./vllm
+  # vllm-amd:
+  #   <<:
+  #     - *base_service_amd
+  #     - *base_vllm
+  #   build:
+  #     dockerfile: Dockerfile_AMD
+  #     context: ./vllm
 
-  omnipedia-amd:
-    <<:
-      - *base_service_amd
-      - *base_omnipedia
-    profiles: ["amd"]
-    build:
-      dockerfile: Dockerfile_AMD
-      context: ./rust
+  # omnipedia-amd:
+  #   <<:
+  #     - *base_service_amd
+  #     - *base_omnipedia
+  #   profiles: ["amd"]
+  #   build:
+  #     dockerfile: Dockerfile_AMD
+  #     context: ./rust
 
-  omnipedia-ingest-amd:
-    <<:
-      - *base_service_amd
-      - *base_omnipedia_ingest
-    profiles: ["amd_ingest"]
-    build:
-      dockerfile: Dockerfile_AMD_INGEST
-      context: ./rust
+  # omnipedia-ingest-amd:
+  #   <<:
+  #     - *base_service_amd
+  #     - *base_omnipedia_ingest
+  #   profiles: ["amd_ingest"]
+  #   build:
+  #     dockerfile: Dockerfile_AMD_INGEST
+  #     context: ./rust
 
-  embeddings-amd:
-    <<:
-      - *base_service_amd
-      - *base_embeddings
-    build:
-      dockerfile: Dockerfile_AMD
-      context: ./embeddings_service
+  # embeddings-amd:
+  #   <<:
+  #     - *base_service_amd
+  #     - *base_embeddings
+  #   build:
+  #     dockerfile: Dockerfile_AMD
+  #     context: ./embeddings_service

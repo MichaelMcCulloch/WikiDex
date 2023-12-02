@@ -20,6 +20,7 @@ pub(crate) const COMPLETION_TABLE_NAME: &str = "completed_on";
 pub(crate) const MARKUP_DB_WIKI_MARKUP_TABLE_NAME: &str = "wiki_markup";
 pub(crate) const DOCSTORE_DB_DOCUMENT_TABLE_NAME: &str = "document";
 pub(crate) const DOCSTORE_DB_ARTICLE_TABLE_NAME: &str = "article";
+pub(crate) const EMBEDDINGS_DB_EMBEDDINGS_TABLE_NAME: &str = "embeddings";
 
 pub(crate) fn write_completion_timestamp(
     connection: &Pool<SqliteConnectionManager>,
@@ -140,6 +141,27 @@ pub(crate) fn database_is_complete(
         Err(_) => Ok(false),
     }
 }
+
+pub(crate) fn count_elements(
+    pool: &Pool<SqliteConnectionManager>,
+) -> Result<Option<usize>, <Engine as Ingest>::E> {
+    let connection = &pool.get().map_err(R2D2Error)?;
+    let mut count_stmt = connection
+        .prepare(&format!(
+            "SELECT article_count FROM {COMPLETION_TABLE_NAME} LIMIT 1;"
+        ))
+        .map_err(RuSqliteError)?;
+    let mut rows = count_stmt.query(params![]).map_err(RuSqliteError)?;
+    let next_row = rows
+        .next()
+        .map(|next_row| next_row.map(|row| row.get(0)))
+        .map_err(RuSqliteError)?;
+    match next_row {
+        Some(Ok(count)) => Ok(count),
+        Some(e) => e.map_err(RuSqliteError),
+        None => Ok(None),
+    }
+}
 pub(crate) fn obtain_markup(
     connection: &Pool<SqliteConnectionManager>,
     progress_bar: &ProgressBar,
@@ -205,6 +227,24 @@ pub(crate) fn init_docstore_sqlite_pool(
             format!("DROP TABLE IF EXISTS {DOCSTORE_DB_ARTICLE_TABLE_NAME};").as_str(),
             format!("CREATE TABLE IF NOT EXISTS {DOCSTORE_DB_ARTICLE_TABLE_NAME} ( id INTEGER PRIMARY KEY NOT NULL, title TEXT NOT NULL, access_date INTEGER, modification_date INTEGER );").as_str(),
             format!("CREATE TABLE IF NOT EXISTS {DOCSTORE_DB_DOCUMENT_TABLE_NAME} ( id INTEGER PRIMARY KEY NOT NULL, text BLOB NOT NULL, article INTEGER, FOREIGN KEY(article) REFERENCES {DOCSTORE_DB_ARTICLE_TABLE_NAME}(id)  );").as_str(),
+            format!("CREATE TABLE IF NOT EXISTS {COMPLETION_TABLE_NAME} ( db_date INTEGER, article_count INTEGER);").as_str(),
+        ] {
+            pool_execute(&connection, query)?;
+        }
+
+    connection
+        .pragma_update(Some(DatabaseName::Main), "journal_mode", "WAL")
+        .map_err(RuSqliteError)?;
+
+    Ok(())
+}
+pub(crate) fn init_temp_embedding_sqlite_pool(
+    connection: &PooledConnection<SqliteConnectionManager>,
+) -> Result<(), <Engine as Ingest>::E> {
+    for query in [
+            format!("DROP TABLE IF EXISTS {COMPLETION_TABLE_NAME};").as_str(),
+            format!("DROP TABLE IF EXISTS {EMBEDDINGS_DB_EMBEDDINGS_TABLE_NAME};").as_str(),
+            format!("CREATE TABLE IF NOT EXISTS {EMBEDDINGS_DB_EMBEDDINGS_TABLE_NAME} (id INTEGER PRIMARY KEY NOT NULL, gte_small BLOB NOT NULL);").as_str(),
             format!("CREATE TABLE IF NOT EXISTS {COMPLETION_TABLE_NAME} ( db_date INTEGER, article_count INTEGER);").as_str(),
         ] {
             pool_execute(&connection, query)?;

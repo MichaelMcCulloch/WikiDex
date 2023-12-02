@@ -159,10 +159,10 @@ pub(crate) fn decompress_articles_into_documents(
                 thread::spawn(move || {
                     let document = markup_processor.process(&markup);
 
-                    tx.send(document).unwrap();
+                    let _ = tx.send(document);
                 });
 
-                let document = match rx.recv_timeout(Duration::from_secs(30)) {
+                let document = match rx.recv_timeout(Duration::from_secs(60)) {
                     Ok(Ok(document)) => Ok(document),
                     Ok(Err(e)) => Err(MarkupError(e)),
                     Err(_) => {

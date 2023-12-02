@@ -5,7 +5,7 @@ use std::{
     path::PathBuf,
 };
 
-use crate::llm::LlmServiceError;
+use crate::{embed::EmbeddingServiceError, llm::LlmServiceError};
 
 use super::markup_processor::WikiMarkupProcessingError;
 
@@ -18,8 +18,10 @@ pub(crate) enum IngestError {
     XmlDateReadError,
     RuSqliteError(r2d2_sqlite::rusqlite::Error),
     LlmServiceError(LlmServiceError),
+    EmbeddingServiceError(EmbeddingServiceError),
     Timeout(String),
     MarkupError(WikiMarkupProcessingError),
+    NoRows,
 }
 
 impl Error for IngestError {}
@@ -49,8 +51,12 @@ impl Display for IngestError {
                 write!(f, "IngestEngine: Unable to read data from XML File Name.",)
             }
             IngestError::LlmServiceError(error) => write!(f, "{error}"),
+            IngestError::EmbeddingServiceError(error) => write!(f, "{error}"),
             IngestError::Timeout(s) => {
                 write!(f, "IngestEngine: Timeout processing '{s}'")
+            }
+            IngestError::NoRows => {
+                write!(f, "IngestEngine: No rows to process.")
             }
             IngestError::MarkupError(e) => {
                 write!(f, "{e}")

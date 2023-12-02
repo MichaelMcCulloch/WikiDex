@@ -2,7 +2,7 @@ use std::sync::Mutex;
 
 use crate::{
     docstore::{DocumentService, SqliteDocstore},
-    embed::{EmbedService, Embedder},
+    embed::{r#async::Embedder, EmbedService},
     formatter::{DocumentFormatter, TextFormatter},
     index::{FaissIndex, SearchService},
     llm::{
