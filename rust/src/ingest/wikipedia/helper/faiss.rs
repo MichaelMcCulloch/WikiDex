@@ -1,3 +1,5 @@
+// TODO: Move me to ingest::, rather than ingest::wikipedia::helper::.
+
 use std::path::Path;
 
 use faiss::{index_factory, Index, MetricType};
