@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use crate::{
     docstore::{DocumentService, SqliteDocstore},
     embed::{r#async::Embedder, EmbedService},
-    formatter::{DocumentFormatter, TextFormatter},
+    formatter::{DocumentFormatter, Provenance, TextFormatter},
     index::{FaissIndex, SearchService},
     llm::{
         AsyncLlmService, AsyncOpenAiService, {LlmInput, LlmMessage, LlmRole},
@@ -20,6 +20,8 @@ pub struct Engine {
     llm: AsyncOpenAiService,
     prompt: String,
 }
+
+const NUM_DOCUMENTS_TO_RETRIEVE: usize = 4;
 
 #[async_trait::async_trait]
 impl QueryEngine for Engine {
@@ -40,7 +42,7 @@ impl QueryEngine for Engine {
             .index
             .lock()
             .map_err(|_| QueryEngineError::UnableToLockIndex)?
-            .search(first_embedding, 8)
+            .search(first_embedding, NUM_DOCUMENTS_TO_RETRIEVE)
             .map_err(|e| QueryEngineError::IndexError(e))?;
 
         let documents = self
@@ -79,7 +81,7 @@ impl QueryEngine for Engine {
                     .index
                     .lock()
                     .map_err(|_| QueryEngineError::UnableToLockIndex)?
-                    .search(first_embedding, 8)
+                    .search(first_embedding, NUM_DOCUMENTS_TO_RETRIEVE)
                     .map_err(|e| QueryEngineError::IndexError(e))?;
 
                 let documents = self
