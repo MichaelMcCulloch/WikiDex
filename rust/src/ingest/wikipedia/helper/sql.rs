@@ -282,6 +282,7 @@ pub(crate) fn obtain_vectors(
     tmp_vector_pool: &Pool<SqliteConnectionManager>,
     progress_bar: &ProgressBar,
 ) -> Result<Vec<f32>, IngestError> {
+    progress_bar.set_message("Obtaining vectors...");
     let tmp_vectorstore_connection = tmp_vector_pool.get().map_err(R2D2Error)?;
     let mut stmt_read_embeddings = tmp_vectorstore_connection
         .prepare("SELECT gte_small FROM embeddings ORDER BY id ASC;")
@@ -303,6 +304,7 @@ pub(crate) fn obtain_vectors(
         .filter_map(|f| f.ok())
         .flat_map(|f| f)
         .collect::<Vec<_>>();
+    progress_bar.set_message("Obtaining vectors...DONE");
     Ok(vector_embeddings)
 }
 pub(crate) fn get_sqlite_pool<P: AsRef<Path>>(

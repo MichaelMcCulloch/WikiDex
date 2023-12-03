@@ -16,6 +16,7 @@ const VECTOR_TMP_DB_NAME: &str = "wikipedia_index.sqlite";
 const VECTOR_INDEX_NAME: &str = "wikipedia_index.faiss";
 
 const BATCH_SIZE: usize = 640 * 10;
+const PCA_DIMENSIONS: usize = 128;
 pub(crate) struct Engine {
     embed: Embedder,
     markup_processor: WikiMarkupProcessor,
@@ -145,8 +146,9 @@ impl Engine {
             h::progress::new_progress_bar(&self.multi_progress, vector_count as u64);
         let index_path = index_path.as_ref();
         let vector_embeddings = h::sql::obtain_vectors(tmp_vector_pool, &obtain_vectors_bar)?;
+        drop(obtain_vectors_bar);
         let count = vector_embeddings.len();
-        h::faiss::populate_vectorestore_index(&index_path, vector_embeddings)?;
+        h::faiss::populate_vectorestore_index(&index_path, vector_embeddings, PCA_DIMENSIONS)?;
         Ok(count)
     }
 }
@@ -195,15 +197,16 @@ impl Ingest for Engine {
 
                     self.create_temp_vector_database(&docstore_pool, &tmp_vector_pool)?;
                 }
-                log::info!("Vector DB is ready at {}", docstore_db_path.display());
+                log::info!("Vector DB is ready at {}", tmp_vector_db_path.display());
 
+                drop(docstore_pool);
                 let index_path = output_directory.join(VECTOR_INDEX_NAME);
                 if !h::faiss::index_is_complete(&index_path).map_err(IndexError)? {
-                    log::info!("Preparing Vector DB...");
+                    log::info!("Preparing Vector Index...");
 
                     self.create_vector_index(&tmp_vector_pool, &index_path)?;
                 }
-                log::info!("Vector DB is ready at {}", docstore_db_path.display());
+                log::info!("Vector Index is ready at {}", index_path.display());
 
                 Ok(1)
             }

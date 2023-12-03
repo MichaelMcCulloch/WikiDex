@@ -10,8 +10,10 @@ use crate::{
 pub(crate) fn populate_vectorestore_index<P: AsRef<Path>>(
     index_path: &P,
     vector_embeddings: Vec<f32>,
+    pca_dimensions: usize,
 ) -> Result<(), IngestError> {
-    let mut index = index_factory(384, "PCA128,Flat", MetricType::L2).map_err(FaissError)?;
+    let mut index = index_factory(384, format!("PCA{pca_dimensions},Flat"), MetricType::L2)
+        .map_err(FaissError)?;
 
     log::info!("Training Vectorstore.");
     index.train(&vector_embeddings).map_err(FaissError)?;
