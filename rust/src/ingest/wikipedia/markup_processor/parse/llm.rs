@@ -7,10 +7,7 @@ use crate::llm::{
 const ESTIMATED_CONTROL_TOKENS_IN_PROMPT: usize = 30;
 const ROOM_FOR_SUMMARY: usize = 8192;
 
-pub(crate) fn process_table_to_llm(
-    table_for_summary: &str,
-    client: &SyncOpenAiService,
-) -> Result<String, LlmServiceError> {
+pub(crate) fn process_table_to_llm(table_for_summary: &str) -> Result<String, LlmServiceError> {
     let system_description = format!("You are a helpful assistant that describes the purpose of the table based on the headers and a random subset of rows from the table.");
 
     let message_description = LlmInput {

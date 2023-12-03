@@ -5,13 +5,21 @@ use super::{
         IngestError::*,
     },
     gzip_helper::{compress_text, decompress_text},
+    text::RecursiveCharacterTextSplitter,
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use indicatif::ProgressBar;
 use markup_processor::WikiMarkupProcessor;
 use parse_mediawiki_dump_reboot::{schema::Namespace, Page};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use std::{fs::File, io::BufReader, path::Path};
+use std::{
+    fs::File,
+    io::BufReader,
+    path::Path,
+    sync::{mpsc::channel, Arc},
+    thread,
+    time::Duration,
+};
 
 pub(crate) fn get_date_from_xml_name<P: AsRef<Path>>(
     file_name: &P,
@@ -70,7 +78,6 @@ pub(crate) fn get_eligible_pages(file: BufReader<File>, progress_bar: &ProgressB
     let eligible_pages = parse
         .filter_map(Result::ok)
         .filter(page_filter)
-        .take(40000)
         .map(|page| {
             progress_bar.inc(1);
             page
@@ -91,83 +98,11 @@ pub(crate) struct CompressedPageWithAccessDate {
     pub(crate) access_date: NaiveDateTime,
 }
 
-#[derive(Clone)]
-pub(crate) struct UnlabledDocument {
-    pub(crate) document: String,
-    pub(crate) table: Vec<DescribedTable>,
-}
-#[derive(Clone)]
-pub(crate) struct DescribedTable {
-    pub(crate) description: String,
-    pub(crate) table: String,
-}
-
-impl UnlabledDocument {
-    pub(crate) fn trim(self) -> Self {
-        let Self { document, table } = self;
-        Self {
-            document: document.trim().to_string(),
-            table: table,
-        }
-    }
-
-    pub(crate) fn from_str(document: String) -> UnlabledDocument {
-        Self {
-            document,
-            table: vec![],
-        }
-    }
-
-    pub(crate) fn from_str_and_vec(
-        document: String,
-        table: Vec<DescribedTable>,
-    ) -> UnlabledDocument {
-        Self { document, table }
-    }
-    pub(crate) fn new() -> Self {
-        Self {
-            document: String::new(),
-            table: vec![],
-        }
-    }
-    pub(crate) fn prepend(self, string: &str) -> Self {
-        let Self { document, table } = self;
-        Self {
-            document: format!("{string}{document}"),
-            table: table,
-        }
-    }
-    pub(crate) fn append(self, string: &str) -> Self {
-        let Self { document, table } = self;
-        Self {
-            document: format!("{document}{string}"),
-            table: table,
-        }
-    }
-    pub(crate) fn join_all(documents: Vec<Self>, separator: &str) -> Self {
-        let mut joined_document = String::new();
-        let mut combined_table = Vec::new();
-
-        for (i, doc) in documents.into_iter().enumerate() {
-            if i > 0 {
-                joined_document.push_str(separator); // Add a space or any other separator
-            }
-            joined_document.push_str(&doc.document);
-            combined_table.extend(doc.table);
-        }
-
-        UnlabledDocument {
-            document: joined_document,
-            table: combined_table,
-        }
-    }
-}
-pub(crate) struct Document {
-    pub(crate) document: String,
-    pub(crate) table: Vec<DescribedTable>,
+pub(crate) struct DocumentFragments {
+    pub(crate) documents: Vec<Vec<u8>>,
     pub(crate) article_title: String,
     pub(crate) access_date: NaiveDateTime,
-    pub(crate) modification_datae: NaiveDateTime,
+    pub(crate) modification_date: NaiveDateTime,
 }
 
 pub(crate) fn compress_articles(
@@ -193,12 +128,15 @@ pub(crate) fn compress_articles(
     pages_compressed
 }
 
-pub(crate) fn decompress_articles_into_documents_and_tables(
+pub(crate) fn decompress_articles_into_documents(
     compressed_pages: Vec<CompressedPageWithAccessDate>,
     progress_bar: &ProgressBar,
     markup_processor: &WikiMarkupProcessor,
-) -> Vec<Document> {
+    splitter: &RecursiveCharacterTextSplitter,
+) -> Vec<DocumentFragments> {
     progress_bar.set_message("Decompressing Markup...");
+
+    let markup_processor = Arc::new(markup_processor.clone());
 
     let documents = compressed_pages
         .into_par_iter()
@@ -208,17 +146,36 @@ pub(crate) fn decompress_articles_into_documents_and_tables(
                  article_title,
                  access_date,
              }| {
+                let markup_processor = markup_processor.clone();
                 let markup = decompress_text(gzipped_text).ok()?;
+                let (tx, rx) = channel();
+                thread::spawn(move || {
+                    let document = markup_processor.process(&markup);
 
-                let document = markup_processor.process(&markup).ok()?;
+                    let _ = tx.send(document);
+                });
+
+                let document = match rx.recv_timeout(Duration::from_secs(60)) {
+                    Ok(Ok(document)) => Ok(document),
+                    Ok(Err(e)) => Err(MarkupError(e)),
+                    Err(_) => {
+                        let timeout = Timeout(article_title.clone());
+                        log::warn!("{timeout}");
+                        Err(timeout)
+                    }
+                }
+                .ok()?;
 
                 progress_bar.inc(1);
-                Some(Document {
-                    document: document.document,
-                    table: document.table,
+                Some(DocumentFragments {
+                    documents: splitter
+                        .split_text(&document)
+                        .into_iter()
+                        .filter_map(|document| compress_text(&document).map_err(IoError).ok())
+                        .collect::<Vec<_>>(),
                     article_title,
                     access_date,
-                    modification_datae: access_date,
+                    modification_date: access_date,
                 })
             },
         )

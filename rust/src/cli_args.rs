@@ -27,12 +27,6 @@ pub(crate) struct WikipediaIngestArgs {
 
     #[arg(short, long, default_value_t = Url::parse("http://embeddings:9000").unwrap())]
     pub(crate) embed_url: Url,
-    #[arg(short, long, default_value_t = Url::parse("http://vllm:5050/v1").unwrap())]
-    pub(crate) vllm_url: Url,
-    #[arg(short, long)]
-    pub(crate) model_name: PathBuf,
-    #[arg(short, long)]
-    pub(crate) model_length: usize,
 }
 
 #[derive(Parser, Debug)]

@@ -78,14 +78,14 @@ services:
       dockerfile: Dockerfile_NVIDIA
       context: ./rust
 
-  omnipedia-ingest-nv:
-    <<:
-      - *base_service_nvidia
-      - *base_omnipedia_ingest
-    profiles: ["nvidia_ingest"]
-    build:
-      dockerfile: Dockerfile_NVIDIA_INGEST
-      context: ./rust
+  # omnipedia-ingest-nv:
+  #   <<:
+  #     - *base_service_nvidia
+  #     - *base_omnipedia_ingest
+  #   profiles: ["nvidia_ingest"]
+  #   build:
+  #     dockerfile: Dockerfile_NVIDIA_INGEST
+  #     context: ./rust
 
   embeddings-nv:
     <<:
@@ -112,14 +112,14 @@ services:
       dockerfile: Dockerfile_AMD
       context: ./rust
 
-  omnipedia-ingest-amd:
-    <<:
-      - *base_service_amd
-      - *base_omnipedia_ingest
-    profiles: ["amd_ingest"]
-    build:
-      dockerfile: Dockerfile_AMD_INGEST
-      context: ./rust
+  # omnipedia-ingest-amd:
+  #   <<:
+  #     - *base_service_amd
+  #     - *base_omnipedia_ingest
+  #   profiles: ["amd_ingest"]
+  #   build:
+  #     dockerfile: Dockerfile_AMD_INGEST
+  #     context: ./rust
 
   embeddings-amd:
     <<:

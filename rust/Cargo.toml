@@ -48,3 +48,7 @@ utoipa-redoc = { version = "1.0.0", features = ["actix-web"] }
 [profile.release]
 lto = true
 strip = true
+
+[profile.test]
+opt-level = 3
+debug = 0

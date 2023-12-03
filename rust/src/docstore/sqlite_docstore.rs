@@ -48,7 +48,7 @@ impl DocumentService for SqliteDocstore {
             .collect::<Vec<_>>()
             .join(",");
         let query = format!(
-            "SELECT document.id, document.doc, article.title FROM document INNER JOIN article ON document.article = article.id WHERE document.id IN ({})",
+            "SELECT document.id, document.text, article.title FROM document INNER JOIN article ON document.article = article.id WHERE document.id IN ({})",
             ids
         );
         let docs_rows = sqlx::query(&query)
@@ -61,7 +61,7 @@ impl DocumentService for SqliteDocstore {
             .filter_map(|row| {
                 let index = row.get::<i64, _>("id");
 
-                let binary_data = row.get::<Vec<u8>, _>("doc");
+                let binary_data = row.get::<Vec<u8>, _>("text");
                 let mut gz = GzDecoder::new(&*binary_data);
                 let mut document = String::new();
                 gz.read_to_string(&mut document).ok()?;
@@ -106,7 +106,7 @@ impl DocumentService for SqliteDocstore {
             .collect::<Vec<_>>()
             .join(",");
 
-        let query = format!("SELECT document.id, document.doc, article.title FROM document INNER JOIN article ON document.article = article.id WHERE document.id IN ({})", ids);
+        let query = format!("SELECT document.id, document.text, article.title FROM document INNER JOIN article ON document.article = article.id WHERE document.id IN ({})", ids);
 
         let docs_rows = sqlx::query(&query)
             .fetch_all(&self.pool)
@@ -118,7 +118,7 @@ impl DocumentService for SqliteDocstore {
             .filter_map(|row| {
                 let index = row.get::<i64, _>("id");
 
-                let binary_data = row.get::<Vec<u8>, _>("doc");
+                let binary_data = row.get::<Vec<u8>, _>("text");
                 let mut gz = GzDecoder::new(&*binary_data);
                 let mut document = String::new();
                 gz.read_to_string(&mut document).ok()?;

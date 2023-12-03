@@ -5,7 +5,7 @@ use std::{
 };
 
 #[derive(Debug)]
-pub enum IndexLoadError {
+pub enum IndexError {
     FileNotFound,
     IndexReadError(FsError),
     IndexFormatError(FsError),
@@ -17,17 +17,17 @@ pub enum IndexSearchError {
     IndexSearchError(FsError),
 }
 
-impl StdError for IndexLoadError {}
+impl StdError for IndexError {}
 impl StdError for IndexSearchError {}
 
-impl Display for IndexLoadError {
+impl Display for IndexError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
-            IndexLoadError::FileNotFound => write!(f, "SearchService: Index not found"),
-            IndexLoadError::IndexReadError(err) => {
+            IndexError::FileNotFound => write!(f, "SearchService: Index not found"),
+            IndexError::IndexReadError(err) => {
                 write!(f, "SearchService: {}", err)
             }
-            IndexLoadError::IndexFormatError(err) => {
+            IndexError::IndexFormatError(err) => {
                 write!(f, "SearchService: {}", err)
             }
         }
