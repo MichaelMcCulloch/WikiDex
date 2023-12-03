@@ -195,8 +195,9 @@ impl Engine {
             let batch = batch.iter().map(|s| s.as_str()).collect::<Vec<_>>();
 
             let batch_result = self.embed.embed(&batch).map_err(EmbeddingServiceError)?;
-            let x = tx.send((ids, batch_result));
+            let _ = tx.send((ids, batch_result));
         }
+        drop(tx);
         db_writter_thread.join().unwrap()?;
         h::sql::write_completion_timestamp(&tmp_vector_pool, document_count)?;
 
