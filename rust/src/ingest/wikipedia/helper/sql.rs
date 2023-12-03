@@ -1,6 +1,11 @@
+use crate::{
+    embed::{sync::Embedder, EmbedServiceSync},
+    ingest::wikipedia::IngestError,
+};
+
 use super::{
     super::{Engine, Ingest, IngestError::*},
-    gzip_helper::compress_text,
+    gzip_helper::{compress_text, decompress_text},
     wiki::{CompressedPage, CompressedPageWithAccessDate, Document, DocumentFragments},
 };
 use chrono::NaiveDateTime;
@@ -10,10 +15,15 @@ use r2d2_sqlite::{
     rusqlite::{params, DatabaseName},
     SqliteConnectionManager,
 };
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use std::{
+    io::Write,
     path::Path,
-    sync::atomic::{AtomicUsize, Ordering},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        mpsc::{Receiver, Sender},
+    },
 };
 
 pub(crate) const COMPLETION_TABLE_NAME: &str = "completed_on";
@@ -119,7 +129,83 @@ pub(crate) fn populate_docstore_db(
     progress_bar.set_message("Writing Docstore to DB...DONE");
     Ok(document_count.fetch_add(0, Ordering::SeqCst))
 }
+pub(crate) fn write_vectorstore(
+    rx: Receiver<(Vec<usize>, Vec<Vec<f32>>)>,
+    tmp_vector_pool_clone: &Pool<SqliteConnectionManager>,
+    create_vectors_bar: &ProgressBar,
+) -> Result<(), IngestError> {
+    let tmp_vector_connection = &tmp_vector_pool_clone.get().map_err(R2D2Error)?;
+    init_temp_embedding_sqlite_pool(&tmp_vector_connection)?;
 
+    while let Ok((indices, embeddings)) = rx.recv() {
+        tmp_vector_connection
+            .execute_batch("BEGIN;")
+            .map_err(RuSqliteError)?;
+        let count = indices.len();
+        for (index, embedding) in indices.into_iter().zip(embeddings) {
+            let mut v8: Vec<u8> = vec![];
+
+            for e in embedding {
+                v8.write_all(&e.to_le_bytes()).map_err(IoError)?;
+            }
+
+            tmp_vector_connection
+                            .execute(
+                                &format!("INSERT INTO {EMBEDDINGS_DB_EMBEDDINGS_TABLE_NAME} (id, gte_small) VALUES ($1, $2)"),
+                                params![index, v8],
+                            )
+                            .map_err(RuSqliteError)?;
+        }
+        create_vectors_bar.inc(count as u64);
+
+        tmp_vector_connection
+            .execute_batch("COMMIT;")
+            .map_err(RuSqliteError)?;
+    }
+    Ok(())
+}
+pub(crate) fn populate_vectorstore_db(
+    embedder: &Embedder,
+    docstore_pool: &Pool<SqliteConnectionManager>,
+    document_count: usize,
+    tx: Sender<(Vec<usize>, Vec<Vec<f32>>)>,
+    batch_size: usize,
+) -> Result<(), <Engine as Ingest>::E> {
+    let docstore_connection = &docstore_pool.get().map_err(R2D2Error)?;
+    Ok(
+        for indices in (0..document_count).collect::<Vec<_>>().chunks(batch_size) {
+            let mut stmt_read_document = docstore_connection
+            .prepare(&format!(
+                "SELECT id, text FROM {DOCSTORE_DB_DOCUMENT_TABLE_NAME} WHERE id >= $1 AND id <= $2 ORDER BY id ASC;"
+            ))
+            .map_err(RuSqliteError)?;
+
+            let start = indices.first().unwrap();
+            let end = indices.last().unwrap();
+
+            let mapped = stmt_read_document
+                .query_map(params![start, end], |row| {
+                    let id: usize = row.get(0)?;
+                    let doc: Vec<u8> = row.get(1)?;
+                    Ok((id, doc))
+                })
+                .map_err(RuSqliteError)?
+                .filter_map(|f| f.ok())
+                .collect::<Vec<_>>();
+
+            let rows = mapped
+                .into_par_iter()
+                .filter_map(|(id, doc)| Some((id, decompress_text(doc).ok()?)))
+                .collect::<Vec<_>>();
+
+            let (ids, batch): (Vec<usize>, Vec<String>) = rows.into_iter().unzip();
+            let batch = batch.iter().map(|s| s.as_str()).collect::<Vec<_>>();
+
+            let batch_result = embedder.embed(&batch).map_err(EmbeddingServiceError)?;
+            let _ = tx.send((ids, batch_result));
+        },
+    )
+}
 pub(crate) fn database_is_complete(
     pool: &Pool<SqliteConnectionManager>,
 ) -> Result<bool, <Engine as Ingest>::E> {

@@ -4,7 +4,7 @@ use super::{
         gzip_helper::decompress_text,
         sql::{
             init_temp_embedding_sqlite_pool, DOCSTORE_DB_DOCUMENT_TABLE_NAME,
-            MARKUP_DB_WIKI_MARKUP_TABLE_NAME,
+            EMBEDDINGS_DB_EMBEDDINGS_TABLE_NAME,
         },
         text::RecursiveCharacterTextSplitter,
     },
@@ -12,10 +12,7 @@ use super::{
     IngestError::{self, *},
     WikiMarkupProcessor,
 };
-use crate::{
-    embed::{sync::Embedder, EmbedServiceSync},
-    ingest::wikipedia::helper::sql::EMBEDDINGS_DB_EMBEDDINGS_TABLE_NAME,
-};
+use crate::embed::{sync::Embedder, EmbedServiceSync};
 use indicatif::MultiProgress;
 use r2d2::Pool;
 use r2d2_sqlite::{rusqlite::params, SqliteConnectionManager};
@@ -133,76 +130,23 @@ impl Engine {
         let tmp_vector_pool_clone = tmp_vector_pool.clone();
         let create_vectors_bar_clone = create_vectors_bar.clone();
 
+        create_vectors_bar.set_message("Writing vectorstore to DB...");
         let db_writter_thread = thread::spawn(move || {
-            let tmp_vector_connection = &tmp_vector_pool_clone.get().map_err(R2D2Error)?;
-            init_temp_embedding_sqlite_pool(&tmp_vector_connection)?;
-
-            while let Ok((indices, embeddings)) = rx.recv() {
-                tmp_vector_connection
-                    .execute_batch("BEGIN;")
-                    .map_err(RuSqliteError)?;
-                let count = indices.len();
-                for (index, embedding) in indices.into_iter().zip(embeddings) {
-                    let mut v8: Vec<u8> = vec![];
-
-                    for e in embedding {
-                        v8.write_all(&e.to_le_bytes()).map_err(IoError)?;
-                    }
-
-                    tmp_vector_connection
-                            .execute(
-                                &format!("INSERT INTO {EMBEDDINGS_DB_EMBEDDINGS_TABLE_NAME} (id, gte_small) VALUES ($1, $2)"),
-                                params![index, v8],
-                            )
-                            .map_err(RuSqliteError)?;
-                }
-                create_vectors_bar_clone.inc(count as u64);
-
-                tmp_vector_connection
-                    .execute_batch("COMMIT;")
-                    .map_err(RuSqliteError)?;
-            }
-            Ok::<(), IngestError>(())
+            h::sql::write_vectorstore(rx, &tmp_vector_pool_clone, &create_vectors_bar_clone)
         });
-        create_vectors_bar.set_message("Writing Vectorstore to DB...");
-        let docstore_connection = &docstore_pool.get().map_err(R2D2Error)?;
-        for indices in (0..document_count).collect::<Vec<_>>().chunks(BATCH_SIZE) {
-            let mut stmt_read_document = docstore_connection
-                .prepare(&format!(
-                    "SELECT id, text FROM {DOCSTORE_DB_DOCUMENT_TABLE_NAME} WHERE id >= $1 AND id <= $2 ORDER BY id ASC;"
-                ))
-                .map_err(RuSqliteError)?;
-
-            let start = indices.first().unwrap();
-            let end = indices.last().unwrap();
-
-            let mapped = stmt_read_document
-                .query_map(params![start, end], |row| {
-                    let id: usize = row.get(0)?;
-                    let doc: Vec<u8> = row.get(1)?;
-                    Ok((id, doc))
-                })
-                .map_err(RuSqliteError)?
-                .filter_map(|f| f.ok())
-                .collect::<Vec<_>>();
-
-            let rows = mapped
-                .into_par_iter()
-                .filter_map(|(id, doc)| Some((id, decompress_text(doc).ok()?)))
-                .collect::<Vec<_>>();
-
-            let (ids, batch): (Vec<usize>, Vec<String>) = rows.into_iter().unzip();
-            let batch = batch.iter().map(|s| s.as_str()).collect::<Vec<_>>();
-
-            let batch_result = self.embed.embed(&batch).map_err(EmbeddingServiceError)?;
-            let _ = tx.send((ids, batch_result));
-        }
-        drop(tx);
-        db_writter_thread.join().unwrap()?;
+        h::sql::populate_vectorstore_db(
+            &self.embed,
+            docstore_pool,
+            document_count,
+            tx,
+            BATCH_SIZE,
+        )?;
         h::sql::write_completion_timestamp(&tmp_vector_pool, document_count)?;
+        create_vectors_bar.set_message("Writing vectorstore to DB...DONE");
 
-        create_vectors_bar.set_message("Writing Vectorstore to DB...DONE");
-        Ok(0)
+        let _ = db_writter_thread.join();
+
+        Ok(document_count)
     }
 }
 
