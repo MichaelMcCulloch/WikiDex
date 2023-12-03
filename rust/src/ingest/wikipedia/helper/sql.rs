@@ -5,8 +5,8 @@ use crate::{
 
 use super::{
     super::{Engine, Ingest, IngestError::*},
-    gzip_helper::{compress_text, decompress_text},
-    wiki::{CompressedPage, CompressedPageWithAccessDate, Document, DocumentFragments},
+    gzip_helper::decompress_text,
+    wiki::{CompressedPage, CompressedPageWithAccessDate, DocumentFragments},
 };
 use chrono::NaiveDateTime;
 use indicatif::ProgressBar;
@@ -129,6 +129,7 @@ pub(crate) fn populate_docstore_db(
     progress_bar.set_message("Writing Docstore to DB...DONE");
     Ok(document_count.fetch_add(0, Ordering::SeqCst))
 }
+
 pub(crate) fn write_vectorstore(
     rx: Receiver<(Vec<usize>, Vec<Vec<f32>>)>,
     tmp_vector_pool_clone: &Pool<SqliteConnectionManager>,
@@ -277,7 +278,33 @@ pub(crate) fn obtain_markup(
     progress_bar.set_message("Obtaining Markup...DONE");
     Ok(mapped)
 }
-
+pub(crate) fn obtain_vectors(
+    tmp_vector_pool: &Pool<SqliteConnectionManager>,
+    progress_bar: &ProgressBar,
+) -> Result<Vec<f32>, IngestError> {
+    let tmp_vectorstore_connection = tmp_vector_pool.get().map_err(R2D2Error)?;
+    let mut stmt_read_embeddings = tmp_vectorstore_connection
+        .prepare("SELECT gte_small FROM embeddings ORDER BY id ASC;")
+        .map_err(RuSqliteError)?;
+    let vector_embeddings = stmt_read_embeddings
+        .query(params![])
+        .map_err(RuSqliteError)?
+        .mapped(|embedding_bytes| {
+            let embedding_bytes: Vec<u8> = embedding_bytes.get(0)?;
+            let mut embedding: Vec<f32> = vec![];
+            for f32_bytes in embedding_bytes.chunks_exact(4) {
+                let mut b = [0u8; 4];
+                b.copy_from_slice(f32_bytes);
+                embedding.push(f32::from_le_bytes(b));
+            }
+            progress_bar.inc(1);
+            Ok(embedding)
+        })
+        .filter_map(|f| f.ok())
+        .flat_map(|f| f)
+        .collect::<Vec<_>>();
+    Ok(vector_embeddings)
+}
 pub(crate) fn get_sqlite_pool<P: AsRef<Path>>(
     path: &P,
 ) -> Result<Pool<SqliteConnectionManager>, r2d2::Error> {

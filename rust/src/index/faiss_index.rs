@@ -7,7 +7,7 @@ use std::{
     time::Instant,
 };
 
-use super::{IndexLoadError, IndexSearchError, SearchService};
+use super::{IndexError, IndexSearchError, SearchService};
 
 pub(crate) struct FaissIndex {
     index: PreTransformIndexImpl<IndexImpl>,
@@ -15,18 +15,18 @@ pub(crate) struct FaissIndex {
 }
 
 impl FaissIndex {
-    pub(crate) fn new<P: AsRef<Path>>(index_path: &P) -> Result<Self, IndexLoadError> {
+    pub(crate) fn new<P: AsRef<Path>>(index_path: &P) -> Result<Self, IndexError> {
         let start = Instant::now();
 
         let index_path = PathBuf::from(index_path.as_ref());
         if !index_path.exists() {
-            return Err(IndexLoadError::FileNotFound);
+            return Err(IndexError::FileNotFound);
         }
 
         let index = faiss::read_index(index_path.to_str().expect("Index path is not a string"))
-            .map_err(|e| IndexLoadError::IndexReadError(e))?
+            .map_err(|e| IndexError::IndexReadError(e))?
             .into_pre_transform()
-            .map_err(|e| IndexLoadError::IndexFormatError(e))?;
+            .map_err(|e| IndexError::IndexFormatError(e))?;
 
         let dims = Index::d(&index);
 

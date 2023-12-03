@@ -1,3 +1,4 @@
+pub(super) mod faiss;
 pub(super) mod gzip_helper;
 pub(super) mod progress;
 pub(super) mod sql;

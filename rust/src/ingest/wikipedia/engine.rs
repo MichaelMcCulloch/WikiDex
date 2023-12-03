@@ -1,34 +1,19 @@
 use super::{
-    helper::{
-        self as h,
-        gzip_helper::decompress_text,
-        sql::{
-            init_temp_embedding_sqlite_pool, DOCSTORE_DB_DOCUMENT_TABLE_NAME,
-            EMBEDDINGS_DB_EMBEDDINGS_TABLE_NAME,
-        },
-        text::RecursiveCharacterTextSplitter,
-    },
+    helper::{self as h, text::RecursiveCharacterTextSplitter},
     Ingest,
     IngestError::{self, *},
     WikiMarkupProcessor,
 };
-use crate::embed::{sync::Embedder, EmbedServiceSync};
+use crate::embed::sync::Embedder;
 use indicatif::MultiProgress;
 use r2d2::Pool;
-use r2d2_sqlite::{rusqlite::params, SqliteConnectionManager};
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use std::{
-    fs::File,
-    io::{BufReader, Write},
-    path::Path,
-    sync::mpsc::channel,
-    thread,
-};
+use r2d2_sqlite::SqliteConnectionManager;
+use std::{fs::File, io::BufReader, path::Path, sync::mpsc::channel, thread};
 
 const MARKUP_DB_NAME: &str = "wikipedia_markup.sqlite";
 const DOCSTORE_DB_NAME: &str = "wikipedia_docstore.sqlite";
 const VECTOR_TMP_DB_NAME: &str = "wikipedia_index.sqlite";
-const VECTOR_DB_NAME: &str = "wikipedia_index.faiss";
+const VECTOR_INDEX_NAME: &str = "wikipedia_index.faiss";
 
 const BATCH_SIZE: usize = 640 * 10;
 pub(crate) struct Engine {
@@ -64,7 +49,7 @@ impl Engine {
         &self,
         input_xml: &P,
         pool: &Pool<SqliteConnectionManager>,
-    ) -> Result<usize, <Self as Ingest>::E> {
+    ) -> Result<usize, IngestError> {
         let access_date = h::wiki::get_date_from_xml_name(input_xml)?;
         let file = BufReader::with_capacity(
             2 * 1024 * 1024,
@@ -121,7 +106,7 @@ impl Engine {
         &self,
         docstore_pool: &Pool<SqliteConnectionManager>,
         tmp_vector_pool: &Pool<SqliteConnectionManager>,
-    ) -> Result<usize, <Self as Ingest>::E> {
+    ) -> Result<usize, IngestError> {
         let document_count = h::sql::count_elements(docstore_pool)?.ok_or(NoRows)?;
         let create_vectors_bar =
             h::progress::new_progress_bar(&self.multi_progress, document_count as u64);
@@ -148,12 +133,35 @@ impl Engine {
 
         Ok(document_count)
     }
+
+    fn create_vector_index<P: AsRef<Path>>(
+        &self,
+        tmp_vector_pool: &Pool<SqliteConnectionManager>,
+        index_path: &P,
+    ) -> Result<usize, IngestError> {
+        let vector_count = h::sql::count_elements(tmp_vector_pool)?.ok_or(NoRows)?;
+        //Obtain markup
+        let obtain_vectors_bar =
+            h::progress::new_progress_bar(&self.multi_progress, vector_count as u64);
+        let index_path = index_path.as_ref();
+        let vector_embeddings = h::sql::obtain_vectors(tmp_vector_pool, &obtain_vectors_bar)?;
+        let count = vector_embeddings.len();
+        h::faiss::populate_vectorestore_index(&index_path, vector_embeddings)?;
+        Ok(count)
+    }
 }
 
 impl Ingest for Engine {
     type E = IngestError;
 
-    fn ingest_wikipedia(self, input_xml: &Path, output_directory: &Path) -> Result<usize, Self::E> {
+    fn ingest_wikipedia<P: AsRef<Path>>(
+        self,
+        input_xml: &P,
+        output_directory: &P,
+    ) -> Result<usize, Self::E> {
+        let input_xml = input_xml.as_ref();
+        let output_directory = output_directory.as_ref();
+
         match (input_xml.exists(), output_directory.exists()) {
             (true, false) => Err(OutputDirectoryNotFound(output_directory.to_path_buf())),
             (false, _) => Err(XmlNotFound(input_xml.to_path_buf())),
@@ -186,6 +194,14 @@ impl Ingest for Engine {
                     log::info!("Preparing Vector DB...");
 
                     self.create_temp_vector_database(&docstore_pool, &tmp_vector_pool)?;
+                }
+                log::info!("Vector DB is ready at {}", docstore_db_path.display());
+
+                let index_path = output_directory.join(VECTOR_INDEX_NAME);
+                if !h::faiss::index_is_complete(&index_path).map_err(IndexError)? {
+                    log::info!("Preparing Vector DB...");
+
+                    self.create_vector_index(&tmp_vector_pool, &index_path)?;
                 }
                 log::info!("Vector DB is ready at {}", docstore_db_path.display());
 

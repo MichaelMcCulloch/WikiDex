@@ -1,12 +1,11 @@
 use std::{
-    any::Any,
     error::Error,
     fmt::{Display, Formatter, Result},
     io,
     path::PathBuf,
 };
 
-use crate::{embed::EmbeddingServiceError, llm::LlmServiceError};
+use crate::{embed::EmbeddingServiceError, index::IndexError};
 
 use super::markup_processor::WikiMarkupProcessingError;
 
@@ -18,11 +17,12 @@ pub(crate) enum IngestError {
     R2D2Error(r2d2::Error),
     XmlDateReadError,
     RuSqliteError(r2d2_sqlite::rusqlite::Error),
-    LlmServiceError(LlmServiceError),
     EmbeddingServiceError(EmbeddingServiceError),
     Timeout(String),
     MarkupError(WikiMarkupProcessingError),
     NoRows,
+    IndexError(IndexError),
+    FaissError(faiss::error::Error),
 }
 
 impl Error for IngestError {}
@@ -51,7 +51,6 @@ impl Display for IngestError {
             IngestError::XmlDateReadError => {
                 write!(f, "IngestEngine: Unable to read data from XML File Name.",)
             }
-            IngestError::LlmServiceError(error) => write!(f, "{error}"),
             IngestError::EmbeddingServiceError(error) => write!(f, "{error}"),
             IngestError::Timeout(s) => {
                 write!(f, "IngestEngine: Timeout processing '{s}'")
@@ -62,6 +61,8 @@ impl Display for IngestError {
             IngestError::MarkupError(e) => {
                 write!(f, "{e}")
             }
+            IngestError::IndexError(e) => write!(f, "{e}"),
+            IngestError::FaissError(error) => write!(f, "IngestEngine: Faiss Error: {error}",),
         }
     }
 }
