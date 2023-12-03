@@ -15,13 +15,13 @@ pub(crate) fn populate_vectorestore_index<P: AsRef<Path>>(
     let mut index = index_factory(384, format!("PCA{pca_dimensions},Flat"), MetricType::L2)
         .map_err(FaissError)?;
 
-    log::info!("Training Vectorstore.");
+    log::info!("Training Vectorstore. Takes up to 10 minutes...");
     index.train(&vector_embeddings).map_err(FaissError)?;
 
-    log::info!("Adding vectors to vectorstore.");
+    log::info!("Adding vectors to vectorstore. Takes up to an hour...");
     index.add(&vector_embeddings).map_err(FaissError)?;
 
-    log::info!("Writing");
+    log::info!("Writing vectorstore to disk. Please wait...");
     faiss::write_index(
         &index,
         index_path
