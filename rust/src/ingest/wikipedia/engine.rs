@@ -17,6 +17,8 @@ const VECTOR_INDEX_NAME: &str = "wikipedia_index.faiss";
 
 const BATCH_SIZE: usize = 640 * 10;
 const PCA_DIMENSIONS: usize = 128;
+const MINIMUM_PASSAGE_LENGTH_IN_WORDS: usize = 15;
+
 pub(crate) struct Engine {
     embed: Embedder,
     markup_processor: WikiMarkupProcessor,
@@ -92,6 +94,7 @@ impl Engine {
             &pages_decompressed_bar,
             &self.markup_processor,
             &self.text_splitter,
+            MINIMUM_PASSAGE_LENGTH_IN_WORDS,
         );
 
         let docstore_written_bar =

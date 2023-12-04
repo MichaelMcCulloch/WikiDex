@@ -133,6 +133,7 @@ pub(crate) fn decompress_articles_into_documents(
     progress_bar: &ProgressBar,
     markup_processor: &WikiMarkupProcessor,
     splitter: &RecursiveCharacterTextSplitter,
+    minimum_passage_length: usize,
 ) -> Vec<DocumentFragments> {
     progress_bar.set_message("Decompressing Markup...");
 
@@ -167,12 +168,16 @@ pub(crate) fn decompress_articles_into_documents(
                 .ok()?;
 
                 progress_bar.inc(1);
+                let documents: Vec<Vec<u8>> = splitter
+                    .split_text(&document)
+                    .into_iter()
+                    .filter(|passage| {
+                        passage.split(" ").collect::<Vec<_>>().len() > minimum_passage_length
+                    })
+                    .filter_map(|document| compress_text(&document).map_err(IoError).ok())
+                    .collect::<Vec<_>>();
                 Some(DocumentFragments {
-                    documents: splitter
-                        .split_text(&document)
-                        .into_iter()
-                        .filter_map(|document| compress_text(&document).map_err(IoError).ok())
-                        .collect::<Vec<_>>(),
+                    documents,
                     article_title,
                     access_date,
                     modification_date: access_date,
