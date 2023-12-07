@@ -8,6 +8,7 @@ use async_openai::{
 };
 use backoff::future::retry;
 use backoff::ExponentialBackoff;
+use futures::StreamExt;
 use url::Url;
 
 use tokio::sync::mpsc::UnboundedSender;
@@ -75,31 +76,41 @@ impl AsyncLlmService for AsyncOpenAiService {
             .max_tokens(max_new_tokens.unwrap_or(2048u16))
             .model(self.model_name.clone())
             .messages(message_openai_compat?)
+            .stream(true)
             .build()
             .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
 
-        let response = self
+        let mut stream = self
             .client
             .chat()
-            .create(request)
+            .create_stream(request)
             .await
             .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
 
-        let response = response
-            .choices
-            .into_iter()
-            .next()
-            .ok_or(LlmServiceError::EmptyResponse)?;
-
-        match (
-            LlmRole::from(&response.message.role),
-            response.message.content,
-        ) {
-            (LlmRole::System, _) => Err(LlmServiceError::UnexpectedRole(LlmRole::System)),
-            (LlmRole::Function, _) => Err(LlmServiceError::UnexpectedRole(LlmRole::Function)),
-            (_, None) => Err(LlmServiceError::EmptyResponse),
-            (role, Some(content)) => Ok(()),
+        while let Some(fragment) = stream.next().await {
+            let fragment = fragment.map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+            let response = fragment
+                .choices
+                .into_iter()
+                .next()
+                .ok_or(LlmServiceError::EmptyResponse)?;
+            if let Some(role) = response.delta.role {
+                tx.send(PartialLlmMessage {
+                    role: Some(LlmRole::from(&role)),
+                    content: None,
+                })
+                .unwrap();
+            }
+            if let Some(content) = response.delta.content {
+                tx.send(PartialLlmMessage {
+                    role: None,
+                    content: Some(content),
+                })
+                .unwrap();
+            }
         }
+
+        Ok(())
     }
     async fn wait_for_service(&self) -> Result<(), LlmServiceError> {
         let request = CreateChatCompletionRequestArgs::default()
