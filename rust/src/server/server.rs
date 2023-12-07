@@ -7,7 +7,7 @@ use utoipa_redoc::{Redoc, Servable};
 
 use crate::inference::Engine;
 
-use super::{conversation, query, ApiDoc};
+use super::{conversation, query, streaming_conversation, ApiDoc};
 
 pub(crate) fn run_server<S: AsRef<str>>(
     engine: Engine,
@@ -23,6 +23,7 @@ pub(crate) fn run_server<S: AsRef<str>>(
             .wrap(middleware::Logger::default())
             .wrap(Cors::permissive())
             .app_data(Data::new(engine.clone()))
+            .service(streaming_conversation)
             .service(conversation)
             .service(query)
             .service(Redoc::with_url("/api-doc", openapi.clone()))

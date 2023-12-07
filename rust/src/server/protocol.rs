@@ -1,10 +1,20 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+
+type Source = (String, String);
+
 #[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
 #[schema(example = assistant_message_schema_example)]
 pub(crate) enum Message {
     User(String),
-    Assistant(String, Vec<(String, String)>),
+    Assistant(String, Vec<Source>),
+}
+
+#[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
+#[schema(example = assistant_partial_message_schema_example)]
+pub(crate) struct PartialMessage {
+    pub(crate) message_content: Option<String>,
+    pub(crate) source: Option<Source>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
@@ -28,6 +38,13 @@ fn assistant_message_schema_example() -> Message {
             (String::from("3"), String::from("Referenced Text 3")),
         ],
     )
+}
+
+fn assistant_partial_message_schema_example() -> PartialMessage {
+    PartialMessage {
+        message_content: Some(String::from(" fragment")),
+        source: Some((String::from("1"), String::from("Referenced Text 1"))),
+    }
 }
 fn user_message_schema_example() -> Message {
     Message::User(String::from("String"))

@@ -76,7 +76,6 @@ impl AsyncLlmService for AsyncOpenAiService {
             .max_tokens(max_new_tokens.unwrap_or(2048u16))
             .model(self.model_name.clone())
             .messages(message_openai_compat?)
-            .stream(true)
             .build()
             .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
 
@@ -87,8 +86,8 @@ impl AsyncLlmService for AsyncOpenAiService {
             .await
             .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
 
-        while let Some(fragment) = stream.next().await {
-            let fragment = fragment.map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+        let _ = stream.next().await; //Skip the first element
+        while let Some(Ok(fragment)) = stream.next().await {
             let response = fragment
                 .choices
                 .into_iter()
