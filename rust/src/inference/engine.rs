@@ -51,13 +51,13 @@ impl QueryEngine for Engine {
             .await
             .map_err(|e| QueryEngineError::DocstoreError(e))?;
 
-        let response = documents
+        let documents = documents
             .iter()
             .map(|(index, document, _)| DocumentFormatter::format_document(*index, document))
             .collect::<Vec<String>>()
             .join("\n\n");
 
-        Ok(response)
+        Ok(documents)
     }
 
     async fn conversation(
@@ -106,7 +106,7 @@ impl QueryEngine for Engine {
                     system,
                     conversation: vec![LlmMessage {
                         role: LlmRole::User,
-                        content: format!("{}", user_query),
+                        content: format!("{user_query}"),
                     }],
                 };
 
