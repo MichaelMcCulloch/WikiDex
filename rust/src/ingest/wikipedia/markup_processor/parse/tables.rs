@@ -1,12 +1,6 @@
 use parse_wiki_text::{TableCaption, TableCell, TableCellType, TableRow};
 
-use crate::ingest::wikipedia::{
-    markup_processor::{
-        Process,
-        WikiMarkupProcessingError::{self},
-    },
-    WikiMarkupProcessor,
-};
+use crate::ingest::wikipedia::markup_processor::WikiMarkupProcessingError::{self};
 
 use super::{
     nodes::{nodes_to_string, ParseResult},
@@ -422,10 +416,6 @@ mod tests_table_rows_to_string {
 }
 
 mod tests_table_to_string {
-
-    use parse_wiki_text::Node;
-
-    use super::*;
 
     #[test]
     fn node_to_string__table__text() {

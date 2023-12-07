@@ -1,13 +1,12 @@
 use std::sync::Mutex;
 
-use actix_web::rt;
 use bytes::Bytes;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 use crate::{
     docstore::{DocumentService, SqliteDocstore},
     embed::{r#async::Embedder, EmbedService},
-    formatter::{DocumentFormatter, Provenance, TextFormatter},
+    formatter::{DocumentFormatter, TextFormatter},
     index::{FaissIndex, SearchService},
     llm::{
         AsyncLlmService, AsyncOpenAiService, PartialLlmMessage, {LlmInput, LlmMessage, LlmRole},

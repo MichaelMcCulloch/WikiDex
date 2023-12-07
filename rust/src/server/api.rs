@@ -103,7 +103,7 @@ async fn conversation(
 )]
 #[post("/streaming_conversation")]
 async fn streaming_conversation(
-    Json(mut conversation_1): Json<Conversation>,
+    Json(conversation_1): Json<Conversation>,
     query_engine: Data<Arc<Engine>>,
 ) -> impl Responder {
     let (client, sender) = Client::new();
