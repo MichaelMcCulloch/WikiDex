@@ -6,7 +6,7 @@ COPY . .
 RUN npm run build
 
 
-FROM busybox:1.36
+FROM busybox:1.36.1
 
 # Create a non-root user to own the files and run our server
 RUN adduser -D static

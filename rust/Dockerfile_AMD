@@ -1,4 +1,4 @@
-FROM rust:1.73.0-bookworm as builder
+FROM rust:1.74.1-bookworm as builder
 
 RUN \
     --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update  && \
@@ -10,7 +10,7 @@ COPY ./src ./src
 RUN  \
     --mount=type=cache,target=/usr/src/omnipedia/target,sharing=locked,rw cargo install --path . --root ./build
 
-FROM nvidia/cuda:12.2.2-runtime-ubuntu22.04
+FROM nvidia/cuda:12.3.1-runtime-ubuntu22.04
 ARG TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST}"
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update  && \
     apt-get install -y pkg-config libssl-dev liblapack-dev libblas-dev libgomp1 && \
