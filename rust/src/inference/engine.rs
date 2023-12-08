@@ -49,13 +49,13 @@ impl QueryEngine for Engine {
             .await
             .map_err(|e| QueryEngineError::DocstoreError(e))?;
 
-        let documents = documents
+        let formatted_documents = documents
             .iter()
             .map(|(index, document, _)| DocumentFormatter::format_document(*index, document))
             .collect::<Vec<String>>()
             .join("\n\n");
 
-        Ok(documents)
+        Ok(formatted_documents)
     }
 
     async fn conversation(
@@ -83,17 +83,18 @@ impl QueryEngine for Engine {
                     .await
                     .map_err(|e| QueryEngineError::DocstoreError(e))?;
 
-                let formatted_document_list = documents
+                let formatted_documents = documents
                     .iter()
                     .map(|(index, document, _provenance)| {
                         DocumentFormatter::format_document(*index, document)
                     })
                     .collect::<Vec<String>>()
                     .join("\n\n");
+
                 let system = self
                     .prompt
-                    .replace("###DOCUMENT_LIST###", &formatted_document_list)
-                    .replace("###USER_QUERY###", user_query);
+                    .replace("###DOCUMENT_LIST###", &formatted_documents)
+                    .replace("###USER_QUERY###", &user_query);
 
                 let input = LlmInput {
                     system,
@@ -150,39 +151,29 @@ impl QueryEngine for Engine {
                     .await
                     .map_err(|e| QueryEngineError::DocstoreError(e))?;
 
-                let partial_messages = documents
-                    .iter()
-                    .map(|(i, d, _)| {
-                        let var_name = PartialMessage {
-                            content: None,
-                            source: Some((format!("{i}"), format!("{d}"))),
-                            finished: None,
-                        };
-                        var_name
-                    })
-                    .map(|partial_message| {
-                        let message_string = &serde_json::to_string(&partial_message).unwrap();
-                        let message_bytes = Bytes::from(
-                            ["event: message\ndata: ", message_string, "\n\n"].concat(),
-                        );
-                        message_bytes
-                    })
-                    .collect::<Vec<_>>();
+                documents.iter().for_each(|(i, d, _)| {
+                    let partial_message = PartialMessage {
+                        content: None,
+                        source: Some((format!("{i}"), format!("{d}"))),
+                        finished: None,
+                    };
+                    let message_string = &serde_json::to_string(&partial_message).unwrap();
+                    let message_bytes =
+                        Bytes::from(["event: message\ndata: ", message_string, "\n\n"].concat());
+                    let _ = tx.send(message_bytes);
+                });
 
-                for partial_message in partial_messages {
-                    tx.send(partial_message).unwrap();
-                }
-
-                let formatted_document_list = documents
+                let formatted_documents = documents
                     .iter()
                     .map(|(index, document, _provenance)| {
                         DocumentFormatter::format_document(*index, document)
                     })
                     .collect::<Vec<String>>()
                     .join("\n\n");
+
                 let system = self
                     .prompt
-                    .replace("###DOCUMENT_LIST###", &formatted_document_list)
+                    .replace("###DOCUMENT_LIST###", &formatted_documents)
                     .replace("###USER_QUERY###", user_query);
 
                 let input = LlmInput {
@@ -193,7 +184,7 @@ impl QueryEngine for Engine {
                     }],
                 };
 
-                let (tx_p, mut rx_p) = unbounded_channel::<PartialLlmMessage>();
+                let (tx_p, mut rx_p) = unbounded_channel();
 
                 actix_web::rt::spawn(async move {
                     while let Some(PartialLlmMessage {
