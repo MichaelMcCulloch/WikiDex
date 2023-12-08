@@ -15,7 +15,7 @@ use super::{Answer, Conversation, Message, PartialMessage, Query};
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(conversation, query),
+    paths(conversation, query, streaming_conversation),
     components(
         schemas(Message),
         schemas(PartialMessage),
