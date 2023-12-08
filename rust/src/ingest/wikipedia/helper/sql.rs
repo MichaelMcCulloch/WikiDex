@@ -202,7 +202,9 @@ pub(crate) fn populate_vectorstore_db(
             let (ids, batch): (Vec<usize>, Vec<String>) = rows.into_iter().unzip();
             let batch = batch.iter().map(|s| s.as_str()).collect::<Vec<_>>();
 
-            let batch_result = embedder.embed(&batch).map_err(EmbeddingServiceError)?;
+            let batch_result = embedder
+                .embed_batch(&batch)
+                .map_err(EmbeddingServiceError)?;
             let _ = tx.send((ids, batch_result));
         },
     )

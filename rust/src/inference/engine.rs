@@ -32,20 +32,15 @@ impl QueryEngine for Engine {
     async fn query(&self, question: &str) -> Result<String, Self::E> {
         let embedding = self
             .embed
-            .embed(&[&question])
+            .embed(&question)
             .await
             .map_err(|e| QueryEngineError::EmbeddingError(e))?;
-
-        let first_embedding = embedding
-            .iter()
-            .next()
-            .ok_or(QueryEngineError::IndexOutOfRange)?;
 
         let result = self
             .index
             .lock()
             .map_err(|_| QueryEngineError::UnableToLockIndex)?
-            .search(first_embedding, NUM_DOCUMENTS_TO_RETRIEVE)
+            .search(&embedding, NUM_DOCUMENTS_TO_RETRIEVE)
             .map_err(|e| QueryEngineError::IndexError(e))?;
 
         let documents = self
@@ -71,20 +66,15 @@ impl QueryEngine for Engine {
             Some(Message::User(user_query)) => {
                 let embedding = self
                     .embed
-                    .embed(&[user_query])
+                    .embed(&user_query)
                     .await
                     .map_err(|e| QueryEngineError::EmbeddingError(e))?;
-
-                let first_embedding = embedding
-                    .iter()
-                    .next()
-                    .ok_or(QueryEngineError::IndexOutOfRange)?;
 
                 let document_indices = self
                     .index
                     .lock()
                     .map_err(|_| QueryEngineError::UnableToLockIndex)?
-                    .search(first_embedding, NUM_DOCUMENTS_TO_RETRIEVE)
+                    .search(&embedding, NUM_DOCUMENTS_TO_RETRIEVE)
                     .map_err(|e| QueryEngineError::IndexError(e))?;
 
                 let documents = self
@@ -143,20 +133,15 @@ impl QueryEngine for Engine {
             Some(Message::User(user_query)) => {
                 let embedding = self
                     .embed
-                    .embed(&[user_query])
+                    .embed(&user_query)
                     .await
                     .map_err(|e| QueryEngineError::EmbeddingError(e))?;
-
-                let first_embedding = embedding
-                    .iter()
-                    .next()
-                    .ok_or(QueryEngineError::IndexOutOfRange)?;
 
                 let document_indices = self
                     .index
                     .lock()
                     .map_err(|_| QueryEngineError::UnableToLockIndex)?
-                    .search(first_embedding, NUM_DOCUMENTS_TO_RETRIEVE)
+                    .search(&embedding, NUM_DOCUMENTS_TO_RETRIEVE)
                     .map_err(|e| QueryEngineError::IndexError(e))?;
 
                 let documents = self

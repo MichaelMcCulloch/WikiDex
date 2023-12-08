@@ -25,7 +25,7 @@ struct EmbeddingsResponse {
 #[async_trait::async_trait]
 impl EmbedService for Embedder {
     type E = EmbeddingServiceError;
-    async fn embed(&self, query: &[&str]) -> Result<Vec<Vec<f32>>, Self::E> {
+    async fn embed_batch(&self, query: &[&str]) -> Result<Vec<Vec<f32>>, Self::E> {
         let payload = serde_json::json!({
             "sentences": query
         });
@@ -49,6 +49,34 @@ impl EmbedService for Embedder {
             ))
         } else {
             Ok(response.embeddings)
+        }
+    }
+    async fn embed(&self, query: &str) -> Result<Vec<f32>, Self::E> {
+        let payload = serde_json::json!({
+            "sentences": [query]
+        });
+
+        let response: EmbeddingsResponse = self
+            .client
+            .post(self.host.clone())
+            .timeout(Duration::from_secs(180))
+            .json(&payload)
+            .send()
+            .await
+            .map_err(|e| EmbeddingServiceError::Reqwuest(e))?
+            .json()
+            .await
+            .map_err(|e| EmbeddingServiceError::Reqwuest(e))?;
+
+        if response.embeddings.len() > 1 {
+            Err(EmbeddingServiceError::EmbeddingSizeMismatch(
+                1,
+                response.embeddings.len(),
+            ))
+        } else if let Some(embedding) = response.embeddings.into_iter().next() {
+            Ok(embedding)
+        } else {
+            Err(EmbeddingServiceError::EmbeddingSizeMismatch(1, 0))
         }
     }
 }

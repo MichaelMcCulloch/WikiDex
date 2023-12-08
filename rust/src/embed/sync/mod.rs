@@ -24,7 +24,7 @@ struct EmbeddingsResponse {
 
 impl EmbedServiceSync for Embedder {
     type E = EmbeddingServiceError;
-    fn embed(&self, query: &[&str]) -> Result<Vec<Vec<f32>>, Self::E> {
+    fn embed_batch(&self, query: &[&str]) -> Result<Vec<Vec<f32>>, Self::E> {
         let payload = serde_json::json!({
             "sentences": query
         });
