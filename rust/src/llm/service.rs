@@ -20,14 +20,3 @@ pub(crate) trait AsyncLlmService {
     ) -> Result<(), Self::E>;
     async fn wait_for_service(&self) -> Result<(), Self::E>;
 }
-
-pub(crate) trait SyncLlmService {
-    type E: Error;
-    fn get_llm_answer(
-        &self,
-        input: LlmInput,
-        max_new_tokens: Option<u16>,
-    ) -> Result<LlmMessage, Self::E>;
-
-    fn wait_for_service(&self) -> Result<(), Self::E>;
-}

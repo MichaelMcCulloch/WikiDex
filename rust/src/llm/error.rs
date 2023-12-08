@@ -5,7 +5,6 @@ use super::{openai, LlmRole};
 #[derive(Debug)]
 pub(crate) enum LlmServiceError {
     AsyncOpenAiError(async_openai::error::OpenAIError),
-    SyncOpenAiError(openai::sync::SynchronousOpenAiClientError),
     EmptyResponse,
     UnexpectedRole(LlmRole),
 }
@@ -20,7 +19,6 @@ impl Display for LlmServiceError {
             LlmServiceError::UnexpectedRole(r) => {
                 write!(f, "LLMService: Unexpected role '{r}' from service.")
             }
-            LlmServiceError::SyncOpenAiError(err) => write!(f, "{}", err),
         }
     }
 }
