@@ -5,7 +5,7 @@ use url::Url;
 
 use crate::cli_args::ServerArgs;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub(crate) struct Config {
     pub(crate) protocol: String,
     pub(crate) host: String,

@@ -5,7 +5,7 @@ use url::Url;
 
 use crate::cli_args::WikipediaIngestArgs;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub(crate) struct Config {
     pub(crate) wiki_xml: PathBuf,
     pub(crate) output_directory: PathBuf,

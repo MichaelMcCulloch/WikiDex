@@ -13,13 +13,13 @@ use serde::{Deserialize, Serialize};
 use super::{
     AsyncLlmService, AsyncOpenAiService, LlmServiceError, SyncLlmService, SyncOpenAiService,
 };
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct LlmInput {
     pub(crate) system: String,
     pub(crate) conversation: Vec<LlmMessage>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum LlmRole {
     Assistant,
@@ -87,13 +87,13 @@ impl Display for LlmRole {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct LlmMessage {
     pub(crate) role: LlmRole,
     pub(crate) content: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct PartialLlmMessage {
     pub(crate) role: Option<LlmRole>,
     pub(crate) content: Option<String>,

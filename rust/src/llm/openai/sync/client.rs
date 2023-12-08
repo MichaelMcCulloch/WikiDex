@@ -9,20 +9,20 @@ use crate::llm::LlmMessage;
 
 use super::SynchronousOpenAiClientError::{self, ReqwestError};
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct LlmResponseUsage {
     prompt_tokens: usize,
     total_tokens: usize,
     completion_tokens: usize,
 }
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct LlmResponseChoices {
     pub(crate) index: usize,
     pub(crate) message: LlmMessage,
     pub(crate) finish_reason: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct LlmResponse {
     pub(crate) id: String,
     pub(crate) object: String,
