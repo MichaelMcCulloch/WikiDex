@@ -101,11 +101,10 @@ impl AsyncLlmService for AsyncOpenAiService {
                 .unwrap();
             }
             if let Some(content) = response.delta.content {
-                tx.send(PartialLlmMessage {
+                let _ = tx.send(PartialLlmMessage {
                     role: None,
                     content: Some(content),
-                })
-                .unwrap();
+                });
             }
         }
 

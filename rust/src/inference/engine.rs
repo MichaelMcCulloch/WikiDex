@@ -208,10 +208,10 @@ impl QueryEngine for Engine {
 
                 actix_web::rt::spawn(async move {
                     loop {
-                        if let PartialLlmMessage {
+                        if let Some(PartialLlmMessage {
                             content: Some(content),
                             ..
-                        } = rx_p.recv().await.unwrap()
+                        }) = rx_p.recv().await
                         {
                             let partial_message = PartialMessage {
                                 message_content: Some(content),
@@ -222,7 +222,7 @@ impl QueryEngine for Engine {
                             let message_bytes = Bytes::from(
                                 ["event: message\ndata: ", message_string, "\n\n"].concat(),
                             );
-                            tx.send(message_bytes).unwrap();
+                            let _ = tx.send(message_bytes);
                         }
                     }
                 });

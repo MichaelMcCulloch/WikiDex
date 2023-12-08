@@ -11,13 +11,14 @@ use crate::{
     server::client::Client,
 };
 
-use super::{Answer, Conversation, Message, Query};
+use super::{Answer, Conversation, Message, PartialMessage, Query};
 
 #[derive(OpenApi)]
 #[openapi(
     paths(conversation, query),
     components(
         schemas(Message),
+        schemas(PartialMessage),
         schemas(Conversation),
         schemas(Query),
         schemas(Answer)
@@ -96,7 +97,7 @@ async fn conversation(
 #[utoipa::path(
     request_body(content = Conversation, content_type = "application/json"),
     responses(
-        (status = 200, description = "AI Response", body = Conversation, content_type = "application/json"),
+        (status = 200, description = "AI Response", body = PartialMessage, content_type = "application/json"),
         (status = 204, description = "No user input"),
         (status = 400, description = "Empty Request")
     )
