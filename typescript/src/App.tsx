@@ -1,16 +1,29 @@
 import React, { useEffect, useRef, useState } from "react";
+import {
+  CustomEventDataType,
+  CustomEventType,
+  SSE,
+  SSEOptions,
+  SSEOptionsMethod,
+} from "sse-ts";
 import "./App.css";
 
 interface Message {
   User?: string;
   Assistant?: [string, [string, string][]];
 }
-
+interface PartialMessage {
+  message_content?: string;
+  source?: [string, string];
+}
 interface Conversation extends Array<Message> {}
 
 function App() {
   const [inputText, setInputText] = useState<string>("");
   const [conversation, setConversation] = useState<Conversation>([]);
+  const [partialMessage, setPartialMessage] = useState<PartialMessage | null>(
+    null
+  );
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<{
     visible: boolean;
@@ -18,6 +31,7 @@ function App() {
     y: number;
     text: string;
   }>({ visible: false, x: 0, y: 0, text: "" });
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [conversation]);
@@ -35,7 +49,6 @@ function App() {
     });
   }
 
-
   async function submit() {
     const userMessageArray = [{ User: inputText }];
 
@@ -43,28 +56,50 @@ function App() {
     setConversation((prev) => [...prev, ...userMessageArray]);
     setInputText("");
 
-    // Then we send the message to the server and handle the response
-    try {
-      const response = await fetch(
-        "https://oracle-rs.semanticallyinvalid.net/conversation",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify([...conversation, ...userMessageArray]), // <--- Changed here!
-        }
-      );
+    const sseOptions: SSEOptions = {
+      headers: { "Content-Type": "application/json", "api-key": "apiKey" },
+      method: SSEOptionsMethod.POST,
+      payload: JSON.stringify([...conversation, ...userMessageArray]),
+    };
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    // Open a connection to the SSE endpoint
+    const source = new SSE(
+      "https://oracle-rs.semanticallyinvalid.net/streaming_conversation",
+      sseOptions
+    );
+
+    // Handle the message events from the server
+    source.addEventListener("message", (event: CustomEventType) => {
+      const dataEvent = event as CustomEventDataType;
+      const data: PartialMessage = JSON.parse(dataEvent.data);
+      setPartialMessage(data);
+
+      if (data.message_content || data.source) {
+        setConversation((prev) => {
+          if (data.message_content) {
+            // If message_content is present, we need to update the last message with additional content
+            const lastMessage = prev[prev.length - 1];
+            if (lastMessage.Assistant) {
+              lastMessage.Assistant[0] += data.message_content;
+            } else {
+              lastMessage.Assistant = [data.message_content, []];
+            }
+            return [...prev.slice(0, prev.length - 1), lastMessage];
+          } else if (data.source) {
+            // If source is present, we need to add a new link to the last message
+            const lastMessage = prev[prev.length - 1];
+            if (lastMessage.Assistant) {
+              lastMessage.Assistant[1].push(data.source);
+            } else {
+              lastMessage.Assistant = ["", [data.source]];
+            }
+            return [...prev.slice(0, prev.length - 1), lastMessage];
+          } else {
+            return [...prev.slice(0, prev.length - 1)];
+          }
+        });
       }
-
-      const serverResponse: Conversation = await response.json();
-      setConversation(serverResponse);
-    } catch (error) {
-      console.error("Fetching failed:", error);
-    }
+    });
   }
 
   return (
@@ -150,7 +185,7 @@ function App() {
             }}
           />
           <button
-            onClick={submit}  
+            onClick={submit}
             style={{
               width: "20%",
               backgroundColor: "#61dafb",
