@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useReducer, useRef, useState } from "react";
 import { SSE } from "sse.js";
 import "./App.css";
 
@@ -8,15 +8,75 @@ interface Message {
 }
 
 interface PartialAssistant {
+  serial: number;
   content?: string;
   source?: [string, string];
+  finished?: string;
 }
 
 interface Conversation extends Array<Message> {}
 
+interface AddMessageAction {
+  type: "ADD_MESSAGE";
+  payload: Message;
+}
+
+interface UpdateAssistantMessageAction {
+  type: "UPDATE_ASSISTANT_MESSAGE";
+  payload: {
+    content: string;
+  };
+}
+interface UpdateAssistantSourceAction {
+  type: "UPDATE_ASSISTANT_SOURCE";
+  payload: {
+    source: [string, string];
+  };
+}
+type ConversationAction =
+  | AddMessageAction
+  | UpdateAssistantMessageAction
+  | UpdateAssistantSourceAction;
+const conversationReducer = (
+  state: Conversation,
+  action: ConversationAction
+): Conversation => {
+  switch (action.type) {
+    case "ADD_MESSAGE":
+      return [...state, action.payload];
+    case "UPDATE_ASSISTANT_SOURCE":
+      return state.map((message, index) => {
+        if (index === state.length - 1 && message.Assistant) {
+          let pre = message.Assistant[1];
+          pre.push(action.payload.source);
+          return {
+            ...message,
+            Assistant: [message.Assistant[0], pre],
+          };
+        }
+        return message;
+      });
+    case "UPDATE_ASSISTANT_MESSAGE":
+      return state.map((message, index) => {
+        if (index === state.length - 1 && message.Assistant) {
+          return {
+            ...message,
+            Assistant: [
+              message.Assistant[0] + action.payload.content,
+              message.Assistant[1],
+            ],
+          };
+        }
+        return message;
+      });
+    default:
+      return state;
+  }
+};
+
 function App() {
   const [inputText, setInputText] = useState<string>("");
-  const [conversation, setConversation] = useState<Conversation>([]);
+  const [conversation, dispatch] = useReducer(conversationReducer, []);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<{
     visible: boolean;
@@ -43,8 +103,8 @@ function App() {
   }
 
   async function submit() {
-    const userMessageArray = { User: inputText };
-    setConversation((prev) => [...prev, userMessageArray]);
+    const userMessage = { User: inputText };
+    dispatch({ type: "ADD_MESSAGE", payload: userMessage });
     setInputText("");
 
     // Open a connection to the SSE endpoint
@@ -52,39 +112,35 @@ function App() {
       "https://oracle-rs.semanticallyinvalid.net/streaming_conversation",
       {
         headers: { "Content-Type": "application/json" },
-        payload: JSON.stringify([...conversation, userMessageArray]),
+        payload: JSON.stringify([...conversation, userMessage]),
       }
     );
-
-    let emptyAssistant: [string, [string, string][]] = ["", []];
+    const emptyAssistant: [string, [string, string][]] = ["", []];
     const emptyResponse = { Assistant: emptyAssistant };
-    setConversation((prev) => [...prev, emptyResponse]);
-
+    dispatch({ type: "ADD_MESSAGE", payload: emptyResponse });
     // Handle the message events from the server
-    source.addEventListener("message", (event: MessageEvent) => {
+
+    source.onmessage = (event) => {
       const data: PartialAssistant = JSON.parse(event.data);
+
       if (data.content) {
-        setConversation((prev) => {
-          const lastMessage = prev[prev.length - 1];
-          if (lastMessage.Assistant) {
-            if (data.content) lastMessage.Assistant[0] += data.content;
-            return [...prev.slice(0, prev.length - 1), lastMessage];
-          } else {
-            return prev;
-          }
+        dispatch({
+          type: "UPDATE_ASSISTANT_MESSAGE",
+          payload: {
+            content: data.content,
+          },
         });
       } else if (data.source) {
-        setConversation((prev) => {
-          const lastMessage = prev[prev.length - 1];
-          if (lastMessage.Assistant) {
-            if (data.source) lastMessage.Assistant[1].push(data.source);
-            return [...prev.slice(0, prev.length - 1), lastMessage];
-          } else {
-            return prev;
-          }
+        dispatch({
+          type: "UPDATE_ASSISTANT_SOURCE",
+          payload: {
+            source: data.source,
+          },
         });
+      } else {
+        source.close();
       }
-    });
+    };
   }
 
   return (

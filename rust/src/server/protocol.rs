@@ -13,8 +13,10 @@ pub(crate) enum Message {
 #[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
 #[schema(example = assistant_partial_message_schema_example)]
 pub(crate) struct PartialMessage {
+    pub(crate) serial: usize,
     pub(crate) content: Option<String>,
     pub(crate) source: Option<Source>,
+    pub(crate) finished: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
@@ -42,8 +44,10 @@ fn assistant_message_schema_example() -> Message {
 
 fn assistant_partial_message_schema_example() -> PartialMessage {
     PartialMessage {
+        serial: 123,
         content: Some(String::from(" fragment")),
         source: Some((String::from("1"), String::from("Referenced Text 1"))),
+        finished: Some(String::new()),
     }
 }
 fn user_message_schema_example() -> Message {

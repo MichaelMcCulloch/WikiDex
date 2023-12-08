@@ -165,11 +165,18 @@ impl QueryEngine for Engine {
                     .await
                     .map_err(|e| QueryEngineError::DocstoreError(e))?;
 
+                let mut serial = 0;
                 let partial_messages = documents
                     .iter()
-                    .map(|(i, d, _)| PartialMessage {
-                        content: None,
-                        source: Some((format!("{i}"), format!("{d}"))),
+                    .map(|(i, d, _)| {
+                        let var_name = PartialMessage {
+                            serial,
+                            content: None,
+                            source: Some((format!("{i}"), format!("{d}"))),
+                            finished: None,
+                        };
+                        serial += 1;
+                        var_name
                     })
                     .map(|partial_message| {
                         let message_string = &serde_json::to_string(&partial_message).unwrap();
@@ -207,24 +214,35 @@ impl QueryEngine for Engine {
                 let (tx_p, mut rx_p) = unbounded_channel::<PartialLlmMessage>();
 
                 actix_web::rt::spawn(async move {
-                    loop {
-                        if let Some(PartialLlmMessage {
+                    while let Some(PartialLlmMessage {
+                        content: Some(content),
+                        ..
+                    }) = rx_p.recv().await
+                    {
+                        let partial_message = PartialMessage {
+                            serial,
                             content: Some(content),
-                            ..
-                        }) = rx_p.recv().await
-                        {
-                            let partial_message = PartialMessage {
-                                content: Some(content),
-                                source: None,
-                            };
+                            source: None,
+                            finished: None,
+                        };
+                        serial += 1;
 
-                            let message_string = &serde_json::to_string(&partial_message).unwrap();
-                            let message_bytes = Bytes::from(
-                                ["event: message\ndata: ", message_string, "\n\n"].concat(),
-                            );
-                            let _ = tx.send(message_bytes);
-                        }
+                        let message_string = &serde_json::to_string(&partial_message).unwrap();
+                        let message_bytes = Bytes::from(
+                            ["event: message\ndata: ", message_string, "\n\n"].concat(),
+                        );
+                        let _ = tx.send(message_bytes);
                     }
+                    let finished_flag = PartialMessage {
+                        serial,
+                        content: None,
+                        source: None,
+                        finished: Some(String::from("DONE")),
+                    };
+                    let finished_string = &serde_json::to_string(&finished_flag).unwrap();
+                    let message_bytes =
+                        Bytes::from(["event: message\ndata: ", finished_string, "\n\n"].concat());
+                    let _ = tx.send(message_bytes);
                 });
 
                 self.llm
