@@ -13,7 +13,7 @@ pub(crate) enum Message {
 #[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
 #[schema(example = assistant_partial_message_schema_example)]
 pub(crate) struct PartialMessage {
-    pub(crate) message_content: Option<String>,
+    pub(crate) content: Option<String>,
     pub(crate) source: Option<Source>,
 }
 
@@ -42,7 +42,7 @@ fn assistant_message_schema_example() -> Message {
 
 fn assistant_partial_message_schema_example() -> PartialMessage {
     PartialMessage {
-        message_content: Some(String::from(" fragment")),
+        content: Some(String::from(" fragment")),
         source: Some((String::from("1"), String::from("Referenced Text 1"))),
     }
 }

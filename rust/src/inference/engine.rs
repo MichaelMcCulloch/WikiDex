@@ -168,7 +168,7 @@ impl QueryEngine for Engine {
                 let partial_messages = documents
                     .iter()
                     .map(|(i, d, _)| PartialMessage {
-                        message_content: None,
+                        content: None,
                         source: Some((format!("{i}"), format!("{d}"))),
                     })
                     .map(|partial_message| {
@@ -214,7 +214,7 @@ impl QueryEngine for Engine {
                         }) = rx_p.recv().await
                         {
                             let partial_message = PartialMessage {
-                                message_content: Some(content),
+                                content: Some(content),
                                 source: None,
                             };
 
