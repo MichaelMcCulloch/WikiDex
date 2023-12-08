@@ -1,29 +1,22 @@
 import React, { useEffect, useRef, useState } from "react";
-import {
-  CustomEventDataType,
-  CustomEventType,
-  SSE,
-  SSEOptions,
-  SSEOptionsMethod,
-} from "sse-ts";
+import { SSE } from "sse.js";
 import "./App.css";
 
 interface Message {
   User?: string;
   Assistant?: [string, [string, string][]];
 }
-interface PartialMessage {
-  message_content?: string;
+
+interface PartialAssistant {
+  content?: string;
   source?: [string, string];
 }
+
 interface Conversation extends Array<Message> {}
 
 function App() {
   const [inputText, setInputText] = useState<string>("");
   const [conversation, setConversation] = useState<Conversation>([]);
-  const [partialMessage, setPartialMessage] = useState<PartialMessage | null>(
-    null
-  );
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<{
     visible: boolean;
@@ -50,52 +43,44 @@ function App() {
   }
 
   async function submit() {
-    const userMessageArray = [{ User: inputText }];
-
-    // First we add the message from the user
-    setConversation((prev) => [...prev, ...userMessageArray]);
+    const userMessageArray = { User: inputText };
+    setConversation((prev) => [...prev, userMessageArray]);
     setInputText("");
-
-    const sseOptions: SSEOptions = {
-      headers: { "Content-Type": "application/json", "api-key": "apiKey" },
-      method: SSEOptionsMethod.POST,
-      payload: JSON.stringify([...conversation, ...userMessageArray]),
-    };
 
     // Open a connection to the SSE endpoint
     const source = new SSE(
       "https://oracle-rs.semanticallyinvalid.net/streaming_conversation",
-      sseOptions
+      {
+        headers: { "Content-Type": "application/json" },
+        payload: JSON.stringify([...conversation, userMessageArray]),
+      }
     );
 
-    // Handle the message events from the server
-    source.addEventListener("message", (event: CustomEventType) => {
-      const dataEvent = event as CustomEventDataType;
-      const data: PartialMessage = JSON.parse(dataEvent.data);
-      setPartialMessage(data);
+    let emptyAssistant: [string, [string, string][]] = ["", []];
+    const emptyResponse = { Assistant: emptyAssistant };
+    setConversation((prev) => [...prev, emptyResponse]);
 
-      if (data.message_content || data.source) {
+    // Handle the message events from the server
+    source.addEventListener("message", (event: MessageEvent) => {
+      const data: PartialAssistant = JSON.parse(event.data);
+      if (data.content) {
         setConversation((prev) => {
-          if (data.message_content) {
-            // If message_content is present, we need to update the last message with additional content
-            const lastMessage = prev[prev.length - 1];
-            if (lastMessage.Assistant) {
-              lastMessage.Assistant[0] += data.message_content;
-            } else {
-              lastMessage.Assistant = [data.message_content, []];
-            }
-            return [...prev.slice(0, prev.length - 1), lastMessage];
-          } else if (data.source) {
-            // If source is present, we need to add a new link to the last message
-            const lastMessage = prev[prev.length - 1];
-            if (lastMessage.Assistant) {
-              lastMessage.Assistant[1].push(data.source);
-            } else {
-              lastMessage.Assistant = ["", [data.source]];
-            }
+          const lastMessage = prev[prev.length - 1];
+          if (lastMessage.Assistant) {
+            if (data.content) lastMessage.Assistant[0] += data.content;
             return [...prev.slice(0, prev.length - 1), lastMessage];
           } else {
-            return [...prev.slice(0, prev.length - 1)];
+            return prev;
+          }
+        });
+      } else if (data.source) {
+        setConversation((prev) => {
+          const lastMessage = prev[prev.length - 1];
+          if (lastMessage.Assistant) {
+            if (data.source) lastMessage.Assistant[1].push(data.source);
+            return [...prev.slice(0, prev.length - 1), lastMessage];
+          } else {
+            return prev;
           }
         });
       }
@@ -151,7 +136,7 @@ function App() {
                 </div>
               );
             }
-            return null; // this is just to handle cases where neither User nor Assistant properties are present, though it shouldn't occur based on your data structure
+            return null; // this is just to handle cases where neither user nor assistant properties are present, though it shouldn't occur based on your data structure
           })}
           <div ref={messagesEndRef} />
         </div>
