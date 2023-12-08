@@ -334,9 +334,8 @@ dependencies = [
 
 [[package]]
 name = "async-openai"
-version = "0.16.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "193af3d32be8d65bbf43ab4cab6d8ca5617db4a3a279f6db20ddb5a935f0428f"
+version = "0.17.1"
+source = "git+https://github.com/MichaelMcCulloch/async-openai-vllm.git?branch=main#460f00ad42ca29b1c307e56a3e1215801fec85a5"
 dependencies = [
  "async-convert",
  "backoff",
@@ -1789,6 +1788,7 @@ dependencies = [
  "async-recursion",
  "async-trait",
  "backoff",
+ "bytes",
  "chrono",
  "clap",
  "colored",

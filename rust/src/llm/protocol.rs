@@ -93,6 +93,12 @@ pub(crate) struct LlmMessage {
     pub(crate) content: String,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub(crate) struct PartialLlmMessage {
+    pub(crate) role: Option<LlmRole>,
+    pub(crate) content: Option<String>,
+}
+
 impl From<&Role> for LlmRole {
     fn from(value: &Role) -> Self {
         match value {

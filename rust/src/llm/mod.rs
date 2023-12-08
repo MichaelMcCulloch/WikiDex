@@ -7,5 +7,5 @@ mod sync_vllm;
 pub(crate) use error::LlmServiceError;
 pub(crate) use openai::r#async::AsyncOpenAiService;
 pub(crate) use openai::sync::SyncOpenAiService;
-pub(crate) use protocol::{LlmInput, LlmMessage, LlmRole};
+pub(crate) use protocol::{LlmInput, LlmMessage, LlmRole, PartialLlmMessage};
 pub(crate) use service::{AsyncLlmService, SyncLlmService};

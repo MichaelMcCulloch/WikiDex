@@ -1,6 +1,6 @@
+use super::{protocol::PartialLlmMessage, LlmInput, LlmMessage};
 use std::error::Error;
-
-use super::{LlmInput, LlmMessage};
+use tokio::sync::mpsc::UnboundedSender;
 
 pub(crate) trait LlmServiceImpl {}
 
@@ -12,6 +12,12 @@ pub(crate) trait AsyncLlmService {
         input: LlmInput,
         max_new_tokens: Option<u16>,
     ) -> Result<LlmMessage, Self::E>;
+    async fn stream_llm_answer(
+        &self,
+        input: LlmInput,
+        max_new_tokens: Option<u16>,
+        tx: UnboundedSender<PartialLlmMessage>,
+    ) -> Result<(), Self::E>;
     async fn wait_for_service(&self) -> Result<(), Self::E>;
 }
 

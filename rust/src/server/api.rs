@@ -6,15 +6,19 @@ use actix_web::{
 use std::sync::Arc;
 use utoipa::OpenApi;
 
-use crate::inference::{Engine, QueryEngine, QueryEngineError};
+use crate::{
+    inference::{Engine, QueryEngine, QueryEngineError},
+    server::client::Client,
+};
 
-use super::{Answer, Conversation, Message, Query};
+use super::{Answer, Conversation, Message, PartialMessage, Query};
 
 #[derive(OpenApi)]
 #[openapi(
     paths(conversation, query),
     components(
         schemas(Message),
+        schemas(PartialMessage),
         schemas(Conversation),
         schemas(Query),
         schemas(Answer)
@@ -88,4 +92,32 @@ async fn conversation(
             }
         }
     }
+}
+
+#[utoipa::path(
+    request_body(content = Conversation, content_type = "application/json"),
+    responses(
+        (status = 200, description = "AI Response", body = PartialMessage, content_type = "application/json"),
+        (status = 204, description = "No user input"),
+        (status = 400, description = "Empty Request")
+    )
+)]
+#[post("/streaming_conversation")]
+async fn streaming_conversation(
+    Json(conversation_1): Json<Conversation>,
+    query_engine: Data<Arc<Engine>>,
+) -> impl Responder {
+    let (client, sender) = Client::new();
+    actix_web::rt::spawn(async move {
+        query_engine
+            .streaming_conversation(&conversation_1, sender)
+            .await
+            .unwrap()
+    });
+
+    HttpResponse::Ok()
+        .append_header(("content-type", "text/event-stream"))
+        .append_header(("connection", "keep-alive"))
+        .append_header(("cache-control", "no-cache"))
+        .streaming(client)
 }
