@@ -47,11 +47,12 @@ const conversationReducer = (
     case "UPDATE_ASSISTANT_SOURCE":
       return state.map((message, index) => {
         if (index === state.length - 1 && message.Assistant) {
-          let pre = message.Assistant[1];
-          pre.push(action.payload.source);
           return {
             ...message,
-            Assistant: [message.Assistant[0], pre],
+            Assistant: [
+              message.Assistant[0],
+              message.Assistant[1].concat([action.payload.source]),
+            ],
           };
         }
         return message;
@@ -115,7 +116,7 @@ function App() {
         payload: JSON.stringify([...conversation, userMessage]),
       }
     );
-    const emptyAssistant: [string, [string, string][]] = ["", []];
+    let emptyAssistant: [string, [string, string][]] = ["", []];
     const emptyResponse = { Assistant: emptyAssistant };
     dispatch({ type: "ADD_MESSAGE", payload: emptyResponse });
     // Handle the message events from the server
@@ -130,14 +131,18 @@ function App() {
             content: data.content,
           },
         });
-      } else if (data.source) {
+      }
+      if (data.source) {
+        console.log(data.source);
+
         dispatch({
           type: "UPDATE_ASSISTANT_SOURCE",
           payload: {
             source: data.source,
           },
         });
-      } else {
+      }
+      if (data.finished) {
         source.close();
       }
     };
