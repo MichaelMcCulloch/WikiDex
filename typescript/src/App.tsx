@@ -182,15 +182,8 @@ function App() {
                     ))}
                   </ul>
                   {tooltip.visible && (
-                    <div
-                      className="tooltip-text"
-                      // style={{
-                      //   position: "absolute",
-                      //   top: tooltip.y + 100,
-                      //   left: tooltip.x,
-                      // }}
-                    >
-                      {tooltip.text}
+                    <div className="tooltip-text">
+                      <p>{tooltip.text}</p>
                     </div>
                   )}
                 </div>
