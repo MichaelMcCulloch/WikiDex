@@ -15,21 +15,14 @@ impl Embedder {
         let embedder = Self { client, host };
         Ok(embedder)
     }
-}
 
-#[derive(Deserialize)]
-struct EmbeddingsResponse {
-    pub(crate) embeddings: Vec<Vec<f32>>,
-}
-
-#[async_trait::async_trait]
-impl EmbedService for Embedder {
-    type E = EmbeddingServiceError;
-    async fn embed(&self, query: &[&str]) -> Result<Vec<Vec<f32>>, Self::E> {
+    async fn call_embedder(
+        &self,
+        queries: &[&str],
+    ) -> Result<EmbeddingsResponse, <Self as EmbedService>::E> {
         let payload = serde_json::json!({
-            "sentences": query
+            "sentences": queries
         });
-
         let response: EmbeddingsResponse = self
             .client
             .post(self.host.clone())
@@ -41,14 +34,42 @@ impl EmbedService for Embedder {
             .json()
             .await
             .map_err(|e| EmbeddingServiceError::Reqwuest(e))?;
+        Ok(response)
+    }
+}
 
-        if response.embeddings.len() != query.len() {
+#[derive(Deserialize)]
+struct EmbeddingsResponse {
+    pub(crate) embeddings: Vec<Vec<f32>>,
+}
+
+#[async_trait::async_trait]
+impl EmbedService for Embedder {
+    type E = EmbeddingServiceError;
+    async fn embed_batch(&self, queries: &[&str]) -> Result<Vec<Vec<f32>>, Self::E> {
+        let response = self.call_embedder(queries).await?;
+
+        if response.embeddings.len() != queries.len() {
             Err(EmbeddingServiceError::EmbeddingSizeMismatch(
-                query.len(),
+                queries.len(),
                 response.embeddings.len(),
             ))
         } else {
             Ok(response.embeddings)
+        }
+    }
+    async fn embed(&self, query: &str) -> Result<Vec<f32>, Self::E> {
+        let response = self.call_embedder(&[query]).await?;
+
+        if response.embeddings.len() > 1 {
+            Err(EmbeddingServiceError::EmbeddingSizeMismatch(
+                1,
+                response.embeddings.len(),
+            ))
+        } else if let Some(embedding) = response.embeddings.into_iter().next() {
+            Ok(embedding)
+        } else {
+            Err(EmbeddingServiceError::EmbeddingSizeMismatch(1, 0))
         }
     }
 }

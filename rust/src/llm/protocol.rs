@@ -10,16 +10,14 @@ use async_openai::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{
-    AsyncLlmService, AsyncOpenAiService, LlmServiceError, SyncLlmService, SyncOpenAiService,
-};
-#[derive(Serialize, Deserialize, Clone, Debug)]
+use super::{AsyncLlmService, AsyncOpenAiService, LlmServiceError};
+#[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct LlmInput {
     pub(crate) system: String,
     pub(crate) conversation: Vec<LlmMessage>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum LlmRole {
     Assistant,
@@ -29,22 +27,6 @@ pub(crate) enum LlmRole {
     Tool,
 }
 
-impl Into<Result<Vec<LlmMessage>, <SyncOpenAiService as SyncLlmService>::E>> for LlmInput {
-    fn into(self) -> Result<Vec<LlmMessage>, <SyncOpenAiService as SyncLlmService>::E> {
-        let Self {
-            system,
-            conversation,
-        } = self;
-
-        let mut messages = vec![LlmMessage {
-            role: LlmRole::System,
-            content: system,
-        }];
-
-        messages.extend(conversation);
-        Ok(messages)
-    }
-}
 impl Into<Result<Vec<ChatCompletionRequestMessage>, <AsyncOpenAiService as AsyncLlmService>::E>>
     for LlmInput
 {
@@ -87,13 +69,13 @@ impl Display for LlmRole {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct LlmMessage {
     pub(crate) role: LlmRole,
     pub(crate) content: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct PartialLlmMessage {
     pub(crate) role: Option<LlmRole>,
     pub(crate) content: Option<String>,
@@ -139,32 +121,5 @@ fn role_message_to_request_message(
             .content(message)
             .build()
             .map(|e| ChatCompletionRequestMessage::Function(e)),
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn serialize_to_oaij_format() {
-        let input = LlmInput {
-            system: String::from("The system message"),
-            conversation: vec![
-                LlmMessage {
-                    role: LlmRole::User,
-                    content: String::from("User String"),
-                },
-                LlmMessage {
-                    role: LlmRole::Assistant,
-                    content: String::from("User String"),
-                },
-            ],
-        };
-
-        let compat: Result<Vec<LlmMessage>, <AsyncOpenAiService as AsyncLlmService>::E> =
-            input.into();
-
-        println!("{}", serde_json::to_string(&compat.unwrap()).unwrap())
     }
 }

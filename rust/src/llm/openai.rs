@@ -1,6 +1,6 @@
 use crate::llm::protocol::PartialLlmMessage;
 
-use super::super::{AsyncLlmService, LlmInput, LlmMessage, LlmRole, LlmServiceError};
+use super::{AsyncLlmService, LlmInput, LlmMessage, LlmRole, LlmServiceError};
 use async_openai::{
     config::OpenAIConfig,
     types::{ChatCompletionRequestMessage, CreateChatCompletionRequestArgs},

@@ -3,31 +3,30 @@ use utoipa::ToSchema;
 
 type Source = (String, String);
 
-#[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
+#[derive(Serialize, Deserialize, ToSchema, Debug)]
 #[schema(example = assistant_message_schema_example)]
 pub(crate) enum Message {
     User(String),
     Assistant(String, Vec<Source>),
 }
 
-#[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
+#[derive(Serialize, Deserialize, ToSchema, Debug)]
 #[schema(example = assistant_partial_message_schema_example)]
 pub(crate) struct PartialMessage {
-    pub(crate) serial: usize,
     pub(crate) content: Option<String>,
     pub(crate) source: Option<Source>,
     pub(crate) finished: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
+#[derive(Serialize, Deserialize, ToSchema, Debug)]
 #[schema(example = conversation_schema_example)]
 pub(crate) struct Conversation(pub(crate) Vec<Message>);
 
-#[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
+#[derive(Serialize, Deserialize, ToSchema, Debug)]
 #[schema(example = query_schema_example)]
 pub(crate) struct Query(pub(crate) String);
 
-#[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
+#[derive(Serialize, Deserialize, ToSchema, Debug)]
 #[schema(example = answer_schema_example)]
 pub(crate) struct Answer(pub(crate) String);
 
@@ -44,7 +43,6 @@ fn assistant_message_schema_example() -> Message {
 
 fn assistant_partial_message_schema_example() -> PartialMessage {
     PartialMessage {
-        serial: 123,
         content: Some(String::from(" fragment")),
         source: Some((String::from("1"), String::from("Referenced Text 1"))),
         finished: Some(String::new()),

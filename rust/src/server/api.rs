@@ -15,7 +15,7 @@ use super::{Answer, Conversation, Message, PartialMessage, Query};
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(conversation, query),
+    paths(conversation, query, streaming_conversation),
     components(
         schemas(Message),
         schemas(PartialMessage),
@@ -109,10 +109,10 @@ async fn streaming_conversation(
 ) -> impl Responder {
     let (client, sender) = Client::new();
     actix_web::rt::spawn(async move {
-        query_engine
+        let _ = query_engine
             .streaming_conversation(&conversation_1, sender)
             .await
-            .unwrap()
+            .map_err(|e| log::error!("{e}"));
     });
 
     HttpResponse::Ok()
