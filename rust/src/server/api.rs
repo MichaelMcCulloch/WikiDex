@@ -108,11 +108,9 @@ async fn streaming_conversation(
     query_engine: Data<Arc<Engine>>,
 ) -> impl Responder {
     let (client, sender) = Client::new();
-    let query_engines = query_engine.clone();
-    let conversation_1s = conversation_1.clone();
     actix_web::rt::spawn(async move {
-        query_engines
-            .streaming_conversation(&conversation_1s, sender)
+        query_engine
+            .streaming_conversation(&conversation_1, sender)
             .await
             .unwrap()
     });
