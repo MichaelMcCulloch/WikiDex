@@ -15,6 +15,27 @@ impl Embedder {
         let embedder = Self { client, host };
         Ok(embedder)
     }
+
+    async fn call_embedder(
+        &self,
+        queries: &[&str],
+    ) -> Result<EmbeddingsResponse, <Self as EmbedService>::E> {
+        let payload = serde_json::json!({
+            "sentences": queries
+        });
+        let response: EmbeddingsResponse = self
+            .client
+            .post(self.host.clone())
+            .timeout(Duration::from_secs(180))
+            .json(&payload)
+            .send()
+            .await
+            .map_err(|e| EmbeddingServiceError::Reqwuest(e))?
+            .json()
+            .await
+            .map_err(|e| EmbeddingServiceError::Reqwuest(e))?;
+        Ok(response)
+    }
 }
 
 #[derive(Deserialize)]
@@ -25,26 +46,12 @@ struct EmbeddingsResponse {
 #[async_trait::async_trait]
 impl EmbedService for Embedder {
     type E = EmbeddingServiceError;
-    async fn embed_batch(&self, query: &[&str]) -> Result<Vec<Vec<f32>>, Self::E> {
-        let payload = serde_json::json!({
-            "sentences": query
-        });
+    async fn embed_batch(&self, queries: &[&str]) -> Result<Vec<Vec<f32>>, Self::E> {
+        let response = self.call_embedder(queries).await?;
 
-        let response: EmbeddingsResponse = self
-            .client
-            .post(self.host.clone())
-            .timeout(Duration::from_secs(180))
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| EmbeddingServiceError::Reqwuest(e))?
-            .json()
-            .await
-            .map_err(|e| EmbeddingServiceError::Reqwuest(e))?;
-
-        if response.embeddings.len() != query.len() {
+        if response.embeddings.len() != queries.len() {
             Err(EmbeddingServiceError::EmbeddingSizeMismatch(
-                query.len(),
+                queries.len(),
                 response.embeddings.len(),
             ))
         } else {
@@ -52,21 +59,7 @@ impl EmbedService for Embedder {
         }
     }
     async fn embed(&self, query: &str) -> Result<Vec<f32>, Self::E> {
-        let payload = serde_json::json!({
-            "sentences": [query]
-        });
-
-        let response: EmbeddingsResponse = self
-            .client
-            .post(self.host.clone())
-            .timeout(Duration::from_secs(180))
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| EmbeddingServiceError::Reqwuest(e))?
-            .json()
-            .await
-            .map_err(|e| EmbeddingServiceError::Reqwuest(e))?;
+        let response = self.call_embedder(&[query]).await?;
 
         if response.embeddings.len() > 1 {
             Err(EmbeddingServiceError::EmbeddingSizeMismatch(
