@@ -165,17 +165,14 @@ impl QueryEngine for Engine {
                     .await
                     .map_err(|e| QueryEngineError::DocstoreError(e))?;
 
-                let mut serial = 0;
                 let partial_messages = documents
                     .iter()
                     .map(|(i, d, _)| {
                         let var_name = PartialMessage {
-                            serial,
                             content: None,
                             source: Some((format!("{i}"), format!("{d}"))),
                             finished: None,
                         };
-                        serial += 1;
                         var_name
                     })
                     .map(|partial_message| {
@@ -220,12 +217,10 @@ impl QueryEngine for Engine {
                     }) = rx_p.recv().await
                     {
                         let partial_message = PartialMessage {
-                            serial,
                             content: Some(content),
                             source: None,
                             finished: None,
                         };
-                        serial += 1;
 
                         let message_string = &serde_json::to_string(&partial_message).unwrap();
                         let message_bytes = Bytes::from(
@@ -234,7 +229,6 @@ impl QueryEngine for Engine {
                         let _ = tx.send(message_bytes);
                     }
                     let finished_flag = PartialMessage {
-                        serial,
                         content: None,
                         source: None,
                         finished: Some(String::from("DONE")),

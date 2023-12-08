@@ -8,7 +8,6 @@ interface Message {
 }
 
 interface PartialAssistant {
-  serial: number;
   content?: string;
   source?: [string, string];
   finished?: string;

@@ -109,10 +109,10 @@ async fn streaming_conversation(
 ) -> impl Responder {
     let (client, sender) = Client::new();
     actix_web::rt::spawn(async move {
-        query_engine
+        let _ = query_engine
             .streaming_conversation(&conversation_1, sender)
             .await
-            .unwrap()
+            .map_err(|e| log::error!("{e}"));
     });
 
     HttpResponse::Ok()
