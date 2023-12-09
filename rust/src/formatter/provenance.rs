@@ -11,29 +11,45 @@ pub(crate) enum Provenance {
     Wikipedia(WikipediaArticleTitle, AccessDate, LastModificationDate),
 }
 
+pub(crate) trait ArticleTitleToWikipediaUrl {
+    fn url(&self) -> String;
+}
+
+impl ArticleTitleToWikipediaUrl for String {
+    fn url(&self) -> String {
+        format!("https://en.wikipedia.org/wiki/{}", self.replace(" ", "_"))
+    }
+}
+
 impl Cite for Provenance {
     fn format(&self, style: CitationStyle) -> String {
         match self {
             Provenance::Wikipedia(title, access_date, edit_date) => match style {
                 CitationStyle::Chigago => {
-                    let url_safe_title = title.replace(" ", "_");
+                    let article_url = title.url();
                     let access_date = access_date.format("%-d %B %Y");
                     let edit_date = edit_date.format("%-d %B %Y");
-                    format!("\"{title}\" Wikipedia. Last modified {edit_date}, Accessed {access_date}, https://en.wikipedia.org/wiki/{url_safe_title}.")
+                    format!("\"{title}\" Wikipedia. Last modified {edit_date}, Accessed {access_date}, {article_url}.")
                 }
                 CitationStyle::MLA => {
-                    let url_safe_title = title.replace(" ", "_");
+                    let article_url = title.url();
                     let access_date = access_date.format("%-d %B %Y");
                     let edit_date = edit_date.format("%-d %B %Y");
-                    format!("\"{title}\" Wikipedia, Wikimedia Foundation, {edit_date}, https://en.wikipedia.org/wiki/{url_safe_title}. Accessed {access_date}.")
+                    format!("\"{title}\" Wikipedia, Wikimedia Foundation, {edit_date}, {article_url}. Accessed {access_date}.")
                 }
                 CitationStyle::APA => {
-                    let url_safe_title = title.replace(" ", "_");
+                    let article_url = title.url();
                     let access_date = access_date.format("%B %-d, %Y");
                     let edit_date = edit_date.format("%Y, %B %-d");
-                    format!("{title}. {edit_date}. In Wikipedia. Retrieved {access_date}, from https://en.wikipedia.org/wiki/{url_safe_title}")
+                    format!("{title}. {edit_date}. In Wikipedia. Retrieved {access_date}, from {article_url}")
                 }
             },
+        }
+    }
+
+    fn url(&self) -> String {
+        match self {
+            Provenance::Wikipedia(title, _, _) => title.url(),
         }
     }
 }
