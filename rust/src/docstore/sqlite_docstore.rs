@@ -1,4 +1,5 @@
 use crate::formatter::Provenance;
+use chrono::NaiveDateTime;
 use flate2::read::GzDecoder;
 use sqlx::{sqlite::SqlitePool, Row};
 use std::{io::Read, path::Path};
@@ -48,7 +49,7 @@ impl DocumentService for SqliteDocstore {
             .collect::<Vec<_>>()
             .join(",");
         let query = format!(
-            "SELECT document.id, document.text, article.title FROM document INNER JOIN article ON document.article = article.id WHERE document.id IN ({})",
+            "SELECT document.id, document.text, article.title, article.access_date, article.modification_date FROM document INNER JOIN article ON document.article = article.id WHERE document.id IN ({})",
             ids
         );
         let docs_rows = sqlx::query(&query)
@@ -67,11 +68,16 @@ impl DocumentService for SqliteDocstore {
                 gz.read_to_string(&mut document).ok()?;
 
                 let article_title = row.get::<String, _>("title");
-                let provenance = Provenance::Wikipedia(
-                    article_title,
-                    replace_me_asap_wikipedia_article_access_date(),
-                    replace_me_asap_wikipedia_article_modification_date(),
-                );
+
+                let access_date = row.get::<i64, _>("access_date");
+                let modification_date = row.get::<i64, _>("modification_date");
+
+                let access_date = NaiveDateTime::from_timestamp_millis(access_date)?.date();
+                let modification_date =
+                    NaiveDateTime::from_timestamp_millis(modification_date)?.date();
+
+                let provenance =
+                    Provenance::Wikipedia(article_title, access_date, modification_date);
                 Some((index, document, provenance))
             })
             .collect::<Vec<(i64, String, Provenance)>>();
@@ -106,7 +112,7 @@ impl DocumentService for SqliteDocstore {
             .collect::<Vec<_>>()
             .join(",");
 
-        let query = format!("SELECT document.id, document.text, article.title FROM document INNER JOIN article ON document.article = article.id WHERE document.id IN ({})", ids);
+        let query = format!("SELECT document.id, document.text, article.title, article.access_date, article.modification_date FROM document INNER JOIN article ON document.article = article.id WHERE document.id IN ({})", ids);
 
         let docs_rows = sqlx::query(&query)
             .fetch_all(&self.pool)
@@ -124,11 +130,15 @@ impl DocumentService for SqliteDocstore {
                 gz.read_to_string(&mut document).ok()?;
 
                 let article_title = row.get::<String, _>("title");
-                let provenance = Provenance::Wikipedia(
-                    article_title,
-                    replace_me_asap_wikipedia_article_access_date(),
-                    replace_me_asap_wikipedia_article_modification_date(),
-                );
+                let access_date = row.get::<i64, _>("access_date");
+                let modification_date = row.get::<i64, _>("modification_date");
+
+                let access_date = NaiveDateTime::from_timestamp_millis(access_date)?.date();
+                let modification_date =
+                    NaiveDateTime::from_timestamp_millis(modification_date)?.date();
+
+                let provenance =
+                    Provenance::Wikipedia(article_title, access_date, modification_date);
                 Some((index, document, provenance))
             })
             .collect::<Vec<(i64, String, Provenance)>>();
