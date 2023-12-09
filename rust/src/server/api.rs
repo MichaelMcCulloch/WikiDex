@@ -11,13 +11,14 @@ use crate::{
     server::client::Client,
 };
 
-use super::{Answer, Conversation, Message, PartialMessage, Query};
+use super::{Answer, Conversation, Message, PartialMessage, Query, Source};
 
 #[derive(OpenApi)]
 #[openapi(
     paths(conversation, query, streaming_conversation),
     components(
         schemas(Message),
+        schemas(Source),
         schemas(PartialMessage),
         schemas(Conversation),
         schemas(Query),

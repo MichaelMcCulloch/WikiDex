@@ -2,14 +2,22 @@ import React, { useEffect, useReducer, useRef, useState } from "react";
 import { SSE } from "sse.js";
 import "./App.css";
 
+interface Source {
+  ordinal: number;
+  index: number;
+  citation: string;
+  url: string;
+  origin_text: string;
+}
+
 interface Message {
   User?: string;
-  Assistant?: [string, [string, string][]];
+  Assistant?: [string, Source[]];
 }
 
 interface PartialAssistant {
   content?: string;
-  source?: [string, string];
+  source?: Source;
   finished?: string;
 }
 
@@ -29,7 +37,7 @@ interface UpdateAssistantMessageAction {
 interface UpdateAssistantSourceAction {
   type: "UPDATE_ASSISTANT_SOURCE";
   payload: {
-    source: [string, string];
+    source: Source;
   };
 }
 type ConversationAction =
@@ -87,7 +95,7 @@ function App() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [conversation]);
+  }, [conversation, tooltip.visible]);
 
   function handleMouseEvents(
     event: React.MouseEvent<HTMLElement>,
@@ -115,7 +123,7 @@ function App() {
         payload: JSON.stringify([...conversation, userMessage]),
       }
     );
-    let emptyAssistant: [string, [string, string][]] = ["", []];
+    let emptyAssistant: [string, []] = ["", []];
     const emptyResponse = { Assistant: emptyAssistant };
     dispatch({ type: "ADD_MESSAGE", payload: emptyResponse });
     // Handle the message events from the server
@@ -163,20 +171,21 @@ function App() {
               return (
                 <div key={idx} className="assistant-text">
                   <p>{message.Assistant[0]}</p>
-                  <ul
-                    style={{
-                      display: "flex",
-                      flexDirection: "row",
-                      gap: "8px",
-                    }}
-                  >
-                    {message.Assistant[1].map((url, urlIdx) => (
+                  <ul className="reference-list">
+                    {message.Assistant[1].map((source, urlIdx) => (
                       <li key={urlIdx} style={{ listStyleType: "none" }}>
                         <div
                           className="link-bubble"
-                          onClick={(e) => handleMouseEvents(e, url[1])}
+                          onClick={(e) =>
+                            handleMouseEvents(e, source.origin_text)
+                          }
                         >
-                          {url[0]}
+                          <p className="reference">
+                            [{source.ordinal}]:{" "}
+                            <a href={source.url} target="_blank">
+                              {source.citation}
+                            </a>
+                          </p>
                         </div>
                       </li>
                     ))}
@@ -189,7 +198,7 @@ function App() {
                 </div>
               );
             }
-            return null; // this is just to handle cases where neither user nor assistant properties are present, though it shouldn't occur based on your data structure
+            return null; // this is just to handle cases where neither user nor assistant properties are present
           })}
           <div ref={messagesEndRef} />
         </div>

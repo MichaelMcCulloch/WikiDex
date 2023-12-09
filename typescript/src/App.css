@@ -6,8 +6,21 @@
 .tooltip-text p {
   white-space: pre-wrap;
 }
-.assistant-text  p {
+.assistant-text p {
   white-space: pre-wrap;
+}
+.urlIndex {
+  font-size: 8px;
+}
+.reference {
+  font-size: 12px;
+}
+
+.reference-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 0px;
 }
 .user-text {
   margin: 10px;

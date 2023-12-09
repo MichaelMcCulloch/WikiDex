@@ -6,12 +6,12 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 use crate::{
     docstore::{DocumentService, SqliteDocstore},
     embed::{r#async::Embedder, EmbedService},
-    formatter::{DocumentFormatter, TextFormatter},
+    formatter::{CitationStyle, Cite, DocumentFormatter, TextFormatter},
     index::{FaissIndex, SearchService},
     llm::{
         AsyncLlmService, AsyncOpenAiService, PartialLlmMessage, {LlmInput, LlmMessage, LlmRole},
     },
-    server::{Conversation, Message, PartialMessage},
+    server::{Conversation, Message, PartialMessage, Source},
 };
 
 use super::{QueryEngine, QueryEngineError};
@@ -114,8 +114,15 @@ impl QueryEngine for Engine {
                     LlmRole::Assistant => Ok(Message::Assistant(
                         content.to_string(),
                         documents
-                            .iter()
-                            .map(|(i, d, _)| (format!("{i}"), format!("{d}")))
+                            .into_iter()
+                            .zip(document_indices)
+                            .map(|((ordinal, origin_text, provenance), index)| Source {
+                                ordinal,
+                                index,
+                                citation: provenance.format(CitationStyle::MLA),
+                                url: provenance.url(),
+                                origin_text,
+                            })
                             .collect(),
                     )),
                     _ => Err(QueryEngineError::InvalidAgentResponse)?,
@@ -151,18 +158,6 @@ impl QueryEngine for Engine {
                     .await
                     .map_err(|e| QueryEngineError::DocstoreError(e))?;
 
-                documents.iter().for_each(|(i, d, _)| {
-                    let partial_message = PartialMessage {
-                        content: None,
-                        source: Some((format!("{i}"), format!("{d}"))),
-                        finished: None,
-                    };
-                    let message_string = &serde_json::to_string(&partial_message).unwrap();
-                    let message_bytes =
-                        Bytes::from(["event: message\ndata: ", message_string, "\n\n"].concat());
-                    let _ = tx.send(message_bytes);
-                });
-
                 let formatted_documents = documents
                     .iter()
                     .map(|(index, document, _provenance)| {
@@ -170,6 +165,27 @@ impl QueryEngine for Engine {
                     })
                     .collect::<Vec<String>>()
                     .join("\n\n");
+
+                documents.into_iter().zip(document_indices).for_each(
+                    |((ordinal, origin_text, provenance), index)| {
+                        let partial_message = PartialMessage {
+                            content: None,
+                            source: Some(Source {
+                                ordinal,
+                                index,
+                                citation: provenance.format(CitationStyle::MLA),
+                                url: provenance.url(),
+                                origin_text,
+                            }),
+                            finished: None,
+                        };
+                        let message_string = &serde_json::to_string(&partial_message).unwrap();
+                        let message_bytes = Bytes::from(
+                            ["event: message\ndata: ", message_string, "\n\n"].concat(),
+                        );
+                        let _ = tx.send(message_bytes);
+                    },
+                );
 
                 let system = self
                     .prompt

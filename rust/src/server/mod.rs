@@ -4,5 +4,5 @@ mod protocol;
 mod server;
 
 pub(crate) use api::*;
-pub(super) use protocol::{Answer, Conversation, Message, PartialMessage, Query};
+pub(super) use protocol::{Answer, Conversation, Message, PartialMessage, Query, Source};
 pub(crate) use server::run_server;
