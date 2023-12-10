@@ -12,7 +12,7 @@ pub(crate) enum Provenance {
 }
 
 impl Cite for Provenance {
-    fn format(&self, style: CitationStyle) -> String {
+    fn format(&self, style: &CitationStyle) -> String {
         match self {
             Provenance::Wikipedia(title, access_date, edit_date) => match style {
                 CitationStyle::Chigago => {
@@ -44,6 +44,12 @@ impl Cite for Provenance {
             }
         }
     }
+
+    fn title(&self) -> String {
+        match self {
+            Provenance::Wikipedia(title, _, _) => title.clone(),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -60,7 +66,7 @@ mod test {
             NaiveDate::from_ymd_opt(2023, 10, 01).unwrap(),
         );
 
-        assert_eq!(expected, provenance.format(CitationStyle::MLA))
+        assert_eq!(expected, provenance.format(&CitationStyle::MLA))
     }
     #[test]
     fn wiki_apa() {
@@ -72,7 +78,7 @@ mod test {
             NaiveDate::from_ymd_opt(2023, 10, 01).unwrap(),
         );
 
-        assert_eq!(expected, provenance.format(CitationStyle::APA))
+        assert_eq!(expected, provenance.format(&CitationStyle::APA))
     }
     #[test]
     fn wiki_chicago() {
@@ -84,6 +90,6 @@ mod test {
             NaiveDate::from_ymd_opt(2023, 10, 01).unwrap(),
         );
 
-        assert_eq!(expected, provenance.format(CitationStyle::Chigago))
+        assert_eq!(expected, provenance.format(&CitationStyle::Chigago))
     }
 }

@@ -12,7 +12,8 @@ pub(crate) struct Config {
     pub(crate) port: u16,
     pub(crate) index: PathBuf,
     pub(crate) docstore: PathBuf,
-    pub(crate) prompt: String,
+    pub(crate) system_prompt: String,
+    pub(crate) user_prompt: String,
     pub(crate) model: PathBuf,
     pub(crate) model_context_length: usize,
     pub(crate) embed_url: Url,
@@ -48,7 +49,8 @@ impl From<ServerArgs> for Config {
             model_context_length: value.model_length,
             embed_url: value.embed_url,
             llm_url: value.vllm_url,
-            prompt: std::fs::read_to_string(value.prompt_path).unwrap(),
+            system_prompt: std::fs::read_to_string(value.system_prompt_path).unwrap(),
+            user_prompt: std::fs::read_to_string(value.user_prompt_path).unwrap(),
         }
     }
 }

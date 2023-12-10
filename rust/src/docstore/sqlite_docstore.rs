@@ -4,11 +4,7 @@ use flate2::read::GzDecoder;
 use sqlx::{sqlite::SqlitePool, Row};
 use std::{io::Read, path::Path};
 
-use super::{
-    replace_me_asap_wikipedia_article_access_date,
-    replace_me_asap_wikipedia_article_modification_date, DocstoreLoadError, DocstoreRetrieveError,
-    DocumentService,
-};
+use super::{DocstoreLoadError, DocstoreRetrieveError, DocumentService};
 pub struct SqliteDocstore {
     pool: SqlitePool,
 }

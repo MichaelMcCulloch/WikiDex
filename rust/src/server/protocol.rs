@@ -1,3 +1,4 @@
+use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -25,6 +26,39 @@ pub(crate) struct PartialMessage {
     pub(crate) content: Option<String>,
     pub(crate) source: Option<Source>,
     pub(crate) finished: Option<String>,
+}
+
+impl PartialMessage {
+    pub(crate) fn done() -> Self {
+        Self {
+            content: None,
+            source: None,
+            finished: Some(String::from("DONE")),
+        }
+    }
+
+    pub(crate) fn source(source: Source) -> Self {
+        Self {
+            content: None,
+            source: Some(source),
+            finished: None,
+        }
+    }
+
+    pub(crate) fn content(content: String) -> Self {
+        Self {
+            content: Some(content),
+            source: None,
+            finished: None,
+        }
+    }
+
+    pub(crate) fn message(self) -> Bytes {
+        let message_string = &serde_json::to_string(&self).unwrap();
+        let message_bytes =
+            Bytes::from(["event: message\ndata: ", message_string, "\n\n"].concat());
+        message_bytes
+    }
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug)]

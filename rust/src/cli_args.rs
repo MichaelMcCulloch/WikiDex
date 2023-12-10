@@ -41,7 +41,9 @@ pub(crate) struct ServerArgs {
     #[arg(short, long)]
     pub(crate) docstore: PathBuf,
     #[arg(short, long)]
-    pub(crate) prompt_path: PathBuf,
+    pub(crate) system_prompt_path: PathBuf,
+    #[arg(short, long)]
+    pub(crate) user_prompt_path: PathBuf,
     #[arg(short, long, default_value_t = Url::parse("http://embeddings:9000").unwrap())]
     pub(crate) embed_url: Url,
     #[arg(short, long, default_value_t = Url::parse("http://vllm:5050/v1").unwrap())]

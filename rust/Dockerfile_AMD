@@ -27,4 +27,6 @@ CMD omnipedia \
     --port "${OMNIPEDIA_CONT_PORT}" \
     --embed-url "http://embeddings-amd:${EMBED_CONT_PORT}" \
     --vllm-url "http://vllm-amd:${VLLM_CONT_PORT}/v1" \
-    --model-length "${MAX_MODEL_LEN}"
+    --model-length "${MAX_MODEL_LEN}" \
+    --system-prompt-path "${SYSTEM_PROMPT_PATH}" \
+    --user-prompt-path "${USER_PROMPT_PATH}"

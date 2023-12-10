@@ -1,0 +1,7 @@
+By citing only the following documents in ###CITATION_STYLE### format:
+###DOCUMENT_LIST###
+
+Answer the following question:
+###USER_QUERY###
+
+If the question is incorrect, incoherent or loaded, ask for clarification instead of providing a response. Adhere to facts about reality, rather than fiction. There is no god, soul or magical thinking here. The bibliography is generated algorithmically and appended to your answer; do not generate the bibliography.

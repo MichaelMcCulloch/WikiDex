@@ -6,7 +6,7 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 use crate::{
     docstore::{DocumentService, SqliteDocstore},
     embed::{r#async::Embedder, EmbedService},
-    formatter::{CitationStyle, Cite, DocumentFormatter, TextFormatter},
+    formatter::{CitationStyle, Cite, DocumentFormatter, Provenance, TextFormatter},
     index::{FaissIndex, SearchService},
     llm::{
         AsyncLlmService, AsyncOpenAiService, PartialLlmMessage, {LlmInput, LlmMessage, LlmRole},
@@ -21,39 +21,19 @@ pub struct Engine {
     embed: Embedder,
     docstore: SqliteDocstore,
     llm: AsyncOpenAiService,
-    prompt: String,
+    system_prompt: String,
+    user_prompt: String,
 }
 
 const NUM_DOCUMENTS_TO_RETRIEVE: usize = 4;
+
+const CITATION_STYLE: CitationStyle = CitationStyle::MLA;
 
 #[async_trait::async_trait]
 impl QueryEngine for Engine {
     type E = QueryEngineError;
     async fn query(&self, question: &str) -> Result<String, Self::E> {
-        let embedding = self
-            .embed
-            .embed(&question)
-            .await
-            .map_err(|e| QueryEngineError::EmbeddingError(e))?;
-
-        let result = self
-            .index
-            .lock()
-            .map_err(|_| QueryEngineError::UnableToLockIndex)?
-            .search(&embedding, NUM_DOCUMENTS_TO_RETRIEVE)
-            .map_err(|e| QueryEngineError::IndexError(e))?;
-
-        let documents = self
-            .docstore
-            .retreive(&result)
-            .await
-            .map_err(|e| QueryEngineError::DocstoreError(e))?;
-
-        let formatted_documents = documents
-            .iter()
-            .map(|(index, document, _)| DocumentFormatter::format_document(*index, document))
-            .collect::<Vec<String>>()
-            .join("\n\n");
+        let (_, _, formatted_documents) = self.get_documents(question).await?;
 
         Ok(formatted_documents)
     }
@@ -64,67 +44,18 @@ impl QueryEngine for Engine {
     ) -> Result<Message, Self::E> {
         match message_history.last() {
             Some(Message::User(user_query)) => {
-                let embedding = self
-                    .embed
-                    .embed(&user_query)
-                    .await
-                    .map_err(|e| QueryEngineError::EmbeddingError(e))?;
-
-                let document_indices = self
-                    .index
-                    .lock()
-                    .map_err(|_| QueryEngineError::UnableToLockIndex)?
-                    .search(&embedding, NUM_DOCUMENTS_TO_RETRIEVE)
-                    .map_err(|e| QueryEngineError::IndexError(e))?;
-
-                let documents = self
-                    .docstore
-                    .retreive(&document_indices)
-                    .await
-                    .map_err(|e| QueryEngineError::DocstoreError(e))?;
-
-                let formatted_documents = documents
-                    .iter()
-                    .map(|(index, document, _provenance)| {
-                        DocumentFormatter::format_document(*index, document)
-                    })
-                    .collect::<Vec<String>>()
-                    .join("\n\n");
-
-                let system = self
-                    .prompt
-                    .replace("###DOCUMENT_LIST###", &formatted_documents)
-                    .replace("###USER_QUERY###", &user_query);
-
-                let input = LlmInput {
-                    system,
-                    conversation: vec![LlmMessage {
-                        role: LlmRole::User,
-                        content: format!("{user_query}"),
-                    }],
-                };
+                let (sources, machine_input) = self
+                    .prepare_answer_data(user_query, &CITATION_STYLE)
+                    .await?;
 
                 let LlmMessage { role, content } = self
                     .llm
-                    .get_llm_answer(input, None)
+                    .get_llm_answer(machine_input, None)
                     .await
                     .map_err(|e| QueryEngineError::LlmError(e))?;
 
                 match role {
-                    LlmRole::Assistant => Ok(Message::Assistant(
-                        content.to_string(),
-                        documents
-                            .into_iter()
-                            .zip(document_indices)
-                            .map(|((ordinal, origin_text, provenance), index)| Source {
-                                ordinal,
-                                index,
-                                citation: provenance.format(CitationStyle::MLA),
-                                url: provenance.url(),
-                                origin_text,
-                            })
-                            .collect(),
-                    )),
+                    LlmRole::Assistant => Ok(Message::Assistant(content.to_string(), sources)),
                     _ => Err(QueryEngineError::InvalidAgentResponse)?,
                 }
             }
@@ -139,68 +70,15 @@ impl QueryEngine for Engine {
     ) -> Result<(), Self::E> {
         match message_history.last() {
             Some(Message::User(user_query)) => {
-                let embedding = self
-                    .embed
-                    .embed(&user_query)
-                    .await
-                    .map_err(|e| QueryEngineError::EmbeddingError(e))?;
-
-                let document_indices = self
-                    .index
-                    .lock()
-                    .map_err(|_| QueryEngineError::UnableToLockIndex)?
-                    .search(&embedding, NUM_DOCUMENTS_TO_RETRIEVE)
-                    .map_err(|e| QueryEngineError::IndexError(e))?;
-
-                let documents = self
-                    .docstore
-                    .retreive(&document_indices)
-                    .await
-                    .map_err(|e| QueryEngineError::DocstoreError(e))?;
-
-                let formatted_documents = documents
-                    .iter()
-                    .map(|(index, document, _provenance)| {
-                        DocumentFormatter::format_document(*index, document)
-                    })
-                    .collect::<Vec<String>>()
-                    .join("\n\n");
-
-                documents.into_iter().zip(document_indices).for_each(
-                    |((ordinal, origin_text, provenance), index)| {
-                        let partial_message = PartialMessage {
-                            content: None,
-                            source: Some(Source {
-                                ordinal,
-                                index,
-                                citation: provenance.format(CitationStyle::MLA),
-                                url: provenance.url(),
-                                origin_text,
-                            }),
-                            finished: None,
-                        };
-                        let message_string = &serde_json::to_string(&partial_message).unwrap();
-                        let message_bytes = Bytes::from(
-                            ["event: message\ndata: ", message_string, "\n\n"].concat(),
-                        );
-                        let _ = tx.send(message_bytes);
-                    },
-                );
-
-                let system = self
-                    .prompt
-                    .replace("###DOCUMENT_LIST###", &formatted_documents)
-                    .replace("###USER_QUERY###", user_query);
-
-                let input = LlmInput {
-                    system,
-                    conversation: vec![LlmMessage {
-                        role: LlmRole::User,
-                        content: format!("{user_query}"),
-                    }],
-                };
+                let (sources, machine_input) = self
+                    .prepare_answer_data(user_query, &CITATION_STYLE)
+                    .await?;
 
                 let (tx_p, mut rx_p) = unbounded_channel();
+
+                sources.into_iter().for_each(|source| {
+                    let _ = tx.send(PartialMessage::source(source).message());
+                });
 
                 actix_web::rt::spawn(async move {
                     while let Some(PartialLlmMessage {
@@ -208,31 +86,13 @@ impl QueryEngine for Engine {
                         ..
                     }) = rx_p.recv().await
                     {
-                        let partial_message = PartialMessage {
-                            content: Some(content),
-                            source: None,
-                            finished: None,
-                        };
-
-                        let message_string = &serde_json::to_string(&partial_message).unwrap();
-                        let message_bytes = Bytes::from(
-                            ["event: message\ndata: ", message_string, "\n\n"].concat(),
-                        );
-                        let _ = tx.send(message_bytes);
+                        let _ = tx.send(PartialMessage::content(content).message());
                     }
-                    let finished_flag = PartialMessage {
-                        content: None,
-                        source: None,
-                        finished: Some(String::from("DONE")),
-                    };
-                    let finished_string = &serde_json::to_string(&finished_flag).unwrap();
-                    let message_bytes =
-                        Bytes::from(["event: message\ndata: ", finished_string, "\n\n"].concat());
-                    let _ = tx.send(message_bytes);
+                    let _ = tx.send(PartialMessage::done().message());
                 });
 
                 self.llm
-                    .stream_llm_answer(input, None, tx_p)
+                    .stream_llm_answer(machine_input, None, tx_p)
                     .await
                     .map_err(|e| QueryEngineError::LlmError(e))?;
 
@@ -250,14 +110,97 @@ impl Engine {
         embed: Embedder,
         docstore: SqliteDocstore,
         llm: AsyncOpenAiService,
-        prompt: String,
+        system_prompt: String,
+        user_prompt: String,
     ) -> Self {
         Self {
             index,
             embed,
             docstore,
             llm,
-            prompt,
+            system_prompt,
+            user_prompt,
         }
+    }
+
+    async fn prepare_answer_data(
+        &self,
+        user_query: &str,
+        citation_format: &CitationStyle,
+    ) -> Result<(Vec<Source>, LlmInput), <Self as QueryEngine>::E> {
+        let (document_indices, documents, formatted_documents) =
+            self.get_documents(user_query).await?;
+
+        let system = self
+            .system_prompt
+            .replace("###DOCUMENT_LIST###", &formatted_documents)
+            .replace("###USER_QUERY###", user_query)
+            .replace("###CITATION_STYLE###", &format!("{CITATION_STYLE}"));
+
+        let user = self
+            .user_prompt
+            .replace("###DOCUMENT_LIST###", &formatted_documents)
+            .replace("###USER_QUERY###", user_query)
+            .replace("###CITATION_STYLE###", &format!("{CITATION_STYLE}"));
+
+        let input = LlmInput {
+            system,
+            conversation: vec![
+                LlmMessage {
+                    role: LlmRole::User,
+                    content: user,
+                },
+                LlmMessage {
+                    role: LlmRole::Assistant,
+                    content: format!(""),
+                },
+            ],
+        };
+
+        Ok((
+            documents
+                .into_iter()
+                .zip(document_indices)
+                .map(|((ordinal, origin_text, provenance), index)| Source {
+                    ordinal,
+                    index,
+                    citation: provenance.format(citation_format),
+                    url: provenance.url(),
+                    origin_text,
+                })
+                .collect(),
+            input,
+        ))
+    }
+
+    async fn get_documents(
+        &self,
+        user_query: &str,
+    ) -> Result<(Vec<i64>, Vec<(usize, String, Provenance)>, String), <Self as QueryEngine>::E>
+    {
+        let embedding = self
+            .embed
+            .embed(&user_query)
+            .await
+            .map_err(|e| QueryEngineError::EmbeddingError(e))?;
+        let document_indices = self
+            .index
+            .lock()
+            .map_err(|_| QueryEngineError::UnableToLockIndex)?
+            .search(&embedding, NUM_DOCUMENTS_TO_RETRIEVE)
+            .map_err(|e| QueryEngineError::IndexError(e))?;
+        let documents = self
+            .docstore
+            .retreive(&document_indices)
+            .await
+            .map_err(|e| QueryEngineError::DocstoreError(e))?;
+        let formatted_documents = documents
+            .iter()
+            .map(|(_, document, provenance)| {
+                DocumentFormatter::format_document(&provenance.title(), document)
+            })
+            .collect::<Vec<String>>()
+            .join("\n\n");
+        Ok((document_indices, documents, formatted_documents))
     }
 }
