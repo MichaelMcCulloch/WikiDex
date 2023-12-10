@@ -17,7 +17,6 @@ use tokio::sync::mpsc::UnboundedSender;
 pub(crate) struct AsyncOpenAiService {
     client: Client<OpenAIConfig>,
     model_name: String,
-    pub(crate) model_context_length: usize,
 }
 
 #[async_trait::async_trait]
@@ -111,19 +110,11 @@ impl AsyncLlmService for AsyncOpenAiService {
 }
 
 impl AsyncOpenAiService {
-    pub(crate) fn new<S: AsRef<str>>(
-        host: Url,
-        model_name: S,
-        model_context_length: usize,
-    ) -> Self {
+    pub(crate) fn new<S: AsRef<str>>(host: Url, model_name: S) -> Self {
         let openai_config = OpenAIConfig::new().with_api_base(host);
         let client = Client::with_config(openai_config);
         let model_name = model_name.as_ref().to_string();
-        Self {
-            client,
-            model_name,
-            model_context_length,
-        }
+        Self { client, model_name }
     }
     fn create_chat_request(
         &self,
