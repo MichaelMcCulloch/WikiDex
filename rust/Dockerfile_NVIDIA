@@ -28,5 +28,4 @@ CMD omnipedia \
     --embed-url "http://embeddings-nv:${EMBED_CONT_PORT}" \
     --vllm-url "http://vllm-nv:${VLLM_CONT_PORT}/v1" \
     --model-length "${MAX_MODEL_LEN}" \
-    --system-prompt-path "${SYSTEM_PROMPT_PATH}" \
-    --user-prompt-path "${USER_PROMPT_PATH}"
+    --system-prompt-path "${SYSTEM_PROMPT_PATH}"

@@ -56,7 +56,6 @@ fn main() -> anyhow::Result<()> {
                 docstore,
                 llm,
                 config.system_prompt,
-                config.user_prompt,
             );
 
             let server = run_server(engine, config.host, config.port)?;

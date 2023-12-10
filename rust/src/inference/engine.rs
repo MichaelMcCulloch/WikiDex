@@ -22,7 +22,6 @@ pub struct Engine {
     docstore: SqliteDocstore,
     llm: AsyncOpenAiService,
     system_prompt: String,
-    user_prompt: String,
 }
 
 const NUM_DOCUMENTS_TO_RETRIEVE: usize = 4;
@@ -111,7 +110,6 @@ impl Engine {
         docstore: SqliteDocstore,
         llm: AsyncOpenAiService,
         system_prompt: String,
-        user_prompt: String,
     ) -> Self {
         Self {
             index,
@@ -119,7 +117,6 @@ impl Engine {
             docstore,
             llm,
             system_prompt,
-            user_prompt,
         }
     }
 
@@ -137,24 +134,12 @@ impl Engine {
             .replace("###USER_QUERY###", user_query)
             .replace("###CITATION_STYLE###", &format!("{CITATION_STYLE}"));
 
-        let user = self
-            .user_prompt
-            .replace("###DOCUMENT_LIST###", &formatted_documents)
-            .replace("###USER_QUERY###", user_query)
-            .replace("###CITATION_STYLE###", &format!("{CITATION_STYLE}"));
-
         let input = LlmInput {
             system,
-            conversation: vec![
-                LlmMessage {
-                    role: LlmRole::User,
-                    content: user,
-                },
-                LlmMessage {
-                    role: LlmRole::Assistant,
-                    content: format!(""),
-                },
-            ],
+            conversation: vec![LlmMessage {
+                role: LlmRole::User,
+                content: user_query.to_string(),
+            }],
         };
 
         Ok((
@@ -196,8 +181,8 @@ impl Engine {
             .map_err(|e| QueryEngineError::DocstoreError(e))?;
         let formatted_documents = documents
             .iter()
-            .map(|(_, document, provenance)| {
-                DocumentFormatter::format_document(&provenance.title(), document)
+            .map(|(ordianal, document, provenance)| {
+                DocumentFormatter::format_document(*ordianal, &provenance.title(), document)
             })
             .collect::<Vec<String>>()
             .join("\n\n");
