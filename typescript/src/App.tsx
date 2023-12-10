@@ -1,7 +1,7 @@
 import React, { useEffect, useReducer, useRef, useState } from "react";
 import { SSE } from "sse.js";
 import "./App.css";
-
+import AssistantResponse from "./AssistantResponse";
 interface Source {
   ordinal: number;
   index: number;
@@ -97,11 +97,12 @@ function App() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [conversation, tooltip.visible]);
 
-  function handleMouseEvents(
+  async function handleMouseEvents(
     event: React.MouseEvent<HTMLElement>,
     text: string
   ) {
     const element = event.currentTarget.getBoundingClientRect();
+
     setTooltip({
       visible: !tooltip.visible,
       x: element.x,
@@ -170,7 +171,7 @@ function App() {
             if (message.Assistant) {
               return (
                 <div key={idx} className="assistant-text">
-                  <p>{message.Assistant[0]}</p>
+                  <AssistantResponse text={message.Assistant[0]} />
                   <ul className="reference-list">
                     {message.Assistant[1].map((source, urlIdx) => (
                       <li key={urlIdx} style={{ listStyleType: "none" }}>
