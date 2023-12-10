@@ -3,8 +3,10 @@ use crate::llm::protocol::PartialLlmMessage;
 use super::{AsyncLlmService, LlmInput, LlmMessage, LlmRole, LlmServiceError};
 use async_openai::{
     config::OpenAIConfig,
-    types::{ChatCompletionRequestMessage, CreateChatCompletionRequestArgs},
-    Client,
+    types::{
+        ChatCompletionRequestMessage, CreateChatCompletionRequest, CreateChatCompletionRequestArgs,
+    },
+    Chat, Client,
 };
 use backoff::future::retry;
 use backoff::ExponentialBackoff;
@@ -26,17 +28,7 @@ impl AsyncLlmService for AsyncOpenAiService {
         input: LlmInput,
         max_new_tokens: Option<u16>,
     ) -> Result<LlmMessage, Self::E> {
-        let message_openai_compat: Result<
-            Vec<ChatCompletionRequestMessage>,
-            <AsyncOpenAiService as AsyncLlmService>::E,
-        > = input.into();
-
-        let request = CreateChatCompletionRequestArgs::default()
-            .max_tokens(max_new_tokens.unwrap_or(2048u16))
-            .model(self.model_name.clone())
-            .messages(message_openai_compat?)
-            .build()
-            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+        let request = self.create_chat_request(input, max_new_tokens)?;
 
         let response = self
             .client
@@ -67,17 +59,7 @@ impl AsyncLlmService for AsyncOpenAiService {
         max_new_tokens: Option<u16>,
         tx: UnboundedSender<PartialLlmMessage>,
     ) -> Result<(), Self::E> {
-        let message_openai_compat: Result<
-            Vec<ChatCompletionRequestMessage>,
-            <AsyncOpenAiService as AsyncLlmService>::E,
-        > = input.into();
-
-        let request = CreateChatCompletionRequestArgs::default()
-            .max_tokens(max_new_tokens.unwrap_or(2048u16))
-            .model(self.model_name.clone())
-            .messages(message_openai_compat?)
-            .build()
-            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+        let request = self.create_chat_request(input, max_new_tokens)?;
 
         let mut stream = self
             .client
@@ -142,5 +124,25 @@ impl AsyncOpenAiService {
             model_name,
             model_context_length,
         }
+    }
+    fn create_chat_request(
+        &self,
+        input: LlmInput,
+        max_new_tokens: Option<u16>,
+    ) -> Result<CreateChatCompletionRequest, <Self as AsyncLlmService>::E> {
+        let message_openai_compat: Result<
+            Vec<ChatCompletionRequestMessage>,
+            <AsyncOpenAiService as AsyncLlmService>::E,
+        > = input.into();
+
+        let request = CreateChatCompletionRequestArgs::default()
+            .max_tokens(max_new_tokens.unwrap_or(2048u16))
+            .model(self.model_name.clone())
+            .messages(message_openai_compat?)
+            .stop("================")
+            .build()
+            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+
+        Ok(request)
     }
 }

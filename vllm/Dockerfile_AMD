@@ -9,7 +9,7 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
     python3 -m venv /venv && \
     . /venv/bin/activate && \
     pip3 install --upgrade pip wheel setuptools packaging && \
-    MAX_JOBS=6 pip3 install vllm fschat[model_worker,webui] bitsnbytes
+    MAX_JOBS=6 pip3 install git+https://github.com/vllm-project/vllm.git@main fschat[model_worker,webui] bitsnbytes
 
 
 CMD . /venv/bin/activate && python -m vllm.entrypoints.openai.api_server \
