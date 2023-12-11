@@ -44,8 +44,11 @@ fn main() -> anyhow::Result<()> {
             let embedder = Embedder::new(config.embed_url)?;
             let docstore = system_runner.block_on(SqliteDocstore::new(&config.docstore))?;
             let index = FaissIndex::new(&config.index)?;
-            let llm =
-                AsyncOpenAiService::new(config.llm_url, config.model.to_str().unwrap().to_string());
+            let llm = AsyncOpenAiService::new(
+                config.openai_key,
+                config.llm_url,
+                config.model.to_str().unwrap().to_string(),
+            );
 
             let engine = InferenceEngine::new(
                 Mutex::new(index),

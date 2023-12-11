@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{Parser, Subcommand};
+use clap::{ArgGroup, Parser, Subcommand};
 use url::Url;
 
 #[derive(Parser)]
@@ -31,6 +31,7 @@ pub(crate) struct WikipediaIngestArgs {
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
+#[command(group(ArgGroup::new("endpoint").args(&["vllm_url", "openai_key"]).multiple(false).required(true)))]
 pub(crate) struct ServerArgs {
     #[arg(short = 'a' , long, default_value_t = String::from("0.0.0.0"))]
     pub(crate) host: String,
@@ -44,10 +45,10 @@ pub(crate) struct ServerArgs {
     pub(crate) system_prompt_path: PathBuf,
     #[arg(short, long, default_value_t = Url::parse("http://embeddings:9000").unwrap())]
     pub(crate) embed_url: Url,
-    #[arg(short, long, default_value_t = Url::parse("http://vllm:5050/v1").unwrap())]
+    #[arg(short, long, default_value_t = Url::parse("http://vllm:5050/v1").unwrap(), group = "endpoint")]
     pub(crate) vllm_url: Url,
+    #[arg(short, long, group = "endpoint")]
+    pub(crate) openai_key: Option<String>,
     #[arg(short, long)]
     pub(crate) model_name: PathBuf,
-    #[arg(short, long)]
-    pub(crate) model_length: usize,
 }

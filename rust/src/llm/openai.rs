@@ -110,8 +110,12 @@ impl AsyncLlmService for AsyncOpenAiService {
 }
 
 impl AsyncOpenAiService {
-    pub(crate) fn new<S: AsRef<str>>(host: Url, model_name: S) -> Self {
-        let openai_config = OpenAIConfig::new().with_api_base(host);
+    pub(crate) fn new<S: AsRef<str>>(openai_key: Option<String>, host: Url, model_name: S) -> Self {
+        let openai_config = match openai_key {
+            Some(key) => OpenAIConfig::new().with_api_key(key),
+            None => OpenAIConfig::new().with_api_base(host),
+        };
+
         let client = Client::with_config(openai_config);
         let model_name = model_name.as_ref().to_string();
         Self { client, model_name }

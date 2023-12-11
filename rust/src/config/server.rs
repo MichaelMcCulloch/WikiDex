@@ -16,6 +16,7 @@ pub(crate) struct Config {
     pub(crate) model: PathBuf,
     pub(crate) embed_url: Url,
     pub(crate) llm_url: Url,
+    pub(crate) openai_key: Option<String>,
 }
 
 pub(crate) trait ConfigUrl {
@@ -47,6 +48,7 @@ impl From<ServerArgs> for Config {
             embed_url: value.embed_url,
             llm_url: value.vllm_url,
             system_prompt: std::fs::read_to_string(value.system_prompt_path).unwrap(),
+            openai_key: value.openai_key,
         }
     }
 }
