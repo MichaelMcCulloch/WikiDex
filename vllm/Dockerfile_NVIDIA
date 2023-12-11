@@ -10,8 +10,8 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
     . /venv/bin/activate && \
     pip3 install --upgrade pip wheel setuptools packaging && \
     pip3 install torch && \
-    pip3 install stanford-stk fschat[model_worker,webui] bitsnbytes && \
-    MAX_JOBS=6 pip3 install git+https://github.com/vllm-project/vllm.git@main 
+    pip3 install fschat[model_worker,webui] bitsnbytes && \
+    MAX_JOBS=6 pip3 install git+https://github.com/vllm-project/vllm.git@2e8fc0d4c3bf8374f1f55569069e59ef45d4bc98 
 
 
 CMD . /venv/bin/activate && python -m vllm.entrypoints.openai.api_server \
@@ -20,6 +20,6 @@ CMD . /venv/bin/activate && python -m vllm.entrypoints.openai.api_server \
     --model "${LLM_MODEL_NAME}" \
     --host 0.0.0.0 \
     --port "${VLLM_CONT_PORT}" \
-    # --quantization "${QUANTIZATION}" \
     --dtype half \
     --max-model-len "${MAX_MODEL_LEN}"
+    # --quantization "${QUANTIZATION}" \
