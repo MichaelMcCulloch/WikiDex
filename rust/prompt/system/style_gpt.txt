@@ -33,7 +33,7 @@ Each factual statement must be supported by a citation.
 - "This statement cites all articles.[1,2,3,4]."
 
 ## Bibliography
-Start the list of sources with exactly the phrase "# References:"
+Start the list of sources with exactly the phrase "# Sources List:"
 
 # Required Source Material
 The articles to be cited are:
