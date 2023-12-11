@@ -7,4 +7,4 @@ Please answer using only the provided documents, in the form of a long-form essa
 
 Every statement you make within your markdown response requires an in-text citation using the number provided. e.g.: This statement requires a citation,[1] and this statement cites two articles.[1,3] This statement cites all articles.[1,2,3,4].
 
-Begin the reference list with exactly the phrase '================'
+Begin the reference list with exactly the phrase '# References:'
