@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.3.1-devel-ubuntu22.04
+FROM nvidia/cuda:12.3.1-runtime-ubuntu22.04
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update && \
     apt-get install --no-install-recommends -y git vim build-essential python3-dev python3-venv ninja-build && \
@@ -9,10 +9,9 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
     python3 -m venv /venv && \
     . /venv/bin/activate && \
     pip3 install --upgrade pip wheel setuptools packaging && \
-    pip3 install torch && \
-    pip3 install fschat[model_worker,webui] bitsnbytes && \
-    MAX_JOBS=6 pip3 install git+https://github.com/vllm-project/vllm.git@2e8fc0d4c3bf8374f1f55569069e59ef45d4bc98 
-
+    pip3 install torch numpy && \
+    pip3 install bitsnbytes && \
+    MAX_JOBS=6 pip3 install vllm 
 
 CMD . /venv/bin/activate && python -m vllm.entrypoints.openai.api_server \
     --disable-log-requests \
