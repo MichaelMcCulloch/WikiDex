@@ -118,7 +118,7 @@ function App() {
 
     // Open a connection to the SSE endpoint
     const source = new SSE(
-      "https://oracle-rs.semanticallyinvalid.net/streaming_conversation",
+      "https://oracle-rs.omnipedia.ca/streaming_conversation",
       {
         headers: { "Content-Type": "application/json" },
         payload: JSON.stringify([...conversation, userMessage]),
