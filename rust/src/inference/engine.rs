@@ -150,7 +150,7 @@ impl Engine {
             system,
             conversation: vec![LlmMessage {
                 role: LlmRole::User,
-                content: format!("Obey the instructions in the system prompt. You must cite every statement [1] and provide your answer in a long-form essay, formatted as markdown. Delimite the essay from the reference list with exactly the line '# Sources List:'. If you don't follow these instructions to the letter, my boss will fire me.\n{user_query}"),
+                content: format!("Obey the instructions in the system prompt. You must cite every statement [1] and provide your answer in a long-form essay, formatted as markdown. Delimite the essay from the reference list with exactly the line '================'\n{user_query}"),
             }],
         };
 
