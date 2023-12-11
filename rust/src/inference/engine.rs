@@ -144,15 +144,13 @@ impl Engine {
 
         let system = self
             .system_prompt
-            .replace("###DOCUMENT_LIST###", &formatted_documents)
-            .replace("###USER_QUERY###", user_query)
-            .replace("###CITATION_STYLE###", &format!("{CITATION_STYLE}"));
+            .replace("###DOCUMENT_LIST###", &formatted_documents);
 
         let input = LlmInput {
             system,
             conversation: vec![LlmMessage {
                 role: LlmRole::User,
-                content: user_query.to_string(),
+                content: format!("Obey the instructions in the system prompt. You must cite every statement [1] and provide your answer in a long-form essay, formatted as markdown. Delimite the essay from the reference list with exactly the line '# Sources List:'. If you don't follow these instructions to the letter, my boss will fire me.\n{user_query}"),
             }],
         };
 
