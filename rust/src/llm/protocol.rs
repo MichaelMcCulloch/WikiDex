@@ -12,9 +12,14 @@ use serde::{Deserialize, Serialize};
 
 use super::{AsyncLlmService, AsyncOpenAiService, LlmServiceError};
 #[derive(Serialize, Deserialize, Debug)]
-pub(crate) struct LlmInput {
+pub(crate) struct LlmChatInput {
     pub(crate) system: String,
     pub(crate) conversation: Vec<LlmMessage>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub(crate) struct LlmInstructInput {
+    pub(crate) instruction: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -28,12 +33,12 @@ pub(crate) enum LlmRole {
 }
 
 impl Into<Result<Vec<ChatCompletionRequestMessage>, <AsyncOpenAiService as AsyncLlmService>::E>>
-    for LlmInput
+    for LlmChatInput
 {
     fn into(
         self,
     ) -> Result<Vec<ChatCompletionRequestMessage>, <AsyncOpenAiService as AsyncLlmService>::E> {
-        let LlmInput {
+        let LlmChatInput {
             system,
             conversation,
         } = self;

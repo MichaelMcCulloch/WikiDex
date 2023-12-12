@@ -9,7 +9,7 @@ use crate::{
     formatter::{CitationStyle, Cite, DocumentFormatter, Provenance, TextFormatter},
     index::{FaissIndex, SearchService},
     llm::{
-        AsyncLlmService, AsyncOpenAiService, PartialLlmMessage, {LlmInput, LlmMessage, LlmRole},
+        AsyncLlmService, AsyncOpenAiService, PartialLlmMessage, {LlmChatInput, LlmMessage, LlmRole},
     },
     server::{Conversation, Message, PartialMessage, Source},
 };
@@ -138,7 +138,7 @@ impl Engine {
         &self,
         user_query: &str,
         citation_format: &CitationStyle,
-    ) -> Result<(Vec<Source>, LlmInput), <Self as QueryEngine>::E> {
+    ) -> Result<(Vec<Source>, LlmChatInput), <Self as QueryEngine>::E> {
         let (document_indices, documents, formatted_documents) =
             self.get_documents(user_query).await?;
 
@@ -146,7 +146,7 @@ impl Engine {
             .system_prompt
             .replace("###DOCUMENT_LIST###", &formatted_documents);
 
-        let input = LlmInput {
+        let input = LlmChatInput {
             system,
             conversation: vec![LlmMessage {
                 role: LlmRole::User,

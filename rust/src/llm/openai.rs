@@ -1,6 +1,6 @@
 use crate::llm::protocol::PartialLlmMessage;
 
-use super::{AsyncLlmService, LlmInput, LlmMessage, LlmRole, LlmServiceError};
+use super::{AsyncLlmService, LlmChatInput, LlmMessage, LlmRole, LlmServiceError};
 use async_openai::{
     config::OpenAIConfig,
     types::{
@@ -24,7 +24,7 @@ impl AsyncLlmService for AsyncOpenAiService {
     type E = LlmServiceError;
     async fn get_llm_answer(
         &self,
-        input: LlmInput,
+        input: LlmChatInput,
         max_new_tokens: Option<u16>,
     ) -> Result<LlmMessage, Self::E> {
         let request = self.create_chat_request(input, max_new_tokens)?;
@@ -54,7 +54,7 @@ impl AsyncLlmService for AsyncOpenAiService {
     }
     async fn stream_llm_answer(
         &self,
-        input: LlmInput,
+        input: LlmChatInput,
         max_new_tokens: Option<u16>,
         tx: UnboundedSender<PartialLlmMessage>,
     ) -> Result<(), Self::E> {
@@ -122,7 +122,7 @@ impl AsyncOpenAiService {
     }
     fn create_chat_request(
         &self,
-        input: LlmInput,
+        input: LlmChatInput,
         max_new_tokens: Option<u16>,
     ) -> Result<CreateChatCompletionRequest, <Self as AsyncLlmService>::E> {
         let message_openai_compat: Result<
