@@ -188,7 +188,7 @@ impl AsyncOpenAiService {
         query: String,
         max_new_tokens: Option<u16>,
     ) -> Result<CreateChatCompletionRequest, <Self as AsyncLlmService>::E> {
-        let query = format!("Obey the instructions in the system prompt. You must cite every statement [1] and provide your answer in a long-form essay, formatted as markdown. Delimite the essay from the reference list with exactly the line '================'\n{query}");
+        let query = format!("Obey the instructions in the system prompt. You must cite every statement [1] and provide your answer in a long-form essay, formatted as markdown. Delimite the essay from the reference list with exactly the line 'References:'\n{query}");
 
         let system = ChatCompletionRequestSystemMessageArgs::default()
             .content(system)

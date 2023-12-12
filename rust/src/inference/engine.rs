@@ -82,23 +82,11 @@ impl QueryEngine for Engine {
                 });
 
                 actix_web::rt::spawn(async move {
-                    let mut whitespace_so_far = true;
                     while let Some(PartialLlmMessage {
                         content: Some(content),
                         ..
                     }) = rx_p.recv().await
                     {
-                        if whitespace_so_far
-                            && !["\n\n", "\n", "\t", " "].contains(&content.as_str())
-                        {
-                            whitespace_so_far = false;
-                        }
-
-                        if whitespace_so_far {
-                            continue;
-                        }
-
-                        // TODO: vLLM only started including the "<|assistant|>" token recently. WHY!?
                         let _ = tx.send(PartialMessage::content(content).message());
                     }
                     let _ = tx.send(PartialMessage::done().message());
