@@ -19,7 +19,7 @@ use url::Url;
 
 use tokio::sync::mpsc::UnboundedSender;
 
-const PROMPT_SALT: &str = "Obey the instructions in the system prompt. You must cite every statement [1] and provide your answer in a long-form essay, formatted as markdown. Delimit the essay from the reference list with exactly the line 'References:'";
+const PROMPT_SALT: &str = "";
 
 pub(crate) struct AsyncOpenAiService {
     client: Client<OpenAIConfig>,
@@ -218,7 +218,7 @@ impl AsyncOpenAiService {
             .max_tokens(max_new_tokens.unwrap_or(2048u16))
             .model(self.model_name.clone())
             .messages(message_openai_compat)
-            .stop("References:")
+            .stop("References")
             .build()
             .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
 
@@ -252,7 +252,7 @@ impl AsyncOpenAiService {
             .model(self.model_name.clone())
             .n(1)
             .prompt(query)
-            .stop("References:")
+            .stop("References")
             .build()
             .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
 
