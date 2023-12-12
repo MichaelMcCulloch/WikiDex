@@ -3,7 +3,7 @@ use std::{fmt::Display, path::PathBuf};
 use colored::Colorize;
 use url::Url;
 
-use crate::cli_args::ServerArgs;
+use crate::{cli_args::ServerArgs, llm::ModelKind};
 
 #[derive(Debug)]
 pub(crate) struct Config {
@@ -14,6 +14,7 @@ pub(crate) struct Config {
     pub(crate) docstore: PathBuf,
     pub(crate) system_prompt: String,
     pub(crate) model: PathBuf,
+    pub(crate) model_kind: ModelKind,
     pub(crate) embed_url: Url,
     pub(crate) llm_url: Url,
     pub(crate) openai_key: Option<String>,
@@ -45,6 +46,7 @@ impl From<ServerArgs> for Config {
             index: value.index,
             docstore: value.docstore,
             model: value.model_name,
+            model_kind: value.model_kind,
             embed_url: value.embed_url,
             llm_url: value.vllm_url,
             system_prompt: std::fs::read_to_string(value.system_prompt_path).unwrap(),
