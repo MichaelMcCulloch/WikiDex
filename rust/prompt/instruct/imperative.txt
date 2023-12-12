@@ -1,0 +1,5 @@
+Write a long-form essay in markdown format. Ensure clarity and avoid misinformation. If a question is incoherent or incorrect, seek clarification rather than providing incorrect information. Do not include information not present in the provided sources and answer using only those sources. Format the essay with single hashtag headings for main sections and double hashtags for subheadings. Use dashes for unordered lists and numbers for ordered lists. Provide citations for every statement of fact, excluding headings. Cite using the format, "This statement cites a source.[1]" and include a reference section titled "References:" Cite the following sources:
+
+###DOCUMENT_LIST###
+
+The purpose of your essay is to answer the following question: \"###USER_QUERY###\".

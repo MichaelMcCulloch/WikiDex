@@ -1,21 +1,7 @@
 use std::fmt::Display;
 
-use async_openai::{
-    error::OpenAIError,
-    types::{
-        ChatCompletionRequestAssistantMessageArgs, ChatCompletionRequestFunctionMessageArgs,
-        ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs,
-        ChatCompletionRequestToolMessageArgs, ChatCompletionRequestUserMessageArgs, Role,
-    },
-};
+use async_openai::types::Role;
 use serde::{Deserialize, Serialize};
-
-use super::{AsyncLlmService, AsyncOpenAiService, LlmServiceError};
-#[derive(Serialize, Deserialize, Debug)]
-pub(crate) struct LlmInput {
-    pub(crate) system: String,
-    pub(crate) conversation: Vec<LlmMessage>,
-}
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "lowercase")]
@@ -25,36 +11,6 @@ pub(crate) enum LlmRole {
     System,
     Function,
     Tool,
-}
-
-impl Into<Result<Vec<ChatCompletionRequestMessage>, <AsyncOpenAiService as AsyncLlmService>::E>>
-    for LlmInput
-{
-    fn into(
-        self,
-    ) -> Result<Vec<ChatCompletionRequestMessage>, <AsyncOpenAiService as AsyncLlmService>::E> {
-        let LlmInput {
-            system,
-            conversation,
-        } = self;
-
-        let system_openai_compat =
-            role_message_to_request_message(&LlmRole::System, system.as_str())
-                .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
-
-        let mut message_openai_compat = vec![system_openai_compat];
-
-        for message in conversation.iter() {
-            let LlmMessage {
-                role,
-                content: message,
-            } = message;
-            let msg: ChatCompletionRequestMessage = role_message_to_request_message(&role, message)
-                .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
-            message_openai_compat.push(msg);
-        }
-        Ok(message_openai_compat)
-    }
 }
 
 impl Display for LlmRole {
@@ -90,36 +46,5 @@ impl From<&Role> for LlmRole {
             Role::Function => LlmRole::Function,
             Role::Tool => LlmRole::Tool,
         }
-    }
-}
-
-fn role_message_to_request_message(
-    role: &LlmRole,
-    message: &str,
-) -> Result<ChatCompletionRequestMessage, OpenAIError> {
-    match role {
-        LlmRole::System => ChatCompletionRequestSystemMessageArgs::default()
-            .content(message)
-            .build()
-            .map(|e| ChatCompletionRequestMessage::System(e)),
-        LlmRole::User => ChatCompletionRequestUserMessageArgs::default()
-            .content(message)
-            .build()
-            .map(|e| ChatCompletionRequestMessage::User(e)),
-
-        LlmRole::Assistant => ChatCompletionRequestAssistantMessageArgs::default()
-            .content(message)
-            .build()
-            .map(|e| ChatCompletionRequestMessage::Assistant(e)),
-
-        LlmRole::Tool => ChatCompletionRequestToolMessageArgs::default()
-            .content(message)
-            .build()
-            .map(|e| ChatCompletionRequestMessage::Tool(e)),
-
-        LlmRole::Function => ChatCompletionRequestFunctionMessageArgs::default()
-            .content(message)
-            .build()
-            .map(|e| ChatCompletionRequestMessage::Function(e)),
     }
 }

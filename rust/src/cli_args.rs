@@ -3,6 +3,8 @@ use std::path::PathBuf;
 use clap::{ArgGroup, Parser, Subcommand};
 use url::Url;
 
+use crate::llm::ModelKind;
+
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 #[command(propagate_version = true)]
@@ -49,6 +51,8 @@ pub(crate) struct ServerArgs {
     pub(crate) vllm_url: Url,
     #[arg(short, long, group = "endpoint")]
     pub(crate) openai_key: Option<String>,
-    #[arg(short, long)]
+    #[arg(short = 'm', long)]
     pub(crate) model_name: PathBuf,
+    #[arg(short = 'k', long)]
+    pub(crate) model_kind: ModelKind,
 }

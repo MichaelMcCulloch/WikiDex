@@ -48,6 +48,7 @@ fn main() -> anyhow::Result<()> {
                 config.openai_key,
                 config.llm_url,
                 config.model.to_str().unwrap().to_string(),
+                config.model_kind,
             );
 
             let engine = InferenceEngine::new(
