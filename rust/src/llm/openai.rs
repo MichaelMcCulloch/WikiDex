@@ -6,9 +6,9 @@ use async_openai::{
     types::{
         ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs,
         ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequest,
-        CreateChatCompletionRequestArgs,
+        CreateChatCompletionRequestArgs, CreateCompletionRequest, CreateCompletionRequestArgs,
     },
-    Chat, Client,
+    Client,
 };
 use backoff::future::retry;
 use backoff::ExponentialBackoff;
@@ -27,7 +27,26 @@ impl AsyncLlmService for AsyncOpenAiService {
     type E = LlmServiceError;
     async fn get_llm_answer(&self, system: String, query: String) -> Result<LlmMessage, Self::E> {
         match self.model_kind {
-            ModelKind::Instruct => todo!(),
+            ModelKind::Instruct => {
+                let request = self.create_instruct_request(system, query, None)?;
+                let response = self
+                    .client
+                    .completions()
+                    .create(request)
+                    .await
+                    .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+
+                let response = response
+                    .choices
+                    .into_iter()
+                    .next()
+                    .ok_or(LlmServiceError::EmptyResponse)?;
+
+                Ok(LlmMessage {
+                    role: LlmRole::Assistant,
+                    content: response.text,
+                })
+            }
             ModelKind::Chat => {
                 let request = self.create_chat_request(system, query, None)?;
                 let response = self
@@ -64,7 +83,31 @@ impl AsyncLlmService for AsyncOpenAiService {
         tx: UnboundedSender<PartialLlmMessage>,
     ) -> Result<(), Self::E> {
         match self.model_kind {
-            ModelKind::Instruct => todo!(),
+            ModelKind::Instruct => {
+                let request = self.create_instruct_request(system, query, None)?;
+
+                let mut stream = self
+                    .client
+                    .completions()
+                    .create_stream(request)
+                    .await
+                    .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+
+                while let Some(Ok(fragment)) = stream.next().await {
+                    let response = fragment
+                        .choices
+                        .into_iter()
+                        .next()
+                        .ok_or(LlmServiceError::EmptyResponse)?;
+
+                    let _ = tx.send(PartialLlmMessage {
+                        role: None,
+                        content: Some(response.text),
+                    });
+                }
+
+                Ok(())
+            }
             ModelKind::Chat => {
                 let request = self.create_chat_request(system, query, None)?;
 
@@ -75,7 +118,7 @@ impl AsyncLlmService for AsyncOpenAiService {
                     .await
                     .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
 
-                let _ = stream.next().await; //Skip the first element
+                let _ = stream.next().await;
                 while let Some(Ok(fragment)) = stream.next().await {
                     let response = fragment
                         .choices
@@ -172,31 +215,23 @@ impl AsyncOpenAiService {
         Ok(request)
     }
 
-    // fn create_chat_request(
-    //     &self,
-    //     system: String,
-    //     query: String,
-    //     max_new_tokens: Option<u16>,
-    // ) -> Result<CreateCompletionRequest, <Self as AsyncLlmService>::E> {
-    //     let input = LlmChatInput {
-    //         system,
-    //         conversation: vec![LlmMessage {
-    //             role: LlmRole::User,
-    //             content: format!("Obey the instructions in the system prompt. You must cite every statement [1] and provide your answer in a long-form essay, formatted as markdown. Delimite the essay from the reference list with exactly the line '================'\n{query}"),
-    //         }],
-    //     };
-    //     let message_openai_compat: Result<
-    //         Vec<ChatCompletionRequestMessage>,
-    //         <AsyncOpenAiService as AsyncLlmService>::E,
-    //     > = input.into();
-    //     let request = CreateChatCompletionRequestArgs::default()
-    //         .max_tokens(max_new_tokens.unwrap_or(2048u16))
-    //         .model(self.model_name.clone())
-    //         .messages(message_openai_compat?)
-    //         .stop("================")
-    //         .build()
-    //         .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+    fn create_instruct_request(
+        &self,
+        system: String,
+        query: String,
+        max_new_tokens: Option<u16>,
+    ) -> Result<CreateCompletionRequest, <Self as AsyncLlmService>::E> {
+        let query = format!("{system}\n\n{query}");
 
-    //     Ok(request)
-    // }
+        let request = CreateCompletionRequestArgs::default()
+            .max_tokens(max_new_tokens.unwrap_or(2048u16))
+            .model(self.model_name.clone())
+            .n(1)
+            .prompt(query)
+            .stop("================")
+            .build()
+            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+
+        Ok(request)
+    }
 }
