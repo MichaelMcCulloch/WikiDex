@@ -208,7 +208,7 @@ impl AsyncOpenAiService {
             .max_tokens(max_new_tokens.unwrap_or(2048u16))
             .model(self.model_name.clone())
             .messages(message_openai_compat)
-            .stop("================")
+            .stop("References:")
             .build()
             .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
 
@@ -228,7 +228,7 @@ impl AsyncOpenAiService {
             .model(self.model_name.clone())
             .n(1)
             .prompt(query)
-            .stop("================")
+            .stop("References:")
             .build()
             .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
 

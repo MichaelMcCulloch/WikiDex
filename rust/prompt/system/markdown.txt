@@ -31,7 +31,7 @@ All statements of fact contains in-text citations.
 "This statement cites all sources.[1,2,3,4]."
 
 ### Reference section
-Begin the reference list with exactly the phrase "================"
+Begin the reference list with exactly the phrase "References:"
 
 # Articles which must be cited.
 
