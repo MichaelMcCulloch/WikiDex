@@ -16,6 +16,9 @@ use futures::StreamExt;
 use url::Url;
 
 use tokio::sync::mpsc::UnboundedSender;
+
+const PROMPT_SALT: &str = "Obey the instructions in the system prompt. You must cite every statement [1] and provide your answer in a long-form essay, formatted as markdown. Delimit the essay from the reference list with exactly the line 'References:'";
+
 pub(crate) struct AsyncOpenAiService {
     client: Client<OpenAIConfig>,
     model_name: String,
@@ -25,10 +28,15 @@ pub(crate) struct AsyncOpenAiService {
 #[async_trait::async_trait]
 impl AsyncLlmService for AsyncOpenAiService {
     type E = LlmServiceError;
-    async fn get_llm_answer(&self, system: String, query: String) -> Result<LlmMessage, Self::E> {
+    async fn get_llm_answer(
+        &self,
+        system: &String,
+        documents: String,
+        query: String,
+    ) -> Result<LlmMessage, Self::E> {
         match self.model_kind {
             ModelKind::Instruct => {
-                let request = self.create_instruct_request(system, query, None)?;
+                let request = self.create_instruct_request(system, documents, query, None)?;
                 let response = self
                     .client
                     .completions()
@@ -48,7 +56,7 @@ impl AsyncLlmService for AsyncOpenAiService {
                 })
             }
             ModelKind::Chat => {
-                let request = self.create_chat_request(system, query, None)?;
+                let request = self.create_chat_request(system, documents, query, None)?;
                 let response = self
                     .client
                     .chat()
@@ -78,13 +86,14 @@ impl AsyncLlmService for AsyncOpenAiService {
     }
     async fn stream_llm_answer(
         &self,
-        system: String,
+        system: &String,
+        documents: String,
         query: String,
         tx: UnboundedSender<PartialLlmMessage>,
     ) -> Result<(), Self::E> {
         match self.model_kind {
             ModelKind::Instruct => {
-                let request = self.create_instruct_request(system, query, None)?;
+                let request = self.create_instruct_request(system, documents, query, None)?;
 
                 let mut stream = self
                     .client
@@ -109,7 +118,7 @@ impl AsyncLlmService for AsyncOpenAiService {
                 Ok(())
             }
             ModelKind::Chat => {
-                let request = self.create_chat_request(system, query, None)?;
+                let request = self.create_chat_request(system, documents, query, None)?;
 
                 let mut stream = self
                     .client
@@ -184,11 +193,14 @@ impl AsyncOpenAiService {
     }
     fn create_chat_request(
         &self,
-        system: String,
+        system: &String,
+        documents: String,
         query: String,
         max_new_tokens: Option<u16>,
     ) -> Result<CreateChatCompletionRequest, <Self as AsyncLlmService>::E> {
-        let query = format!("Obey the instructions in the system prompt. You must cite every statement [1] and provide your answer in a long-form essay, formatted as markdown. Delimite the essay from the reference list with exactly the line 'References:'\n{query}");
+        let query = format!("{PROMPT_SALT}\n{query}");
+
+        let system = system.replace("###DOCUMENT_LIST###", &documents);
 
         let system = ChatCompletionRequestSystemMessageArgs::default()
             .content(system)
@@ -217,11 +229,15 @@ impl AsyncOpenAiService {
 
     fn create_instruct_request(
         &self,
-        system: String,
+        system: &String,
+        documents: String,
         query: String,
         max_new_tokens: Option<u16>,
     ) -> Result<CreateCompletionRequest, <Self as AsyncLlmService>::E> {
-        let query = format!("{system}\n\nAnswer the following question: {query}");
+        let query = system
+            .replace("###USER_QUERY###", &query)
+            .replace("###URL###", &"https://oracle.semanticallyinvalid.net")
+            .replace("###DOCUMENT_LIST###", &documents);
 
         let request = CreateCompletionRequestArgs::default()
             .max_tokens(max_new_tokens.unwrap_or(2048u16))

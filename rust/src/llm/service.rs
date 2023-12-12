@@ -7,10 +7,16 @@ pub(crate) trait LlmServiceImpl {}
 #[async_trait::async_trait]
 pub(crate) trait AsyncLlmService {
     type E: Error;
-    async fn get_llm_answer(&self, system: String, query: String) -> Result<LlmMessage, Self::E>;
+    async fn get_llm_answer(
+        &self,
+        system: &String,
+        documents: String,
+        query: String,
+    ) -> Result<LlmMessage, Self::E>;
     async fn stream_llm_answer(
         &self,
-        system: String,
+        system: &String,
+        documents: String,
         query: String,
         tx: UnboundedSender<PartialLlmMessage>,
     ) -> Result<(), Self::E>;

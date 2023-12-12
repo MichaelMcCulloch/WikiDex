@@ -32,7 +32,7 @@ const CITATION_STYLE: CitationStyle = CitationStyle::MLA;
 impl QueryEngine for Engine {
     type E = QueryEngineError;
     async fn query(&self, question: &str) -> Result<String, Self::E> {
-        let (_, _, formatted_documents) = self.get_documents(question).await?;
+        let (_, formatted_documents) = self.get_documents(question).await?;
 
         Ok(formatted_documents)
     }
@@ -43,13 +43,11 @@ impl QueryEngine for Engine {
     ) -> Result<Message, Self::E> {
         match message_history.into_iter().last() {
             Some(Message::User(user_query)) => {
-                let (sources, system) = self
-                    .prepare_answer_data(&user_query, &CITATION_STYLE)
-                    .await?;
+                let (sources, formatted_documents) = self.get_documents(&user_query).await?;
 
                 let LlmMessage { role, content } = self
                     .llm
-                    .get_llm_answer(system, user_query)
+                    .get_llm_answer(&self.system_prompt, formatted_documents, user_query)
                     .await
                     .map_err(|e| QueryEngineError::LlmError(e))?;
 
@@ -71,9 +69,7 @@ impl QueryEngine for Engine {
     ) -> Result<(), Self::E> {
         match message_history.into_iter().last() {
             Some(Message::User(user_query)) => {
-                let (sources, system) = self
-                    .prepare_answer_data(&user_query, &CITATION_STYLE)
-                    .await?;
+                let (sources, formatted_documents) = self.get_documents(&user_query).await?;
 
                 let (tx_p, mut rx_p) = unbounded_channel();
 
@@ -93,7 +89,7 @@ impl QueryEngine for Engine {
                 });
 
                 self.llm
-                    .stream_llm_answer(system, user_query, tx_p)
+                    .stream_llm_answer(&self.system_prompt, formatted_documents, user_query, tx_p)
                     .await
                     .map_err(|e| QueryEngineError::LlmError(e))?;
 
@@ -122,55 +118,29 @@ impl Engine {
         }
     }
 
-    async fn prepare_answer_data(
-        &self,
-        user_query: &str,
-        citation_format: &CitationStyle,
-    ) -> Result<(Vec<Source>, String), <Self as QueryEngine>::E> {
-        let (document_indices, documents, formatted_documents) =
-            self.get_documents(user_query).await?;
-
-        let system = self
-            .system_prompt
-            .replace("###DOCUMENT_LIST###", &formatted_documents);
-
-        Ok((
-            documents
-                .into_iter()
-                .zip(document_indices)
-                .map(|((ordinal, origin_text, provenance), index)| Source {
-                    ordinal,
-                    index,
-                    citation: provenance.format(citation_format),
-                    url: provenance.url(),
-                    origin_text,
-                })
-                .collect(),
-            system,
-        ))
-    }
-
     async fn get_documents(
         &self,
         user_query: &str,
-    ) -> Result<(Vec<i64>, Vec<(usize, String, Provenance)>, String), <Self as QueryEngine>::E>
-    {
+    ) -> Result<(Vec<Source>, String), <Self as QueryEngine>::E> {
         let embedding = self
             .embed
             .embed(&user_query)
             .await
             .map_err(|e| QueryEngineError::EmbeddingError(e))?;
+
         let document_indices = self
             .index
             .lock()
             .map_err(|_| QueryEngineError::UnableToLockIndex)?
             .search(&embedding, NUM_DOCUMENTS_TO_RETRIEVE)
             .map_err(|e| QueryEngineError::IndexError(e))?;
+
         let documents = self
             .docstore
             .retreive(&document_indices)
             .await
             .map_err(|e| QueryEngineError::DocstoreError(e))?;
+
         let formatted_documents = documents
             .iter()
             .map(|(ordianal, document, provenance)| {
@@ -178,6 +148,19 @@ impl Engine {
             })
             .collect::<Vec<String>>()
             .join("\n\n");
-        Ok((document_indices, documents, formatted_documents))
+
+        let sources = documents
+            .into_iter()
+            .zip(document_indices)
+            .map(|((ordinal, origin_text, provenance), index)| Source {
+                ordinal,
+                index,
+                citation: provenance.format(&CITATION_STYLE),
+                url: provenance.url(),
+                origin_text,
+            })
+            .collect::<Vec<_>>();
+
+        Ok((sources, formatted_documents))
     }
 }
