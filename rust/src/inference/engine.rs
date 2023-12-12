@@ -41,15 +41,15 @@ impl QueryEngine for Engine {
         &self,
         Conversation(message_history): Conversation,
     ) -> Result<Message, Self::E> {
-        match message_history.last() {
+        match message_history.into_iter().last() {
             Some(Message::User(user_query)) => {
-                let (sources, machine_input) = self
-                    .prepare_answer_data(user_query, &CITATION_STYLE)
+                let (sources, system) = self
+                    .prepare_answer_data(&user_query, &CITATION_STYLE)
                     .await?;
 
                 let LlmMessage { role, content } = self
                     .llm
-                    .get_llm_answer(machine_input, None)
+                    .get_llm_answer(system, user_query)
                     .await
                     .map_err(|e| QueryEngineError::LlmError(e))?;
 
@@ -69,10 +69,10 @@ impl QueryEngine for Engine {
         Conversation(message_history): Conversation,
         tx: UnboundedSender<Bytes>,
     ) -> Result<(), Self::E> {
-        match message_history.last() {
+        match message_history.into_iter().last() {
             Some(Message::User(user_query)) => {
-                let (sources, machine_input) = self
-                    .prepare_answer_data(user_query, &CITATION_STYLE)
+                let (sources, system) = self
+                    .prepare_answer_data(&user_query, &CITATION_STYLE)
                     .await?;
 
                 let (tx_p, mut rx_p) = unbounded_channel();
@@ -105,7 +105,7 @@ impl QueryEngine for Engine {
                 });
 
                 self.llm
-                    .stream_llm_answer(machine_input, None, tx_p)
+                    .stream_llm_answer(system, user_query, tx_p)
                     .await
                     .map_err(|e| QueryEngineError::LlmError(e))?;
 
@@ -138,21 +138,13 @@ impl Engine {
         &self,
         user_query: &str,
         citation_format: &CitationStyle,
-    ) -> Result<(Vec<Source>, LlmChatInput), <Self as QueryEngine>::E> {
+    ) -> Result<(Vec<Source>, String), <Self as QueryEngine>::E> {
         let (document_indices, documents, formatted_documents) =
             self.get_documents(user_query).await?;
 
         let system = self
             .system_prompt
             .replace("###DOCUMENT_LIST###", &formatted_documents);
-
-        let input = LlmChatInput {
-            system,
-            conversation: vec![LlmMessage {
-                role: LlmRole::User,
-                content: format!("Obey the instructions in the system prompt. You must cite every statement [1] and provide your answer in a long-form essay, formatted as markdown. Delimite the essay from the reference list with exactly the line '================'\n{user_query}"),
-            }],
-        };
 
         Ok((
             documents
@@ -166,7 +158,7 @@ impl Engine {
                     origin_text,
                 })
                 .collect(),
-            input,
+            system,
         ))
     }
 

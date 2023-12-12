@@ -23,74 +23,81 @@ pub(crate) struct AsyncOpenAiService {
 #[async_trait::async_trait]
 impl AsyncLlmService for AsyncOpenAiService {
     type E = LlmServiceError;
-    async fn get_llm_answer(
-        &self,
-        input: LlmChatInput,
-        max_new_tokens: Option<u16>,
-    ) -> Result<LlmMessage, Self::E> {
-        let request = self.create_chat_request(input, max_new_tokens)?;
+    async fn get_llm_answer(&self, system: String, query: String) -> Result<LlmMessage, Self::E> {
+        match self.model_kind {
+            ModelKind::Instruct => todo!(),
+            ModelKind::Chat => {
+                let request = self.create_chat_request(system, query, None)?;
+                let response = self
+                    .client
+                    .chat()
+                    .create(request)
+                    .await
+                    .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
 
-        let response = self
-            .client
-            .chat()
-            .create(request)
-            .await
-            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+                let response = response
+                    .choices
+                    .into_iter()
+                    .next()
+                    .ok_or(LlmServiceError::EmptyResponse)?;
 
-        let response = response
-            .choices
-            .into_iter()
-            .next()
-            .ok_or(LlmServiceError::EmptyResponse)?;
-
-        match (
-            LlmRole::from(&response.message.role),
-            response.message.content,
-        ) {
-            (LlmRole::System, _) => Err(LlmServiceError::UnexpectedRole(LlmRole::System)),
-            (LlmRole::Function, _) => Err(LlmServiceError::UnexpectedRole(LlmRole::Function)),
-            (_, None) => Err(LlmServiceError::EmptyResponse),
-            (role, Some(content)) => Ok(LlmMessage { role, content }),
+                match (
+                    LlmRole::from(&response.message.role),
+                    response.message.content,
+                ) {
+                    (LlmRole::System, _) => Err(LlmServiceError::UnexpectedRole(LlmRole::System)),
+                    (LlmRole::Function, _) => {
+                        Err(LlmServiceError::UnexpectedRole(LlmRole::Function))
+                    }
+                    (_, None) => Err(LlmServiceError::EmptyResponse),
+                    (role, Some(content)) => Ok(LlmMessage { role, content }),
+                }
+            }
         }
     }
     async fn stream_llm_answer(
         &self,
-        input: LlmChatInput,
-        max_new_tokens: Option<u16>,
+        system: String,
+        query: String,
         tx: UnboundedSender<PartialLlmMessage>,
     ) -> Result<(), Self::E> {
-        let request = self.create_chat_request(input, max_new_tokens)?;
+        match self.model_kind {
+            ModelKind::Instruct => todo!(),
+            ModelKind::Chat => {
+                let request = self.create_chat_request(system, query, None)?;
 
-        let mut stream = self
-            .client
-            .chat()
-            .create_stream(request)
-            .await
-            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+                let mut stream = self
+                    .client
+                    .chat()
+                    .create_stream(request)
+                    .await
+                    .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
 
-        let _ = stream.next().await; //Skip the first element
-        while let Some(Ok(fragment)) = stream.next().await {
-            let response = fragment
-                .choices
-                .into_iter()
-                .next()
-                .ok_or(LlmServiceError::EmptyResponse)?;
-            if let Some(role) = response.delta.role {
-                tx.send(PartialLlmMessage {
-                    role: Some(LlmRole::from(&role)),
-                    content: None,
-                })
-                .unwrap();
-            }
-            if let Some(content) = response.delta.content {
-                let _ = tx.send(PartialLlmMessage {
-                    role: None,
-                    content: Some(content),
-                });
+                let _ = stream.next().await; //Skip the first element
+                while let Some(Ok(fragment)) = stream.next().await {
+                    let response = fragment
+                        .choices
+                        .into_iter()
+                        .next()
+                        .ok_or(LlmServiceError::EmptyResponse)?;
+                    if let Some(role) = response.delta.role {
+                        tx.send(PartialLlmMessage {
+                            role: Some(LlmRole::from(&role)),
+                            content: None,
+                        })
+                        .unwrap();
+                    }
+                    if let Some(content) = response.delta.content {
+                        let _ = tx.send(PartialLlmMessage {
+                            role: None,
+                            content: Some(content),
+                        });
+                    }
+                }
+
+                Ok(())
             }
         }
-
-        Ok(())
     }
     async fn wait_for_service(&self) -> Result<(), LlmServiceError> {
         let request = CreateChatCompletionRequestArgs::default()
@@ -132,14 +139,21 @@ impl AsyncOpenAiService {
     }
     fn create_chat_request(
         &self,
-        input: LlmChatInput,
+        system: String,
+        query: String,
         max_new_tokens: Option<u16>,
     ) -> Result<CreateChatCompletionRequest, <Self as AsyncLlmService>::E> {
+        let input = LlmChatInput {
+            system,
+            conversation: vec![LlmMessage {
+                role: LlmRole::User,
+                content: format!("Obey the instructions in the system prompt. You must cite every statement [1] and provide your answer in a long-form essay, formatted as markdown. Delimite the essay from the reference list with exactly the line '================'\n{query}"),
+            }],
+        };
         let message_openai_compat: Result<
             Vec<ChatCompletionRequestMessage>,
             <AsyncOpenAiService as AsyncLlmService>::E,
         > = input.into();
-
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(max_new_tokens.unwrap_or(2048u16))
             .model(self.model_name.clone())
