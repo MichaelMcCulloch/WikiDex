@@ -62,21 +62,18 @@ async fn query(
 #[utoipa::path(
     request_body(content = Conversation, content_type = "application/json"),
     responses(
-        (status = 200, description = "AI Response", body = Conversation, content_type = "application/json"),
+        (status = 200, description = "AI Response", body = Message, content_type = "application/json"),
         (status = 204, description = "No user input"),
         (status = 400, description = "Empty Request")
     )
 )]
 #[post("/conversation")]
 async fn conversation(
-    Json(mut conversation): Json<Conversation>,
+    Json(conversation): Json<Conversation>,
     query_engine: Data<Arc<Engine>>,
 ) -> impl Responder {
-    match query_engine.conversation(&conversation).await {
-        Ok(message) => {
-            conversation.0.push(message);
-            HttpResponse::Ok().json(conversation)
-        }
+    match query_engine.conversation(conversation).await {
+        Ok(message) => HttpResponse::Ok().json(message),
         Err(e) => {
             log::error!("{e}");
             match e {
@@ -111,7 +108,7 @@ async fn streaming_conversation(
     let (client, sender) = Client::new();
     actix_web::rt::spawn(async move {
         let _ = query_engine
-            .streaming_conversation(&conversation_1, sender)
+            .streaming_conversation(conversation_1, sender)
             .await
             .map_err(|e| log::error!("{e}"));
     });

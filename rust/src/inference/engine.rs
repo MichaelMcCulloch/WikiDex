@@ -9,7 +9,7 @@ use crate::{
     formatter::{CitationStyle, Cite, DocumentFormatter, Provenance, TextFormatter},
     index::{FaissIndex, SearchService},
     llm::{
-        AsyncLlmService, AsyncOpenAiService, PartialLlmMessage, {LlmChatInput, LlmMessage, LlmRole},
+        AsyncLlmService, AsyncOpenAiService, PartialLlmMessage, {LlmMessage, LlmRole},
     },
     server::{Conversation, Message, PartialMessage, Source},
 };
@@ -39,7 +39,7 @@ impl QueryEngine for Engine {
 
     async fn conversation(
         &self,
-        Conversation(message_history): &Conversation,
+        Conversation(message_history): Conversation,
     ) -> Result<Message, Self::E> {
         match message_history.last() {
             Some(Message::User(user_query)) => {
@@ -66,7 +66,7 @@ impl QueryEngine for Engine {
     }
     async fn streaming_conversation(
         &self,
-        Conversation(message_history): &Conversation,
+        Conversation(message_history): Conversation,
         tx: UnboundedSender<Bytes>,
     ) -> Result<(), Self::E> {
         match message_history.last() {
