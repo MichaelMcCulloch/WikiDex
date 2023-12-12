@@ -1,10 +1,12 @@
 use crate::llm::protocol::PartialLlmMessage;
 
-use super::{AsyncLlmService, LlmChatInput, LlmMessage, LlmRole, LlmServiceError, ModelKind};
+use super::{AsyncLlmService, LlmMessage, LlmRole, LlmServiceError, ModelKind};
 use async_openai::{
     config::OpenAIConfig,
     types::{
-        ChatCompletionRequestMessage, CreateChatCompletionRequest, CreateChatCompletionRequestArgs,
+        ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs,
+        ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequest,
+        CreateChatCompletionRequestArgs,
     },
     Chat, Client,
 };
@@ -143,25 +145,58 @@ impl AsyncOpenAiService {
         query: String,
         max_new_tokens: Option<u16>,
     ) -> Result<CreateChatCompletionRequest, <Self as AsyncLlmService>::E> {
-        let input = LlmChatInput {
-            system,
-            conversation: vec![LlmMessage {
-                role: LlmRole::User,
-                content: format!("Obey the instructions in the system prompt. You must cite every statement [1] and provide your answer in a long-form essay, formatted as markdown. Delimite the essay from the reference list with exactly the line '================'\n{query}"),
-            }],
-        };
-        let message_openai_compat: Result<
-            Vec<ChatCompletionRequestMessage>,
-            <AsyncOpenAiService as AsyncLlmService>::E,
-        > = input.into();
+        let query = format!("Obey the instructions in the system prompt. You must cite every statement [1] and provide your answer in a long-form essay, formatted as markdown. Delimite the essay from the reference list with exactly the line '================'\n{query}");
+
+        let system = ChatCompletionRequestSystemMessageArgs::default()
+            .content(system)
+            .build()
+            .map(|e| ChatCompletionRequestMessage::System(e))
+            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+
+        let query = ChatCompletionRequestUserMessageArgs::default()
+            .content(query)
+            .build()
+            .map(|e| ChatCompletionRequestMessage::User(e))
+            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+
+        let message_openai_compat = vec![system, query];
+
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(max_new_tokens.unwrap_or(2048u16))
             .model(self.model_name.clone())
-            .messages(message_openai_compat?)
+            .messages(message_openai_compat)
             .stop("================")
             .build()
             .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
 
         Ok(request)
     }
+
+    // fn create_chat_request(
+    //     &self,
+    //     system: String,
+    //     query: String,
+    //     max_new_tokens: Option<u16>,
+    // ) -> Result<CreateCompletionRequest, <Self as AsyncLlmService>::E> {
+    //     let input = LlmChatInput {
+    //         system,
+    //         conversation: vec![LlmMessage {
+    //             role: LlmRole::User,
+    //             content: format!("Obey the instructions in the system prompt. You must cite every statement [1] and provide your answer in a long-form essay, formatted as markdown. Delimite the essay from the reference list with exactly the line '================'\n{query}"),
+    //         }],
+    //     };
+    //     let message_openai_compat: Result<
+    //         Vec<ChatCompletionRequestMessage>,
+    //         <AsyncOpenAiService as AsyncLlmService>::E,
+    //     > = input.into();
+    //     let request = CreateChatCompletionRequestArgs::default()
+    //         .max_tokens(max_new_tokens.unwrap_or(2048u16))
+    //         .model(self.model_name.clone())
+    //         .messages(message_openai_compat?)
+    //         .stop("================")
+    //         .build()
+    //         .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+
+    //     Ok(request)
+    // }
 }
