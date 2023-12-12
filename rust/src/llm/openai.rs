@@ -1,6 +1,6 @@
 use crate::llm::protocol::PartialLlmMessage;
 
-use super::{AsyncLlmService, LlmChatInput, LlmMessage, LlmRole, LlmServiceError};
+use super::{AsyncLlmService, LlmChatInput, LlmMessage, LlmRole, LlmServiceError, ModelKind};
 use async_openai::{
     config::OpenAIConfig,
     types::{
@@ -17,6 +17,7 @@ use tokio::sync::mpsc::UnboundedSender;
 pub(crate) struct AsyncOpenAiService {
     client: Client<OpenAIConfig>,
     model_name: String,
+    model_kind: ModelKind,
 }
 
 #[async_trait::async_trait]
@@ -110,7 +111,12 @@ impl AsyncLlmService for AsyncOpenAiService {
 }
 
 impl AsyncOpenAiService {
-    pub(crate) fn new<S: AsRef<str>>(openai_key: Option<String>, host: Url, model_name: S) -> Self {
+    pub(crate) fn new<S: AsRef<str>>(
+        openai_key: Option<String>,
+        host: Url,
+        model_name: S,
+        model_kind: ModelKind,
+    ) -> Self {
         let openai_config = match openai_key {
             Some(key) => OpenAIConfig::new().with_api_key(key),
             None => OpenAIConfig::new().with_api_base(host),
@@ -118,7 +124,11 @@ impl AsyncOpenAiService {
 
         let client = Client::with_config(openai_config);
         let model_name = model_name.as_ref().to_string();
-        Self { client, model_name }
+        Self {
+            client,
+            model_name,
+            model_kind,
+        }
     }
     fn create_chat_request(
         &self,
