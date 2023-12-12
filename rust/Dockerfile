@@ -10,13 +10,13 @@ COPY ./src ./src
 RUN  \
     --mount=type=cache,target=/usr/src/omnipedia/target,sharing=locked,rw cargo install --path . --root ./build
 
-FROM nvidia/cuda:12.3.1-runtime-ubuntu22.04
+FROM ubuntu:22.04
 ARG TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST}"
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update  && \
     apt-get install -y pkg-config libssl-dev liblapack-dev libblas-dev libgomp1 && \
     rm -rf /var/lib/apt/lists/*
 COPY --from=builder /usr/src/omnipedia/build/bin/omnipedia /usr/local/bin/omnipedia
- 
+
 
 CMD omnipedia \
     server \
@@ -25,7 +25,6 @@ CMD omnipedia \
     --model-name "${LLM_MODEL_NAME}" \
     --host 0.0.0.0 \
     --port "${OMNIPEDIA_CONT_PORT}" \
-    --embed-url "http://embeddings-amd:${EMBED_CONT_PORT}" \
-    --vllm-url "http://vllm-amd:${VLLM_CONT_PORT}/v1" \
-    --model-length "${MAX_MODEL_LEN}" \
-    --system-prompt-path "${SYSTEM_PROMPT_PATH}" 
+    --embed-url "http://embeddings-nv:${EMBED_CONT_PORT}" \
+    --vllm-url "http://vllm-nv:${VLLM_CONT_PORT}/v1" \
+    --system-prompt-path "${SYSTEM_PROMPT_PATH}"

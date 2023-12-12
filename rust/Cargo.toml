@@ -21,7 +21,6 @@ colored = "2.0.4"
 crossbeam = "0.8.2"
 env_logger = "0.10.0"
 faiss = { git = "https://github.com/MichaelMcCulloch/faiss-rs.git", branch = "latest+avx2", features = [
-    # "gpu",
     "static",
 ] }
 flate2 = "1.0.27"
@@ -46,6 +45,7 @@ toml = "0.8.6"
 url = "2.4.1"
 utoipa = { version = "4.0.0", features = ["actix_extras"] }
 utoipa-redoc = { version = "1.0.0", features = ["actix-web"] }
+
 [profile.release]
 lto = true
 strip = true
