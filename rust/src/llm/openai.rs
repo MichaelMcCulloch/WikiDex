@@ -221,7 +221,7 @@ impl AsyncOpenAiService {
         query: String,
         max_new_tokens: Option<u16>,
     ) -> Result<CreateCompletionRequest, <Self as AsyncLlmService>::E> {
-        let query = format!("{system}\n\n{query}");
+        let query = format!("{system}\n\nAnswer the following question: {query}");
 
         let request = CreateCompletionRequestArgs::default()
             .max_tokens(max_new_tokens.unwrap_or(2048u16))
