@@ -12,12 +12,14 @@ pub(crate) trait AsyncLlmService {
         system: &String,
         documents: String,
         query: String,
+        citation_index_begin: usize,
     ) -> Result<LlmMessage, Self::E>;
     async fn stream_llm_answer(
         &self,
         system: &String,
         documents: String,
         query: String,
+        citation_index_begin: usize,
         tx: UnboundedSender<PartialLlmMessage>,
     ) -> Result<(), Self::E>;
     async fn wait_for_service(&self) -> Result<(), Self::E>;

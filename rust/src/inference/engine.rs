@@ -11,7 +11,7 @@ use crate::{
     llm::{
         AsyncLlmService, AsyncOpenAiService, PartialLlmMessage, {LlmMessage, LlmRole},
     },
-    server::{Conversation, Message, PartialMessage, Source},
+    server::{Conversation, CountSources, Message, PartialMessage, Source},
 };
 
 use super::{QueryEngine, QueryEngineError};
@@ -32,7 +32,7 @@ const CITATION_STYLE: CitationStyle = CitationStyle::MLA;
 impl QueryEngine for Engine {
     type E = QueryEngineError;
     async fn query(&self, question: &str) -> Result<String, Self::E> {
-        let (_, formatted_documents) = self.get_documents(question).await?;
+        let (_, formatted_documents) = self.get_documents(question, 0usize).await?;
 
         Ok(formatted_documents)
     }
@@ -41,13 +41,20 @@ impl QueryEngine for Engine {
         &self,
         Conversation(message_history): Conversation,
     ) -> Result<Message, Self::E> {
+        let num_sources = message_history.sources_count();
         match message_history.into_iter().last() {
             Some(Message::User(user_query)) => {
-                let (sources, formatted_documents) = self.get_documents(&user_query).await?;
+                let (sources, formatted_documents) =
+                    self.get_documents(&user_query, num_sources).await?;
 
                 let LlmMessage { role, content } = self
                     .llm
-                    .get_llm_answer(&self.system_prompt, formatted_documents, user_query)
+                    .get_llm_answer(
+                        &self.system_prompt,
+                        formatted_documents,
+                        user_query,
+                        num_sources,
+                    )
                     .await
                     .map_err(|e| QueryEngineError::LlmError(e))?;
 
@@ -67,9 +74,11 @@ impl QueryEngine for Engine {
         Conversation(message_history): Conversation,
         tx: UnboundedSender<Bytes>,
     ) -> Result<(), Self::E> {
+        let num_sources = message_history.sources_count();
         match message_history.into_iter().last() {
             Some(Message::User(user_query)) => {
-                let (sources, formatted_documents) = self.get_documents(&user_query).await?;
+                let (sources, formatted_documents) =
+                    self.get_documents(&user_query, num_sources).await?;
 
                 let (tx_p, mut rx_p) = unbounded_channel();
 
@@ -89,7 +98,13 @@ impl QueryEngine for Engine {
                 });
 
                 self.llm
-                    .stream_llm_answer(&self.system_prompt, formatted_documents, user_query, tx_p)
+                    .stream_llm_answer(
+                        &self.system_prompt,
+                        formatted_documents,
+                        user_query,
+                        num_sources,
+                        tx_p,
+                    )
                     .await
                     .map_err(|e| QueryEngineError::LlmError(e))?;
 
@@ -121,6 +136,7 @@ impl Engine {
     async fn get_documents(
         &self,
         user_query: &str,
+        num_sources_already_in_chat: usize,
     ) -> Result<(Vec<Source>, String), <Self as QueryEngine>::E> {
         let embedding = self
             .embed
@@ -144,7 +160,11 @@ impl Engine {
         let formatted_documents = documents
             .iter()
             .map(|(ordianal, document, provenance)| {
-                DocumentFormatter::format_document(*ordianal, &provenance.title(), document)
+                DocumentFormatter::format_document(
+                    *ordianal + num_sources_already_in_chat,
+                    &provenance.title(),
+                    document,
+                )
             })
             .collect::<Vec<String>>()
             .join("\n\n");
@@ -153,7 +173,7 @@ impl Engine {
             .into_iter()
             .zip(document_indices)
             .map(|((ordinal, origin_text, provenance), index)| Source {
-                ordinal,
+                ordinal: ordinal + num_sources_already_in_chat,
                 index,
                 citation: provenance.format(&CITATION_STYLE),
                 url: provenance.url(),

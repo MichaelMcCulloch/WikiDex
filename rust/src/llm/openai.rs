@@ -33,10 +33,17 @@ impl AsyncLlmService for AsyncOpenAiService {
         system: &String,
         documents: String,
         query: String,
+        citation_index_begin: usize,
     ) -> Result<LlmMessage, Self::E> {
         match self.model_kind {
             ModelKind::Instruct => {
-                let request = self.create_instruct_request(system, documents, query, None)?;
+                let request = self.create_instruct_request(
+                    system,
+                    documents,
+                    query,
+                    citation_index_begin,
+                    None,
+                )?;
                 let response = self
                     .client
                     .completions()
@@ -89,11 +96,18 @@ impl AsyncLlmService for AsyncOpenAiService {
         system: &String,
         documents: String,
         query: String,
+        citation_index_begin: usize,
         tx: UnboundedSender<PartialLlmMessage>,
     ) -> Result<(), Self::E> {
         match self.model_kind {
             ModelKind::Instruct => {
-                let request = self.create_instruct_request(system, documents, query, None)?;
+                let request = self.create_instruct_request(
+                    system,
+                    documents,
+                    query,
+                    citation_index_begin,
+                    None,
+                )?;
 
                 let mut stream = self
                     .client
@@ -200,7 +214,7 @@ impl AsyncOpenAiService {
     ) -> Result<CreateChatCompletionRequest, <Self as AsyncLlmService>::E> {
         let query = format!("{PROMPT_SALT}\n{query}");
 
-        let system = system.replace("###DOCUMENT_LIST###", &documents);
+        let system = system.replace("___DOCUMENT_LIST___", &documents);
 
         let system = ChatCompletionRequestSystemMessageArgs::default()
             .content(system)
@@ -232,12 +246,24 @@ impl AsyncOpenAiService {
         system: &String,
         documents: String,
         query: String,
+        citation_index_begin: usize,
         max_new_tokens: Option<u16>,
     ) -> Result<CreateCompletionRequest, <Self as AsyncLlmService>::E> {
+        let c1 = citation_index_begin + 1;
+        let c2 = citation_index_begin + 2;
+        let c3 = citation_index_begin + 3;
+        let c4 = citation_index_begin + 4;
+
         let query = system
-            .replace("###USER_QUERY###", &query)
-            .replace("###URL###", &"http://localhost")
-            .replace("###DOCUMENT_LIST###", &documents);
+            .replace("___USER_QUERY___", &query)
+            .replace("___URL___", &"http://localhost")
+            .replace("___CITE1___", &c1.to_string())
+            .replace("___CITE2___", &c2.to_string())
+            .replace("___CITE3___", &c3.to_string())
+            .replace("___CITE4___", &c4.to_string())
+            .replace("___DOCUMENT_LIST___", &documents);
+
+        log::info!("{query}");
 
         let request = CreateCompletionRequestArgs::default()
             .max_tokens(max_new_tokens.unwrap_or(2048u16))
