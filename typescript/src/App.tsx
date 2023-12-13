@@ -174,7 +174,11 @@ function App() {
                   <AssistantResponse text={message.Assistant[0]} />
                   <ul className="reference-list">
                     {message.Assistant[1].map((source, urlIdx) => (
-                      <li key={urlIdx} style={{ listStyleType: "none" }}>
+                      <li
+                        id={"citation_" + source.ordinal.toString()}
+                        key={urlIdx}
+                        style={{ listStyleType: "none" }}
+                      >
                         <div
                           className="link-bubble"
                           onClick={(e) =>

@@ -15,6 +15,10 @@
 .reference {
   font-size: 12px;
 }
+.citation_link {
+  color: #61dafb;
+  text-decoration: none;
+}
 
 .reference-list {
   display: flex;

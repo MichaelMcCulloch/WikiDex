@@ -236,7 +236,7 @@ impl AsyncOpenAiService {
     ) -> Result<CreateCompletionRequest, <Self as AsyncLlmService>::E> {
         let query = system
             .replace("###USER_QUERY###", &query)
-            .replace("###URL###", &"https://oracle.semanticallyinvalid.net")
+            .replace("###URL###", &"http://localhost")
             .replace("###DOCUMENT_LIST###", &documents);
 
         let request = CreateCompletionRequestArgs::default()

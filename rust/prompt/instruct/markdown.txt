@@ -35,7 +35,7 @@ All statements of fact contains in-text citations.
 "This statement cites all sources.[[1](###URL###/#1),[2](###URL###/#2),[3](###URL###/#3),[4](###URL###/#4)]."
 
 ### Bibliography / Reference section
-Omit the bibliography entirely. Your citations will link to the ones already on the UI page.
+Begin the bibliography section with _exactly_ the phrase "References:". If you want it to be displayed at all.
 
 # Articles which must be cited.
 
