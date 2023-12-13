@@ -6,10 +6,11 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 use crate::{
     docstore::{DocumentService, SqliteDocstore},
     embed::{r#async::Embedder, EmbedService},
-    formatter::{CitationStyle, Cite, DocumentFormatter, Provenance, TextFormatter},
+    formatter::{CitationStyle, Cite, DocumentFormatter, TextFormatter},
     index::{FaissIndex, SearchService},
     llm::{
-        AsyncLlmService, AsyncOpenAiService, PartialLlmMessage, {LlmMessage, LlmRole},
+        AsyncLlmService, AsyncLlmServiceArguments, AsyncOpenAiService, PartialLlmMessage,
+        {LlmMessage, LlmRole},
     },
     server::{Conversation, CountSources, Message, PartialMessage, Source},
 };
@@ -47,14 +48,16 @@ impl QueryEngine for Engine {
                 let (sources, formatted_documents) =
                     self.get_documents(&user_query, num_sources).await?;
 
+                let llm_service_arguments = AsyncLlmServiceArguments {
+                    system: &self.system_prompt,
+                    documents: &formatted_documents,
+                    query: &user_query,
+                    citation_index_begin: num_sources,
+                };
+
                 let LlmMessage { role, content } = self
                     .llm
-                    .get_llm_answer(
-                        &self.system_prompt,
-                        formatted_documents,
-                        user_query,
-                        num_sources,
-                    )
+                    .get_llm_answer(llm_service_arguments)
                     .await
                     .map_err(|e| QueryEngineError::LlmError(e))?;
 
@@ -96,15 +99,14 @@ impl QueryEngine for Engine {
                     }
                     let _ = tx.send(PartialMessage::done().message());
                 });
-
+                let llm_service_arguments = AsyncLlmServiceArguments {
+                    system: &self.system_prompt,
+                    documents: &formatted_documents,
+                    query: &user_query,
+                    citation_index_begin: num_sources,
+                };
                 self.llm
-                    .stream_llm_answer(
-                        &self.system_prompt,
-                        formatted_documents,
-                        user_query,
-                        num_sources,
-                        tx_p,
-                    )
+                    .stream_llm_answer(llm_service_arguments, tx_p)
                     .await
                     .map_err(|e| QueryEngineError::LlmError(e))?;
 
