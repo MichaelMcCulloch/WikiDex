@@ -30,9 +30,9 @@ pub(crate) struct AsyncOpenAiService {
 #[async_trait::async_trait]
 impl AsyncLlmService for AsyncOpenAiService {
     type E = LlmServiceError;
-    async fn get_llm_answer<'a>(
+    async fn get_llm_answer(
         &self,
-        arguments: &'a AsyncLlmServiceArguments,
+        arguments: AsyncLlmServiceArguments<'async_trait>,
     ) -> Result<LlmMessage, Self::E> {
         match self.model_kind {
             ModelKind::Instruct => {
@@ -84,9 +84,9 @@ impl AsyncLlmService for AsyncOpenAiService {
             }
         }
     }
-    async fn stream_llm_answer<'a>(
+    async fn stream_llm_answer(
         &self,
-        arguments: &'a AsyncLlmServiceArguments,
+        arguments: AsyncLlmServiceArguments<'async_trait>,
         tx: UnboundedSender<PartialLlmMessage>,
     ) -> Result<(), Self::E> {
         match self.model_kind {
@@ -189,9 +189,9 @@ impl AsyncOpenAiService {
             model_kind,
         }
     }
-    fn create_chat_request<'a>(
+    fn create_chat_request(
         &self,
-        arguments: &'a AsyncLlmServiceArguments,
+        arguments: AsyncLlmServiceArguments,
         max_new_tokens: Option<u16>,
     ) -> Result<CreateChatCompletionRequest, <Self as AsyncLlmService>::E> {
         let query = format!("{PROMPT_SALT}\n{}", arguments.query);
@@ -225,9 +225,9 @@ impl AsyncOpenAiService {
         Ok(request)
     }
 
-    fn create_instruct_request<'a>(
+    fn create_instruct_request(
         &self,
-        arguments: &'a AsyncLlmServiceArguments,
+        arguments: AsyncLlmServiceArguments,
         max_new_tokens: Option<u16>,
     ) -> Result<CreateCompletionRequest, <Self as AsyncLlmService>::E> {
         let c1 = arguments.citation_index_begin + 1;

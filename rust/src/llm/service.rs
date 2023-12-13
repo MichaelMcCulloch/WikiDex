@@ -14,13 +14,13 @@ pub(crate) struct AsyncLlmServiceArguments<'a> {
 #[async_trait::async_trait]
 pub(crate) trait AsyncLlmService {
     type E: Error;
-    async fn get_llm_answer<'a>(
+    async fn get_llm_answer(
         &self,
-        arguments: &'a AsyncLlmServiceArguments,
+        arguments: AsyncLlmServiceArguments<'async_trait>,
     ) -> Result<LlmMessage, Self::E>;
-    async fn stream_llm_answer<'a>(
+    async fn stream_llm_answer(
         &self,
-        arguments: &'a AsyncLlmServiceArguments,
+        arguments: AsyncLlmServiceArguments<'async_trait>,
         tx: UnboundedSender<PartialLlmMessage>,
     ) -> Result<(), Self::E>;
     async fn wait_for_service(&self) -> Result<(), Self::E>;
