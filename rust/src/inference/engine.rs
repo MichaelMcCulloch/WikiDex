@@ -57,7 +57,7 @@ impl QueryEngine for Engine {
 
                 let LlmMessage { role, content } = self
                     .llm
-                    .get_llm_answer(llm_service_arguments)
+                    .get_llm_answer(&llm_service_arguments)
                     .await
                     .map_err(|e| QueryEngineError::LlmError(e))?;
 
@@ -106,7 +106,7 @@ impl QueryEngine for Engine {
                     citation_index_begin: num_sources,
                 };
                 self.llm
-                    .stream_llm_answer(llm_service_arguments, tx_p)
+                    .stream_llm_answer(&llm_service_arguments, tx_p)
                     .await
                     .map_err(|e| QueryEngineError::LlmError(e))?;
 
