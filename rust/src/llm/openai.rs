@@ -245,8 +245,6 @@ impl AsyncOpenAiService {
             .replace("___CITE4___", &c4.to_string())
             .replace("___DOCUMENT_LIST___", &arguments.documents);
 
-        log::info!("{query}");
-
         let request = CreateCompletionRequestArgs::default()
             .max_tokens(max_new_tokens.unwrap_or(2048u16))
             .model(self.model_name.clone())
