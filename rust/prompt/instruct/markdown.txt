@@ -26,21 +26,24 @@ Ordered list items begin with a number 'N. '.
 You must provide a citation for every statement you make.
 Headings do not contain in-text citations. 
 All statements of fact contains in-text citations.
+In text citations are formatted as a markdown link [___CITE1___](___URL___/#___CITE1___)
+Begin indexing citations at ___CITE1___.
+
 
 ### Citation format examples
-"This statement cites a source.[[1](###URL###/#1)] This statement cites a different source.[[2](###URL###/#2)]"
-"This statement cites a source. And this statement cites the same source.[[1](###URL###/#1)]"
-"This statement cites a source.[[1](###URL###/#1)]"
-"This statement cites two sources.[[2](###URL###/#2),[3](###URL###/#3)]"
-"This statement cites all sources.[[1](###URL###/#1),[2](###URL###/#2),[3](###URL###/#3),[4](###URL###/#4)]."
+"This statement cites a source.[[___CITE1___](___URL___/#___CITE1___)] This statement cites a different source.[[___CITE2___](___URL___/#___CITE2___)]"
+"This statement cites a source. And this statement cites the same source.[[___CITE1___](___URL___/#___CITE1___)]"
+"This statement cites a source.[[___CITE1___](___URL___/#___CITE1___)]"
+"This statement cites two sources.[[___CITE2___](___URL___/#___CITE2___),[___CITE3___](___URL___/#___CITE3___)]"
+"This statement cites all sources.[[___CITE1___](___URL___/#___CITE1___),[___CITE2___](___URL___/#___CITE2___),[___CITE3___](___URL___/#___CITE3___),[___CITE4____](___URL___/#___CITE4____)]."
 
 ### Bibliography / Reference section
-Omit the bibliography entirely. Your citations will link to the ones already on the UI page.
+Begin the bibliography section with _exactly_ the phrase "References:". If you want it to be displayed at all.
 
 # Articles which must be cited.
 
 The sources provided are listed as:
-###DOCUMENT_LIST###
+___DOCUMENT_LIST___
 
 # Question
-###USER_QUERY###
+___USER_QUERY___

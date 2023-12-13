@@ -154,7 +154,6 @@ impl DocumentService for SqliteDocstore {
                     doc_text.clone(),
                     document_provenance.clone(),
                 ))
-                // No excuse but being lazy. Docs will always be a set, and it's one to one with the query.
             })
             .collect::<Vec<(usize, String, Provenance)>>();
 

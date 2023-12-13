@@ -65,6 +65,23 @@ impl PartialMessage {
 #[schema(example = conversation_schema_example)]
 pub(crate) struct Conversation(pub(crate) Vec<Message>);
 
+pub(crate) trait CountSources {
+    fn sources_count(&self) -> usize;
+}
+impl CountSources for Vec<Message> {
+    fn sources_count(&self) -> usize {
+        self.iter().fold(0usize, |acc, message| match message {
+            Message::User(_) => acc,
+            Message::Assistant(_, s) => s.len() + acc,
+        })
+    }
+}
+impl CountSources for Conversation {
+    fn sources_count(&self) -> usize {
+        self.0.sources_count()
+    }
+}
+
 #[derive(Serialize, Deserialize, ToSchema, Debug)]
 #[schema(example = query_schema_example)]
 pub(crate) struct Query(pub(crate) String);

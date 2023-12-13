@@ -40,6 +40,7 @@ interface UpdateAssistantSourceAction {
     source: Source;
   };
 }
+
 type ConversationAction =
   | AddMessageAction
   | UpdateAssistantMessageAction
@@ -51,6 +52,7 @@ const conversationReducer = (
   switch (action.type) {
     case "ADD_MESSAGE":
       return [...state, action.payload];
+
     case "UPDATE_ASSISTANT_SOURCE":
       return state.map((message, index) => {
         if (index === state.length - 1 && message.Assistant) {
@@ -115,7 +117,6 @@ function App() {
     const userMessage = { User: inputText };
     dispatch({ type: "ADD_MESSAGE", payload: userMessage });
     setInputText("");
-
     // Open a connection to the SSE endpoint
     const source = new SSE(
       "https://oracle-rs.semanticallyinvalid.net/streaming_conversation",
@@ -128,7 +129,6 @@ function App() {
     const emptyResponse = { Assistant: emptyAssistant };
     dispatch({ type: "ADD_MESSAGE", payload: emptyResponse });
     // Handle the message events from the server
-
     source.onmessage = (event) => {
       const data: PartialAssistant = JSON.parse(event.data);
 
@@ -141,8 +141,6 @@ function App() {
         });
       }
       if (data.source) {
-        console.log(data.source);
-
         dispatch({
           type: "UPDATE_ASSISTANT_SOURCE",
           payload: {
@@ -174,7 +172,11 @@ function App() {
                   <AssistantResponse text={message.Assistant[0]} />
                   <ul className="reference-list">
                     {message.Assistant[1].map((source, urlIdx) => (
-                      <li key={urlIdx} style={{ listStyleType: "none" }}>
+                      <li
+                        id={"citation_" + source.ordinal.toString()}
+                        key={urlIdx}
+                        style={{ listStyleType: "none" }}
+                      >
                         <div
                           className="link-bubble"
                           onClick={(e) =>

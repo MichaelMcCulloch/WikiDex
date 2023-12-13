@@ -1,6 +1,8 @@
 use crate::llm::protocol::PartialLlmMessage;
 
-use super::{AsyncLlmService, LlmMessage, LlmRole, LlmServiceError, ModelKind};
+use super::{
+    AsyncLlmService, AsyncLlmServiceArguments, LlmMessage, LlmRole, LlmServiceError, ModelKind,
+};
 use async_openai::{
     config::OpenAIConfig,
     types::{
@@ -30,13 +32,11 @@ impl AsyncLlmService for AsyncOpenAiService {
     type E = LlmServiceError;
     async fn get_llm_answer(
         &self,
-        system: &String,
-        documents: String,
-        query: String,
+        arguments: AsyncLlmServiceArguments<'async_trait>,
     ) -> Result<LlmMessage, Self::E> {
         match self.model_kind {
             ModelKind::Instruct => {
-                let request = self.create_instruct_request(system, documents, query, None)?;
+                let request = self.create_instruct_request(arguments, None)?;
                 let response = self
                     .client
                     .completions()
@@ -56,7 +56,7 @@ impl AsyncLlmService for AsyncOpenAiService {
                 })
             }
             ModelKind::Chat => {
-                let request = self.create_chat_request(system, documents, query, None)?;
+                let request = self.create_chat_request(arguments, None)?;
                 let response = self
                     .client
                     .chat()
@@ -86,14 +86,12 @@ impl AsyncLlmService for AsyncOpenAiService {
     }
     async fn stream_llm_answer(
         &self,
-        system: &String,
-        documents: String,
-        query: String,
+        arguments: AsyncLlmServiceArguments<'async_trait>,
         tx: UnboundedSender<PartialLlmMessage>,
     ) -> Result<(), Self::E> {
         match self.model_kind {
             ModelKind::Instruct => {
-                let request = self.create_instruct_request(system, documents, query, None)?;
+                let request = self.create_instruct_request(arguments, None)?;
 
                 let mut stream = self
                     .client
@@ -118,7 +116,7 @@ impl AsyncLlmService for AsyncOpenAiService {
                 Ok(())
             }
             ModelKind::Chat => {
-                let request = self.create_chat_request(system, documents, query, None)?;
+                let request = self.create_chat_request(arguments, None)?;
 
                 let mut stream = self
                     .client
@@ -193,14 +191,14 @@ impl AsyncOpenAiService {
     }
     fn create_chat_request(
         &self,
-        system: &String,
-        documents: String,
-        query: String,
+        arguments: AsyncLlmServiceArguments,
         max_new_tokens: Option<u16>,
     ) -> Result<CreateChatCompletionRequest, <Self as AsyncLlmService>::E> {
-        let query = format!("{PROMPT_SALT}\n{query}");
+        let query = format!("{PROMPT_SALT}\n{}", arguments.query);
 
-        let system = system.replace("###DOCUMENT_LIST###", &documents);
+        let system = arguments
+            .system
+            .replace("___DOCUMENT_LIST___", &arguments.documents);
 
         let system = ChatCompletionRequestSystemMessageArgs::default()
             .content(system)
@@ -229,15 +227,25 @@ impl AsyncOpenAiService {
 
     fn create_instruct_request(
         &self,
-        system: &String,
-        documents: String,
-        query: String,
+        arguments: AsyncLlmServiceArguments,
         max_new_tokens: Option<u16>,
     ) -> Result<CreateCompletionRequest, <Self as AsyncLlmService>::E> {
-        let query = system
-            .replace("###USER_QUERY###", &query)
-            .replace("###URL###", &"https://oracle.semanticallyinvalid.net")
-            .replace("###DOCUMENT_LIST###", &documents);
+        let c1 = arguments.citation_index_begin + 1;
+        let c2 = arguments.citation_index_begin + 2;
+        let c3 = arguments.citation_index_begin + 3;
+        let c4 = arguments.citation_index_begin + 4;
+
+        let query = arguments
+            .system
+            .replace("___USER_QUERY___", &arguments.query)
+            .replace("___URL___", &"http://localhost")
+            .replace("___CITE1___", &c1.to_string())
+            .replace("___CITE2___", &c2.to_string())
+            .replace("___CITE3___", &c3.to_string())
+            .replace("___CITE4___", &c4.to_string())
+            .replace("___DOCUMENT_LIST___", &arguments.documents);
+
+        log::info!("{query}");
 
         let request = CreateCompletionRequestArgs::default()
             .max_tokens(max_new_tokens.unwrap_or(2048u16))
