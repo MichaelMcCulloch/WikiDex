@@ -52,6 +52,10 @@ x-base_service_embeddings: &base_embeddings
   ports:
     - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
 
+x-base_service_infinity: &base_infinity
+  ports:
+    - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
+
 services:
   ui:
     <<:
@@ -97,6 +101,18 @@ services:
     build:
       dockerfile: Dockerfile_NVIDIA
       context: ./embeddings_service
+      args:
+        SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
+
+  infinity-nv:
+    <<:
+      - *base_service_nvidia
+      - *base_infinity
+    build:
+      dockerfile: Dockerfile_NVIDIA
+      context: ./infinity
+      args:
+        SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
 
   vllm-amd:
     <<:
