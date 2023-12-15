@@ -68,6 +68,9 @@ services:
     build:
       dockerfile: Dockerfile_NVIDIA
       context: ./vllm
+      args:
+        TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST}
+        LLM_MODEL_NAME: ${LLM_MODEL_NAME}
 
   omnipedia:
     <<:
@@ -77,8 +80,8 @@ services:
     build:
       dockerfile: Dockerfile
       context: ./rust
-
-  # omnipedia-ingest:
+      args:
+        LLM_MODEL_NAME: ${LLM_MODEL_NAME}
   #   <<:
   #     - *base_service
   #     - *base_omnipedia_ingest
