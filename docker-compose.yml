@@ -94,15 +94,15 @@ services:
   #     dockerfile: Dockerfile_INGEST
   #     context: ./rust
 
-  embeddings-nv:
-    <<:
-      - *base_service_nvidia
-      - *base_embeddings
-    build:
-      dockerfile: Dockerfile_NVIDIA
-      context: ./embeddings_service
-      args:
-        SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
+  # embeddings-nv:
+  #   <<:
+  #     - *base_service_nvidia
+  #     - *base_embeddings
+  #   build:
+  #     dockerfile: Dockerfile_NVIDIA
+  #     context: ./embeddings_service
+  #     args:
+  #       SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
 
   infinity-nv:
     <<:
@@ -122,10 +122,10 @@ services:
       dockerfile: Dockerfile_AMD
       context: ./vllm
 
-  embeddings-amd:
-    <<:
-      - *base_service_amd
-      - *base_embeddings
-    build:
-      dockerfile: Dockerfile_AMD
-      context: ./embeddings_service
+  # embeddings-amd:
+  #   <<:
+  #     - *base_service_amd
+  #     - *base_embeddings
+  #   build:
+  #     dockerfile: Dockerfile_AMD
+  #     context: ./embeddings_service
