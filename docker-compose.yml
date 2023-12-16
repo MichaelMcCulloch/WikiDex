@@ -48,10 +48,6 @@ x-base_service_omnipedia_ingest: &base_omnipedia_ingest
   volumes:
     - ./wikidump:/wikidump
 
-x-base_service_embeddings: &base_embeddings
-  ports:
-    - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
-
 x-base_service_infinity: &base_infinity
   ports:
     - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
@@ -86,23 +82,6 @@ services:
       context: ./rust
       args:
         LLM_MODEL_NAME: ${LLM_MODEL_NAME}
-  #   <<:
-  #     - *base_service
-  #     - *base_omnipedia_ingest
-  #   profiles: ["nvidia_ingest"]
-  #   build:
-  #     dockerfile: Dockerfile_INGEST
-  #     context: ./rust
-
-  # embeddings-nv:
-  #   <<:
-  #     - *base_service_nvidia
-  #     - *base_embeddings
-  #   build:
-  #     dockerfile: Dockerfile_NVIDIA
-  #     context: ./embeddings_service
-  #     args:
-  #       SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
 
   infinity-nv:
     <<:
@@ -121,11 +100,3 @@ services:
     build:
       dockerfile: Dockerfile_AMD
       context: ./vllm
-
-  # embeddings-amd:
-  #   <<:
-  #     - *base_service_amd
-  #     - *base_embeddings
-  #   build:
-  #     dockerfile: Dockerfile_AMD
-  #     context: ./embeddings_service
