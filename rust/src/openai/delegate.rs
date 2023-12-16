@@ -1,7 +1,4 @@
-use async_openai::types::CreateEmbeddingRequestArgs;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
-
-use crate::server::PartialMessage;
 
 use super::{
     embedding::EmbeddingClient,

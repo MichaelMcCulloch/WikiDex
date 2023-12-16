@@ -16,7 +16,7 @@ use crate::{
     index::FaissIndex,
     inference::Engine as InferenceEngine,
     ingest::wikipedia::Engine as WikipediaIngestEngine,
-    openai::{ModelKind, OpenAiDelegate, OpenAiDelegateBuilder, OpenAiDelegateBuilderArgument},
+    openai::{ModelKind, OpenAiDelegateBuilder, OpenAiDelegateBuilderArgument},
 };
 use actix_web::rt;
 use clap::Parser;

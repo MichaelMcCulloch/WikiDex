@@ -1,7 +1,4 @@
-use crate::{
-    ingest::wikipedia::IngestError,
-    openai::{self, EmbedService, OpenAiDelegate},
-};
+use crate::{ingest::wikipedia::IngestError, openai::OpenAiDelegate};
 
 use super::{
     super::{Engine, Ingest, IngestError::*},
@@ -166,7 +163,7 @@ pub(crate) fn write_vectorstore(
     Ok(())
 }
 pub(crate) fn populate_vectorstore_db(
-    openai: &OpenAiDelegate,
+    _openai: &OpenAiDelegate,
     docstore_pool: &Pool<SqliteConnectionManager>,
     document_count: usize,
     tx: Sender<(Vec<usize>, Vec<Vec<f32>>)>,
@@ -200,7 +197,7 @@ pub(crate) fn populate_vectorstore_db(
                 .collect::<Vec<_>>();
 
             let (ids, batch): (Vec<usize>, Vec<String>) = rows.into_iter().unzip();
-            let batch = batch.iter().map(|s| s.as_str()).collect::<Vec<_>>();
+            let _batch = batch.iter().map(|s| s.as_str()).collect::<Vec<_>>();
 
             // let batch_result = openai.embed(&batch).map_err(EmbeddingServiceError)?;
             let batch_result = vec![];

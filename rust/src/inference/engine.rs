@@ -8,8 +8,7 @@ use crate::{
     formatter::{CitationStyle, Cite, DocumentFormatter, TextFormatter},
     index::{FaissIndex, SearchService},
     openai::{
-        EmbedService, LanguageServiceServiceArguments, LlmRole, LlmService, LlmServiceError,
-        PartialLlmMessage,
+        EmbedService, LanguageServiceServiceArguments, LlmRole, LlmService, PartialLlmMessage,
     },
     openai::{LlmMessage, OpenAiDelegate},
     server::{Conversation, CountSources, Message, PartialMessage, Source},

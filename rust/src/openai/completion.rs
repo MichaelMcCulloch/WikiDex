@@ -1,8 +1,5 @@
 use super::{
-    delegate::LanguageServiceServiceArguments,
-    error::LlmServiceError,
-    protocol::{LlmMessage, PartialLlmMessage},
-    service::TCompletionClient,
+    delegate::LanguageServiceServiceArguments, error::LlmServiceError, service::TCompletionClient,
 };
 use async_openai::{
     config::OpenAIConfig,
@@ -10,7 +7,7 @@ use async_openai::{
     Client,
 };
 use futures::StreamExt;
-use std::error::Error;
+
 use tokio::sync::mpsc::UnboundedSender;
 
 pub(crate) struct CompletionClient {

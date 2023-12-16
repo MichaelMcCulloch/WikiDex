@@ -78,7 +78,7 @@ impl TCompletionClient for ChatCompletionClient {
             (LlmRole::System, _) => Err(LlmServiceError::UnexpectedRole(LlmRole::System)),
             (LlmRole::Function, _) => Err(LlmServiceError::UnexpectedRole(LlmRole::Function)),
             (_, None) => Err(LlmServiceError::EmptyResponse),
-            (role, Some(content)) => Ok(content),
+            (_role, Some(content)) => Ok(content),
         }
     }
 
@@ -103,7 +103,7 @@ impl TCompletionClient for ChatCompletionClient {
                 .into_iter()
                 .next()
                 .ok_or(LlmServiceError::EmptyResponse)?;
-            if let Some(role) = response.delta.role {}
+            if let Some(_role) = response.delta.role {}
             if let Some(content) = response.delta.content {
                 let _ = tx.send(content);
             }

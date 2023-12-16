@@ -1,8 +1,6 @@
-use std::error::Error;
-
 use async_openai::{config::OpenAIConfig, types::CreateEmbeddingRequestArgs, Client};
 
-use super::{error::EmbeddingServiceError, service::EmbedService, OpenAiDelegate};
+use super::{error::EmbeddingServiceError, service::EmbedService};
 
 pub(crate) struct EmbeddingClient {
     embedding_client: Client<OpenAIConfig>,
