@@ -417,6 +417,8 @@ mod tests_table_rows_to_string {
 
 mod tests_table_to_string {
 
+    use super::*;
+    use parse_wiki_text::Node;
     #[test]
     fn node_to_string__table__text() {
         let table_attribute_text = "table_attribute_text";
