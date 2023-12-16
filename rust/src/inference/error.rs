@@ -1,14 +1,16 @@
 use std::fmt::{Display, Formatter, Result};
 
 use crate::{
-    docstore::DocstoreRetrieveError, embed::EmbeddingServiceError, index::IndexSearchError,
-    llm::LlmServiceError,
+    docstore::DocstoreRetrieveError,
+    index::IndexSearchError,
+    openai::{EmbeddingServiceError, LlmServiceError},
 };
 
 #[derive(Debug)]
 pub(crate) enum QueryEngineError {
     DocstoreError(DocstoreRetrieveError),
-    EmbeddingError(EmbeddingServiceError),
+    LlmServiceError(LlmServiceError),
+    EmbeddingServiceError(EmbeddingServiceError),
     EmptyConversation,
     IndexError(IndexSearchError),
     IndexOutOfRange,
@@ -26,7 +28,10 @@ impl Display for QueryEngineError {
             QueryEngineError::DocstoreError(err) => {
                 write!(f, "{}", err)
             }
-            QueryEngineError::EmbeddingError(err) => {
+            QueryEngineError::LlmServiceError(err) => {
+                write!(f, "{}", err)
+            }
+            QueryEngineError::EmbeddingServiceError(err) => {
                 write!(f, "{}", err)
             }
             QueryEngineError::IndexError(err) => write!(f, "{}", err),

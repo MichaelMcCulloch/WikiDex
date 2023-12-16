@@ -3,7 +3,7 @@ use std::{fmt::Display, path::PathBuf};
 use colored::Colorize;
 use url::Url;
 
-use crate::{cli_args::ServerArgs, llm::ModelKind};
+use crate::{cli_args::ServerArgs, openai::ModelKind};
 
 #[derive(Debug)]
 pub(crate) struct Config {

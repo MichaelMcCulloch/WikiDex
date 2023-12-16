@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use clap::{ArgGroup, Parser, Subcommand};
 use url::Url;
 
-use crate::llm::ModelKind;
+use crate::openai::ModelKind;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]

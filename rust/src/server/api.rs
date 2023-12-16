@@ -52,7 +52,10 @@ async fn query(
                 | QueryEngineError::LlmError(_)
                 | QueryEngineError::IndexError(_)
                 | QueryEngineError::DocstoreError(_)
-                | QueryEngineError::EmbeddingError(_) => HttpResponse::InternalServerError().into(),
+                | QueryEngineError::EmbeddingServiceError(_)
+                | QueryEngineError::LlmServiceError(_) => {
+                    HttpResponse::InternalServerError().into()
+                }
             }
         }
     }
@@ -86,7 +89,10 @@ async fn conversation(
                 | QueryEngineError::LlmError(_)
                 | QueryEngineError::IndexError(_)
                 | QueryEngineError::DocstoreError(_)
-                | QueryEngineError::EmbeddingError(_) => HttpResponse::InternalServerError().into(),
+                | QueryEngineError::EmbeddingServiceError(_)
+                | QueryEngineError::LlmServiceError(_) => {
+                    HttpResponse::InternalServerError().into()
+                }
             }
         }
     }

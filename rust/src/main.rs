@@ -1,12 +1,11 @@
 mod cli_args;
 mod config;
 mod docstore;
-mod embed;
 mod formatter;
 mod index;
 mod inference;
 mod ingest;
-mod llm;
+mod openai;
 mod server;
 
 #[cfg(test)]
@@ -14,11 +13,10 @@ mod test_data;
 
 use crate::{
     cli_args::{Cli, Commands},
-    embed::{r#async::openai::OpenAiEmbeddingService, sync::Embedder as SEmbedder},
     index::FaissIndex,
     inference::Engine as InferenceEngine,
     ingest::wikipedia::Engine as WikipediaIngestEngine,
-    llm::OpenAiLlmService,
+    openai::{ModelKind, OpenAiDelegate, OpenAiDelegateBuilder, OpenAiDelegateBuilderArgument},
 };
 use actix_web::rt;
 use clap::Parser;
@@ -28,6 +26,7 @@ use indicatif_log_bridge::LogWrapper;
 use ingest::wikipedia::Ingest;
 use server::run_server;
 use std::sync::Mutex;
+use url::Url;
 
 fn main() -> anyhow::Result<()> {
     std::env::set_var("RUST_LOG", "info");
@@ -40,29 +39,32 @@ fn main() -> anyhow::Result<()> {
 
             log::info!("\n{config}");
 
-            // let embedder = Embedder::new(config.embed_url)?;
-            let embedder = OpenAiEmbeddingService::new(
-                None,
-                config.embed_url,
-                &config.embed_model_name.to_str().unwrap().to_string(),
-            );
-
             let docstore = system_runner.block_on(SqliteDocstore::new(&config.docstore))?;
             let index = FaissIndex::new(&config.index)?;
-            let llm = OpenAiLlmService::new(
-                config.openai_key,
-                config.llm_url,
-                config.language_model_name.to_str().unwrap().to_string(),
-                config.language_model_kind,
-            );
 
-            let engine = InferenceEngine::new(
-                Mutex::new(index),
-                embedder,
-                docstore,
-                llm,
-                config.system_prompt,
-            );
+            let openai_builder =
+                OpenAiDelegateBuilder::with_embedding(OpenAiDelegateBuilderArgument::Endpoint(
+                    config.embed_url,
+                    config.embed_model_name.to_str().unwrap().to_string(),
+                ));
+
+            let openai = match config.language_model_kind {
+                ModelKind::Instruct => {
+                    openai_builder.with_completion(OpenAiDelegateBuilderArgument::Endpoint(
+                        config.llm_url,
+                        config.language_model_name.to_str().unwrap().to_string(),
+                    ))
+                }
+                ModelKind::Chat => {
+                    openai_builder.with_chat(OpenAiDelegateBuilderArgument::Endpoint(
+                        config.llm_url,
+                        config.language_model_name.to_str().unwrap().to_string(),
+                    ))
+                }
+            };
+
+            let engine =
+                InferenceEngine::new(Mutex::new(index), openai, docstore, config.system_prompt);
 
             let server = run_server(engine, config.host, config.port)?;
             system_runner.block_on(server).map_err(anyhow::Error::from)
@@ -82,9 +84,15 @@ fn main() -> anyhow::Result<()> {
 
             log::info!("\n{config}");
 
-            let embedder = SEmbedder::new(config.embed_url)?;
+            let openai_builder = OpenAiDelegateBuilder::with_embedding(
+                OpenAiDelegateBuilderArgument::Endpoint(config.embed_url, "".to_string()),
+            );
+            let openai = openai_builder.with_completion(OpenAiDelegateBuilderArgument::Endpoint(
+                Url::parse("input").unwrap(),
+                "".to_string(),
+            ));
 
-            let engine = WikipediaIngestEngine::new(embedder, multi_progress, 1024, 128);
+            let engine = WikipediaIngestEngine::new(openai, multi_progress, 1024, 128);
 
             engine.ingest_wikipedia(&config.wiki_xml, &config.output_directory)?;
             Ok(())

@@ -5,16 +5,13 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 use crate::{
     docstore::{DocumentService, SqliteDocstore},
-    embed::{
-        r#async::{openai::OpenAiEmbeddingService, Embedder},
-        EmbedService,
-    },
     formatter::{CitationStyle, Cite, DocumentFormatter, TextFormatter},
     index::{FaissIndex, SearchService},
-    llm::{
-        AsyncLlmServiceArguments, LlmService, OpenAiLlmService, PartialLlmMessage,
-        {LlmMessage, LlmRole},
+    openai::{
+        EmbedService, LanguageServiceServiceArguments, LlmRole, LlmService, LlmServiceError,
+        PartialLlmMessage,
     },
+    openai::{LlmMessage, OpenAiDelegate},
     server::{Conversation, CountSources, Message, PartialMessage, Source},
 };
 
@@ -22,9 +19,8 @@ use super::{QueryEngine, QueryEngineError};
 
 pub struct Engine {
     index: Mutex<FaissIndex>,
-    embed: OpenAiEmbeddingService,
+    openai: OpenAiDelegate,
     docstore: SqliteDocstore,
-    llm: OpenAiLlmService,
     system_prompt: String,
 }
 
@@ -51,7 +47,7 @@ impl QueryEngine for Engine {
                 let (sources, formatted_documents) =
                     self.get_documents(&user_query, num_sources).await?;
 
-                let llm_service_arguments = AsyncLlmServiceArguments {
+                let llm_service_arguments = LanguageServiceServiceArguments {
                     system: &self.system_prompt,
                     documents: &formatted_documents,
                     query: &user_query,
@@ -59,7 +55,7 @@ impl QueryEngine for Engine {
                 };
 
                 let LlmMessage { role, content } = self
-                    .llm
+                    .openai
                     .get_llm_answer(llm_service_arguments)
                     .await
                     .map_err(|e| QueryEngineError::LlmError(e))?;
@@ -102,13 +98,13 @@ impl QueryEngine for Engine {
                     }
                     let _ = tx.send(PartialMessage::done().message());
                 });
-                let llm_service_arguments = AsyncLlmServiceArguments {
+                let llm_service_arguments = LanguageServiceServiceArguments {
                     system: &self.system_prompt,
                     documents: &formatted_documents,
                     query: &user_query,
                     citation_index_begin: num_sources,
                 };
-                self.llm
+                self.openai
                     .stream_llm_answer(llm_service_arguments, tx_p)
                     .await
                     .map_err(|e| QueryEngineError::LlmError(e))?;
@@ -124,16 +120,14 @@ impl QueryEngine for Engine {
 impl Engine {
     pub(crate) fn new(
         index: Mutex<FaissIndex>,
-        embed: OpenAiEmbeddingService,
+        openai: OpenAiDelegate,
         docstore: SqliteDocstore,
-        llm: OpenAiLlmService,
         system_prompt: String,
     ) -> Self {
         Self {
             index,
-            embed,
+            openai,
             docstore,
-            llm,
             system_prompt,
         }
     }
@@ -144,10 +138,10 @@ impl Engine {
         num_sources_already_in_chat: usize,
     ) -> Result<(Vec<Source>, String), <Self as QueryEngine>::E> {
         let embedding = self
-            .embed
+            .openai
             .embed(&user_query)
             .await
-            .map_err(|e| QueryEngineError::EmbeddingError(e))?;
+            .map_err(|e| QueryEngineError::EmbeddingServiceError(e))?;
 
         let document_indices = self
             .index
