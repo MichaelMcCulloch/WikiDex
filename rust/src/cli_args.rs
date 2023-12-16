@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use clap::{ArgGroup, Parser, Subcommand};
 use url::Url;
 
-use crate::llm::ModelKind;
+use crate::openai::ModelKind;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -29,6 +29,8 @@ pub(crate) struct WikipediaIngestArgs {
 
     #[arg(short, long, default_value_t = Url::parse("http://embeddings:9000").unwrap())]
     pub(crate) embed_url: Url,
+    #[arg(short = 'm', long)]
+    pub(crate) embed_model_name: PathBuf,
 }
 
 #[derive(Parser, Debug)]
@@ -45,14 +47,16 @@ pub(crate) struct ServerArgs {
     pub(crate) docstore: PathBuf,
     #[arg(short, long)]
     pub(crate) system_prompt_path: PathBuf,
-    #[arg(short, long, default_value_t = Url::parse("http://embeddings:9000").unwrap())]
+    #[arg(short, long, default_value_t = Url::parse("http://embeddings:9000/v1").unwrap())]
     pub(crate) embed_url: Url,
     #[arg(short, long, default_value_t = Url::parse("http://vllm:5050/v1").unwrap(), group = "endpoint")]
     pub(crate) vllm_url: Url,
     #[arg(short, long, group = "endpoint")]
     pub(crate) openai_key: Option<String>,
-    #[arg(short = 'm', long)]
-    pub(crate) model_name: PathBuf,
+    #[arg(short, long)]
+    pub(crate) language_model_name: PathBuf,
     #[arg(short = 'k', long)]
-    pub(crate) model_kind: ModelKind,
+    pub(crate) language_model_kind: ModelKind,
+    #[arg(short = 'm', long)]
+    pub(crate) embed_model_name: PathBuf,
 }

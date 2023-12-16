@@ -4,7 +4,7 @@ use super::{
     IngestError::{self, *},
     WikiMarkupProcessor,
 };
-use crate::embed::sync::Embedder;
+use crate::openai::OpenAiDelegate;
 use indicatif::MultiProgress;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
@@ -20,7 +20,7 @@ const PCA_DIMENSIONS: usize = 128;
 const MINIMUM_PASSAGE_LENGTH_IN_WORDS: usize = 15;
 
 pub(crate) struct Engine {
-    embed: Embedder,
+    openai: OpenAiDelegate,
     markup_processor: WikiMarkupProcessor,
     text_splitter: RecursiveCharacterTextSplitter<'static>,
     multi_progress: MultiProgress,
@@ -28,7 +28,7 @@ pub(crate) struct Engine {
 
 impl Engine {
     pub(crate) fn new(
-        embed: Embedder,
+        openai: OpenAiDelegate,
         multi_progress: MultiProgress,
         chunk_size: usize,
         chunk_overlap: usize,
@@ -36,7 +36,7 @@ impl Engine {
         let markup_processor = WikiMarkupProcessor::new();
 
         Self {
-            embed,
+            openai,
             markup_processor,
             multi_progress,
             text_splitter: RecursiveCharacterTextSplitter::new(
@@ -124,7 +124,7 @@ impl Engine {
             h::sql::write_vectorstore(rx, &tmp_vector_pool_clone, &create_vectors_bar_clone)
         });
         h::sql::populate_vectorstore_db(
-            &self.embed,
+            &self.openai,
             docstore_pool,
             document_count,
             tx,

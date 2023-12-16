@@ -1,6 +1,6 @@
 use std::{cmp::min, time::Instant};
 
-use crate::llm::{
+use crate::openai::{
     LlmInput, LlmMessage, LlmRole, LlmServiceError, SyncLlmService, SyncOpenAiService,
 };
 

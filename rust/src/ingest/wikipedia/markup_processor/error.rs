@@ -3,7 +3,7 @@ use std::{
     fmt::{Display, Formatter, Result},
 };
 
-use crate::llm::LlmServiceError;
+use crate::openai::LlmServiceError;
 
 #[derive(Debug)]
 pub(crate) enum WikiMarkupProcessingError {

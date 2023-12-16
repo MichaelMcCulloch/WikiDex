@@ -48,7 +48,7 @@ x-base_service_omnipedia_ingest: &base_omnipedia_ingest
   volumes:
     - ./wikidump:/wikidump
 
-x-base_service_embeddings: &base_embeddings
+x-base_service_infinity: &base_infinity
   ports:
     - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
 
@@ -68,6 +68,9 @@ services:
     build:
       dockerfile: Dockerfile_NVIDIA
       context: ./vllm
+      args:
+        TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST}
+        LLM_MODEL_NAME: ${LLM_MODEL_NAME}
 
   omnipedia:
     <<:
@@ -77,23 +80,18 @@ services:
     build:
       dockerfile: Dockerfile
       context: ./rust
+      args:
+        LLM_MODEL_NAME: ${LLM_MODEL_NAME}
 
-  # omnipedia-ingest:
-  #   <<:
-  #     - *base_service
-  #     - *base_omnipedia_ingest
-  #   profiles: ["nvidia_ingest"]
-  #   build:
-  #     dockerfile: Dockerfile_INGEST
-  #     context: ./rust
-
-  embeddings-nv:
+  infinity-nv:
     <<:
       - *base_service_nvidia
-      - *base_embeddings
+      - *base_infinity
     build:
       dockerfile: Dockerfile_NVIDIA
-      context: ./embeddings_service
+      context: ./infinity
+      args:
+        SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
 
   vllm-amd:
     <<:
@@ -102,11 +100,3 @@ services:
     build:
       dockerfile: Dockerfile_AMD
       context: ./vllm
-
-  embeddings-amd:
-    <<:
-      - *base_service_amd
-      - *base_embeddings
-    build:
-      dockerfile: Dockerfile_AMD
-      context: ./embeddings_service

@@ -22,10 +22,11 @@ CMD omnipedia \
     server \
     --index "${INDEX_PATH}" \
     --docstore "${DOCSTORE_PATH}" \
-    --model-name "${LLM_MODEL_NAME}" \
+    --vllm-url "http://vllm-nv:${VLLM_CONT_PORT}/v1" \
+    --language-model-name "${LLM_MODEL_NAME}/" \
+    --language-model-kind "${MODEL_KIND}" \
+    --embed-url "http://infinity-nv:${EMBED_CONT_PORT}/v1" \
+    --embed-model-name "${SBERT_MODEL_NAME}" \
     --host 0.0.0.0 \
     --port "${OMNIPEDIA_CONT_PORT}" \
-    --embed-url "http://embeddings-nv:${EMBED_CONT_PORT}" \
-    --vllm-url "http://vllm-nv:${VLLM_CONT_PORT}/v1" \
-    --model-kind "${MODEL_KIND}" \
     --system-prompt-path "${SYSTEM_PROMPT_PATH}"

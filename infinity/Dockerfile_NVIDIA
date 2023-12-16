@@ -1,0 +1,16 @@
+FROM michaelf34/infinity:latest
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update && \
+    apt-get install --no-install-recommends -y git git-lfs && \
+    rm -rf /var/lib/apt/lists/*
+
+ARG TORCH_CUDA_ARCH_LIST
+ARG SBERT_MODEL_NAME
+
+ENV MODEL_REPO="https://huggingface.co/$SBERT_MODEL_NAME"
+ENV MODEL_PATH="/root/.cache/git/$SBERT_MODEL_NAME"
+
+RUN git lfs install
+RUN git clone "$MODEL_REPO" "$MODEL_PATH"
+
+ENTRYPOINT  infinity_emb --model-name-or-path $MODEL_PATH --port $EMBED_CONT_PORT 
