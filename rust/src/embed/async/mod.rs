@@ -2,6 +2,8 @@ use reqwest::{Client, Url};
 use serde::Deserialize;
 use std::time::Duration;
 
+pub(crate) mod openai;
+
 use super::{EmbedService, EmbeddingServiceError};
 
 pub struct Embedder {

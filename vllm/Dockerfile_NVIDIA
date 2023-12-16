@@ -17,15 +17,14 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
 ARG LLM_MODEL_NAME
 
 ENV MODEL_REPO="https://huggingface.co/$LLM_MODEL_NAME"
-ENV MODEL_PATH="/root/.cache/git/$LLM_MODEL_NAME"
 
 RUN git lfs install
-RUN git clone "$MODEL_REPO" "$MODEL_PATH"
+RUN git clone "$MODEL_REPO" "$LLM_MODEL_NAME"
 
 CMD . /venv/bin/activate && python -m vllm.entrypoints.openai.api_server \
     --disable-log-requests \
     --gpu-memory-utilization 0.85 \
-    --model "$MODEL_PATH/" \
+    --model "$LLM_MODEL_NAME/" \
     --host 0.0.0.0 \
     --port "$VLLM_CONT_PORT" \
     --dtype half \

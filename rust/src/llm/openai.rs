@@ -1,7 +1,7 @@
 use crate::llm::protocol::PartialLlmMessage;
 
 use super::{
-    AsyncLlmService, AsyncLlmServiceArguments, LlmMessage, LlmRole, LlmServiceError, ModelKind,
+    AsyncLlmServiceArguments, LlmMessage, LlmRole, LlmService, LlmServiceError, ModelKind,
 };
 use async_openai::{
     config::OpenAIConfig,
@@ -21,14 +21,14 @@ use tokio::sync::mpsc::UnboundedSender;
 
 const PROMPT_SALT: &str = "";
 
-pub(crate) struct AsyncOpenAiService {
+pub(crate) struct OpenAiLlmService {
     client: Client<OpenAIConfig>,
     model_name: String,
     model_kind: ModelKind,
 }
 
 #[async_trait::async_trait]
-impl AsyncLlmService for AsyncOpenAiService {
+impl LlmService for OpenAiLlmService {
     type E = LlmServiceError;
     async fn get_llm_answer(
         &self,
@@ -169,7 +169,7 @@ impl AsyncLlmService for AsyncOpenAiService {
     }
 }
 
-impl AsyncOpenAiService {
+impl OpenAiLlmService {
     pub(crate) fn new<S: AsRef<str>>(
         openai_key: Option<String>,
         host: Url,
@@ -193,7 +193,7 @@ impl AsyncOpenAiService {
         &self,
         arguments: AsyncLlmServiceArguments,
         max_new_tokens: Option<u16>,
-    ) -> Result<CreateChatCompletionRequest, <Self as AsyncLlmService>::E> {
+    ) -> Result<CreateChatCompletionRequest, <Self as LlmService>::E> {
         let query = format!("{PROMPT_SALT}\n{}", arguments.query);
 
         let system = arguments
@@ -229,7 +229,7 @@ impl AsyncOpenAiService {
         &self,
         arguments: AsyncLlmServiceArguments,
         max_new_tokens: Option<u16>,
-    ) -> Result<CreateCompletionRequest, <Self as AsyncLlmService>::E> {
+    ) -> Result<CreateCompletionRequest, <Self as LlmService>::E> {
         let c1 = arguments.citation_index_begin + 1;
         let c2 = arguments.citation_index_begin + 2;
         let c3 = arguments.citation_index_begin + 3;
@@ -247,7 +247,7 @@ impl AsyncOpenAiService {
 
         let request = CreateCompletionRequestArgs::default()
             .max_tokens(max_new_tokens.unwrap_or(2048u16))
-            .model(self.model_name.clone())
+            .model(&self.model_name)
             .n(1)
             .prompt(query)
             .stop("References:")

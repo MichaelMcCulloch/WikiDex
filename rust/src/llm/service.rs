@@ -12,7 +12,7 @@ pub(crate) struct AsyncLlmServiceArguments<'a> {
 }
 
 #[async_trait::async_trait]
-pub(crate) trait AsyncLlmService {
+pub(crate) trait LlmService {
     type E: Error;
     async fn get_llm_answer(
         &self,

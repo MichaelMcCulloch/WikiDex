@@ -5,11 +5,14 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 use crate::{
     docstore::{DocumentService, SqliteDocstore},
-    embed::{r#async::Embedder, EmbedService},
+    embed::{
+        r#async::{openai::OpenAiEmbeddingService, Embedder},
+        EmbedService,
+    },
     formatter::{CitationStyle, Cite, DocumentFormatter, TextFormatter},
     index::{FaissIndex, SearchService},
     llm::{
-        AsyncLlmService, AsyncLlmServiceArguments, AsyncOpenAiService, PartialLlmMessage,
+        AsyncLlmServiceArguments, LlmService, OpenAiLlmService, PartialLlmMessage,
         {LlmMessage, LlmRole},
     },
     server::{Conversation, CountSources, Message, PartialMessage, Source},
@@ -19,9 +22,9 @@ use super::{QueryEngine, QueryEngineError};
 
 pub struct Engine {
     index: Mutex<FaissIndex>,
-    embed: Embedder,
+    embed: OpenAiEmbeddingService,
     docstore: SqliteDocstore,
-    llm: AsyncOpenAiService,
+    llm: OpenAiLlmService,
     system_prompt: String,
 }
 
@@ -121,9 +124,9 @@ impl QueryEngine for Engine {
 impl Engine {
     pub(crate) fn new(
         index: Mutex<FaissIndex>,
-        embed: Embedder,
+        embed: OpenAiEmbeddingService,
         docstore: SqliteDocstore,
-        llm: AsyncOpenAiService,
+        llm: OpenAiLlmService,
         system_prompt: String,
     ) -> Self {
         Self {

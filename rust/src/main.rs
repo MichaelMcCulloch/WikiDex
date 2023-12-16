@@ -14,12 +14,11 @@ mod test_data;
 
 use crate::{
     cli_args::{Cli, Commands},
-    embed::r#async::Embedder,
-    embed::sync::Embedder as SEmbedder,
+    embed::{r#async::openai::OpenAiEmbeddingService, sync::Embedder as SEmbedder},
     index::FaissIndex,
     inference::Engine as InferenceEngine,
     ingest::wikipedia::Engine as WikipediaIngestEngine,
-    llm::AsyncOpenAiService,
+    llm::OpenAiLlmService,
 };
 use actix_web::rt;
 use clap::Parser;
@@ -41,14 +40,20 @@ fn main() -> anyhow::Result<()> {
 
             log::info!("\n{config}");
 
-            let embedder = Embedder::new(config.embed_url)?;
+            // let embedder = Embedder::new(config.embed_url)?;
+            let embedder = OpenAiEmbeddingService::new(
+                None,
+                config.embed_url,
+                &config.embed_model_name.to_str().unwrap().to_string(),
+            );
+
             let docstore = system_runner.block_on(SqliteDocstore::new(&config.docstore))?;
             let index = FaissIndex::new(&config.index)?;
-            let llm = AsyncOpenAiService::new(
+            let llm = OpenAiLlmService::new(
                 config.openai_key,
                 config.llm_url,
-                config.model.to_str().unwrap().to_string(),
-                config.model_kind,
+                config.language_model_name.to_str().unwrap().to_string(),
+                config.language_model_kind,
             );
 
             let engine = InferenceEngine::new(

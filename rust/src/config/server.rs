@@ -13,8 +13,9 @@ pub(crate) struct Config {
     pub(crate) index: PathBuf,
     pub(crate) docstore: PathBuf,
     pub(crate) system_prompt: String,
-    pub(crate) model: PathBuf,
-    pub(crate) model_kind: ModelKind,
+    pub(crate) language_model_name: PathBuf,
+    pub(crate) language_model_kind: ModelKind,
+    pub(crate) embed_model_name: PathBuf,
     pub(crate) embed_url: Url,
     pub(crate) llm_url: Url,
     pub(crate) openai_key: Option<String>,
@@ -45,12 +46,13 @@ impl From<ServerArgs> for Config {
             port: value.port,
             index: value.index,
             docstore: value.docstore,
-            model: value.model_name,
-            model_kind: value.model_kind,
+            language_model_name: value.language_model_name,
+            language_model_kind: value.language_model_kind,
             embed_url: value.embed_url,
             llm_url: value.vllm_url,
             system_prompt: std::fs::read_to_string(value.system_prompt_path).unwrap(),
             openai_key: value.openai_key,
+            embed_model_name: value.embed_model_name,
         }
     }
 }
@@ -60,7 +62,7 @@ impl Display for Config {
         let Config {
             index,
             docstore,
-            model,
+            language_model_name: model,
             embed_url,
             llm_url,
             ..
