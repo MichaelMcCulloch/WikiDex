@@ -298,7 +298,7 @@ pub(crate) async fn get_sqlite_pool<P: AsRef<Path>>(path: &P) -> Result<SqlitePo
     let path = path.to_path_buf();
     let path = path
         .to_str()
-        .map(|path| format!("{path}"))
+        .map(|path| path.to_string())
         .ok_or(IngestError::DirectoryNotFound(path.to_path_buf()))?;
 
     if !sqlx::Sqlite::database_exists(&path).await.map_err(Sqlite)? {

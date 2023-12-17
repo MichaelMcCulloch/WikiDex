@@ -39,8 +39,7 @@ use crate::ingest::wikipedia::Engine as WikipediaIngestEngine;
 use indicatif::MultiProgress;
 #[cfg(feature = "ingest")]
 use indicatif_log_bridge::LogWrapper;
-#[cfg(feature = "ingest")]
-use url::Url;
+
 
 fn main() -> anyhow::Result<()> {
     std::env::set_var("RUST_LOG", "info");
