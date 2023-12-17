@@ -5,7 +5,7 @@ use super::{
 };
 use crate::{
     ingest::wikipedia::IngestError,
-    openai::{OpenAiDelegate, self},
+    openai::OpenAiDelegate,
 };
 use chrono::NaiveDateTime; 
 use indicatif::ProgressBar;
