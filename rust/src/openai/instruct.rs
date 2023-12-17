@@ -8,31 +8,28 @@ use futures::StreamExt;
 
 use tokio::sync::mpsc::UnboundedSender;
 
-pub(crate) struct CompletionClient {
-    completion_client: Client<OpenAIConfig>,
-    completion_model_name: String,
+pub(crate) struct InstructClient {
+    instruct_client: Client<OpenAIConfig>,
+    instruct_model_name: String,
 }
 
-impl CompletionClient {
-    pub(super) fn new(
-        completion_client: Client<OpenAIConfig>,
-        completion_model_name: String,
-    ) -> Self {
-        CompletionClient {
-            completion_client,
-            completion_model_name,
+impl InstructClient {
+    pub(super) fn new(instruct_client: Client<OpenAIConfig>, instruct_model_name: String) -> Self {
+        InstructClient {
+            instruct_client,
+            instruct_model_name,
         }
     }
 }
 
-impl CompletionClient {
+impl InstructClient {
     pub(crate) async fn get_response(
         &self,
         arguments: LanguageServiceServiceArguments<'_>,
     ) -> Result<String, LlmServiceError> {
         let request = self.create_instruct_request(arguments)?;
         let response = self
-            .completion_client
+            .instruct_client
             .completions()
             .create(request)
             .await
@@ -54,7 +51,7 @@ impl CompletionClient {
         let request = self.create_instruct_request(arguments)?;
 
         let mut stream = self
-            .completion_client
+            .instruct_client
             .completions()
             .create_stream(request)
             .await
@@ -74,14 +71,14 @@ impl CompletionClient {
     }
 }
 
-pub(crate) trait TCompletion {
+pub(crate) trait InstructRequest {
     fn create_instruct_request(
         &self,
         arguments: LanguageServiceServiceArguments,
     ) -> Result<CreateCompletionRequest, LlmServiceError>;
 }
 
-impl TCompletion for CompletionClient {
+impl InstructRequest for InstructClient {
     fn create_instruct_request(
         &self,
         arguments: LanguageServiceServiceArguments,
@@ -103,7 +100,7 @@ impl TCompletion for CompletionClient {
 
         let request = CreateCompletionRequestArgs::default()
             .max_tokens(2048u16)
-            .model(&self.completion_model_name)
+            .model(&self.instruct_model_name)
             .n(1)
             .prompt(query)
             .stop("References:")

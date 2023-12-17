@@ -1,9 +1,9 @@
 mod builder;
 mod chat;
-mod completion;
 mod delegate;
 mod embedding;
 mod error;
+mod instruct;
 mod kind;
 mod protocol;
 

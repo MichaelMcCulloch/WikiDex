@@ -12,21 +12,21 @@ use futures::StreamExt;
 use tokio::sync::mpsc::UnboundedSender;
 const PROMPT_SALT: &str = "";
 
-pub(crate) struct ChatCompletionClient {
+pub(crate) struct ChatClient {
     chat_client: Client<OpenAIConfig>,
     chat_model_name: String,
 }
 
-impl ChatCompletionClient {
+impl ChatClient {
     pub(super) fn new(chat_client: Client<OpenAIConfig>, chat_model_name: String) -> Self {
-        ChatCompletionClient {
+        ChatClient {
             chat_client,
             chat_model_name,
         }
     }
 }
 
-impl ChatCompletionClient {
+impl ChatClient {
     pub(crate) async fn get_response(
         &self,
         arguments: LanguageServiceServiceArguments<'_>,
@@ -86,13 +86,13 @@ impl ChatCompletionClient {
         Ok(())
     }
 }
-pub(crate) trait TChat {
+pub(crate) trait ChatRequest {
     fn create_chat_request(
         &self,
         arguments: LanguageServiceServiceArguments,
     ) -> Result<CreateChatCompletionRequest, LlmServiceError>;
 }
-impl TChat for ChatCompletionClient {
+impl ChatRequest for ChatClient {
     fn create_chat_request(
         &self,
         arguments: LanguageServiceServiceArguments,

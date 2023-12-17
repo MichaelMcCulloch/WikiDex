@@ -1,9 +1,9 @@
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 use super::{
-    chat::ChatCompletionClient,
-    completion::CompletionClient,
+    chat::ChatClient,
     embedding::EmbeddingClient,
+    instruct::InstructClient,
     protocol::{LlmMessage, PartialLlmMessage},
     EmbeddingServiceError, LlmRole, LlmServiceError,
 };
@@ -14,19 +14,19 @@ pub(crate) struct LanguageServiceServiceArguments<'arg> {
     pub(crate) query: &'arg str,
     pub(crate) citation_index_begin: usize,
 }
-pub(super) enum ECompletionClient {
-    Chat(ChatCompletionClient),
-    Completion(CompletionClient),
+pub(super) enum LlmClient {
+    Chat(ChatClient),
+    Instruct(InstructClient),
 }
 
-impl ECompletionClient {
+impl LlmClient {
     pub(crate) async fn get_response(
         &self,
         arguments: LanguageServiceServiceArguments<'_>,
     ) -> Result<String, LlmServiceError> {
         match self {
-            ECompletionClient::Chat(client) => client.get_response(arguments).await,
-            ECompletionClient::Completion(client) => client.get_response(arguments).await,
+            LlmClient::Chat(chat) => chat.get_response(arguments).await,
+            LlmClient::Instruct(instruct) => instruct.get_response(arguments).await,
         }
     }
 
@@ -36,19 +36,19 @@ impl ECompletionClient {
         tx: UnboundedSender<String>,
     ) -> Result<(), LlmServiceError> {
         match self {
-            ECompletionClient::Chat(client) => client.stream_response(arguments, tx).await,
-            ECompletionClient::Completion(client) => client.stream_response(arguments, tx).await,
+            LlmClient::Chat(chat) => chat.stream_response(arguments, tx).await,
+            LlmClient::Instruct(instruct) => instruct.stream_response(arguments, tx).await,
         }
     }
 }
 
 pub(crate) struct OpenAiDelegate {
-    llm_client: ECompletionClient,
+    llm_client: LlmClient,
     embed_client: EmbeddingClient,
 }
 
 impl OpenAiDelegate {
-    pub(super) fn new(llm_client: ECompletionClient, embed_client: EmbeddingClient) -> Self {
+    pub(super) fn new(llm_client: LlmClient, embed_client: EmbeddingClient) -> Self {
         OpenAiDelegate {
             llm_client,
             embed_client,
