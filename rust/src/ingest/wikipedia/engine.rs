@@ -9,20 +9,13 @@ use indicatif::MultiProgress;
 use sqlx::SqlitePool;
 use tokio::sync::mpsc::unbounded_channel;
 
-use std::{
-    fs::File,
-    io::BufReader,
-    path::Path,
-    sync::{mpsc::channel, Arc},
-    thread,
-};
+use std::{fs::File, io::BufReader, path::Path, sync::Arc};
 
 const MARKUP_DB_NAME: &str = "wikipedia_markup.sqlite";
 const DOCSTORE_DB_NAME: &str = "wikipedia_docstore.sqlite";
 const VECTOR_TMP_DB_NAME: &str = "wikipedia_index.sqlite";
 const VECTOR_INDEX_NAME: &str = "wikipedia_index.faiss";
 
-const BATCH_SIZE: usize = 640 * 10;
 const PCA_DIMENSIONS: usize = 128;
 const MINIMUM_PASSAGE_LENGTH_IN_WORDS: usize = 15;
 

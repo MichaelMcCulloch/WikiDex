@@ -20,12 +20,6 @@ use std::{
     },
 };
 
-pub(crate) const COMPLETION_TABLE_NAME: &str = "completed_on";
-pub(crate) const MARKUP_DB_WIKI_MARKUP_TABLE_NAME: &str = "wiki_markup";
-pub(crate) const DOCSTORE_DB_DOCUMENT_TABLE_NAME: &str = "document";
-pub(crate) const DOCSTORE_DB_ARTICLE_TABLE_NAME: &str = "article";
-pub(crate) const EMBEDDINGS_DB_EMBEDDINGS_TABLE_NAME: &str = "embeddings";
-
 pub(crate) async fn write_completion_timestamp(
     pool: &SqlitePool,
     article_count: i64,
