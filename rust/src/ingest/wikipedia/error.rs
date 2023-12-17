@@ -5,10 +5,7 @@ use std::{
     path::PathBuf,
 };
 
-use crate::{
-    index::IndexError,
-    openai::{EmbeddingServiceError, LlmServiceError},
-};
+use crate::{index::IndexError, openai::EmbeddingServiceError};
 
 use super::markup_processor::WikiMarkupProcessingError;
 
