@@ -8,7 +8,9 @@ ARG TORCH_CUDA_ARCH_LIST
 RUN --mount=type=cache,target=/root/.cache/pip,rw \
     python3 -m venv /venv && \
     . /venv/bin/activate && \
-    pip3 install --upgrade pip wheel setuptools packaging torch numpy bitsnbytes git+https://github.com/vllm-project/vllm.git@main 
+    pip install --upgrade pip wheel setuptools packaging && \
+    pip install torch numpy bitsnbytes && \
+    pip install git+https://github.com/vllm-project/vllm.git@main 
 
 ARG LLM_MODEL_NAME
 
@@ -23,7 +25,7 @@ RUN mkdir -p $LLM_MODEL_NAME
 RUN --mount=type=cache,target=/root/.cache/git,rw \
     cp -R $MODEL_PATH/* /$LLM_MODEL_NAME 
 
-CMD . /venv/bin/activate && python -m vllm.entrypoints.openai.api_server \
+CMD . /venv/bin/activate && python3 -m vllm.entrypoints.openai.api_server \
     --disable-log-stats \
     --disable-log-requests \
     --gpu-memory-utilization 0.85 \
