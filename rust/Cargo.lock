@@ -3150,9 +3150,9 @@ dependencies = [
 
 [[package]]
 name = "utoipa-redoc"
-version = "1.0.0"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c91925cf8fc316aaef77dcc6845770a62016c598d4114b63e991c3e7e5b0549"
+checksum = "01520ff2511e54c069eda8e93569fff9893b2548c53c1357655292f47ef6782f"
 dependencies = [
  "actix-web",
  "serde",
