@@ -16,7 +16,7 @@ impl SqliteDocstore {
             return Err(DocstoreLoadError::FileNotFound);
         }
         let pool = SqlitePool::connect(
-            &docstore_path
+            docstore_path
                 .to_str()
                 .expect("Docstore path is not a string"),
         )
@@ -33,9 +33,8 @@ impl DocumentService for SqliteDocstore {
     async fn retreive_batch(&self, indices: &Vec<Vec<i64>>) -> Result<Vec<Self::R>, Self::E> {
         let start = std::time::Instant::now();
         let flattened_indices = indices
-            .into_iter()
-            .flatten()
-            .map(|i| *i)
+            .iter()
+            .flatten().copied()
             .collect::<Vec<i64>>();
 
         // build dynamic query statement
@@ -51,7 +50,7 @@ impl DocumentService for SqliteDocstore {
         let docs_rows = sqlx::query(&query)
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| DocstoreRetrieveError::SqlxError(e))?;
+            .map_err(DocstoreRetrieveError::SqlxError)?;
 
         let docs = docs_rows
             .into_iter()
@@ -85,7 +84,7 @@ impl DocumentService for SqliteDocstore {
                     .enumerate()
                     .filter_map(|(array_index, docstore_index)| {
                         let (_, doc_text, document_provenance) =
-                            docs.iter().filter(|d| d.0 == *docstore_index).next()?;
+                            docs.iter().find(|d| d.0 == *docstore_index)?;
                         Some((
                             array_index + 1,
                             doc_text.clone(),
@@ -148,7 +147,7 @@ impl DocumentService for SqliteDocstore {
             .enumerate()
             .filter_map(|(array_index, docstore_index)| {
                 let (_, doc_text, document_provenance) =
-                    docs.iter().filter(|d| d.0 == *docstore_index).next()?;
+                    docs.iter().find(|d| d.0 == *docstore_index)?;
                 Some((
                     array_index + 1,
                     doc_text.clone(),

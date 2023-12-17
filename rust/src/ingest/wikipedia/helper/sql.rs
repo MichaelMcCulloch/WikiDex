@@ -1,5 +1,5 @@
 use super::{
-    super::{Engine, Ingest, IngestError::*},
+    super::{IngestError::*},
     gzip_helper::decompress_text,
     wiki::{CompressedPage, CompressedPageWithAccessDate, DocumentFragments},
 };
@@ -9,14 +9,13 @@ use crate::{
 };
 use chrono::NaiveDateTime;
 use indicatif::ProgressBar;
-use sqlx::{SqliteConnection, SqlitePool, sqlite::SqliteConnectOptions}; 
+use sqlx::{SqliteConnection, SqlitePool}; 
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use std::{
     io::Write,
     path::Path,
     sync::{
-        atomic::{AtomicI64, AtomicUsize, Ordering},
-        mpsc::{Receiver, Sender}, Arc,
+        atomic::{AtomicI64, Ordering}, Arc,
     },
 };
 
@@ -317,7 +316,7 @@ pub(crate) async fn get_sqlite_pool<P: AsRef<Path>>(path: &P) -> Result<SqlitePo
                 path.to_path_buf(),
             ))?;
 
-    SqlitePool::connect(&path.as_ref()).await.map_err(Sqlite)
+    SqlitePool::connect(path.as_ref()).await.map_err(Sqlite)
 }
 
 pub(crate) async fn init_markup_sqlite_pool(

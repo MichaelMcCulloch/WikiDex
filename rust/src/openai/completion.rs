@@ -39,13 +39,13 @@ impl TCompletion for CompletionClient {
 
         let query = arguments
             .system
-            .replace("___USER_QUERY___", &arguments.query)
-            .replace("___URL___", &"http://localhost")
+            .replace("___USER_QUERY___", arguments.query)
+            .replace("___URL___", "http://localhost")
             .replace("___CITE1___", &c1.to_string())
             .replace("___CITE2___", &c2.to_string())
             .replace("___CITE3___", &c3.to_string())
             .replace("___CITE4___", &c4.to_string())
-            .replace("___DOCUMENT_LIST___", &arguments.documents);
+            .replace("___DOCUMENT_LIST___", arguments.documents);
 
         let request = CreateCompletionRequestArgs::default()
             .max_tokens(2048u16)
@@ -54,7 +54,7 @@ impl TCompletion for CompletionClient {
             .prompt(query)
             .stop("References:")
             .build()
-            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+            .map_err(LlmServiceError::AsyncOpenAiError)?;
 
         Ok(request)
     }
@@ -72,7 +72,7 @@ impl TCompletionClient for CompletionClient {
             .completions()
             .create(request)
             .await
-            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+            .map_err(LlmServiceError::AsyncOpenAiError)?;
 
         let response = response
             .choices
@@ -94,7 +94,7 @@ impl TCompletionClient for CompletionClient {
             .completions()
             .create_stream(request)
             .await
-            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+            .map_err(LlmServiceError::AsyncOpenAiError)?;
 
         while let Some(Ok(fragment)) = stream.next().await {
             let response = fragment

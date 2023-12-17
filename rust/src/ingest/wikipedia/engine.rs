@@ -1,6 +1,5 @@
 use super::{
     helper::{self as h, text::RecursiveCharacterTextSplitter},
-    Ingest,
     IngestError::{self, *},
     WikiMarkupProcessor,
 };
@@ -109,10 +108,12 @@ impl Engine {
     }
     async fn create_temp_vector_database(
         &self,
-        docstore_pool: &SqlitePool,
+        docstore_pool: SqlitePool,
         tmp_vector_pool: &SqlitePool,
     ) -> Result<i64, IngestError> {
-        let document_count = h::sql::count_elements(docstore_pool).await?.ok_or(NoRows)?;
+        let document_count = h::sql::count_elements(&docstore_pool)
+            .await?
+            .ok_or(NoRows)?;
         let create_vectors_bar =
             h::progress::new_progress_bar(&self.multi_progress, document_count as u64);
         let (tx, rx) = unbounded_channel::<(i64, Vec<f32>)>();
@@ -126,8 +127,8 @@ impl Engine {
             h::sql::write_vectorstore(rx, tmp_vector_pool_clone, create_vectors_bar_clone).await
         });
 
-        h::sql::populate_vectorstore_db(&self.openai, docstore_pool, document_count, tx).await?;
-        h::sql::write_completion_timestamp(&tmp_vector_pool, document_count).await?;
+        h::sql::populate_vectorstore_db(&self.openai, &docstore_pool, document_count, tx).await?;
+        h::sql::write_completion_timestamp(tmp_vector_pool, document_count).await?;
         create_vectors_bar.set_message("Writing vectorstore to DB...DONE");
 
         let _ = db_writter_thread.await;
@@ -192,12 +193,11 @@ impl Engine {
                 if !h::sql::database_is_complete(&tmp_vector_pool).await? {
                     log::info!("Preparing Vector DB...");
 
-                    self.create_temp_vector_database(&docstore_pool, &tmp_vector_pool)
+                    self.create_temp_vector_database(docstore_pool, &tmp_vector_pool)
                         .await?;
                 }
                 log::info!("Vector DB is ready at {}", tmp_vector_db_path.display());
 
-                drop(docstore_pool);
                 let index_path = output_directory.join(VECTOR_INDEX_NAME);
                 if !h::faiss::index_is_complete(&index_path).map_err(IndexError)? {
                     log::info!("Preparing Vector Index...");

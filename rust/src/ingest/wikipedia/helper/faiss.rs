@@ -16,7 +16,7 @@ pub(crate) fn populate_vectorestore_index<P: AsRef<Path>>(
 ) -> Result<(), IngestError> {
     let vector_contiguous = vector_embeddings
         .into_iter()
-        .flat_map(|f| f)
+        .flatten()
         .collect::<Vec<_>>();
 
     let mut index = index_factory(384, format!("PCA{pca_dimensions},Flat"), MetricType::L2)

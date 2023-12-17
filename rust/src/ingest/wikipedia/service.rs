@@ -1,6 +1,6 @@
 use std::{
     error::Error,
-    path::{Path, PathBuf},
+    path::{Path},
 };
 
 #[async_trait::async_trait]

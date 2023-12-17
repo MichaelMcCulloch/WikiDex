@@ -57,7 +57,7 @@ impl QueryEngine for Engine {
                     .openai
                     .get_llm_answer(llm_service_arguments)
                     .await
-                    .map_err(|e| QueryEngineError::LlmError(e))?;
+                    .map_err(QueryEngineError::LlmError)?;
 
                 match role {
                     LlmRole::Assistant => {
@@ -106,7 +106,7 @@ impl QueryEngine for Engine {
                 self.openai
                     .stream_llm_answer(llm_service_arguments, tx_p)
                     .await
-                    .map_err(|e| QueryEngineError::LlmError(e))?;
+                    .map_err(QueryEngineError::LlmError)?;
 
                 Ok(())
             }
@@ -138,22 +138,22 @@ impl Engine {
     ) -> Result<(Vec<Source>, String), <Self as QueryEngine>::E> {
         let embedding = self
             .openai
-            .embed(&user_query)
+            .embed(user_query)
             .await
-            .map_err(|e| QueryEngineError::EmbeddingServiceError(e))?;
+            .map_err(QueryEngineError::EmbeddingServiceError)?;
 
         let document_indices = self
             .index
             .lock()
             .map_err(|_| QueryEngineError::UnableToLockIndex)?
             .search(&embedding, NUM_DOCUMENTS_TO_RETRIEVE)
-            .map_err(|e| QueryEngineError::IndexError(e))?;
+            .map_err(QueryEngineError::IndexError)?;
 
         let documents = self
             .docstore
             .retreive(&document_indices)
             .await
-            .map_err(|e| QueryEngineError::DocstoreError(e))?;
+            .map_err(QueryEngineError::DocstoreError)?;
 
         let formatted_documents = documents
             .iter()

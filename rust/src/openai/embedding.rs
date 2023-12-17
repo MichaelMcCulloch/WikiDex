@@ -27,14 +27,14 @@ impl EmbedService for EmbeddingClient {
             .model(&self.embedding_model_name)
             .input([query])
             .build()
-            .map_err(|e| EmbeddingServiceError::AsyncOpenAiError(e))?;
+            .map_err(EmbeddingServiceError::AsyncOpenAiError)?;
 
         let response = self
             .embedding_client
             .embeddings()
             .create(request)
             .await
-            .map_err(|e| EmbeddingServiceError::AsyncOpenAiError(e))?;
+            .map_err(EmbeddingServiceError::AsyncOpenAiError)?;
 
         if response.data.len() > 1 {
             Err(EmbeddingServiceError::EmbeddingSizeMismatch(

@@ -63,7 +63,7 @@ impl TCompletionClient for ChatCompletionClient {
             .chat()
             .create(request)
             .await
-            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+            .map_err(LlmServiceError::AsyncOpenAiError)?;
 
         let response = response
             .choices
@@ -94,7 +94,7 @@ impl TCompletionClient for ChatCompletionClient {
             .chat()
             .create_stream(request)
             .await
-            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+            .map_err(LlmServiceError::AsyncOpenAiError)?;
 
         let _ = stream.next().await;
         while let Some(Ok(fragment)) = stream.next().await {
@@ -122,19 +122,19 @@ impl TChat for ChatCompletionClient {
 
         let system = arguments
             .system
-            .replace("___DOCUMENT_LIST___", &arguments.documents);
+            .replace("___DOCUMENT_LIST___", arguments.documents);
 
         let system = ChatCompletionRequestSystemMessageArgs::default()
             .content(system)
             .build()
-            .map(|e| ChatCompletionRequestMessage::System(e))
-            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+            .map(ChatCompletionRequestMessage::System)
+            .map_err(LlmServiceError::AsyncOpenAiError)?;
 
         let query = ChatCompletionRequestUserMessageArgs::default()
             .content(query)
             .build()
-            .map(|e| ChatCompletionRequestMessage::User(e))
-            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+            .map(ChatCompletionRequestMessage::User)
+            .map_err(LlmServiceError::AsyncOpenAiError)?;
 
         let message_openai_compat = vec![system, query];
 
@@ -144,7 +144,7 @@ impl TChat for ChatCompletionClient {
             .messages(message_openai_compat)
             .stop("References:")
             .build()
-            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+            .map_err(LlmServiceError::AsyncOpenAiError)?;
 
         Ok(request)
     }

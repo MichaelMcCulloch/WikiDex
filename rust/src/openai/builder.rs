@@ -11,9 +11,9 @@ pub(crate) enum OpenAiDelegateBuilderArgument {
     OpenAiApi(String, String),
 }
 
-impl Into<(Client<OpenAIConfig>, String)> for OpenAiDelegateBuilderArgument {
-    fn into(self) -> (Client<OpenAIConfig>, String) {
-        let (openai_config, model_name) = match self {
+impl From<OpenAiDelegateBuilderArgument> for (Client<OpenAIConfig>, String) {
+    fn from(val: OpenAiDelegateBuilderArgument) -> Self {
+        let (openai_config, model_name) = match val {
             OpenAiDelegateBuilderArgument::Endpoint(url, name) => {
                 (OpenAIConfig::new().with_api_base(url), name)
             }

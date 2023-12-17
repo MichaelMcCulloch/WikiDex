@@ -32,7 +32,7 @@ pub(super) fn table_captions_to_string(
     regexes: &Regexes,
 ) -> Result<Option<String>, WikiMarkupProcessingError> {
     if table_captions.is_empty() {
-        return Ok(None);
+        Ok(None)
     } else {
         let mut documents = vec![];
         for tc in table_captions.iter() {
@@ -63,7 +63,7 @@ pub(super) fn table_cells_to_string(
     regexes: &Regexes,
 ) -> Result<Option<String>, WikiMarkupProcessingError> {
     if table_cells.is_empty() {
-        return Ok(None);
+        Ok(None)
     } else {
         let tag = match table_cells.first().unwrap().type_ {
             TableCellType::Heading => "||",

@@ -3,7 +3,6 @@ use crate::ingest::wikipedia::IngestError;
 use super::{
     super::{
         markup_processor::{self, Process},
-        Engine, Ingest,
         IngestError::*,
     },
     gzip_helper::{compress_text, decompress_text},
@@ -34,31 +33,26 @@ pub(crate) fn get_date_from_xml_name<P: AsRef<Path>>(
     file_name
         .as_ref()
         .file_name()
-        .and_then(|file_name| file_name.to_str())
-        .and_then(|file_name| Some(file_name.split('-').collect::<Vec<_>>()))
+        .and_then(|file_name| file_name.to_str()).map(|file_name| file_name.split('-').collect::<Vec<_>>())
         .and_then(|split| split.get(date_index_from_split).cloned())
         .and_then(|date| if !date.len() == 8 { None } else { Some(date) })
         .and_then(|date| {
-            str::parse(&date[year_range])
-                .and_then(|y| Ok((y, date)))
+            str::parse(&date[year_range]).map(|y| (y, date))
                 .ok()
         })
         .and_then(|(y, date)| {
-            str::parse(&date[month_range])
-                .and_then(|m| Ok((y, m, date)))
+            str::parse(&date[month_range]).map(|m| (y, m, date))
                 .ok()
         })
         .and_then(|(y, m, date)| {
-            str::parse(&date[day_range])
-                .and_then(|d| Ok((y, m, d)))
+            str::parse(&date[day_range]).map(|d| (y, m, d))
                 .ok()
         })
         .and_then(|(y, m, d)| {
-            NaiveTime::from_num_seconds_from_midnight_opt(0, 0)
-                .and_then(|midnight| Some((y, m, d, midnight)))
+            NaiveTime::from_num_seconds_from_midnight_opt(0, 0).map(|midnight| (y, m, d, midnight))
         })
         .and_then(|(year, month, day, midnight)| {
-            NaiveDate::from_ymd_opt(year, month, day).and_then(|d| Some(d.and_time(midnight)))
+            NaiveDate::from_ymd_opt(year, month, day).map(|d| d.and_time(midnight))
         })
         .ok_or(XmlDateReadError)
 }
@@ -174,7 +168,7 @@ pub(crate) fn decompress_articles_into_documents(
                     .split_text(&document)
                     .into_iter()
                     .filter(|passage| {
-                        passage.split(" ").collect::<Vec<_>>().len() > minimum_passage_length
+                        passage.split(' ').collect::<Vec<_>>().len() > minimum_passage_length
                     })
                     .filter_map(|document| compress_text(&document).map_err(IoError).ok())
                     .collect::<Vec<_>>();

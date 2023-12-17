@@ -22,7 +22,7 @@ pub(crate) const STOP_PHRASES: [&str; 6] = [
 pub(crate) type ParseResult = Result<String, <WikiMarkupProcessor as Process>::E>;
 
 pub(crate) fn process_to_article(nodes: &[Node<'_>], regexes: &Regexes) -> ParseResult {
-    let output = nodes_to_string(&nodes, regexes)?;
+    let output = nodes_to_string(nodes, regexes)?;
 
     let output = regexes
         .twospace
@@ -113,7 +113,7 @@ pub(super) fn node_to_string(node: &Node<'_>, regexes: &Regexes) -> ParseResult 
                 Some(default) => nodes_to_string(default, regexes)?,
                 None => String::new(),
             };
-            Ok(vec![name, default].join(": "))
+            Ok([name, default].join(": "))
         }
 
         Node::DefinitionList { items, .. } => definition_list_items_to_string(items, regexes),
@@ -125,7 +125,7 @@ pub(super) fn node_to_string(node: &Node<'_>, regexes: &Regexes) -> ParseResult 
         } => {
             let name = nodes_to_string(name, regexes)?;
             if regexes.refn.is_match(&name) || regexes.linktext.is_match(&name) {
-                refn_parameters_to_string(&parameters, regexes)
+                refn_parameters_to_string(parameters, regexes)
             } else if regexes.language.is_match(&name) && !parameters.is_empty() {
                 refn_parameters_to_string(&parameters[1..], regexes)
             } else {
