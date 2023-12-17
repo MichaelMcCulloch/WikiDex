@@ -79,14 +79,14 @@ impl Engine {
 
     async fn create_docstore_database(
         &self,
-        markup_pool: &SqlitePool,
+        markup_pool: SqlitePool,
         docstore_pool: &SqlitePool,
     ) -> Result<i64, IngestError> {
-        let document_count = h::sql::count_elements(markup_pool).await?.ok_or(NoRows)?;
+        let document_count = h::sql::count_elements(&markup_pool).await?.ok_or(NoRows)?;
         //Obtain markup
         let obtain_markup_bar =
             h::progress::new_progress_bar(&self.multi_progress, document_count as u64);
-        let pages = h::sql::obtain_markup(markup_pool, &obtain_markup_bar).await?;
+        let pages = h::sql::obtain_markup(&markup_pool, &obtain_markup_bar).await?;
 
         let pages_decompressed_bar =
             h::progress::new_progress_bar(&self.multi_progress, pages.len() as u64);
@@ -123,7 +123,7 @@ impl Engine {
         create_vectors_bar.set_message("Writing vectorstore to DB...");
 
         let db_writter_thread = actix_web::rt::spawn(async move {
-            h::sql::write_vectorstore(rx, tmp_vector_pool_clone, create_vectors_bar_clone)
+            h::sql::write_vectorstore(rx, tmp_vector_pool_clone, create_vectors_bar_clone).await
         });
 
         h::sql::populate_vectorstore_db(&self.openai, docstore_pool, document_count, tx).await?;
@@ -156,18 +156,12 @@ impl Engine {
     }
 }
 
-#[async_trait::async_trait]
-impl Ingest for Engine {
-    type E = IngestError;
-
-    async fn ingest_wikipedia(
+impl Engine {
+    pub(crate) async fn ingest_wikipedia(
         self,
         input_xml: &Path,
         output_directory: &Path,
-    ) -> Result<usize, Self::E> {
-        let input_xml = input_xml;
-        let output_directory = output_directory;
-
+    ) -> Result<usize, IngestError> {
         match (input_xml.exists(), output_directory.exists()) {
             (true, false) => Err(DirectoryNotFound(output_directory.to_path_buf())),
             (false, _) => Err(XmlNotFound(input_xml.to_path_buf())),
@@ -188,11 +182,10 @@ impl Ingest for Engine {
                 if !h::sql::database_is_complete(&docstore_pool).await? {
                     log::info!("Preparing docstore DB...");
 
-                    self.create_docstore_database(&markup_pool, &docstore_pool)
+                    self.create_docstore_database(markup_pool, &docstore_pool)
                         .await?;
                 }
                 log::info!("Docstore DB is ready at {}", docstore_db_path.display());
-                drop(markup_pool);
 
                 let tmp_vector_db_path = output_directory.join(VECTOR_TMP_DB_NAME);
                 let tmp_vector_pool = h::sql::get_sqlite_pool(&tmp_vector_db_path).await?;

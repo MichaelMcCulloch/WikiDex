@@ -9,7 +9,7 @@ use crate::{
 };
 use chrono::NaiveDateTime;
 use indicatif::ProgressBar;
-use sqlx::{SqliteConnection, SqlitePool, sqlite::SqliteConnectOptions};
+use sqlx::{SqliteConnection, SqlitePool, sqlite::SqliteConnectOptions}; 
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use std::{
     io::Write,
@@ -23,7 +23,7 @@ use std::{
 pub(crate) async fn write_completion_timestamp(
     pool: &SqlitePool,
     article_count: i64,
-) -> Result<(), <Engine as Ingest>::E> {
+) -> Result<(), IngestError> {
     let naive_utc = chrono::Utc::now().naive_utc();
     let timestamp = naive_utc.timestamp_millis();
 
@@ -45,7 +45,7 @@ pub(crate) async fn populate_markup_db(
     pages_compressed: Vec<CompressedPage>,
     access_date: NaiveDateTime,
     progress_bar: &ProgressBar,
-) -> Result<i64, <Engine as Ingest>::E> {
+) -> Result<i64, IngestError> {
     progress_bar.set_message("Writing Compressed Markup to DB...");
     let mut connection = pool.acquire().await.map_err(Sqlite)?;
     let _rows = sqlx::query!("BEGIN;",)
@@ -89,7 +89,7 @@ pub(crate) async fn populate_docstore_db(
     pool: &SqlitePool,
     pages_compressed: Vec<DocumentFragments>,
     progress_bar: &ProgressBar,
-) -> Result<i64, <Engine as Ingest>::E> {
+) -> Result<i64, IngestError> {
     progress_bar.set_message("Writing Docstore to DB...");
     let mut connection = pool.acquire().await.map_err(Sqlite)?;
     let _rows = sqlx::query!("BEGIN;",)
@@ -190,7 +190,7 @@ pub(crate) async fn populate_vectorstore_db(
     pool: &SqlitePool,
     document_count: i64,
     tx: UnboundedSender<(i64, Vec<f32>)>,
-) -> Result<(), <Engine as Ingest>::E> {
+) -> Result<(), IngestError> {
     let mut connection = pool.acquire().await.map_err(Sqlite)?;
 
     for index in 0..document_count {
@@ -212,7 +212,7 @@ pub(crate) async fn populate_vectorstore_db(
 
     Ok(())
 }
-pub(crate) async fn database_is_complete(pool: &SqlitePool) -> Result<bool, <Engine as Ingest>::E> {
+pub(crate) async fn database_is_complete(pool: &SqlitePool) -> Result<bool, IngestError> {
     let mut connection = pool.acquire().await.map_err(Sqlite)?;
 
     let record = sqlx::query!(
@@ -231,7 +231,7 @@ pub(crate) async fn database_is_complete(pool: &SqlitePool) -> Result<bool, <Eng
 
 pub(crate) async fn count_elements(
     pool: &SqlitePool,
-) -> Result<Option<i64>, <Engine as Ingest>::E> {
+) -> Result<Option<i64>, IngestError> {
     let mut connection = pool.acquire().await.map_err(Sqlite)?;
 
     let record = sqlx::query!(
@@ -250,7 +250,7 @@ pub(crate) async fn count_elements(
 pub(crate) async fn obtain_markup(
     pool: &SqlitePool,
     progress_bar: &ProgressBar,
-) -> Result<Vec<CompressedPageWithAccessDate>, <Engine as Ingest>::E> {
+) -> Result<Vec<CompressedPageWithAccessDate>, IngestError> {
     progress_bar.set_message("Obtaining Markup...");
     let mut connection = pool.acquire().await.map_err(Sqlite)?;
 
@@ -307,7 +307,7 @@ pub(crate) async fn obtain_vectors(
     
     Ok(records)
 }
-pub(crate) async fn get_sqlite_pool<P: AsRef<Path>>(path: &P) -> Result<SqlitePool, <Engine as Ingest>::E> {
+pub(crate) async fn get_sqlite_pool<P: AsRef<Path>>(path: &P) -> Result<SqlitePool, IngestError> {
     let path = path.as_ref();
     let path = path.to_path_buf();
     let path = path
@@ -322,7 +322,7 @@ pub(crate) async fn get_sqlite_pool<P: AsRef<Path>>(path: &P) -> Result<SqlitePo
 
 pub(crate) async fn init_markup_sqlite_pool(
     connection: &mut SqliteConnection,
-) -> Result<(), <Engine as Ingest>::E> {
+) -> Result<(), IngestError> {
 
     let _rows = sqlx::query!(
         "DROP TABLE IF EXISTS completed_on;",
@@ -355,7 +355,7 @@ pub(crate) async fn init_markup_sqlite_pool(
 
 pub(crate) async fn init_docstore_sqlite_pool(
     connection: &mut SqliteConnection,
-) -> Result<(), <Engine as Ingest>::E> {
+) -> Result<(), IngestError> {
 
 let _rows = sqlx::query!(
 "DROP TABLE IF EXISTS completed_on;",
@@ -400,7 +400,7 @@ let _rows = sqlx::query!(
 }
 pub(crate) async fn init_temp_embedding_sqlite_pool(
     connection: &mut SqliteConnection,
-) -> Result<(), <Engine as Ingest>::E> {
+) -> Result<(), IngestError> {
 
 
     let _rows = sqlx::query!(

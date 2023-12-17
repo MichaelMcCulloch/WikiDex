@@ -1,3 +1,5 @@
+use crate::ingest::wikipedia::IngestError;
+
 use super::{
     super::{
         markup_processor::{self, Process},
@@ -23,7 +25,7 @@ use std::{
 
 pub(crate) fn get_date_from_xml_name<P: AsRef<Path>>(
     file_name: &P,
-) -> Result<NaiveDateTime, <Engine as Ingest>::E> {
+) -> Result<NaiveDateTime, IngestError> {
     let date_index_from_split = 1;
     let year_range = 0..4;
     let month_range = 4..6;
