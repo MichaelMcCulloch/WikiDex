@@ -4,7 +4,7 @@ use flate2::read::GzDecoder;
 use sqlx::{sqlite::SqlitePool, Row};
 use std::{io::Read, path::Path};
 
-use super::{DocstoreLoadError, DocstoreRetrieveError, DocumentService};
+use super::{DocstoreLoadError, DocstoreRetrieveError};
 pub struct SqliteDocstore {
     pool: SqlitePool,
 }
@@ -26,16 +26,13 @@ impl SqliteDocstore {
     }
 }
 
-#[async_trait::async_trait]
-impl DocumentService for SqliteDocstore {
-    type E = DocstoreRetrieveError;
-    type R = Vec<(usize, String, Provenance)>;
-    async fn retreive_batch(&self, indices: &Vec<Vec<i64>>) -> Result<Vec<Self::R>, Self::E> {
+impl SqliteDocstore {
+    async fn retreive_batch(
+        &self,
+        indices: &Vec<Vec<i64>>,
+    ) -> Result<Vec<Vec<(usize, String, Provenance)>>, DocstoreRetrieveError> {
         let start = std::time::Instant::now();
-        let flattened_indices = indices
-            .iter()
-            .flatten().copied()
-            .collect::<Vec<i64>>();
+        let flattened_indices = indices.iter().flatten().copied().collect::<Vec<i64>>();
 
         // build dynamic query statement
         let ids = flattened_indices
@@ -101,7 +98,10 @@ impl DocumentService for SqliteDocstore {
         Ok(result)
     }
 
-    async fn retreive(&self, indices: &Vec<i64>) -> Result<Self::R, Self::E> {
+    pub(crate) async fn retreive(
+        &self,
+        indices: &Vec<i64>,
+    ) -> Result<Vec<(usize, String, Provenance)>, DocstoreRetrieveError> {
         let start = std::time::Instant::now();
 
         // build dynamic query statement

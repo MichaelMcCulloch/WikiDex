@@ -1,6 +1,6 @@
 use async_openai::{config::OpenAIConfig, types::CreateEmbeddingRequestArgs, Client};
 
-use super::{error::EmbeddingServiceError, service::EmbedService};
+use super::error::EmbeddingServiceError;
 
 pub(crate) struct EmbeddingClient {
     embedding_client: Client<OpenAIConfig>,
@@ -19,10 +19,8 @@ impl EmbeddingClient {
     }
 }
 
-#[async_trait::async_trait]
-impl EmbedService for EmbeddingClient {
-    type E = EmbeddingServiceError;
-    async fn embed(&self, query: &str) -> Result<Vec<f32>, Self::E> {
+impl EmbeddingClient {
+    pub(crate) async fn embed(&self, query: &str) -> Result<Vec<f32>, EmbeddingServiceError> {
         let request = CreateEmbeddingRequestArgs::default()
             .model(&self.embedding_model_name)
             .input([query])

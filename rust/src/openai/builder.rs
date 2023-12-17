@@ -2,8 +2,10 @@ use async_openai::{config::OpenAIConfig, Client};
 use url::Url;
 
 use super::{
-    chat::ChatCompletionClient, completion::CompletionClient, delegate::OpenAiDelegate,
-    embedding::EmbeddingClient, service::ECompletionClient,
+    chat::ChatCompletionClient,
+    completion::CompletionClient,
+    delegate::{ECompletionClient, OpenAiDelegate},
+    embedding::EmbeddingClient,
 };
 
 pub(crate) enum OpenAiDelegateBuilderArgument {

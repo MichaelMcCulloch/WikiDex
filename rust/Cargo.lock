@@ -1796,7 +1796,6 @@ dependencies = [
  "anyhow",
  "async-openai",
  "async-recursion",
- "async-trait",
  "backoff",
  "bytes",
  "chrono",

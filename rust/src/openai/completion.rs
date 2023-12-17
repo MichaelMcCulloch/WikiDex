@@ -1,6 +1,4 @@
-use super::{
-    delegate::LanguageServiceServiceArguments, error::LlmServiceError, service::TCompletionClient,
-};
+use super::{delegate::LanguageServiceServiceArguments, error::LlmServiceError};
 use async_openai::{
     config::OpenAIConfig,
     types::{CreateCompletionRequest, CreateCompletionRequestArgs},
@@ -25,6 +23,62 @@ impl CompletionClient {
             completion_model_name,
         }
     }
+}
+
+impl CompletionClient {
+    pub(crate) async fn get_response(
+        &self,
+        arguments: LanguageServiceServiceArguments<'_>,
+    ) -> Result<String, LlmServiceError> {
+        let request = self.create_instruct_request(arguments)?;
+        let response = self
+            .completion_client
+            .completions()
+            .create(request)
+            .await
+            .map_err(LlmServiceError::AsyncOpenAiError)?;
+
+        let response = response
+            .choices
+            .into_iter()
+            .next()
+            .ok_or(LlmServiceError::EmptyResponse)?;
+        Ok(response.text)
+    }
+
+    pub(crate) async fn stream_response(
+        &self,
+        arguments: LanguageServiceServiceArguments<'_>,
+        tx: UnboundedSender<String>,
+    ) -> Result<(), LlmServiceError> {
+        let request = self.create_instruct_request(arguments)?;
+
+        let mut stream = self
+            .completion_client
+            .completions()
+            .create_stream(request)
+            .await
+            .map_err(LlmServiceError::AsyncOpenAiError)?;
+
+        while let Some(Ok(fragment)) = stream.next().await {
+            let response = fragment
+                .choices
+                .into_iter()
+                .next()
+                .ok_or(LlmServiceError::EmptyResponse)?;
+
+            let _ = tx.send(response.text);
+        }
+
+        Ok(())
+    }
+}
+
+pub(crate) trait TCompletion {
+    fn create_instruct_request(
+        &self,
+        arguments: LanguageServiceServiceArguments,
+    ) -> Result<CreateCompletionRequest, LlmServiceError>;
 }
 
 impl TCompletion for CompletionClient {
@@ -58,61 +112,4 @@ impl TCompletion for CompletionClient {
 
         Ok(request)
     }
-}
-
-#[async_trait::async_trait]
-impl TCompletionClient for CompletionClient {
-    async fn get_response(
-        &self,
-        arguments: LanguageServiceServiceArguments<'async_trait>,
-    ) -> Result<String, LlmServiceError> {
-        let request = self.create_instruct_request(arguments)?;
-        let response = self
-            .completion_client
-            .completions()
-            .create(request)
-            .await
-            .map_err(LlmServiceError::AsyncOpenAiError)?;
-
-        let response = response
-            .choices
-            .into_iter()
-            .next()
-            .ok_or(LlmServiceError::EmptyResponse)?;
-        Ok(response.text)
-    }
-
-    async fn stream_response(
-        &self,
-        arguments: LanguageServiceServiceArguments<'async_trait>,
-        tx: UnboundedSender<String>,
-    ) -> Result<(), LlmServiceError> {
-        let request = self.create_instruct_request(arguments)?;
-
-        let mut stream = self
-            .completion_client
-            .completions()
-            .create_stream(request)
-            .await
-            .map_err(LlmServiceError::AsyncOpenAiError)?;
-
-        while let Some(Ok(fragment)) = stream.next().await {
-            let response = fragment
-                .choices
-                .into_iter()
-                .next()
-                .ok_or(LlmServiceError::EmptyResponse)?;
-
-            let _ = tx.send(response.text);
-        }
-
-        Ok(())
-    }
-}
-
-pub(crate) trait TCompletion {
-    fn create_instruct_request(
-        &self,
-        arguments: LanguageServiceServiceArguments,
-    ) -> Result<CreateCompletionRequest, LlmServiceError>;
 }

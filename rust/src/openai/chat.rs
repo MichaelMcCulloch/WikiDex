@@ -1,9 +1,4 @@
-use super::{
-    delegate::LanguageServiceServiceArguments,
-    error::LlmServiceError,
-    protocol::{LlmMessage, LlmRole, PartialLlmMessage},
-    service::TCompletionClient,
-};
+use super::{delegate::LanguageServiceServiceArguments, error::LlmServiceError, protocol::LlmRole};
 use async_openai::{
     config::OpenAIConfig,
     types::{
@@ -14,22 +9,8 @@ use async_openai::{
     Client,
 };
 use futures::StreamExt;
-use std::error::Error;
 use tokio::sync::mpsc::UnboundedSender;
-
-#[async_trait::async_trait]
-pub(crate) trait ChatService {
-    type E: Error;
-    async fn answer(
-        &self,
-        arguments: LanguageServiceServiceArguments<'async_trait>,
-    ) -> Result<LlmMessage, Self::E>;
-    async fn stream_answer(
-        &self,
-        arguments: LanguageServiceServiceArguments<'async_trait>,
-        tx: UnboundedSender<PartialLlmMessage>,
-    ) -> Result<(), Self::E>;
-}
+const PROMPT_SALT: &str = "";
 
 pub(crate) struct ChatCompletionClient {
     chat_client: Client<OpenAIConfig>,
@@ -45,17 +26,10 @@ impl ChatCompletionClient {
     }
 }
 
-pub(crate) trait TChat {
-    fn create_chat_request(
+impl ChatCompletionClient {
+    pub(crate) async fn get_response(
         &self,
-        arguments: LanguageServiceServiceArguments,
-    ) -> Result<CreateChatCompletionRequest, LlmServiceError>;
-}
-#[async_trait::async_trait]
-impl TCompletionClient for ChatCompletionClient {
-    async fn get_response(
-        &self,
-        arguments: LanguageServiceServiceArguments<'async_trait>,
+        arguments: LanguageServiceServiceArguments<'_>,
     ) -> Result<String, LlmServiceError> {
         let request = self.create_chat_request(arguments)?;
         let response = self
@@ -82,9 +56,9 @@ impl TCompletionClient for ChatCompletionClient {
         }
     }
 
-    async fn stream_response(
+    pub(crate) async fn stream_response(
         &self,
-        arguments: LanguageServiceServiceArguments<'async_trait>,
+        arguments: LanguageServiceServiceArguments<'_>,
         tx: UnboundedSender<String>,
     ) -> Result<(), LlmServiceError> {
         let request = self.create_chat_request(arguments)?;
@@ -112,7 +86,12 @@ impl TCompletionClient for ChatCompletionClient {
         Ok(())
     }
 }
-const PROMPT_SALT: &str = "";
+pub(crate) trait TChat {
+    fn create_chat_request(
+        &self,
+        arguments: LanguageServiceServiceArguments,
+    ) -> Result<CreateChatCompletionRequest, LlmServiceError>;
+}
 impl TChat for ChatCompletionClient {
     fn create_chat_request(
         &self,

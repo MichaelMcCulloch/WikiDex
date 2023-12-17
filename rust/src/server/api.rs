@@ -7,7 +7,7 @@ use std::sync::Arc;
 use utoipa::OpenApi;
 
 use crate::{
-    inference::{Engine, QueryEngine, QueryEngineError},
+    inference::{Engine, QueryEngineError},
     server::client::Client,
 };
 

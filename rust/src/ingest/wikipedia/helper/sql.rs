@@ -5,9 +5,9 @@ use super::{
 };
 use crate::{
     ingest::wikipedia::IngestError,
-    openai::{EmbedService, OpenAiDelegate},
+    openai::OpenAiDelegate,
 };
-use chrono::NaiveDateTime;
+use chrono::NaiveDateTime; 
 use indicatif::ProgressBar;
 use sqlx::{SqliteConnection, SqlitePool}; 
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
@@ -199,7 +199,8 @@ pub(crate) async fn populate_vectorstore_db(
             "SELECT text FROM document WHERE id == ?1;",index
         )
         .fetch_one(&mut *connection)
-        .await .map_err(Sqlite)?;
+        .await
+        .map_err(Sqlite)?; 
 
         let bytes = row.text;
         let document = decompress_text(bytes).map_err(IoError)?;
