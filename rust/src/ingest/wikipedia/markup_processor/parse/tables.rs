@@ -400,7 +400,7 @@ mod tests_table_cell_to_string {
         let row_content_text = "row_content_text";
         let cell_attribute_text = "cell_attribute_text";
 
-        let table_attribute = Node::Text {
+        let _table_attribute = Node::Text {
             value: table_attribute_text,
             end: 0,
             start: 0,

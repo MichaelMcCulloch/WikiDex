@@ -159,7 +159,7 @@ mod tests_node_to_string {
 
         let document_text = SUPREME_COURT_VOL_129;
 
-        let parse = configuration.parse(&document_text).nodes;
+        let parse = configuration.parse(document_text).nodes;
         let regex = Regexes::new();
 
         let process = process_to_article(&parse, &regex).unwrap();
