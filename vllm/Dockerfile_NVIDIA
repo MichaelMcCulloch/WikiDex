@@ -8,17 +8,12 @@ ARG TORCH_CUDA_ARCH_LIST
 RUN --mount=type=cache,target=/root/.cache/pip,rw \
     python3 -m venv /venv && \
     . /venv/bin/activate && \
-    pip3 install --upgrade pip wheel setuptools packaging && \
-    pip3 install torch numpy && \
-    pip3 install bitsnbytes && \
-    MAX_JOBS=6 pip3 install git+https://github.com/vllm-project/vllm.git@main 
-
+    pip3 install --upgrade pip wheel setuptools packaging torch numpy bitsnbytes git+https://github.com/vllm-project/vllm.git@main 
 
 ARG LLM_MODEL_NAME
 
 ENV MODEL_REPO=https://huggingface.co/$LLM_MODEL_NAME
 ENV MODEL_PATH=/root/.cache/git/$LLM_MODEL_NAME
-
 
 RUN --mount=type=cache,target=/root/.cache/git,rw \
     if ! cd $MODEL_PATH; then (git lfs install; git clone $MODEL_REPO $MODEL_PATH); fi
