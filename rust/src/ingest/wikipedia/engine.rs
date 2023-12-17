@@ -19,7 +19,7 @@ const PCA_DIMENSIONS: usize = 128;
 const MINIMUM_PASSAGE_LENGTH_IN_WORDS: usize = 15;
 
 pub(crate) struct Engine {
-    openai: OpenAiDelegate,
+    openai: Arc<OpenAiDelegate>,
     markup_processor: WikiMarkupProcessor,
     text_splitter: RecursiveCharacterTextSplitter<'static>,
     multi_progress: MultiProgress,
@@ -35,7 +35,7 @@ impl Engine {
         let markup_processor = WikiMarkupProcessor::new();
 
         Self {
-            openai,
+            openai: Arc::new(openai),
             markup_processor,
             multi_progress,
             text_splitter: RecursiveCharacterTextSplitter::new(
@@ -127,7 +127,8 @@ impl Engine {
             h::sql::write_vectorstore(rx, tmp_vector_pool_clone, create_vectors_bar_clone).await
         });
 
-        h::sql::populate_vectorstore_db(&self.openai, &docstore_pool, document_count, tx).await?;
+        h::sql::populate_vectorstore_db(self.openai.clone(), &docstore_pool, document_count, tx)
+            .await?;
         h::sql::write_completion_timestamp(tmp_vector_pool, document_count).await?;
         create_vectors_bar.set_message("Writing vectorstore to DB...DONE");
 

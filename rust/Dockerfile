@@ -6,7 +6,9 @@ RUN \
     rm -rf /var/lib/apt/lists/*
 WORKDIR /usr/src/omnipedia
 COPY ./Cargo.toml ./Cargo.toml
+COPY ./sqlite_dummy.db ./sqlite_dummy.db
 COPY ./src ./src
+ARG DATABASE_URL="sqlite://sqlite_dummy.db"
 RUN  \
     --mount=type=cache,target=/usr/src/omnipedia/target,sharing=locked,rw cargo install --path . --root ./build
 
@@ -17,6 +19,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update  &
     rm -rf /var/lib/apt/lists/*
 COPY --from=builder /usr/src/omnipedia/build/bin/omnipedia /usr/local/bin/omnipedia
 
+COPY ./sqlite_dummy.db ./sqlite_dummy.db
 
 CMD omnipedia \
     server \

@@ -5,7 +5,7 @@ use super::{
 };
 use crate::{
     ingest::wikipedia::IngestError,
-    openai::OpenAiDelegate,
+    openai::{OpenAiDelegate, self},
 };
 use chrono::NaiveDateTime; 
 use indicatif::ProgressBar;
@@ -185,29 +185,35 @@ pub(crate) async fn write_vectorstore(
     Ok(())
 }
 pub(crate) async fn populate_vectorstore_db(
-    openai: &OpenAiDelegate,
+    openai: Arc<OpenAiDelegate>,
     pool: &SqlitePool,
     document_count: i64,
     tx: UnboundedSender<(i64, Vec<f32>)>,
 ) -> Result<(), IngestError> {
-    let mut connection = pool.acquire().await.map_err(Sqlite)?;
+    
+
+    let openai = Arc::new(openai);
 
     for index in 0..document_count {
         let tx = tx.clone();
+        let openai = openai.clone();
+        let mut connection = pool.acquire().await.map_err(Sqlite)?;
+        actix_web::rt::spawn(async move {
+            let row = sqlx::query!(
+                "SELECT text FROM document WHERE id == ?1;",index
+            )
+            .fetch_one(&mut *connection)
+            .await
+            .map_err(Sqlite)?; 
 
-        let row = sqlx::query!(
-            "SELECT text FROM document WHERE id == ?1;",index
-        )
-        .fetch_one(&mut *connection)
-        .await
-        .map_err(Sqlite)?; 
+            let bytes = row.text;
+            let document = decompress_text(bytes).map_err(IoError)?;
 
-        let bytes = row.text;
-        let document = decompress_text(bytes).map_err(IoError)?;
-
- 
-        let embedding = openai.embed(&document).await.map_err(EmbeddingServiceError)?;
-        let _ = tx.send((index, embedding));
+    
+            let embedding = openai.embed(&document).await.map_err(EmbeddingServiceError)?;
+            let _ = tx.send((index, embedding));
+            Ok::<(), IngestError>(())
+        });
     }
 
     Ok(())
