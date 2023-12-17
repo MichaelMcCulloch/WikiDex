@@ -26,7 +26,7 @@ CMD omnipedia \
     --index "${INDEX_PATH}" \
     --docstore "${DOCSTORE_PATH}" \
     --llm-url "http://vllm-nv:${VLLM_CONT_PORT}/v1" \
-    --language-model-name "${LLM_MODEL_NAME}/" \
+    --language-model-name "${LLM_MODEL_NAME}" \
     --language-model-kind "${MODEL_KIND}" \
     --embed-url "http://infinity-nv:${EMBED_CONT_PORT}/v1" \
     --embed-model-name "${SBERT_MODEL_NAME}" \
