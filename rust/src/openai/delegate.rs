@@ -64,7 +64,6 @@ impl LlmService for OpenAiDelegate {
                 });
             }
         });
-        self.llm_client.stream_response(arguments, tx_s).await?;
-        todo!()
+        self.llm_client.stream_response(arguments, tx_s).await
     }
 }

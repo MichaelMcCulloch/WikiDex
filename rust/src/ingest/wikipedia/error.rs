@@ -16,10 +16,9 @@ use super::markup_processor::WikiMarkupProcessingError;
 pub(crate) enum IngestError {
     XmlNotFound(PathBuf),
     IoError(io::Error),
-    OutputDirectoryNotFound(PathBuf),
-    R2D2Error(r2d2::Error),
+    DirectoryNotFound(PathBuf),
+    Sqlite(sqlx::Error),
     XmlDateReadError,
-    RuSqliteError(r2d2_sqlite::rusqlite::Error),
     LlmServiceError(LlmServiceError),
     EmbeddingServiceError(EmbeddingServiceError),
     Timeout(String),
@@ -36,20 +35,13 @@ impl Display for IngestError {
             IngestError::XmlNotFound(path) => {
                 write!(f, "IngestEngine: Input XML '{}' not found", path.display())
             }
-            IngestError::OutputDirectoryNotFound(path) => {
-                write!(
-                    f,
-                    "IngestEngine: Output directory '{}' not found",
-                    path.display()
-                )
+            IngestError::DirectoryNotFound(path) => {
+                write!(f, "IngestEngine: Directory '{}' not found", path.display())
             }
             IngestError::IoError(error) => {
                 write!(f, "IngestEngine: IO Error: {error}",)
             }
-            IngestError::R2D2Error(error) => {
-                write!(f, "IngestEngine: Sqlite Error: {error}",)
-            }
-            IngestError::RuSqliteError(error) => {
+            IngestError::Sqlite(error) => {
                 write!(f, "IngestEngine: Sqlite Error: {error}",)
             }
             IngestError::XmlDateReadError => {

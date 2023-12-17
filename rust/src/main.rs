@@ -81,6 +81,7 @@ fn main() -> anyhow::Result<()> {
                 .unwrap();
 
             let config = config::ingest::Config::from(ingest_args);
+            let system_runner = rt::System::new();
 
             log::info!("\n{config}");
 
@@ -88,13 +89,14 @@ fn main() -> anyhow::Result<()> {
                 OpenAiDelegateBuilderArgument::Endpoint(config.embed_url, "".to_string()),
             );
             let openai = openai_builder.with_completion(OpenAiDelegateBuilderArgument::Endpoint(
-                Url::parse("input").unwrap(),
+                Url::parse("").unwrap(),
                 "".to_string(),
             ));
 
             let engine = WikipediaIngestEngine::new(openai, multi_progress, 1024, 128);
-
-            engine.ingest_wikipedia(&config.wiki_xml, &config.output_directory)?;
+            system_runner
+                .block_on(engine.ingest_wikipedia(&config.wiki_xml, &config.output_directory))
+                .map_err(anyhow::Error::from)?;
             Ok(())
         }
     }

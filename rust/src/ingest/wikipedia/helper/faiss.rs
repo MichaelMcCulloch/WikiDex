@@ -11,17 +11,22 @@ use crate::{
 
 pub(crate) fn populate_vectorestore_index<P: AsRef<Path>>(
     index_path: &P,
-    vector_embeddings: Vec<f32>,
+    vector_embeddings: Vec<Vec<f32>>,
     pca_dimensions: usize,
 ) -> Result<(), IngestError> {
+    let vector_contiguous = vector_embeddings
+        .into_iter()
+        .flat_map(|f| f)
+        .collect::<Vec<_>>();
+
     let mut index = index_factory(384, format!("PCA{pca_dimensions},Flat"), MetricType::L2)
         .map_err(FaissError)?;
 
     log::info!("Training Vectorstore. Takes up to 10 minutes...");
-    index.train(&vector_embeddings).map_err(FaissError)?;
+    index.train(&vector_contiguous).map_err(FaissError)?;
 
     log::info!("Adding vectors to vectorstore. Takes up to an hour...");
-    index.add(&vector_embeddings).map_err(FaissError)?;
+    index.add(&vector_contiguous).map_err(FaissError)?;
 
     log::info!("Writing vectorstore to disk. Please wait...");
     faiss::write_index(
@@ -30,7 +35,7 @@ pub(crate) fn populate_vectorestore_index<P: AsRef<Path>>(
             .as_ref()
             .to_path_buf()
             .to_str()
-            .ok_or(IngestError::OutputDirectoryNotFound(
+            .ok_or(IngestError::DirectoryNotFound(
                 index_path.as_ref().to_path_buf(),
             ))?,
     )
