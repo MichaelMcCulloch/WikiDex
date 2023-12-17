@@ -23,7 +23,6 @@ use clap::Parser;
 use docstore::SqliteDocstore;
 use indicatif::MultiProgress;
 use indicatif_log_bridge::LogWrapper;
-use ingest::wikipedia::Ingest;
 use server::run_server;
 use std::sync::Mutex;
 use url::Url;
@@ -50,7 +49,7 @@ fn main() -> anyhow::Result<()> {
 
             let openai = match config.language_model_kind {
                 ModelKind::Instruct => {
-                    openai_builder.with_completion(OpenAiDelegateBuilderArgument::Endpoint(
+                    openai_builder.with_instruct(OpenAiDelegateBuilderArgument::Endpoint(
                         config.llm_url,
                         config.language_model_name.to_str().unwrap().to_string(),
                     ))
@@ -81,20 +80,22 @@ fn main() -> anyhow::Result<()> {
                 .unwrap();
 
             let config = config::ingest::Config::from(ingest_args);
+            let system_runner = rt::System::new();
 
             log::info!("\n{config}");
 
             let openai_builder = OpenAiDelegateBuilder::with_embedding(
                 OpenAiDelegateBuilderArgument::Endpoint(config.embed_url, "".to_string()),
             );
-            let openai = openai_builder.with_completion(OpenAiDelegateBuilderArgument::Endpoint(
-                Url::parse("input").unwrap(),
+            let openai = openai_builder.with_instruct(OpenAiDelegateBuilderArgument::Endpoint(
+                Url::parse("").unwrap(),
                 "".to_string(),
             ));
 
             let engine = WikipediaIngestEngine::new(openai, multi_progress, 1024, 128);
-
-            engine.ingest_wikipedia(&config.wiki_xml, &config.output_directory)?;
+            system_runner
+                .block_on(engine.ingest_wikipedia(&config.wiki_xml, &config.output_directory))
+                .map_err(anyhow::Error::from)?;
             Ok(())
         }
     }

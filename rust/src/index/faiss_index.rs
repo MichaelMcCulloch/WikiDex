@@ -24,9 +24,9 @@ impl FaissIndex {
         }
 
         let index = faiss::read_index(index_path.to_str().expect("Index path is not a string"))
-            .map_err(|e| IndexError::IndexReadError(e))?
+            .map_err(IndexError::IndexReadError)?
             .into_pre_transform()
-            .map_err(|e| IndexError::IndexFormatError(e))?;
+            .map_err(IndexError::IndexFormatError)?;
 
         let dims = Index::d(&index);
 
@@ -47,13 +47,13 @@ impl SearchService for FaissIndex {
         let flattened_query: Vec<f32> = query
             .iter()
             .all(|q| q.len() == self.dims as usize)
-            .then(|| query.into_iter().flatten().map(|f| *f).collect())
+            .then(|| query.iter().flatten().copied().collect())
             .ok_or(IndexSearchError::IncorrectDimensions)?;
 
         let rs = self
             .index
             .search(&flattened_query, neighbors)
-            .map_err(|d| IndexSearchError::IndexSearchError(d))?;
+            .map_err(IndexSearchError::IndexSearchError)?;
         let x: Vec<i64> = rs.labels.iter().map(|i| i.to_native()).collect();
         let indices = x.chunks_exact(neighbors).map(|v| v.to_vec()).collect();
         log::debug!("Index {:?}", start.elapsed());
@@ -64,8 +64,8 @@ impl SearchService for FaissIndex {
         let start = Instant::now();
         let rs = self
             .index
-            .search(&query, neighbors)
-            .map_err(|d| IndexSearchError::IndexSearchError(d))?;
+            .search(query, neighbors)
+            .map_err(IndexSearchError::IndexSearchError)?;
         let indices: Vec<i64> = rs.labels.iter().map(|i| i.to_native()).collect();
         log::debug!("Index {:?}", start.elapsed());
         Ok(indices)

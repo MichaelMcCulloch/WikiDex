@@ -4,7 +4,7 @@ use flate2::read::GzDecoder;
 use sqlx::{sqlite::SqlitePool, Row};
 use std::{io::Read, path::Path};
 
-use super::{DocstoreLoadError, DocstoreRetrieveError, DocumentService};
+use super::{DocstoreLoadError, DocstoreRetrieveError};
 pub struct SqliteDocstore {
     pool: SqlitePool,
 }
@@ -16,7 +16,7 @@ impl SqliteDocstore {
             return Err(DocstoreLoadError::FileNotFound);
         }
         let pool = SqlitePool::connect(
-            &docstore_path
+            docstore_path
                 .to_str()
                 .expect("Docstore path is not a string"),
         )
@@ -26,17 +26,13 @@ impl SqliteDocstore {
     }
 }
 
-#[async_trait::async_trait]
-impl DocumentService for SqliteDocstore {
-    type E = DocstoreRetrieveError;
-    type R = Vec<(usize, String, Provenance)>;
-    async fn retreive_batch(&self, indices: &Vec<Vec<i64>>) -> Result<Vec<Self::R>, Self::E> {
+impl SqliteDocstore {
+    async fn retreive_batch(
+        &self,
+        indices: &Vec<Vec<i64>>,
+    ) -> Result<Vec<Vec<(usize, String, Provenance)>>, DocstoreRetrieveError> {
         let start = std::time::Instant::now();
-        let flattened_indices = indices
-            .into_iter()
-            .flatten()
-            .map(|i| *i)
-            .collect::<Vec<i64>>();
+        let flattened_indices = indices.iter().flatten().copied().collect::<Vec<i64>>();
 
         // build dynamic query statement
         let ids = flattened_indices
@@ -51,7 +47,7 @@ impl DocumentService for SqliteDocstore {
         let docs_rows = sqlx::query(&query)
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| DocstoreRetrieveError::SqlxError(e))?;
+            .map_err(DocstoreRetrieveError::SqlxError)?;
 
         let docs = docs_rows
             .into_iter()
@@ -85,7 +81,7 @@ impl DocumentService for SqliteDocstore {
                     .enumerate()
                     .filter_map(|(array_index, docstore_index)| {
                         let (_, doc_text, document_provenance) =
-                            docs.iter().filter(|d| d.0 == *docstore_index).next()?;
+                            docs.iter().find(|d| d.0 == *docstore_index)?;
                         Some((
                             array_index + 1,
                             doc_text.clone(),
@@ -102,7 +98,10 @@ impl DocumentService for SqliteDocstore {
         Ok(result)
     }
 
-    async fn retreive(&self, indices: &Vec<i64>) -> Result<Self::R, Self::E> {
+    pub(crate) async fn retreive(
+        &self,
+        indices: &Vec<i64>,
+    ) -> Result<Vec<(usize, String, Provenance)>, DocstoreRetrieveError> {
         let start = std::time::Instant::now();
 
         // build dynamic query statement
@@ -148,7 +147,7 @@ impl DocumentService for SqliteDocstore {
             .enumerate()
             .filter_map(|(array_index, docstore_index)| {
                 let (_, doc_text, document_provenance) =
-                    docs.iter().filter(|d| d.0 == *docstore_index).next()?;
+                    docs.iter().find(|d| d.0 == *docstore_index)?;
                 Some((
                     array_index + 1,
                     doc_text.clone(),

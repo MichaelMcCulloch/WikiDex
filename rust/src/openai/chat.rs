@@ -1,9 +1,4 @@
-use super::{
-    delegate::LanguageServiceServiceArguments,
-    error::LlmServiceError,
-    protocol::{LlmMessage, LlmRole, PartialLlmMessage},
-    service::TCompletionClient,
-};
+use super::{delegate::LanguageServiceServiceArguments, error::LlmServiceError, protocol::LlmRole};
 use async_openai::{
     config::OpenAIConfig,
     types::{
@@ -14,48 +9,27 @@ use async_openai::{
     Client,
 };
 use futures::StreamExt;
-use std::error::Error;
 use tokio::sync::mpsc::UnboundedSender;
+const PROMPT_SALT: &str = "";
 
-#[async_trait::async_trait]
-pub(crate) trait ChatService {
-    type E: Error;
-    async fn answer(
-        &self,
-        arguments: LanguageServiceServiceArguments<'async_trait>,
-    ) -> Result<LlmMessage, Self::E>;
-    async fn stream_answer(
-        &self,
-        arguments: LanguageServiceServiceArguments<'async_trait>,
-        tx: UnboundedSender<PartialLlmMessage>,
-    ) -> Result<(), Self::E>;
-}
-
-pub(crate) struct ChatCompletionClient {
+pub(crate) struct ChatClient {
     chat_client: Client<OpenAIConfig>,
     chat_model_name: String,
 }
 
-impl ChatCompletionClient {
+impl ChatClient {
     pub(super) fn new(chat_client: Client<OpenAIConfig>, chat_model_name: String) -> Self {
-        ChatCompletionClient {
+        ChatClient {
             chat_client,
             chat_model_name,
         }
     }
 }
 
-pub(crate) trait TChat {
-    fn create_chat_request(
+impl ChatClient {
+    pub(crate) async fn get_response(
         &self,
-        arguments: LanguageServiceServiceArguments,
-    ) -> Result<CreateChatCompletionRequest, LlmServiceError>;
-}
-#[async_trait::async_trait]
-impl TCompletionClient for ChatCompletionClient {
-    async fn get_response(
-        &self,
-        arguments: LanguageServiceServiceArguments<'async_trait>,
+        arguments: LanguageServiceServiceArguments<'_>,
     ) -> Result<String, LlmServiceError> {
         let request = self.create_chat_request(arguments)?;
         let response = self
@@ -63,7 +37,7 @@ impl TCompletionClient for ChatCompletionClient {
             .chat()
             .create(request)
             .await
-            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+            .map_err(LlmServiceError::AsyncOpenAiError)?;
 
         let response = response
             .choices
@@ -82,9 +56,9 @@ impl TCompletionClient for ChatCompletionClient {
         }
     }
 
-    async fn stream_response(
+    pub(crate) async fn stream_response(
         &self,
-        arguments: LanguageServiceServiceArguments<'async_trait>,
+        arguments: LanguageServiceServiceArguments<'_>,
         tx: UnboundedSender<String>,
     ) -> Result<(), LlmServiceError> {
         let request = self.create_chat_request(arguments)?;
@@ -94,7 +68,7 @@ impl TCompletionClient for ChatCompletionClient {
             .chat()
             .create_stream(request)
             .await
-            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+            .map_err(LlmServiceError::AsyncOpenAiError)?;
 
         let _ = stream.next().await;
         while let Some(Ok(fragment)) = stream.next().await {
@@ -112,8 +86,13 @@ impl TCompletionClient for ChatCompletionClient {
         Ok(())
     }
 }
-const PROMPT_SALT: &str = "";
-impl TChat for ChatCompletionClient {
+pub(crate) trait ChatRequest {
+    fn create_chat_request(
+        &self,
+        arguments: LanguageServiceServiceArguments,
+    ) -> Result<CreateChatCompletionRequest, LlmServiceError>;
+}
+impl ChatRequest for ChatClient {
     fn create_chat_request(
         &self,
         arguments: LanguageServiceServiceArguments,
@@ -122,19 +101,19 @@ impl TChat for ChatCompletionClient {
 
         let system = arguments
             .system
-            .replace("___DOCUMENT_LIST___", &arguments.documents);
+            .replace("___DOCUMENT_LIST___", arguments.documents);
 
         let system = ChatCompletionRequestSystemMessageArgs::default()
             .content(system)
             .build()
-            .map(|e| ChatCompletionRequestMessage::System(e))
-            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+            .map(ChatCompletionRequestMessage::System)
+            .map_err(LlmServiceError::AsyncOpenAiError)?;
 
         let query = ChatCompletionRequestUserMessageArgs::default()
             .content(query)
             .build()
-            .map(|e| ChatCompletionRequestMessage::User(e))
-            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+            .map(ChatCompletionRequestMessage::User)
+            .map_err(LlmServiceError::AsyncOpenAiError)?;
 
         let message_openai_compat = vec![system, query];
 
@@ -144,7 +123,7 @@ impl TChat for ChatCompletionClient {
             .messages(message_openai_compat)
             .stop("References:")
             .build()
-            .map_err(|e| LlmServiceError::AsyncOpenAiError(e))?;
+            .map_err(LlmServiceError::AsyncOpenAiError)?;
 
         Ok(request)
     }

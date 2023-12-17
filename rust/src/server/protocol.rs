@@ -55,9 +55,8 @@ impl PartialMessage {
 
     pub(crate) fn message(self) -> Bytes {
         let message_string = &serde_json::to_string(&self).unwrap();
-        let message_bytes =
-            Bytes::from(["event: message\ndata: ", message_string, "\n\n"].concat());
-        message_bytes
+        
+        Bytes::from(["event: message\ndata: ", message_string, "\n\n"].concat())
     }
 }
 

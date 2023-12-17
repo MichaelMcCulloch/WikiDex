@@ -13,4 +13,5 @@ ENV MODEL_PATH="/root/.cache/git/$SBERT_MODEL_NAME"
 RUN git lfs install
 RUN git clone "$MODEL_REPO" "$MODEL_PATH"
 
-ENTRYPOINT  infinity_emb --model-name-or-path $MODEL_PATH --port $EMBED_CONT_PORT 
+ENTRYPOINT  infinity_emb --model-name-or-path $MODEL_PATH --port $EMBED_CONT_PORT --device cuda
+# ENTRYPOINT  infinity_emb --help

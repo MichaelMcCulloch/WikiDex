@@ -7,7 +7,7 @@ use std::sync::Arc;
 use utoipa::OpenApi;
 
 use crate::{
-    inference::{Engine, QueryEngine, QueryEngineError},
+    inference::{Engine, QueryEngineError},
     server::client::Client,
 };
 
@@ -46,14 +46,12 @@ async fn query(
                 QueryEngineError::LastMessageIsNotUser | QueryEngineError::EmptyConversation => {
                     HttpResponse::BadRequest().into()
                 }
-                QueryEngineError::IndexOutOfRange
-                | QueryEngineError::InvalidAgentResponse
+                QueryEngineError::InvalidAgentResponse
                 | QueryEngineError::UnableToLockIndex
                 | QueryEngineError::LlmError(_)
                 | QueryEngineError::IndexError(_)
                 | QueryEngineError::DocstoreError(_)
-                | QueryEngineError::EmbeddingServiceError(_)
-                | QueryEngineError::LlmServiceError(_) => {
+                | QueryEngineError::EmbeddingServiceError(_) => {
                     HttpResponse::InternalServerError().into()
                 }
             }
@@ -83,14 +81,12 @@ async fn conversation(
                 QueryEngineError::LastMessageIsNotUser | QueryEngineError::EmptyConversation => {
                     HttpResponse::BadRequest().into()
                 }
-                QueryEngineError::IndexOutOfRange
-                | QueryEngineError::InvalidAgentResponse
+                QueryEngineError::InvalidAgentResponse
                 | QueryEngineError::UnableToLockIndex
                 | QueryEngineError::LlmError(_)
                 | QueryEngineError::IndexError(_)
                 | QueryEngineError::DocstoreError(_)
-                | QueryEngineError::EmbeddingServiceError(_)
-                | QueryEngineError::LlmServiceError(_) => {
+                | QueryEngineError::EmbeddingServiceError(_) => {
                     HttpResponse::InternalServerError().into()
                 }
             }

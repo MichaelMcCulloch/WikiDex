@@ -2,8 +2,10 @@ use async_openai::{config::OpenAIConfig, Client};
 use url::Url;
 
 use super::{
-    chat::ChatCompletionClient, completion::CompletionClient, delegate::OpenAiDelegate,
-    embedding::EmbeddingClient, service::ECompletionClient,
+    chat::ChatClient,
+    delegate::{LlmClient, OpenAiDelegate},
+    embedding::EmbeddingClient,
+    instruct::InstructClient,
 };
 
 pub(crate) enum OpenAiDelegateBuilderArgument {
@@ -11,9 +13,9 @@ pub(crate) enum OpenAiDelegateBuilderArgument {
     OpenAiApi(String, String),
 }
 
-impl Into<(Client<OpenAIConfig>, String)> for OpenAiDelegateBuilderArgument {
-    fn into(self) -> (Client<OpenAIConfig>, String) {
-        let (openai_config, model_name) = match self {
+impl From<OpenAiDelegateBuilderArgument> for (Client<OpenAIConfig>, String) {
+    fn from(val: OpenAiDelegateBuilderArgument) -> Self {
+        let (openai_config, model_name) = match val {
             OpenAiDelegateBuilderArgument::Endpoint(url, name) => {
                 (OpenAIConfig::new().with_api_base(url), name)
             }
@@ -36,9 +38,9 @@ pub(crate) struct OpenAiDelegateBuilderWithChat {
     chat_client: Client<OpenAIConfig>,
     chat_model_name: String,
 }
-pub(crate) struct OpenAiDelegateBuilderWithCompletion {
-    completion_client: Client<OpenAIConfig>,
-    completion_model_name: String,
+pub(crate) struct OpenAiDelegateBuilderWithInstruct {
+    instruct_client: Client<OpenAIConfig>,
+    instruct_model_name: String,
 }
 
 impl OpenAiDelegateBuilderWithEmbedding {
@@ -49,21 +51,18 @@ impl OpenAiDelegateBuilderWithEmbedding {
         } = self;
         let (chat_client, chat_model_name) = endpoint.into();
         OpenAiDelegate::new(
-            ECompletionClient::Chat(ChatCompletionClient::new(chat_client, chat_model_name)),
+            LlmClient::Chat(ChatClient::new(chat_client, chat_model_name)),
             EmbeddingClient::new(embedding_client, embedding_model_name),
         )
     }
-    pub(crate) fn with_completion(self, endpoint: OpenAiDelegateBuilderArgument) -> OpenAiDelegate {
+    pub(crate) fn with_instruct(self, endpoint: OpenAiDelegateBuilderArgument) -> OpenAiDelegate {
         let OpenAiDelegateBuilderWithEmbedding {
             embedding_client,
             embedding_model_name,
         } = self;
-        let (completion_client, completion_model_name) = endpoint.into();
+        let (instruct_client, instruct_model_name) = endpoint.into();
         OpenAiDelegate::new(
-            ECompletionClient::Completion(CompletionClient::new(
-                completion_client,
-                completion_model_name,
-            )),
+            LlmClient::Instruct(InstructClient::new(instruct_client, instruct_model_name)),
             EmbeddingClient::new(embedding_client, embedding_model_name),
         )
     }
@@ -78,24 +77,21 @@ impl OpenAiDelegateBuilderWithChat {
         let (embedding_client, embedding_model_name) = endpoint.into();
 
         OpenAiDelegate::new(
-            ECompletionClient::Chat(ChatCompletionClient::new(chat_client, chat_model_name)),
+            LlmClient::Chat(ChatClient::new(chat_client, chat_model_name)),
             EmbeddingClient::new(embedding_client, embedding_model_name),
         )
     }
 }
-impl OpenAiDelegateBuilderWithCompletion {
+impl OpenAiDelegateBuilderWithInstruct {
     pub(crate) fn with_embedding(self, endpoint: OpenAiDelegateBuilderArgument) -> OpenAiDelegate {
-        let OpenAiDelegateBuilderWithCompletion {
-            completion_client,
-            completion_model_name,
+        let OpenAiDelegateBuilderWithInstruct {
+            instruct_client,
+            instruct_model_name,
         } = self;
         let (embedding_client, embedding_model_name) = endpoint.into();
 
         OpenAiDelegate::new(
-            ECompletionClient::Completion(CompletionClient::new(
-                completion_client,
-                completion_model_name,
-            )),
+            LlmClient::Instruct(InstructClient::new(instruct_client, instruct_model_name)),
             EmbeddingClient::new(embedding_client, embedding_model_name),
         )
     }
@@ -122,14 +118,14 @@ impl OpenAiDelegateBuilder {
             chat_model_name,
         }
     }
-    pub(crate) fn with_completion(
+    pub(crate) fn with_instruct(
         endpoint: OpenAiDelegateBuilderArgument,
-    ) -> OpenAiDelegateBuilderWithCompletion {
-        let (completion_client, completion_model_name) = endpoint.into();
+    ) -> OpenAiDelegateBuilderWithInstruct {
+        let (instruct_client, instruct_model_name) = endpoint.into();
 
-        OpenAiDelegateBuilderWithCompletion {
-            completion_client,
-            completion_model_name,
+        OpenAiDelegateBuilderWithInstruct {
+            instruct_client,
+            instruct_model_name,
         }
     }
 }

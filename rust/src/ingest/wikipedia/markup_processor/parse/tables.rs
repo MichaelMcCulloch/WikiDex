@@ -32,7 +32,7 @@ pub(super) fn table_captions_to_string(
     regexes: &Regexes,
 ) -> Result<Option<String>, WikiMarkupProcessingError> {
     if table_captions.is_empty() {
-        return Ok(None);
+        Ok(None)
     } else {
         let mut documents = vec![];
         for tc in table_captions.iter() {
@@ -63,7 +63,7 @@ pub(super) fn table_cells_to_string(
     regexes: &Regexes,
 ) -> Result<Option<String>, WikiMarkupProcessingError> {
     if table_cells.is_empty() {
-        return Ok(None);
+        Ok(None)
     } else {
         let tag = match table_cells.first().unwrap().type_ {
             TableCellType::Heading => "||",
@@ -121,7 +121,7 @@ mod tests_table_cell_to_string {
 
     use super::*;
     #[test]
-    fn table_cell_to_string__ordinary__text() {
+    fn table_cell_to_string_ordinary_text() {
         let cell_attribute_text = "cell_attribute_text";
         let cell_content_text = "cell_content_text";
         let cell_attribute = Node::Text {
@@ -148,7 +148,7 @@ mod tests_table_cell_to_string {
         assert_eq!(format!("{cell_content_text}"), extraction)
     }
     #[test]
-    fn table_cell_to_string__heading__text() {
+    fn table_cell_to_string_heading_text() {
         let cell_attribute_text = "cell_attribute_text";
         let cell_content_text = "cell_content_text";
         let cell_attribute = Node::Text {
@@ -174,16 +174,9 @@ mod tests_table_cell_to_string {
         let extraction = table_cell_to_string(&input, &regex).unwrap();
         assert_eq!(format!("{cell_content_text}"), extraction)
     }
-}
 
-#[cfg(test)]
-mod tests_table_cells_to_string {
-
-    use parse_wiki_text::Node;
-
-    use super::*;
     #[test]
-    fn table_cells_to_string__ordinary__text() {
+    fn table_cells_to_string_ordinary_text() {
         let cell_attribute_text = "cell_attribute_text";
         let cell_content_text = "cell_content_text";
         let cell_attribute = Node::Text {
@@ -232,7 +225,7 @@ mod tests_table_cells_to_string {
         )
     }
     #[test]
-    fn table_cells_to_string__heading__text() {
+    fn table_cells_to_string_heading_text() {
         let cell_attribute_text = "cell_attribute_text";
         let cell_content_text = "cell_content_text";
         let cell_attribute = Node::Text {
@@ -280,17 +273,9 @@ mod tests_table_cells_to_string {
             extraction
         )
     }
-}
-
-#[cfg(test)]
-mod tests_table_row_to_string {
-
-    use parse_wiki_text::Node;
-
-    use super::*;
 
     #[test]
-    fn table_row_to_string__text__text() {
+    fn table_row_to_string_text_text() {
         let row_attribute_text = "row_attribute_text";
         let cell_attribute_text = "cell_attribute_text";
         let cell_content_text = "cell_content_text";
@@ -330,17 +315,9 @@ mod tests_table_row_to_string {
         let extraction = table_row_to_string(&input, &regex).unwrap();
         assert_eq!(format!("||{cell_content_text}||"), extraction)
     }
-}
-
-#[cfg(test)]
-mod tests_table_rows_to_string {
-
-    use parse_wiki_text::Node;
-
-    use super::*;
 
     #[test]
-    fn table_rows_to_string__text__text() {
+    fn table_rows_to_string_text_text() {
         let row_attribute_text = "row_attribute_text";
         let cell_attribute_text = "cell_attribute_text";
         let cell_content_text = "cell_content_text";
@@ -413,14 +390,9 @@ mod tests_table_rows_to_string {
             extraction
         )
     }
-}
 
-mod tests_table_to_string {
-
-    use super::*;
-    use parse_wiki_text::Node;
     #[test]
-    fn node_to_string__table__text() {
+    fn node_to_string_table_text() {
         let table_attribute_text = "table_attribute_text";
         let caption_attribute_text = "caption_attribute_text";
         let caption_content_text = "caption_content_text";

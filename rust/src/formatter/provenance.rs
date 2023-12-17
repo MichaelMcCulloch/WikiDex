@@ -40,7 +40,7 @@ impl Cite for Provenance {
     fn url(&self) -> String {
         match self {
             Provenance::Wikipedia(title, _, _) => {
-                format!("https://en.wikipedia.org/wiki/{}", title.replace(" ", "_"))
+                format!("https://en.wikipedia.org/wiki/{}", title.replace(' ', "_"))
             }
         }
     }

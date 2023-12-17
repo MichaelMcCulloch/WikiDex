@@ -41,5 +41,5 @@ pub(super) fn _template_parameter_to_string(
         Some(name) => nodes_to_string(name, regexes)?,
         None => String::new(),
     };
-    Ok(vec![name, value].join(": "))
+    Ok([name, value].join(": "))
 }

@@ -1,9 +1,10 @@
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 use super::{
+    chat::ChatClient,
     embedding::EmbeddingClient,
+    instruct::InstructClient,
     protocol::{LlmMessage, PartialLlmMessage},
-    service::{ECompletionClient, EmbedService, LlmService, TCompletionClient},
     EmbeddingServiceError, LlmRole, LlmServiceError,
 };
 
@@ -13,47 +14,66 @@ pub(crate) struct LanguageServiceServiceArguments<'arg> {
     pub(crate) query: &'arg str,
     pub(crate) citation_index_begin: usize,
 }
+pub(super) enum LlmClient {
+    Chat(ChatClient),
+    Instruct(InstructClient),
+}
+
+impl LlmClient {
+    pub(crate) async fn get_response(
+        &self,
+        arguments: LanguageServiceServiceArguments<'_>,
+    ) -> Result<String, LlmServiceError> {
+        match self {
+            LlmClient::Chat(chat) => chat.get_response(arguments).await,
+            LlmClient::Instruct(instruct) => instruct.get_response(arguments).await,
+        }
+    }
+
+    pub(crate) async fn stream_response(
+        &self,
+        arguments: LanguageServiceServiceArguments<'_>,
+        tx: UnboundedSender<String>,
+    ) -> Result<(), LlmServiceError> {
+        match self {
+            LlmClient::Chat(chat) => chat.stream_response(arguments, tx).await,
+            LlmClient::Instruct(instruct) => instruct.stream_response(arguments, tx).await,
+        }
+    }
+}
 
 pub(crate) struct OpenAiDelegate {
-    llm_client: ECompletionClient,
+    llm_client: LlmClient,
     embed_client: EmbeddingClient,
 }
 
 impl OpenAiDelegate {
-    pub(super) fn new(llm_client: ECompletionClient, embed_client: EmbeddingClient) -> Self {
+    pub(super) fn new(llm_client: LlmClient, embed_client: EmbeddingClient) -> Self {
         OpenAiDelegate {
             llm_client,
             embed_client,
         }
     }
-}
 
-#[async_trait::async_trait]
-impl EmbedService for OpenAiDelegate {
-    type E = EmbeddingServiceError;
-    async fn embed(&self, query: &str) -> Result<Vec<f32>, Self::E> {
+    pub(crate) async fn embed(&self, query: &str) -> Result<Vec<f32>, EmbeddingServiceError> {
         self.embed_client.embed(query).await
     }
-}
 
-#[async_trait::async_trait]
-impl LlmService for OpenAiDelegate {
-    type E = LlmServiceError;
-    async fn get_llm_answer(
+    pub(crate) async fn get_llm_answer(
         &self,
-        arguments: LanguageServiceServiceArguments<'async_trait>,
-    ) -> Result<LlmMessage, Self::E> {
+        arguments: LanguageServiceServiceArguments<'_>,
+    ) -> Result<LlmMessage, LlmServiceError> {
         let message = self.llm_client.get_response(arguments).await?;
         Ok(LlmMessage {
             role: LlmRole::Assistant,
             content: message,
         })
     }
-    async fn stream_llm_answer(
+    pub(crate) async fn stream_llm_answer(
         &self,
-        arguments: LanguageServiceServiceArguments<'async_trait>,
+        arguments: LanguageServiceServiceArguments<'_>,
         tx: UnboundedSender<PartialLlmMessage>,
-    ) -> Result<(), Self::E> {
+    ) -> Result<(), LlmServiceError> {
         let (tx_s, mut rx_s) = unbounded_channel();
 
         actix_web::rt::spawn(async move {
@@ -64,7 +84,6 @@ impl LlmService for OpenAiDelegate {
                 });
             }
         });
-        self.llm_client.stream_response(arguments, tx_s).await?;
-        todo!()
+        self.llm_client.stream_response(arguments, tx_s).await
     }
 }

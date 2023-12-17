@@ -4,17 +4,15 @@ use bytes::Bytes;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 use crate::{
-    docstore::{DocumentService, SqliteDocstore},
+    docstore::SqliteDocstore,
     formatter::{CitationStyle, Cite, DocumentFormatter, TextFormatter},
     index::{FaissIndex, SearchService},
-    openai::{
-        EmbedService, LanguageServiceServiceArguments, LlmRole, LlmService, PartialLlmMessage,
-    },
+    openai::{LanguageServiceServiceArguments, LlmRole, PartialLlmMessage},
     openai::{LlmMessage, OpenAiDelegate},
     server::{Conversation, CountSources, Message, PartialMessage, Source},
 };
 
-use super::{QueryEngine, QueryEngineError};
+use super::QueryEngineError;
 
 pub struct Engine {
     index: Mutex<FaissIndex>,
@@ -27,19 +25,17 @@ const NUM_DOCUMENTS_TO_RETRIEVE: usize = 4;
 
 const CITATION_STYLE: CitationStyle = CitationStyle::MLA;
 
-#[async_trait::async_trait]
-impl QueryEngine for Engine {
-    type E = QueryEngineError;
-    async fn query(&self, question: &str) -> Result<String, Self::E> {
+impl Engine {
+    pub(crate) async fn query(&self, question: &str) -> Result<String, QueryEngineError> {
         let (_, formatted_documents) = self.get_documents(question, 0usize).await?;
 
         Ok(formatted_documents)
     }
 
-    async fn conversation(
+    pub(crate) async fn conversation(
         &self,
         Conversation(message_history): Conversation,
-    ) -> Result<Message, Self::E> {
+    ) -> Result<Message, QueryEngineError> {
         let num_sources = message_history.sources_count();
         match message_history.into_iter().last() {
             Some(Message::User(user_query)) => {
@@ -57,7 +53,7 @@ impl QueryEngine for Engine {
                     .openai
                     .get_llm_answer(llm_service_arguments)
                     .await
-                    .map_err(|e| QueryEngineError::LlmError(e))?;
+                    .map_err(QueryEngineError::LlmError)?;
 
                 match role {
                     LlmRole::Assistant => {
@@ -70,11 +66,11 @@ impl QueryEngine for Engine {
             None => Err(QueryEngineError::EmptyConversation)?,
         }
     }
-    async fn streaming_conversation(
+    pub(crate) async fn streaming_conversation(
         &self,
         Conversation(message_history): Conversation,
         tx: UnboundedSender<Bytes>,
-    ) -> Result<(), Self::E> {
+    ) -> Result<(), QueryEngineError> {
         let num_sources = message_history.sources_count();
         match message_history.into_iter().last() {
             Some(Message::User(user_query)) => {
@@ -106,7 +102,7 @@ impl QueryEngine for Engine {
                 self.openai
                     .stream_llm_answer(llm_service_arguments, tx_p)
                     .await
-                    .map_err(|e| QueryEngineError::LlmError(e))?;
+                    .map_err(QueryEngineError::LlmError)?;
 
                 Ok(())
             }
@@ -131,29 +127,29 @@ impl Engine {
         }
     }
 
-    async fn get_documents(
+    pub(crate) async fn get_documents(
         &self,
         user_query: &str,
         num_sources_already_in_chat: usize,
-    ) -> Result<(Vec<Source>, String), <Self as QueryEngine>::E> {
+    ) -> Result<(Vec<Source>, String), QueryEngineError> {
         let embedding = self
             .openai
-            .embed(&user_query)
+            .embed(user_query)
             .await
-            .map_err(|e| QueryEngineError::EmbeddingServiceError(e))?;
+            .map_err(QueryEngineError::EmbeddingServiceError)?;
 
         let document_indices = self
             .index
             .lock()
             .map_err(|_| QueryEngineError::UnableToLockIndex)?
             .search(&embedding, NUM_DOCUMENTS_TO_RETRIEVE)
-            .map_err(|e| QueryEngineError::IndexError(e))?;
+            .map_err(QueryEngineError::IndexError)?;
 
         let documents = self
             .docstore
             .retreive(&document_indices)
             .await
-            .map_err(|e| QueryEngineError::DocstoreError(e))?;
+            .map_err(QueryEngineError::DocstoreError)?;
 
         let formatted_documents = documents
             .iter()

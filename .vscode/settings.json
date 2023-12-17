@@ -1,0 +1,16 @@
+{
+  "rust-analyzer.server.extraEnv": {
+    "DATABASE_URL": "sqlite://sqlite_dummy.db"
+  },
+  "rust-analyzer.cargo.extraEnv": {
+    "DATABASE_URL": "sqlite://sqlite_dummy.db"
+  },
+  "rust-analyzer.runnables.extraEnv": [
+    {
+      // "mask": null, // null mask means that this rule will be applied for all runnables
+      "env": {
+        "DATABASE_URL": "sqlite://sqlite_dummy.db"
+      }
+    }
+  ]
+}
