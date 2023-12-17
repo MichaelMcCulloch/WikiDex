@@ -9,7 +9,18 @@ x-base_service: &base_service
 
 x-base_service_nvidia: &base_service_nvidia
   <<: *base_service
-  profiles: ["nvidia", "nvidia_ingest"]
+  profiles: ["nvidia"]
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            device_ids: ["0"]
+            capabilities: [gpu]
+
+x-base_ingest_service_nvidia: &base_ingest_nvidia_ingest
+  <<: *base_service
+  profiles: ["nvidia_ingest"]
   deploy:
     resources:
       reservations:
@@ -20,7 +31,7 @@ x-base_service_nvidia: &base_service_nvidia
 
 x-base_service_amd: &base_service_amd
   <<: *base_service
-  profiles: ["amd", "amd_ingest"]
+  profiles: ["amd"]
   group_add:
     - video
   devices:
@@ -57,6 +68,7 @@ services:
     <<:
       - *base_service
       - *base_ui
+    profiles: ["nvidia", "amd"]
     build:
       dockerfile: Dockerfile
       context: ./typescript
@@ -86,6 +98,16 @@ services:
   infinity-nv:
     <<:
       - *base_service_nvidia
+      - *base_infinity
+    build:
+      dockerfile: Dockerfile_NVIDIA
+      context: ./infinity
+      args:
+        SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
+
+  infinity-ingest-nv:
+    <<:
+      - *base_ingest_nvidia_ingest
       - *base_infinity
     build:
       dockerfile: Dockerfile_NVIDIA
