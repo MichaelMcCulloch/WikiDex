@@ -144,8 +144,7 @@ mod tests_node_to_string {
 
     use crate::{
         ingest::wikipedia::{
-            configurations::WIKIPEDIA_CONFIGURATION, helper::text::RecursiveCharacterTextSplitter,
-            markup_processor::parse::Regexes,
+            configurations::WIKIPEDIA_CONFIGURATION, markup_processor::parse::Regexes,
         },
         test_data::SUPREME_COURT_VOL_129,
     };

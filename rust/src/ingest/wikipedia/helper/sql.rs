@@ -1,5 +1,5 @@
 use super::{
-    super::{IngestError::*},
+    super::IngestError::*,
     gzip_helper::decompress_text,
     wiki::{CompressedPage, CompressedPageWithAccessDate, DocumentFragments},
 };

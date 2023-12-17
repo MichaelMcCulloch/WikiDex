@@ -19,7 +19,6 @@ pub(crate) enum IngestError {
     DirectoryNotFound(PathBuf),
     Sqlite(sqlx::Error),
     XmlDateReadError,
-    LlmServiceError(LlmServiceError),
     EmbeddingServiceError(EmbeddingServiceError),
     Timeout(String),
     MarkupError(WikiMarkupProcessingError),
@@ -47,7 +46,6 @@ impl Display for IngestError {
             IngestError::XmlDateReadError => {
                 write!(f, "IngestEngine: Unable to read data from XML File Name.",)
             }
-            IngestError::LlmServiceError(error) => write!(f, "{error}"),
             IngestError::EmbeddingServiceError(error) => write!(f, "{error}"),
             IngestError::Timeout(s) => {
                 write!(f, "IngestEngine: Timeout processing '{s}'")

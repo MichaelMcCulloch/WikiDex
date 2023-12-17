@@ -9,11 +9,9 @@ use crate::{
 #[derive(Debug)]
 pub(crate) enum QueryEngineError {
     DocstoreError(DocstoreRetrieveError),
-    LlmServiceError(LlmServiceError),
     EmbeddingServiceError(EmbeddingServiceError),
     EmptyConversation,
     IndexError(IndexSearchError),
-    IndexOutOfRange,
     InvalidAgentResponse,
     LastMessageIsNotUser,
     LlmError(LlmServiceError),
@@ -28,9 +26,7 @@ impl Display for QueryEngineError {
             QueryEngineError::DocstoreError(err) => {
                 write!(f, "{}", err)
             }
-            QueryEngineError::LlmServiceError(err) => {
-                write!(f, "{}", err)
-            }
+
             QueryEngineError::EmbeddingServiceError(err) => {
                 write!(f, "{}", err)
             }
@@ -39,7 +35,6 @@ impl Display for QueryEngineError {
             QueryEngineError::EmptyConversation => {
                 write!(f, "QueryEngine: Empty conversation error")
             }
-            QueryEngineError::IndexOutOfRange => write!(f, "QueryEngine: Index out of range error"),
             QueryEngineError::InvalidAgentResponse => {
                 write!(f, "QueryEngine: Invalid agent response error")
             }

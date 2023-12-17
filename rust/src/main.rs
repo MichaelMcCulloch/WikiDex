@@ -23,7 +23,6 @@ use clap::Parser;
 use docstore::SqliteDocstore;
 use indicatif::MultiProgress;
 use indicatif_log_bridge::LogWrapper;
-use ingest::wikipedia::Ingest;
 use server::run_server;
 use std::sync::Mutex;
 use url::Url;

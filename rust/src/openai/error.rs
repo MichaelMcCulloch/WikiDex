@@ -5,7 +5,6 @@ use super::protocol::LlmRole;
 #[derive(Debug)]
 pub(crate) enum LlmServiceError {
     AsyncOpenAiError(async_openai::error::OpenAIError),
-    EmbeddingSizeMismatch(usize, usize),
     EmptyResponse,
     UnexpectedRole(LlmRole),
 }
@@ -20,11 +19,6 @@ impl Display for LlmServiceError {
             LlmServiceError::UnexpectedRole(r) => {
                 write!(f, "LLMService: Unexpected role '{r}' from service.")
             }
-            LlmServiceError::EmbeddingSizeMismatch(expected, actual) => write!(
-                f,
-                "EmbeddingService: Embedding size mismatch. Expected: {}, Actual: {}",
-                expected, actual
-            ),
         }
     }
 }
