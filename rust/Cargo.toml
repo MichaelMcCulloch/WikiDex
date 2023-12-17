@@ -22,11 +22,8 @@ faiss = { git = "https://github.com/MichaelMcCulloch/faiss-rs.git", branch = "la
 ] }
 flate2 = "1.0.27"
 futures = "0.3.28"
-indicatif = "0.17.7"
-indicatif-log-bridge = "0.2.2"
 log = "0.4.20"
-parse_mediawiki_dump_reboot = "1.0.1"
-parse_wiki_text = "0.1.5"
+
 regex = "1.9.6"
 rayon = "1.8.0"
 serde = "1.0.188"
@@ -34,8 +31,14 @@ serde_json = "1.0.107"
 sqlx = { version = "0.7.2", features = ["sqlite", "runtime-tokio"] }
 tokio = { version = "1.32.0", features = ["rt", "macros"] }
 url = "2.4.1"
-utoipa = { version = "4.0.0", features = ["actix_extras"] }
-utoipa-redoc = { version = "2.0.0", features = ["actix-web"] }
+
+indicatif = { version = "0.17.7", optional = true }
+indicatif-log-bridge = { version = "0.2.2", optional = true }
+parse_mediawiki_dump_reboot = { version = "1.0.1", optional = true }
+parse_wiki_text = { version = "0.1.5", optional = true }
+
+utoipa = { version = "4.0.0", features = ["actix_extras"], optional = true }
+utoipa-redoc = { version = "2.0.0", features = ["actix-web"], optional = true }
 
 [profile.release]
 lto = true
@@ -44,3 +47,14 @@ strip = true
 [profile.test]
 opt-level = 3
 debug = 0
+
+
+[features]
+default = ["server", "ingest"]
+server = ["dep:utoipa", "dep:utoipa-redoc"]
+ingest = [
+    "dep:parse_mediawiki_dump_reboot",
+    "dep:parse_wiki_text",
+    "dep:indicatif",
+    "dep:indicatif-log-bridge",
+]

@@ -1,9 +1,7 @@
-use std::{fmt::Display, path::PathBuf};
-
-use colored::Colorize;
-use url::Url;
-
 use crate::cli_args::WikipediaIngestArgs;
+use colored::Colorize;
+use std::{fmt::Display, path::PathBuf};
+use url::Url;
 
 #[derive(Debug)]
 pub(crate) struct Config {
@@ -11,6 +9,7 @@ pub(crate) struct Config {
     pub(crate) output_directory: PathBuf,
     pub(crate) embed_url: Url,
 }
+
 impl From<WikipediaIngestArgs> for Config {
     fn from(value: WikipediaIngestArgs) -> Self {
         Config {
@@ -20,6 +19,7 @@ impl From<WikipediaIngestArgs> for Config {
         }
     }
 }
+
 impl Display for Config {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let Config {

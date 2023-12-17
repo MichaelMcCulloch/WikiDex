@@ -12,13 +12,15 @@ pub(crate) struct Cli {
     #[command(subcommand)]
     pub(crate) command: Commands,
 }
-
 #[derive(Subcommand)]
 pub(crate) enum Commands {
+    #[cfg(feature = "server")]
     Server(ServerArgs),
+    #[cfg(feature = "ingest")]
     Wikipedia(WikipediaIngestArgs),
 }
 
+#[cfg(feature = "ingest")]
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub(crate) struct WikipediaIngestArgs {
@@ -33,6 +35,7 @@ pub(crate) struct WikipediaIngestArgs {
     pub(crate) embed_model_name: PathBuf,
 }
 
+#[cfg(feature = "server")]
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 #[command(group(ArgGroup::new("endpoint").args(&["vllm_url", "openai_key"]).multiple(false).required(true)))]

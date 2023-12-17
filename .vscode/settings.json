@@ -12,5 +12,6 @@
         "DATABASE_URL": "sqlite://sqlite_dummy.db"
       }
     }
-  ]
+  ],
+  "rust-analyzer.showUnlinkedFileNotification": false
 }

@@ -1,36 +1,50 @@
 mod cli_args;
 mod config;
-mod docstore;
-mod formatter;
 mod index;
-mod inference;
-mod ingest;
 mod openai;
-mod server;
+
+use crate::{
+    cli_args::{Cli, Commands},
+    openai::{OpenAiDelegateBuilder, OpenAiDelegateBuilderArgument},
+};
+use actix_web::rt;
+use clap::Parser;
 
 #[cfg(test)]
 mod test_data;
 
-use crate::{
-    cli_args::{Cli, Commands},
-    index::FaissIndex,
-    inference::Engine as InferenceEngine,
-    ingest::wikipedia::Engine as WikipediaIngestEngine,
-    openai::{ModelKind, OpenAiDelegateBuilder, OpenAiDelegateBuilderArgument},
-};
-use actix_web::rt;
-use clap::Parser;
+#[cfg(feature = "server")]
+mod docstore;
+#[cfg(feature = "server")]
+mod formatter;
+#[cfg(feature = "server")]
+mod inference;
+#[cfg(feature = "server")]
+mod server;
+#[cfg(feature = "server")]
+use crate::{index::FaissIndex, inference::Engine as InferenceEngine, openai::ModelKind};
+#[cfg(feature = "server")]
 use docstore::SqliteDocstore;
-use indicatif::MultiProgress;
-use indicatif_log_bridge::LogWrapper;
+#[cfg(feature = "server")]
 use server::run_server;
+#[cfg(feature = "server")]
 use std::sync::Mutex;
+
+#[cfg(feature = "ingest")]
+mod ingest;
+#[cfg(feature = "ingest")]
+use crate::ingest::wikipedia::Engine as WikipediaIngestEngine;
+#[cfg(feature = "ingest")]
+use indicatif::MultiProgress;
+#[cfg(feature = "ingest")]
+use indicatif_log_bridge::LogWrapper;
+#[cfg(feature = "ingest")]
 use url::Url;
 
 fn main() -> anyhow::Result<()> {
     std::env::set_var("RUST_LOG", "info");
-
     match Cli::parse().command {
+        #[cfg(feature = "server")]
         Commands::Server(server_args) => {
             env_logger::init();
             let config = config::server::Config::from(server_args);
@@ -68,6 +82,7 @@ fn main() -> anyhow::Result<()> {
             let server = run_server(engine, config.host, config.port)?;
             system_runner.block_on(server).map_err(anyhow::Error::from)
         }
+        #[cfg(feature = "ingest")]
         Commands::Wikipedia(ingest_args) => {
             let logger =
                 env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
