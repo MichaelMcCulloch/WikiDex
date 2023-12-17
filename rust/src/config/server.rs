@@ -50,7 +50,7 @@ impl From<ServerArgs> for Config {
             language_model_name: value.language_model_name,
             language_model_kind: value.language_model_kind,
             embed_url: value.embed_url,
-            llm_url: value.vllm_url,
+            llm_url: value.llm_url,
             system_prompt: std::fs::read_to_string(value.system_prompt_path).unwrap(),
             openai_key: value.openai_key,
             embed_model_name: value.embed_model_name,

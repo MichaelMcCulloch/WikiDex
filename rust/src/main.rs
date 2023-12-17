@@ -5,6 +5,7 @@ mod openai;
 
 use crate::{
     cli_args::{Cli, Commands},
+    openai::ModelKind,
     openai::{OpenAiDelegateBuilder, OpenAiDelegateBuilderArgument},
 };
 use actix_web::rt;
@@ -22,7 +23,7 @@ mod inference;
 #[cfg(feature = "server")]
 mod server;
 #[cfg(feature = "server")]
-use crate::{index::FaissIndex, inference::Engine as InferenceEngine, openai::ModelKind};
+use crate::{index::FaissIndex, inference::Engine as InferenceEngine};
 #[cfg(feature = "server")]
 use docstore::SqliteDocstore;
 #[cfg(feature = "server")]
@@ -99,13 +100,25 @@ fn main() -> anyhow::Result<()> {
 
             log::info!("\n{config}");
 
-            let openai_builder = OpenAiDelegateBuilder::with_embedding(
-                OpenAiDelegateBuilderArgument::Endpoint(config.embed_url, "".to_string()),
-            );
-            let openai = openai_builder.with_instruct(OpenAiDelegateBuilderArgument::Endpoint(
-                Url::parse("").unwrap(),
-                "".to_string(),
-            ));
+            let openai_builder =
+                OpenAiDelegateBuilder::with_embedding(OpenAiDelegateBuilderArgument::Endpoint(
+                    config.embed_url,
+                    config.embed_model_name.to_str().unwrap().to_string(),
+                ));
+            let openai = match config.language_model_kind {
+                ModelKind::Instruct => {
+                    openai_builder.with_instruct(OpenAiDelegateBuilderArgument::Endpoint(
+                        config.llm_url,
+                        config.language_model_name.to_str().unwrap().to_string(),
+                    ))
+                }
+                ModelKind::Chat => {
+                    openai_builder.with_chat(OpenAiDelegateBuilderArgument::Endpoint(
+                        config.llm_url,
+                        config.language_model_name.to_str().unwrap().to_string(),
+                    ))
+                }
+            };
 
             let engine = WikipediaIngestEngine::new(openai, multi_progress, 1024, 128);
             system_runner

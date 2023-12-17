@@ -1,4 +1,4 @@
-use crate::cli_args::WikipediaIngestArgs;
+use crate::{cli_args::WikipediaIngestArgs, openai::ModelKind};
 use colored::Colorize;
 use std::{fmt::Display, path::PathBuf};
 use url::Url;
@@ -8,6 +8,10 @@ pub(crate) struct Config {
     pub(crate) wiki_xml: PathBuf,
     pub(crate) output_directory: PathBuf,
     pub(crate) embed_url: Url,
+    pub(crate) embed_model_name: PathBuf,
+    pub(crate) llm_url: Url,
+    pub(crate) language_model_name: PathBuf,
+    pub(crate) language_model_kind: ModelKind,
 }
 
 impl From<WikipediaIngestArgs> for Config {
@@ -16,6 +20,10 @@ impl From<WikipediaIngestArgs> for Config {
             wiki_xml: value.wiki_xml,
             output_directory: value.output_directory,
             embed_url: value.embed_url,
+            llm_url: value.llm_url,
+            language_model_name: value.language_model_name,
+            language_model_kind: value.language_model_kind,
+            embed_model_name: value.embed_model_name,
         }
     }
 }
@@ -31,7 +39,6 @@ impl Display for Config {
 
         let wiki_xml = wiki_xml.display();
         let output_directory = output_directory.display();
-
         let embed_url = embed_url.as_str().yellow();
 
         write!(
