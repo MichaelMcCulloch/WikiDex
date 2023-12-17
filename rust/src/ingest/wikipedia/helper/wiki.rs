@@ -33,21 +33,13 @@ pub(crate) fn get_date_from_xml_name<P: AsRef<Path>>(
     file_name
         .as_ref()
         .file_name()
-        .and_then(|file_name| file_name.to_str()).map(|file_name| file_name.split('-').collect::<Vec<_>>())
+        .and_then(|file_name| file_name.to_str())
+        .map(|file_name| file_name.split('-').collect::<Vec<_>>())
         .and_then(|split| split.get(date_index_from_split).cloned())
         .and_then(|date| if !date.len() == 8 { None } else { Some(date) })
-        .and_then(|date| {
-            str::parse(&date[year_range]).map(|y| (y, date))
-                .ok()
-        })
-        .and_then(|(y, date)| {
-            str::parse(&date[month_range]).map(|m| (y, m, date))
-                .ok()
-        })
-        .and_then(|(y, m, date)| {
-            str::parse(&date[day_range]).map(|d| (y, m, d))
-                .ok()
-        })
+        .and_then(|date| str::parse(&date[year_range]).map(|y| (y, date)).ok())
+        .and_then(|(y, date)| str::parse(&date[month_range]).map(|m| (y, m, date)).ok())
+        .and_then(|(y, m, date)| str::parse(&date[day_range]).map(|d| (y, m, d)).ok())
         .and_then(|(y, m, d)| {
             NaiveTime::from_num_seconds_from_midnight_opt(0, 0).map(|midnight| (y, m, d, midnight))
         })
