@@ -20,6 +20,36 @@ impl EmbeddingClient {
 }
 
 impl EmbeddingClient {
+    pub(crate) async fn embed_batch(
+        &self,
+        queries: Vec<String>,
+    ) -> Result<Vec<Vec<f32>>, EmbeddingServiceError> {
+        let request = CreateEmbeddingRequestArgs::default()
+            .model(&self.embedding_model_name)
+            .input(&queries)
+            .build()
+            .map_err(EmbeddingServiceError::AsyncOpenAiError)?;
+
+        let response = self
+            .embedding_client
+            .embeddings()
+            .create(request)
+            .await
+            .map_err(EmbeddingServiceError::AsyncOpenAiError)?;
+
+        if response.data.len() != queries.len() {
+            Err(EmbeddingServiceError::EmbeddingSizeMismatch(
+                queries.len(),
+                response.data.len(),
+            ))
+        } else {
+            Ok(response
+                .data
+                .into_iter()
+                .map(|e| e.embedding)
+                .collect::<Vec<_>>())
+        }
+    }
     pub(crate) async fn embed(&self, query: &str) -> Result<Vec<f32>, EmbeddingServiceError> {
         let request = CreateEmbeddingRequestArgs::default()
             .model(&self.embedding_model_name)

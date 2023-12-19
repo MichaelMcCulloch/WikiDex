@@ -58,6 +58,12 @@ impl OpenAiDelegate {
     pub(crate) async fn embed(&self, query: &str) -> Result<Vec<f32>, EmbeddingServiceError> {
         self.embed_client.embed(query).await
     }
+    pub(crate) async fn embed_batch(
+        &self,
+        queries: Vec<String>,
+    ) -> Result<Vec<Vec<f32>>, EmbeddingServiceError> {
+        self.embed_client.embed_batch(queries).await
+    }
 
     pub(crate) async fn get_llm_answer(
         &self,

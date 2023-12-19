@@ -116,7 +116,7 @@ impl Engine {
             .ok_or(NoRows)?;
         let create_vectors_bar =
             h::progress::new_progress_bar(&self.multi_progress, document_count as u64);
-        let (tx, rx) = unbounded_channel::<(i64, Vec<f32>)>();
+        let (tx, rx) = unbounded_channel::<Vec<(i64, Vec<f32>)>>();
 
         let tmp_vector_pool_clone = Arc::new(tmp_vector_pool.clone());
         let create_vectors_bar_clone = Arc::new(create_vectors_bar.clone());

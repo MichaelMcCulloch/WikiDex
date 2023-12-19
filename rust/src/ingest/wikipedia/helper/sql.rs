@@ -17,6 +17,8 @@ use std::{
 };
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
+const BATCH_SIZE: usize = 512;
+
 pub(crate) async fn write_completion_timestamp(
     pool: &SqlitePool,
     article_count: i64,
@@ -144,35 +146,35 @@ pub(crate) async fn populate_docstore_db(
 }
 
 pub(crate) async fn write_vectorstore(
-    mut rx: UnboundedReceiver<(i64, Vec<f32>)>,
+    mut rx: UnboundedReceiver<Vec<(i64, Vec<f32>)>>,
     pool: Arc<SqlitePool>,
     create_vectors_bar: Arc<ProgressBar>,
 ) -> Result<(), IngestError> {
     let mut connection = pool.acquire().await.map_err(Sqlite)?;
     init_temp_embedding_sqlite_pool(&mut connection).await?;
 
-    while let Some((index, embedding)) = rx.recv().await {
+    while let Some(embeddings) = rx.recv().await {
         let _rows = sqlx::query!("BEGIN;",)
             .execute(&mut *connection)
             .await
             .map_err(Sqlite)?;
+        for (index, embedding) in embeddings {
+            let mut v8: Vec<u8> = vec![];
 
-        let mut v8: Vec<u8> = vec![];
+            for e in embedding {
+                v8.write_all(&e.to_le_bytes()).map_err(IoError)?;
+            }
 
-        for e in embedding {
-            v8.write_all(&e.to_le_bytes()).map_err(IoError)?;
+            let _rows = sqlx::query!(
+                "INSERT INTO embeddings (id, gte_small) VALUES (?1, ?2)",
+                index,
+                v8
+            )
+            .execute(&mut *connection)
+            .await
+            .map_err(Sqlite)?;
+            create_vectors_bar.inc(1);
         }
-
-        let _rows = sqlx::query!(
-            "INSERT INTO embeddings (id, gte_small) VALUES (?1, ?2)",
-            index,
-            v8
-        )
-        .execute(&mut *connection)
-        .await
-        .map_err(Sqlite)?;
-
-        create_vectors_bar.inc(1);
 
         let _rows = sqlx::query!("COMMIT;",)
             .execute(&mut *connection)
@@ -185,28 +187,40 @@ pub(crate) async fn populate_vectorstore_db(
     openai: Arc<OpenAiDelegate>,
     pool: &SqlitePool,
     document_count: i64,
-    tx: UnboundedSender<(i64, Vec<f32>)>,
+    tx: UnboundedSender<Vec<(i64, Vec<f32>)>>,
 ) -> Result<(), IngestError> {
     let openai = Arc::new(openai);
 
-    for index in 0..document_count {
+    for indices in (0..document_count).step_by(BATCH_SIZE) {
         let tx = tx.clone();
         let openai = openai.clone();
         let mut connection = pool.acquire().await.map_err(Sqlite)?;
+        let start = indices;
+        let end = indices + BATCH_SIZE as i64;
+
         actix_web::rt::spawn(async move {
-            let row = sqlx::query!("SELECT text FROM document WHERE id == ?1;", index)
-                .fetch_one(&mut *connection)
-                .await
-                .map_err(Sqlite)?;
+            let texts = sqlx::query!(
+                "SELECT text FROM document WHERE id >= ?1 AND id < ?2 ORDER BY id ASC;",
+                start,
+                end
+            )
+            .map(|row| row.text)
+            .fetch_all(&mut *connection)
+            .await
+            .map_err(Sqlite)?
+            .into_iter()
+            .filter_map(|record| decompress_text(record).ok())
+            .collect::<Vec<_>>();
 
-            let bytes = row.text;
-            let document = decompress_text(bytes).map_err(IoError)?;
-
-            let embedding = openai
-                .embed(&document)
+            let embeddings = openai
+                .embed_batch(texts)
                 .await
                 .map_err(EmbeddingServiceError)?;
-            let _ = tx.send((index, embedding));
+            let _ = tx.send(
+                (indices..(indices + BATCH_SIZE as i64))
+                    .zip(embeddings)
+                    .collect::<Vec<_>>(),
+            );
             Ok::<(), IngestError>(())
         });
     }
