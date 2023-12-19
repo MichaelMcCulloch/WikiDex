@@ -1,32 +1,13 @@
-# As Builder
-FROM nvidia/cuda:12.3.1-devel-ubuntu22.04 as builder
-
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update && \
-    apt-get install --no-install-recommends -y git-lfs vim build-essential python3-dev python3-venv ninja-build && \
-    rm -rf /var/lib/apt/lists/*
-
-ARG TORCH_CUDA_ARCH_LIST
-RUN --mount=type=cache,target=/root/.cache/pip,rw \
-    python3 -m venv /venv && \
-    . /venv/bin/activate && \
-    pip install --upgrade pip wheel setuptools packaging && \
-    pip install torch numpy bitsnbytes && \
-    pip install git+https://github.com/vllm-project/vllm.git@main 
-
-# Runtime
-FROM nvidia/cuda:12.3.1-runtime-ubuntu22.04
-
-# Copy virtual environment from builder
-COPY --from=builder /venv /venv
-
-ARG LLM_MODEL_NAME
-ENV MODEL_REPO=https://huggingface.co/$LLM_MODEL_NAME
-ENV MODEL_PATH=/root/.cache/git/$LLM_MODEL_NAME
+FROM vllm/vllm-openai:latest
 
 # Install Git LFS
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update && \
     apt-get install --no-install-recommends -y git-lfs python3 && \
     rm -rf /var/lib/apt/lists/*
+
+ARG LLM_MODEL_NAME
+ENV MODEL_REPO=https://huggingface.co/$LLM_MODEL_NAME
+ENV MODEL_PATH=/root/.cache/git/$LLM_MODEL_NAME
 
 # Clone the model
 RUN --mount=type=cache,target=/root/.cache/git,rw \
@@ -35,10 +16,10 @@ RUN --mount=type=cache,target=/root/.cache/git,rw \
 # Copy model to a specific directory
 RUN mkdir -p $LLM_MODEL_NAME
 RUN --mount=type=cache,target=/root/.cache/git,rw \
-    cp -R $MODEL_PATH/* /$LLM_MODEL_NAME 
+    cp -R $MODEL_PATH/* $LLM_MODEL_NAME 
 
-CMD . /venv/bin/activate && python3 -m vllm.entrypoints.openai.api_server \
-    --disable-log-stats \
+ENTRYPOINT python3 -m vllm.entrypoints.openai.api_server \
+    # --disable-log-stats \
     --disable-log-requests \
     --gpu-memory-utilization 0.85 \
     --model $LLM_MODEL_NAME \
@@ -46,3 +27,4 @@ CMD . /venv/bin/activate && python3 -m vllm.entrypoints.openai.api_server \
     --port $VLLM_CONT_PORT \
     --dtype half \
     --max-model-len $MAX_MODEL_LEN
+
