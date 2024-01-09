@@ -28,7 +28,7 @@ pub(crate) struct WikipediaIngestArgs {
     pub(crate) wiki_xml: PathBuf,
     #[arg(short, long)]
     pub(crate) output_directory: PathBuf,
-    #[arg(short, long, default_value_t = Url::parse("http://infinity:9000/v1").unwrap())]
+    #[arg(short, long, default_value_t = Url::parse("http://infinity:9000").unwrap())]
     pub(crate) embed_url: Url,
     #[arg(short = 'm', long)]
     pub(crate) embed_model_name: PathBuf,

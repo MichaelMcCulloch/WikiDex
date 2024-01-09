@@ -28,7 +28,7 @@ CMD omnipedia \
     --llm-url "http://vllm-nv:${VLLM_CONT_PORT}/v1" \
     --language-model-name "${LLM_MODEL_NAME}" \
     --language-model-kind "${MODEL_KIND}" \
-    --embed-url "http://infinity-nv:${EMBED_CONT_PORT}/v1" \
+    --embed-url "http://infinity-nv:${EMBED_CONT_PORT}" \
     --embed-model-name "${SBERT_MODEL_NAME}" \
     --host 0.0.0.0 \
     --port "${OMNIPEDIA_CONT_PORT}" \

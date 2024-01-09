@@ -17,6 +17,10 @@ impl From<OpenAiDelegateBuilderArgument> for (Client<OpenAIConfig>, String) {
     fn from(val: OpenAiDelegateBuilderArgument) -> Self {
         let (openai_config, model_name) = match val {
             OpenAiDelegateBuilderArgument::Endpoint(url, name) => {
+                let url = match url.as_str().strip_suffix('/') {
+                    Some(url_safe) => url_safe,
+                    None => url.as_str(),
+                };
                 (OpenAIConfig::new().with_api_base(url), name)
             }
             OpenAiDelegateBuilderArgument::OpenAiApi(api_key, name) => {
