@@ -77,7 +77,7 @@ impl Display for Config {
 
         let [engine_conversation_path, engine_query_path, engine_api_doc_path, embed_url, llm_url] =
             [
-                engine_url.join("conversation").unwrap(),
+                engine_url.join("streaming_conversation").unwrap(),
                 engine_url.join("query").unwrap(),
                 engine_url.join("api-doc").unwrap(),
                 embed_url.clone(),
