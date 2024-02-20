@@ -17,7 +17,7 @@ use std::{
 };
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
-const BATCH_SIZE: usize = 512;
+const BATCH_SIZE: usize = 2048;
 
 pub(crate) async fn write_completion_timestamp(
     pool: &SqlitePool,
