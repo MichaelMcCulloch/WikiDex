@@ -38,6 +38,8 @@ pub(crate) struct WikipediaIngestArgs {
     pub(crate) language_model_name: PathBuf,
     #[arg(short = 'k', long)]
     pub(crate) language_model_kind: ModelKind,
+    #[arg(short = 'n', long, default_value_t = 0)]
+    pub(crate) limit: usize,
 }
 
 #[cfg(feature = "server")]

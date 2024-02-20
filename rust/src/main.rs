@@ -40,7 +40,6 @@ use indicatif::MultiProgress;
 #[cfg(feature = "ingest")]
 use indicatif_log_bridge::LogWrapper;
 
-
 fn main() -> anyhow::Result<()> {
     std::env::set_var("RUST_LOG", "info");
     match Cli::parse().command {
@@ -121,7 +120,11 @@ fn main() -> anyhow::Result<()> {
 
             let engine = WikipediaIngestEngine::new(openai, multi_progress, 1024, 128);
             system_runner
-                .block_on(engine.ingest_wikipedia(&config.wiki_xml, &config.output_directory))
+                .block_on(engine.ingest_wikipedia(
+                    &config.wiki_xml,
+                    &config.output_directory,
+                    config.limit,
+                ))
                 .map_err(anyhow::Error::from)?;
             Ok(())
         }

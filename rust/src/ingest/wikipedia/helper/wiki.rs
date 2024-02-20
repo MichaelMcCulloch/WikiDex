@@ -60,17 +60,32 @@ pub(crate) fn page_filter(page: &Page) -> bool {
         && !(page.text.starts_with("#REDIRECT") || page.text.starts_with("#redirect"))
 }
 
-pub(crate) fn get_eligible_pages(file: BufReader<File>, progress_bar: &ProgressBar) -> Vec<Page> {
+pub(crate) fn get_eligible_pages(
+    file: BufReader<File>,
+    progress_bar: &ProgressBar,
+    limit: usize,
+) -> Vec<Page> {
     let parse = parse_mediawiki_dump_reboot::parse(file);
     progress_bar.set_message("Getting markup from XML...");
-    let eligible_pages = parse
-        .filter_map(Result::ok)
-        .filter(page_filter)
-        .map(|page| {
-            progress_bar.inc(1);
-            page
-        })
-        .collect::<Vec<_>>();
+    let filtered_pages = parse.filter_map(Result::ok).filter(page_filter);
+
+    let eligible_pages = if limit == 0 {
+        filtered_pages
+            .map(|page| {
+                progress_bar.inc(1);
+                page
+            })
+            .collect::<Vec<_>>()
+    } else {
+        filtered_pages
+            .take(limit)
+            .map(|page| {
+                progress_bar.inc(1);
+                page
+            })
+            .collect::<Vec<_>>()
+    };
+
     progress_bar.set_message("Getting markup from XML...DONE");
     eligible_pages
 }
