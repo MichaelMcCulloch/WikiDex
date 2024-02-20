@@ -11,12 +11,14 @@ variables:
 
 stages:
   - check
-  - test
+  - build
+
 sast:
   stage: test
 include:
   - template: Security/SAST.gitlab-ci.yml
-check-ingest-job:
+
+check-ingest:
   image: rust:1.75.0-bookworm
   stage: check
   script:
@@ -24,7 +26,7 @@ check-ingest-job:
     - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
     - cd rust
     - cargo check --no-default-features --features ingest
-check-server-job:
+check-server:
   image: rust:1.75.0-bookworm
   stage: check
   script:
@@ -32,3 +34,25 @@ check-server-job:
     - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
     - cd rust
     - cargo check --no-default-features --features server
+build-ingest:
+  image: rust:1.75.0-bookworm
+  stage: build
+  script:
+    - apt-get update
+    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - cd rust
+    - cargo install --no-default-features --features ingest --path . --root ./build
+  artifacts:
+    paths:
+      - "rust/build/"
+build-server:
+  image: rust:1.75.0-bookworm
+  stage: build
+  script:
+    - apt-get update
+    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - cd rust
+    - cargo install --no-default-features --features server --path . --root ./build
+  artifacts:
+    paths:
+      - "rust/build/"
