@@ -112,7 +112,7 @@ services:
       - *base_ingest_nvidia_ingest
       - *base_infinity
     environment:
-      - BATCH_SIZE=2560
+      - BATCH_SIZE=4096
     build:
       dockerfile: Dockerfile_NVIDIA
       context: ./infinity
