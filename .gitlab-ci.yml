@@ -20,9 +20,11 @@ check-ingest-job:
   image: rust:1.75.0-bookworm
   stage: check
   script:
+    - cd rust
     - cargo check --no-default-features --features ingest
 check-server-job:
   image: rust:1.75.0-bookworm
   stage: check
   script:
+    - cd rust
     - cargo check --no-default-features --features server
