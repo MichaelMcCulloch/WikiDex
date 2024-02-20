@@ -12,6 +12,7 @@ pub(crate) struct Config {
     pub(crate) llm_url: Url,
     pub(crate) language_model_name: PathBuf,
     pub(crate) language_model_kind: ModelKind,
+    pub(crate) limit: usize,
 }
 
 impl From<WikipediaIngestArgs> for Config {
@@ -24,6 +25,7 @@ impl From<WikipediaIngestArgs> for Config {
             language_model_name: value.language_model_name,
             language_model_kind: value.language_model_kind,
             embed_model_name: value.embed_model_name,
+            limit: value.limit,
         }
     }
 }
