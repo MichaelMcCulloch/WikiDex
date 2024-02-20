@@ -20,11 +20,15 @@ check-ingest-job:
   image: rust:1.75.0-bookworm
   stage: check
   script:
+    - apt-get update
+    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
     - cd rust
     - cargo check --no-default-features --features ingest
 check-server-job:
   image: rust:1.75.0-bookworm
   stage: check
   script:
+    - apt-get update
+    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
     - cd rust
     - cargo check --no-default-features --features server
