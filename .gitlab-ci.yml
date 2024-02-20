@@ -12,6 +12,7 @@ variables:
 stages:
   - check
   - build
+  - test
 
 sast:
   stage: test
