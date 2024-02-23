@@ -51,7 +51,7 @@ impl Engine {
         &self,
         input_xml: &P,
         pool: &SqlitePool,
-        limit: usize,
+        ingest_limit: usize,
     ) -> Result<i64, IngestError> {
         let access_date = h::wiki::get_date_from_xml_name(input_xml)?;
         let file = BufReader::with_capacity(
@@ -60,7 +60,7 @@ impl Engine {
         );
 
         let eligible_pages_bar = h::progress::new_progress_bar(&self.multi_progress, 7000000);
-        let eligible_pages = h::wiki::get_eligible_pages(file, &eligible_pages_bar, limit);
+        let eligible_pages = h::wiki::get_eligible_pages(file, &eligible_pages_bar, ingest_limit);
 
         let pages_compressed_bar =
             h::progress::new_progress_bar(&self.multi_progress, eligible_pages.len() as u64);
@@ -157,14 +157,12 @@ impl Engine {
         h::faiss::populate_vectorestore_index(&index_path, vector_embeddings, PCA_DIMENSIONS)?;
         Ok(count)
     }
-}
 
-impl Engine {
     pub(crate) async fn ingest_wikipedia(
         self,
         input_xml: &Path,
         output_directory: &Path,
-        limit: usize,
+        ingest_limit: usize,
     ) -> Result<usize, IngestError> {
         match (input_xml.exists(), output_directory.exists()) {
             (true, false) => Err(DirectoryNotFound(output_directory.to_path_buf())),
@@ -175,7 +173,7 @@ impl Engine {
 
                 if !h::sql::database_is_complete(&markup_pool).await? {
                     log::info!("Preparing markup DB...");
-                    self.create_markup_database(&input_xml, &markup_pool, limit)
+                    self.create_markup_database(&input_xml, &markup_pool, ingest_limit)
                         .await?;
                 }
                 log::info!("Markup DB is ready at {}", markup_db_path.display());
