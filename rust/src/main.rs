@@ -35,10 +35,17 @@ use std::sync::Mutex;
 mod ingest;
 #[cfg(feature = "ingest")]
 use crate::ingest::wikipedia::Engine as WikipediaIngestEngine;
-#[cfg(feature = "ingest")]
+#[cfg(any(feature = "ingest", feature = "breeder"))]
 use indicatif::MultiProgress;
-#[cfg(feature = "ingest")]
+#[cfg(any(feature = "ingest", feature = "breeder"))]
 use indicatif_log_bridge::LogWrapper;
+
+// #[cfg(any(feature = "ingest",feature = "breeder"))]
+
+#[cfg(feature = "breeder")]
+mod breeder;
+#[cfg(feature = "ingest")]
+use crate::breeder::Engine as PromptBreedingEngine;
 
 fn main() -> anyhow::Result<()> {
     std::env::set_var("RUST_LOG", "info");
@@ -123,10 +130,56 @@ fn main() -> anyhow::Result<()> {
                 .block_on(engine.ingest_wikipedia(
                     &config.wiki_xml,
                     &config.output_directory,
-                    config.limit,
+                    config.ingest_limit,
                 ))
                 .map_err(anyhow::Error::from)?;
             Ok(())
+        }
+        #[cfg(feature = "breeder")]
+        Commands::Breed(breeder_args) => {
+            let logger =
+                env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+                    .build();
+
+            let multi_progress = MultiProgress::new();
+
+            LogWrapper::new(multi_progress.clone(), logger)
+                .try_init()
+                .unwrap();
+
+            let config = config::breeder::Config::from(breeder_args);
+            let system_runner = rt::System::new();
+
+            let docstore = system_runner.block_on(SqliteDocstore::new(&config.docstore))?;
+            let index = FaissIndex::new(&config.index)?;
+
+            let openai_builder =
+                OpenAiDelegateBuilder::with_embedding(OpenAiDelegateBuilderArgument::Endpoint(
+                    config.embed_url,
+                    config.embed_model_name.to_str().unwrap().to_string(),
+                ));
+
+            let openai = match config.language_model_kind {
+                ModelKind::Instruct => {
+                    openai_builder.with_instruct(OpenAiDelegateBuilderArgument::Endpoint(
+                        config.llm_url,
+                        config.language_model_name.to_str().unwrap().to_string(),
+                    ))
+                }
+                ModelKind::Chat => {
+                    openai_builder.with_chat(OpenAiDelegateBuilderArgument::Endpoint(
+                        config.llm_url,
+                        config.language_model_name.to_str().unwrap().to_string(),
+                    ))
+                }
+            };
+
+            let engine = PromptBreedingEngine::new(Mutex::new(index), openai, docstore);
+
+            let _prompt = system_runner
+                .block_on(engine.breed_prompt())
+                .map_err(anyhow::Error::from)?;
+            todo!()
         }
     }
 }

@@ -18,6 +18,32 @@ pub(crate) enum Commands {
     Server(ServerArgs),
     #[cfg(feature = "ingest")]
     Wikipedia(WikipediaIngestArgs),
+    #[cfg(feature = "breeder")]
+    Breed(BreederArgs),
+}
+
+#[cfg(feature = "breeder")]
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+pub(crate) struct BreederArgs {
+    #[arg(short, long)]
+    pub(crate) index: PathBuf,
+    #[arg(short, long)]
+    pub(crate) docstore: PathBuf,
+    #[arg(short, long)]
+    pub(crate) output_directory: PathBuf,
+    #[arg(short, long, default_value_t = Url::parse("http://infinity:9000").unwrap())]
+    pub(crate) embed_url: Url,
+    #[arg(short = 'm', long)]
+    pub(crate) embed_model_name: PathBuf,
+    #[arg(short = 'v', long, default_value_t = Url::parse("http://vllm:5050/v1").unwrap())]
+    pub(crate) llm_url: Url,
+    #[arg(short, long)]
+    pub(crate) language_model_name: PathBuf,
+    #[arg(short = 'k', long)]
+    pub(crate) language_model_kind: ModelKind,
+    #[arg(short = 'n', long, default_value_t = 0)]
+    pub(crate) generation_limit: usize,
 }
 
 #[cfg(feature = "ingest")]
@@ -39,7 +65,7 @@ pub(crate) struct WikipediaIngestArgs {
     #[arg(short = 'k', long)]
     pub(crate) language_model_kind: ModelKind,
     #[arg(short = 'n', long, default_value_t = 0)]
-    pub(crate) limit: usize,
+    pub(crate) ingest_limit: usize,
 }
 
 #[cfg(feature = "server")]
