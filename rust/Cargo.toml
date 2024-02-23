@@ -51,7 +51,7 @@ debug = 0
 
 
 [features]
-default = ["server", "ingest"]
+default = ["server", "ingest", "breeder"]
 server = ["dep:utoipa", "dep:utoipa-redoc"]
 ingest = [
     "dep:itertools",
@@ -60,3 +60,4 @@ ingest = [
     "dep:indicatif",
     "dep:indicatif-log-bridge",
 ]
+breeder = []

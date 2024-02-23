@@ -63,13 +63,13 @@ pub(crate) fn page_filter(page: &Page) -> bool {
 pub(crate) fn get_eligible_pages(
     file: BufReader<File>,
     progress_bar: &ProgressBar,
-    limit: usize,
+    ingest_limit: usize,
 ) -> Vec<Page> {
     let parse = parse_mediawiki_dump_reboot::parse(file);
     progress_bar.set_message("Getting markup from XML...");
     let filtered_pages = parse.filter_map(Result::ok).filter(page_filter);
 
-    let eligible_pages = if limit == 0 {
+    let eligible_pages = if ingest_limit == 0 {
         filtered_pages
             .map(|page| {
                 progress_bar.inc(1);
@@ -78,7 +78,7 @@ pub(crate) fn get_eligible_pages(
             .collect::<Vec<_>>()
     } else {
         filtered_pages
-            .take(limit)
+            .take(ingest_limit)
             .map(|page| {
                 progress_bar.inc(1);
                 page
