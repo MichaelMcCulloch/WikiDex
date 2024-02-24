@@ -43,7 +43,7 @@ pub(crate) struct BreederArgs {
     pub(crate) embed_url: Url,
     #[arg(short = 'm', long)]
     pub(crate) embed_model_name: PathBuf,
-    #[arg(short = 'v', long, default_value_t = Url::parse("http://vllm:5050/v1").unwrap())]
+    #[arg(short = 'v', long, default_value_t = Url::parse("http://vllm:5050/v1").unwrap(), group = "endpoint")]
     pub(crate) llm_url: Url,
     #[arg(short, long)]
     pub(crate) language_model_name: PathBuf,

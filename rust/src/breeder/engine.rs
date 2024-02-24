@@ -20,7 +20,7 @@ pub struct Engine {
 }
 
 pub struct Unit {
-    task_prompts: Vec<String>,
+    // task_prompts: Vec<String>,
     mutation_prompt: String,
     fitness_score: Option<f32>, // Fitness could be an option if not yet evaluated
 }
@@ -46,7 +46,7 @@ impl Engine {
 
         let LlmMessage { role: _, content } = self
             .openai
-            .get_llm_answer(llm_service_arguments)
+            .get_llm_answer(llm_service_arguments, 256u16)
             .await
             .map_err(PromptBreedingError::LlmError)?;
 
@@ -113,8 +113,8 @@ impl Engine {
         &self,
         thinking_styles: &[String],
         mutation_prompts: &[String],
-        problem_description: &String,
-    ) -> Result<Vec<Unit>, PromptBreedingError> {
+        problem_description: &'static str,
+    ) -> Result<Vec<String>, PromptBreedingError> {
         let (tx, mut rx) = unbounded_channel();
         let population_writer = actix_web::rt::spawn(async move {
             let mut intial_population = vec![];
@@ -128,33 +128,41 @@ impl Engine {
             for mutation in mutation_prompts.iter() {
                 let tx = tx.clone();
                 let openai = self.openai.clone();
-                let problem_description = problem_description.clone();
                 let style = style.clone();
                 let mutation = mutation.clone();
                 actix_web::rt::spawn(async move {
                     let mutation_instruction =
                         format!("{mutation} INSTRUCTION: {style} {problem_description} INSTRUCTION MUTANT: ");
 
-                    let LlmMessage { role: _, content } = openai
-                        .get_llm_answer(LanguageServiceArguments {
-                            system: &mutation_instruction,
-                            documents: "",
-                            query: "",
-                            citation_index_begin: 0,
-                        })
+                    match openai
+                        .get_llm_answer(
+                            LanguageServiceArguments {
+                                system: &mutation_instruction,
+                                documents: "",
+                                query: "",
+                                citation_index_begin: 0,
+                            },
+                            128u16,
+                        )
                         .await
-                        .map_err(PromptBreedingError::LlmError)?;
+                        .map_err(PromptBreedingError::LlmError)
+                    {
+                        Ok(LlmMessage { role: _, content }) => {
+                            tx.clone().send((mutation_instruction, content)).unwrap();
+                        }
+                        Err(e) => {
+                            log::error!("{e}")
+                        }
+                    };
 
-                    let _ = tx.clone().send((mutation_instruction, content));
                     Ok::<(), PromptBreedingError>(())
                 });
             }
         }
         drop(tx);
         let intial_population = population_writer.await.unwrap()?;
-        // Initialize the population based on mutation prompts and problem description
-        println!("{:#?}", intial_population);
-        todo!()
+
+        intial_population
     }
 
     async fn evaluate_fitness(
@@ -193,7 +201,7 @@ impl Engine {
 
     pub(crate) async fn breed_prompt(
         &self,
-        problem_description: &str,
+        problem_description: &'static str,
         _number_of_generations: usize,
     ) -> Result<String, PromptBreedingError> {
         let _population = self
@@ -208,7 +216,7 @@ impl Engine {
                     String::from("Mutate the prompt with an unexpected twist."),
                     String::from("Modify the instruction like no self-respecting LLM would."),
                 ],
-                &String::from(problem_description),
+                problem_description,
             )
             .await?;
         // while number_of_generations > 0 {

@@ -26,18 +26,16 @@ impl InstructClient {
     pub(crate) async fn get_response(
         &self,
         arguments: LanguageServiceArguments<'_>,
+        max_tokens: u16,
     ) -> Result<String, LlmServiceError> {
-        let request = self.create_instruct_request(arguments)?;
+        let request = self.create_instruct_request(arguments, max_tokens)?;
 
-        log::info!("{:#?}", request);
         let response = self
             .instruct_client
             .completions()
             .create(request)
             .await
             .map_err(LlmServiceError::AsyncOpenAiError)?;
-
-        log::info!("{:#?}", response);
 
         let response = response
             .choices
@@ -51,8 +49,9 @@ impl InstructClient {
         &self,
         arguments: LanguageServiceArguments<'_>,
         tx: UnboundedSender<String>,
+        max_tokens: u16,
     ) -> Result<(), LlmServiceError> {
-        let request = self.create_instruct_request(arguments)?;
+        let request = self.create_instruct_request(arguments, max_tokens)?;
 
         let mut stream = self
             .instruct_client
@@ -79,6 +78,7 @@ pub(crate) trait InstructRequest {
     fn create_instruct_request(
         &self,
         arguments: LanguageServiceArguments,
+        max_tokens: u16,
     ) -> Result<CreateCompletionRequest, LlmServiceError>;
 }
 
@@ -86,6 +86,7 @@ impl InstructRequest for InstructClient {
     fn create_instruct_request(
         &self,
         arguments: LanguageServiceArguments,
+        max_tokens: u16,
     ) -> Result<CreateCompletionRequest, LlmServiceError> {
         let c1 = arguments.citation_index_begin + 1;
         let c2 = arguments.citation_index_begin + 2;
@@ -102,17 +103,14 @@ impl InstructRequest for InstructClient {
             .replace("___CITE4___", &c4.to_string())
             .replace("___DOCUMENT_LIST___", arguments.documents);
 
-        log::info!("{query}");
-
         let request = CreateCompletionRequestArgs::default()
-            .max_tokens(2048u16)
+            .max_tokens(max_tokens)
             .model(&self.instruct_model_name)
             .n(1)
             .prompt(query)
             .stop("References:")
             .build()
             .map_err(LlmServiceError::AsyncOpenAiError)?;
-
         Ok(request)
     }
 }

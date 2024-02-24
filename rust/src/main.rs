@@ -139,10 +139,9 @@ fn main() -> anyhow::Result<()> {
         }
         #[cfg(feature = "breeder")]
         Commands::Breed(breeder_args) => {
-            let logger = env_logger::Builder::from_env(
-                env_logger::Env::default().default_filter_or("debug"),
-            )
-            .build();
+            let logger =
+                env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+                    .build();
 
             let multi_progress = MultiProgress::new();
 
