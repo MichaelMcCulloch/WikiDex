@@ -30,6 +30,7 @@ use crate::inference::Engine as InferenceEngine;
 use docstore::SqliteDocstore;
 #[cfg(feature = "server")]
 use server::run_server;
+use std::fs;
 #[cfg(any(feature = "server", feature = "breeder"))]
 use std::sync::Mutex;
 
@@ -155,6 +156,15 @@ fn main() -> anyhow::Result<()> {
             let docstore = system_runner.block_on(SqliteDocstore::new(&config.docstore))?;
             let index = FaissIndex::new(&config.index)?;
 
+            let thinking_styles = fs::read_to_string(config.thinking_styles_db)?
+                .split('\n')
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>();
+            let mutation_prompts = fs::read_to_string(config.mutation_prompts_db)?
+                .split('\n')
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>();
+
             let openai_builder =
                 OpenAiDelegateBuilder::with_embedding(OpenAiDelegateBuilderArgument::Endpoint(
                     config.embed_url,
@@ -176,7 +186,13 @@ fn main() -> anyhow::Result<()> {
                 }
             };
 
-            let engine = PromptBreedingEngine::new(Mutex::new(index), openai, docstore);
+            let engine = PromptBreedingEngine::new(
+                Mutex::new(index),
+                openai,
+                docstore,
+                thinking_styles,
+                mutation_prompts,
+            );
 
             let problem_description =
                 "Answer the question with a summary based off the provided documents.";
