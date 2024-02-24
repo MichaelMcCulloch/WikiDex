@@ -9,7 +9,7 @@ x-base_service: &base_service
 
 x-base_service_nvidia: &base_service_nvidia
   <<: *base_service
-  profiles: ["nvidia"]
+  profiles: ["server"]
   deploy:
     resources:
       reservations:
@@ -20,7 +20,7 @@ x-base_service_nvidia: &base_service_nvidia
 
 x-base_ingest_service_nvidia: &base_ingest_nvidia_ingest
   <<: *base_service
-  profiles: ["nvidia_ingest"]
+  profiles: ["ingest"]
   deploy:
     resources:
       reservations:
@@ -29,14 +29,14 @@ x-base_ingest_service_nvidia: &base_ingest_nvidia_ingest
             device_ids: ["0"]
             capabilities: [gpu]
 
-x-base_service_amd: &base_service_amd
-  <<: *base_service
-  profiles: ["amd"]
-  group_add:
-    - video
-  devices:
-    - "/dev/dri"
-    - "/dev/kfd"
+# x-base_service_amd: &base_service_amd
+#   <<: *base_service
+#   profiles: ["amd"]
+#   group_add:
+#     - video
+#   devices:
+#     - "/dev/dri"
+#     - "/dev/kfd"
 
 x-base_service_vllm: &base_vllm
   ports:
@@ -64,65 +64,71 @@ x-base_service_infinity: &base_infinity
     - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
 
 services:
-  # ui:
-  #   <<:
-  #     - *base_service
-  #     - *base_ui
-  #   profiles: ["nvidia", "amd"]
-  #   build:
-  #     dockerfile: Dockerfile
-  #     context: ./typescript
+  ui:
+    <<:
+      - *base_service
+      - *base_ui
+    profiles: ["server"]
+    build:
+      dockerfile: Dockerfile
+      context: ./typescript
 
-  vllm-nv:
+  vllm:
     <<:
       - *base_service_nvidia
       - *base_vllm
+    profiles: ["server", "breeder"]
     build:
-      dockerfile: Dockerfile_NVIDIA
+      dockerfile: Dockerfile
       context: ./vllm
       args:
         TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST}
         LLM_MODEL_NAME: ${LLM_MODEL_NAME}
 
-  # omnipedia:
-  #   <<:
-  #     - *base_service
-  #     - *base_omnipedia
-  #   profiles: ["nvidia"]
-  #   build:
-  #     dockerfile: Dockerfile
-  #     context: ./rust
-  #     args:
-  #       LLM_MODEL_NAME: ${LLM_MODEL_NAME}
+  omnipedia:
+    <<:
+      - *base_service
+      - *base_omnipedia
+    profiles: ["server"]
+    build:
+      dockerfile: Dockerfile
+      context: ./rust
+      args:
+        LLM_MODEL_NAME: ${LLM_MODEL_NAME}
 
-  infinity-nv:
+  omnipedia-breeder:
+    <<:
+      - *base_service
+      - *base_omnipedia
+    profiles: ["breeder"]
+    build:
+      dockerfile: Dockerfile_Breeder
+      context: ./rust
+      args:
+        LLM_MODEL_NAME: ${LLM_MODEL_NAME}
+
+  infinity:
     <<:
       - *base_service_nvidia
       - *base_infinity
+    profiles: ["server", "breeder"]
     environment:
       - BATCH_SIZE=128
     build:
-      dockerfile: Dockerfile_NVIDIA
+      dockerfile: Dockerfile
       context: ./infinity
       args:
         SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
 
-  # infinity-ingest-nv:
-  #   <<:
-  #     - *base_ingest_nvidia_ingest
-  #     - *base_infinity
-  #   environment:
-  #     - BATCH_SIZE=4096
-  #   build:
-  #     dockerfile: Dockerfile_NVIDIA
-  #     context: ./infinity
-  #     args:
-  #       SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
-
-  # vllm-amd:
-  #   <<:
-  #     - *base_service_amd
-  #     - *base_vllm
-  #   build:
-  #     dockerfile: Dockerfile_AMD
-  #     context: ./vllm
+  infinity-ingest:
+    <<:
+      - *base_ingest_nvidia_ingest
+      - *base_infinity
+    profiles: ["ingest"]
+    environment:
+      - BATCH_SIZE=4096
+    build:
+      dockerfile: Dockerfile
+      context: ./infinity
+      args:
+        SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}

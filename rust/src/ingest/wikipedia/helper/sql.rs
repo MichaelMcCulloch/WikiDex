@@ -4,6 +4,8 @@ use super::{
     wiki::{CompressedPage, CompressedPageWithAccessDate, DocumentFragments},
 };
 use crate::{ingest::wikipedia::IngestError, openai::OpenAiDelegate};
+use backoff::future::retry;
+use backoff::ExponentialBackoff;
 use chrono::NaiveDateTime;
 use indicatif::ProgressBar;
 use sqlx::{migrate::MigrateDatabase, SqliteConnection, SqlitePool};
@@ -190,6 +192,12 @@ pub(crate) async fn populate_vectorstore_db(
     tx: UnboundedSender<Vec<(i64, Vec<f32>)>>,
 ) -> Result<(), IngestError> {
     let openai = Arc::new(openai);
+
+    retry(ExponentialBackoff::default(), || async {
+        Ok(openai.embed_up().await?)
+    })
+    .await
+    .unwrap();
 
     for indices in (0..document_count).step_by(BATCH_SIZE) {
         let tx = tx.clone();
