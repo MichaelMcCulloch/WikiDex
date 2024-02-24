@@ -1,15 +1,14 @@
-use std::sync::{Arc, Mutex};
-
-use tokio::sync::mpsc::unbounded_channel;
-
+use super::PromptBreedingError;
 use crate::{
     docstore::SqliteDocstore,
     formatter::CitationStyle,
     index::FaissIndex,
     openai::{LanguageServiceArguments, LlmMessage, OpenAiDelegate},
 };
-
-use super::PromptBreedingError;
+use backoff::future::retry;
+use backoff::ExponentialBackoff;
+use std::sync::{Arc, Mutex};
+use tokio::sync::mpsc::unbounded_channel;
 
 pub struct Engine {
     index: Mutex<FaissIndex>,
@@ -115,6 +114,12 @@ impl Engine {
         mutation_prompts: &[String],
         problem_description: &'static str,
     ) -> Result<Vec<String>, PromptBreedingError> {
+        retry(ExponentialBackoff::default(), || async {
+            log::info!("Checking LLM Awake");
+            Ok(self.openai.llm_up().await?)
+        })
+        .await
+        .unwrap();
         let (tx, mut rx) = unbounded_channel();
         let population_writer = actix_web::rt::spawn(async move {
             let mut intial_population = vec![];

@@ -4,11 +4,11 @@ use super::{
     WikiMarkupProcessor,
 };
 use crate::openai::OpenAiDelegate;
+
 use indicatif::MultiProgress;
 use sqlx::SqlitePool;
-use tokio::sync::mpsc::unbounded_channel;
-
 use std::{fs::File, io::BufReader, path::Path, sync::Arc};
+use tokio::sync::mpsc::unbounded_channel;
 
 const MARKUP_DB_NAME: &str = "wikipedia_markup.sqlite";
 const DOCSTORE_DB_NAME: &str = "wikipedia_docstore.sqlite";

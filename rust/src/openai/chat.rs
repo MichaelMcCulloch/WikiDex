@@ -1,10 +1,11 @@
 use super::{delegate::LanguageServiceArguments, error::LlmServiceError, protocol::LlmRole};
 use async_openai::{
     config::OpenAIConfig,
+    error::OpenAIError,
     types::{
         ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs,
         ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequest,
-        CreateChatCompletionRequestArgs,
+        CreateChatCompletionRequestArgs, ListModelResponse,
     },
     Client,
 };
@@ -18,15 +19,16 @@ pub(crate) struct ChatClient {
 }
 
 impl ChatClient {
+    pub(crate) async fn up(&self) -> Result<ListModelResponse, OpenAIError> {
+        self.chat_client.models().list().await
+    }
     pub(super) fn new(chat_client: Client<OpenAIConfig>, chat_model_name: String) -> Self {
         ChatClient {
             chat_client,
             chat_model_name,
         }
     }
-}
 
-impl ChatClient {
     pub(crate) async fn get_response(
         &self,
         arguments: LanguageServiceArguments<'_>,

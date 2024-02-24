@@ -1,3 +1,4 @@
+use async_openai::{error::OpenAIError, types::ListModelResponse};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 use super::{
@@ -20,6 +21,12 @@ pub(super) enum LlmClient {
 }
 
 impl LlmClient {
+    pub(crate) async fn up(&self) -> Result<ListModelResponse, OpenAIError> {
+        match self {
+            LlmClient::Chat(chat) => chat.up().await,
+            LlmClient::Instruct(instruct) => instruct.up().await,
+        }
+    }
     pub(crate) async fn get_response(
         &self,
         arguments: LanguageServiceArguments<'_>,
@@ -52,6 +59,13 @@ pub(crate) struct OpenAiDelegate {
 }
 
 impl OpenAiDelegate {
+    pub(crate) async fn llm_up(&self) -> Result<ListModelResponse, OpenAIError> {
+        self.llm_client.up().await
+    }
+    pub(crate) async fn embed_up(&self) -> Result<ListModelResponse, OpenAIError> {
+        self.embed_client.up().await
+    }
+
     pub(super) fn new(llm_client: LlmClient, embed_client: EmbeddingClient) -> Self {
         OpenAiDelegate {
             llm_client,

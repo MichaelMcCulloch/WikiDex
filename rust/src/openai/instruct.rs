@@ -1,7 +1,8 @@
 use super::{delegate::LanguageServiceArguments, error::LlmServiceError};
 use async_openai::{
     config::OpenAIConfig,
-    types::{CreateCompletionRequest, CreateCompletionRequestArgs},
+    error::OpenAIError,
+    types::{CreateCompletionRequest, CreateCompletionRequestArgs, ListModelResponse},
     Client,
 };
 use futures::StreamExt;
@@ -14,15 +15,17 @@ pub(crate) struct InstructClient {
 }
 
 impl InstructClient {
+    pub(crate) async fn up(&self) -> Result<ListModelResponse, OpenAIError> {
+        self.instruct_client.models().list().await
+    }
+
     pub(super) fn new(instruct_client: Client<OpenAIConfig>, instruct_model_name: String) -> Self {
         InstructClient {
             instruct_client,
             instruct_model_name,
         }
     }
-}
 
-impl InstructClient {
     pub(crate) async fn get_response(
         &self,
         arguments: LanguageServiceArguments<'_>,

@@ -1,4 +1,9 @@
-use async_openai::{config::OpenAIConfig, types::CreateEmbeddingRequestArgs, Client};
+use async_openai::{
+    config::OpenAIConfig,
+    error::OpenAIError,
+    types::{CreateEmbeddingRequestArgs, ListModelResponse},
+    Client,
+};
 
 use super::error::EmbeddingServiceError;
 
@@ -8,6 +13,10 @@ pub(crate) struct EmbeddingClient {
 }
 
 impl EmbeddingClient {
+    pub(crate) async fn up(&self) -> Result<ListModelResponse, OpenAIError> {
+        self.embedding_client.models().list().await
+    }
+
     pub(super) fn new(
         embedding_client: Client<OpenAIConfig>,
         embedding_model_name: String,
@@ -17,18 +26,17 @@ impl EmbeddingClient {
             embedding_model_name,
         }
     }
-}
 
-impl EmbeddingClient {
     pub(crate) async fn embed_batch(
         &self,
         queries: Vec<String>,
     ) -> Result<Vec<Vec<f32>>, EmbeddingServiceError> {
-        let request = CreateEmbeddingRequestArgs::default()
-            .model(&self.embedding_model_name)
-            .input(&queries)
-            .build()
-            .map_err(EmbeddingServiceError::AsyncOpenAiError)?;
+        let request: async_openai::types::CreateEmbeddingRequest =
+            CreateEmbeddingRequestArgs::default()
+                .model(&self.embedding_model_name)
+                .input(&queries)
+                .build()
+                .map_err(EmbeddingServiceError::AsyncOpenAiError)?;
 
         let response = self
             .embedding_client
