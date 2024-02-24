@@ -1,4 +1,4 @@
-use super::{delegate::LanguageServiceServiceArguments, error::LlmServiceError, protocol::LlmRole};
+use super::{delegate::LanguageServiceArguments, error::LlmServiceError, protocol::LlmRole};
 use async_openai::{
     config::OpenAIConfig,
     types::{
@@ -29,7 +29,7 @@ impl ChatClient {
 impl ChatClient {
     pub(crate) async fn get_response(
         &self,
-        arguments: LanguageServiceServiceArguments<'_>,
+        arguments: LanguageServiceArguments<'_>,
     ) -> Result<String, LlmServiceError> {
         let request = self.create_chat_request(arguments)?;
         let response = self
@@ -58,7 +58,7 @@ impl ChatClient {
 
     pub(crate) async fn stream_response(
         &self,
-        arguments: LanguageServiceServiceArguments<'_>,
+        arguments: LanguageServiceArguments<'_>,
         tx: UnboundedSender<String>,
     ) -> Result<(), LlmServiceError> {
         let request = self.create_chat_request(arguments)?;
@@ -89,13 +89,13 @@ impl ChatClient {
 pub(crate) trait ChatRequest {
     fn create_chat_request(
         &self,
-        arguments: LanguageServiceServiceArguments,
+        arguments: LanguageServiceArguments,
     ) -> Result<CreateChatCompletionRequest, LlmServiceError>;
 }
 impl ChatRequest for ChatClient {
     fn create_chat_request(
         &self,
-        arguments: LanguageServiceServiceArguments,
+        arguments: LanguageServiceArguments,
     ) -> Result<CreateChatCompletionRequest, LlmServiceError> {
         let query = format!("{PROMPT_SALT}\n{}", arguments.query);
 

@@ -14,21 +14,23 @@ use clap::Parser;
 #[cfg(test)]
 mod test_data;
 
-#[cfg(feature = "server")]
+#[cfg(any(feature = "server", feature = "breeder"))]
 mod docstore;
-#[cfg(feature = "server")]
+#[cfg(any(feature = "server", feature = "breeder"))]
 mod formatter;
 #[cfg(feature = "server")]
 mod inference;
 #[cfg(feature = "server")]
 mod server;
+#[cfg(any(feature = "server", feature = "breeder"))]
+use crate::index::FaissIndex;
 #[cfg(feature = "server")]
-use crate::{index::FaissIndex, inference::Engine as InferenceEngine};
-#[cfg(feature = "server")]
+use crate::inference::Engine as InferenceEngine;
+#[cfg(any(feature = "server", feature = "breeder"))]
 use docstore::SqliteDocstore;
 #[cfg(feature = "server")]
 use server::run_server;
-#[cfg(feature = "server")]
+#[cfg(any(feature = "server", feature = "breeder"))]
 use std::sync::Mutex;
 
 #[cfg(feature = "ingest")]
@@ -44,7 +46,7 @@ use indicatif_log_bridge::LogWrapper;
 
 #[cfg(feature = "breeder")]
 mod breeder;
-#[cfg(feature = "ingest")]
+#[cfg(feature = "breeder")]
 use crate::breeder::Engine as PromptBreedingEngine;
 
 fn main() -> anyhow::Result<()> {
@@ -137,9 +139,10 @@ fn main() -> anyhow::Result<()> {
         }
         #[cfg(feature = "breeder")]
         Commands::Breed(breeder_args) => {
-            let logger =
-                env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
-                    .build();
+            let logger = env_logger::Builder::from_env(
+                env_logger::Env::default().default_filter_or("debug"),
+            )
+            .build();
 
             let multi_progress = MultiProgress::new();
 
@@ -176,8 +179,11 @@ fn main() -> anyhow::Result<()> {
 
             let engine = PromptBreedingEngine::new(Mutex::new(index), openai, docstore);
 
+            let problem_description =
+                "Answer the question with a summary based off the provided documents.";
+
             let _prompt = system_runner
-                .block_on(engine.breed_prompt())
+                .block_on(engine.breed_prompt(problem_description, config.generation_limit))
                 .map_err(anyhow::Error::from)?;
             todo!()
         }

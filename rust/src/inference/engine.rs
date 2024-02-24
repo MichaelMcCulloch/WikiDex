@@ -7,8 +7,7 @@ use crate::{
     docstore::SqliteDocstore,
     formatter::{CitationStyle, Cite, DocumentFormatter, TextFormatter},
     index::{FaissIndex, SearchService},
-    openai::{LanguageServiceServiceArguments, LlmRole, PartialLlmMessage},
-    openai::{LlmMessage, OpenAiDelegate},
+    openai::{LanguageServiceArguments, LlmMessage, LlmRole, OpenAiDelegate, PartialLlmMessage},
     server::{Conversation, CountSources, Message, PartialMessage, Source},
 };
 
@@ -42,7 +41,7 @@ impl Engine {
                 let (sources, formatted_documents) =
                     self.get_documents(&user_query, num_sources).await?;
 
-                let llm_service_arguments = LanguageServiceServiceArguments {
+                let llm_service_arguments = LanguageServiceArguments {
                     system: &self.system_prompt,
                     documents: &formatted_documents,
                     query: &user_query,
@@ -93,7 +92,7 @@ impl Engine {
                     }
                     let _ = tx.send(PartialMessage::done().message());
                 });
-                let llm_service_arguments = LanguageServiceServiceArguments {
+                let llm_service_arguments = LanguageServiceArguments {
                     system: &self.system_prompt,
                     documents: &formatted_documents,
                     query: &user_query,

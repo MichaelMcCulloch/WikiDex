@@ -60,4 +60,4 @@ ingest = [
     "dep:indicatif",
     "dep:indicatif-log-bridge",
 ]
-breeder = []
+breeder = ["dep:indicatif", "dep:indicatif-log-bridge"]

@@ -6,6 +6,8 @@ use url::Url;
 pub(crate) struct Config {
     pub(crate) index: PathBuf,
     pub(crate) docstore: PathBuf,
+    pub(crate) thinking_styles_db: PathBuf,
+    pub(crate) mutation_prompts_db: PathBuf,
     pub(crate) output_directory: PathBuf,
     pub(crate) embed_url: Url,
     pub(crate) embed_model_name: PathBuf,
@@ -27,6 +29,8 @@ impl From<BreederArgs> for Config {
             generation_limit: value.generation_limit,
             index: value.index,
             docstore: value.docstore,
+            thinking_styles_db: value.thinking_styles_db,
+            mutation_prompts_db: value.mutation_prompts_db,
         }
     }
 }

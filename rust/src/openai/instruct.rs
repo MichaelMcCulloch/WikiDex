@@ -1,4 +1,4 @@
-use super::{delegate::LanguageServiceServiceArguments, error::LlmServiceError};
+use super::{delegate::LanguageServiceArguments, error::LlmServiceError};
 use async_openai::{
     config::OpenAIConfig,
     types::{CreateCompletionRequest, CreateCompletionRequestArgs},
@@ -25,15 +25,19 @@ impl InstructClient {
 impl InstructClient {
     pub(crate) async fn get_response(
         &self,
-        arguments: LanguageServiceServiceArguments<'_>,
+        arguments: LanguageServiceArguments<'_>,
     ) -> Result<String, LlmServiceError> {
         let request = self.create_instruct_request(arguments)?;
+
+        log::info!("{:#?}", request);
         let response = self
             .instruct_client
             .completions()
             .create(request)
             .await
             .map_err(LlmServiceError::AsyncOpenAiError)?;
+
+        log::info!("{:#?}", response);
 
         let response = response
             .choices
@@ -45,7 +49,7 @@ impl InstructClient {
 
     pub(crate) async fn stream_response(
         &self,
-        arguments: LanguageServiceServiceArguments<'_>,
+        arguments: LanguageServiceArguments<'_>,
         tx: UnboundedSender<String>,
     ) -> Result<(), LlmServiceError> {
         let request = self.create_instruct_request(arguments)?;
@@ -74,14 +78,14 @@ impl InstructClient {
 pub(crate) trait InstructRequest {
     fn create_instruct_request(
         &self,
-        arguments: LanguageServiceServiceArguments,
+        arguments: LanguageServiceArguments,
     ) -> Result<CreateCompletionRequest, LlmServiceError>;
 }
 
 impl InstructRequest for InstructClient {
     fn create_instruct_request(
         &self,
-        arguments: LanguageServiceServiceArguments,
+        arguments: LanguageServiceArguments,
     ) -> Result<CreateCompletionRequest, LlmServiceError> {
         let c1 = arguments.citation_index_begin + 1;
         let c2 = arguments.citation_index_begin + 2;
@@ -97,6 +101,8 @@ impl InstructRequest for InstructClient {
             .replace("___CITE3___", &c3.to_string())
             .replace("___CITE4___", &c4.to_string())
             .replace("___DOCUMENT_LIST___", arguments.documents);
+
+        log::info!("{query}");
 
         let request = CreateCompletionRequestArgs::default()
             .max_tokens(2048u16)
