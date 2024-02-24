@@ -122,7 +122,7 @@ impl Engine {
                 intial_population.push(result);
             }
 
-            Ok::<Vec<(String, String)>, PromptBreedingError>(intial_population)
+            Ok::<Vec<String>, PromptBreedingError>(intial_population)
         });
         for style in thinking_styles.iter() {
             for mutation in mutation_prompts.iter() {
@@ -148,7 +148,7 @@ impl Engine {
                         .map_err(PromptBreedingError::LlmError)
                     {
                         Ok(LlmMessage { role: _, content }) => {
-                            tx.clone().send((mutation_instruction, content)).unwrap();
+                            tx.clone().send(content).unwrap();
                         }
                         Err(e) => {
                             log::error!("{e}")
@@ -162,7 +162,7 @@ impl Engine {
         drop(tx);
         let intial_population = population_writer.await.unwrap()?;
 
-        intial_population
+        Ok(intial_population)
     }
 
     async fn evaluate_fitness(
@@ -204,7 +204,7 @@ impl Engine {
         problem_description: &'static str,
         _number_of_generations: usize,
     ) -> Result<String, PromptBreedingError> {
-        let _population = self
+        let population = self
             .initialize_population(
                 &[
                     String::from("Make up a systematic answer that makes you look quite clever."),
@@ -219,6 +219,9 @@ impl Engine {
                 problem_description,
             )
             .await?;
+        for member in population {
+            println!("{member}");
+        }
         // while number_of_generations > 0 {
         //     for unit in &population {
         //         let fitness = self.evaluate_fitness(unit, problem_description).await?;
