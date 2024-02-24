@@ -184,7 +184,7 @@ fn main() -> anyhow::Result<()> {
             let _prompt = system_runner
                 .block_on(engine.breed_prompt(problem_description, config.generation_limit))
                 .map_err(anyhow::Error::from)?;
-            todo!()
+            Ok(())
         }
     }
 }
