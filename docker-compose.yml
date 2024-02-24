@@ -59,6 +59,13 @@ x-base_service_omnipedia_ingest: &base_omnipedia_ingest
   volumes:
     - ./wikidump:/wikidump
 
+x-base_service_omnipedia_breeder: &base_omnipedia_breeder
+  ports:
+    - "${OMNIPEDIA_HOST_PORT}:${OMNIPEDIA_CONT_PORT}"
+  volumes:
+    - ./rust/db:/db
+    - ./rust/breeder:/breeder
+
 x-base_service_infinity: &base_infinity
   ports:
     - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
@@ -99,7 +106,7 @@ services:
   omnipedia-breeder:
     <<:
       - *base_service
-      - *base_omnipedia
+      - *base_omnipedia_breeder
     profiles: ["breeder"]
     build:
       dockerfile: Dockerfile_Breeder

@@ -31,5 +31,5 @@ CMD omnipedia \
     --language-model-kind "${MODEL_KIND}" \
     --index "${INDEX_PATH}" \
     --docstore "${DOCSTORE_PATH}" \
-    --thinking-styles-db "test" \
-    --mutation-prompts-db "test"
+    --thinking-styles-db "${THINKING_STYLES_PATH}" \
+    --mutation-prompts-db "${MUTATOR_PROMPT_PATH}"

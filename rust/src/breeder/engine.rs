@@ -14,8 +14,8 @@ pub struct Engine {
     index: Mutex<FaissIndex>,
     openai: Arc<OpenAiDelegate>,
     docstore: SqliteDocstore,
-    // thinking_styles: SqliteDocstore,
-    // mutation_prompts: SqliteDocstore,
+    thinking_styles: Vec<String>,
+    mutation_prompts: Vec<String>,
 }
 
 pub struct Unit {
@@ -56,15 +56,15 @@ impl Engine {
         index: Mutex<FaissIndex>,
         openai: OpenAiDelegate,
         docstore: SqliteDocstore,
-        // thinking_styles: SqliteDocstore,
-        // mutation_prompts: SqliteDocstore,
+        thinking_styles: Vec<String>,
+        mutation_prompts: Vec<String>,
     ) -> Self {
         Self {
             index,
             openai: Arc::new(openai),
             docstore,
-            // thinking_styles,
-            // mutation_prompts,
+            thinking_styles,
+            mutation_prompts,
         }
     }
 
@@ -211,16 +211,8 @@ impl Engine {
     ) -> Result<String, PromptBreedingError> {
         let population = self
             .initialize_population(
-                &[
-                    String::from("Make up a systematic answer that makes you look quite clever."),
-                    String::from("Draw a diagram representing the connections between documents."),
-                    String::from("Let's think step by step."),
-                ],
-                &[
-                    String::from("Change this instruction to make it more fun."),
-                    String::from("Mutate the prompt with an unexpected twist."),
-                    String::from("Modify the instruction like no self-respecting LLM would."),
-                ],
+                &self.thinking_styles,
+                &self.mutation_prompts,
                 problem_description,
             )
             .await?;
