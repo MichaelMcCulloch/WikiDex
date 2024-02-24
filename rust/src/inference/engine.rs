@@ -50,7 +50,7 @@ impl Engine {
 
                 let LlmMessage { role, content } = self
                     .openai
-                    .get_llm_answer(llm_service_arguments)
+                    .get_llm_answer(llm_service_arguments, 2048u16)
                     .await
                     .map_err(QueryEngineError::LlmError)?;
 
@@ -99,7 +99,7 @@ impl Engine {
                     citation_index_begin: num_sources,
                 };
                 self.openai
-                    .stream_llm_answer(llm_service_arguments, tx_p)
+                    .stream_llm_answer(llm_service_arguments, tx_p, 2048u16)
                     .await
                     .map_err(QueryEngineError::LlmError)?;
 

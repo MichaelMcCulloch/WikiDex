@@ -23,10 +23,11 @@ impl LlmClient {
     pub(crate) async fn get_response(
         &self,
         arguments: LanguageServiceArguments<'_>,
+        max_tokens: u16,
     ) -> Result<String, LlmServiceError> {
         match self {
             LlmClient::Chat(chat) => chat.get_response(arguments).await,
-            LlmClient::Instruct(instruct) => instruct.get_response(arguments).await,
+            LlmClient::Instruct(instruct) => instruct.get_response(arguments, max_tokens).await,
         }
     }
 
@@ -34,10 +35,13 @@ impl LlmClient {
         &self,
         arguments: LanguageServiceArguments<'_>,
         tx: UnboundedSender<String>,
+        max_tokens: u16,
     ) -> Result<(), LlmServiceError> {
         match self {
             LlmClient::Chat(chat) => chat.stream_response(arguments, tx).await,
-            LlmClient::Instruct(instruct) => instruct.stream_response(arguments, tx).await,
+            LlmClient::Instruct(instruct) => {
+                instruct.stream_response(arguments, tx, max_tokens).await
+            }
         }
     }
 }
@@ -68,8 +72,9 @@ impl OpenAiDelegate {
     pub(crate) async fn get_llm_answer(
         &self,
         arguments: LanguageServiceArguments<'_>,
+        max_tokens: u16,
     ) -> Result<LlmMessage, LlmServiceError> {
-        let message = self.llm_client.get_response(arguments).await?;
+        let message = self.llm_client.get_response(arguments, max_tokens).await?;
         Ok(LlmMessage {
             role: LlmRole::Assistant,
             content: message,
@@ -79,6 +84,7 @@ impl OpenAiDelegate {
         &self,
         arguments: LanguageServiceArguments<'_>,
         tx: UnboundedSender<PartialLlmMessage>,
+        max_tokens: u16,
     ) -> Result<(), LlmServiceError> {
         let (tx_s, mut rx_s) = unbounded_channel();
 
@@ -90,6 +96,8 @@ impl OpenAiDelegate {
                 });
             }
         });
-        self.llm_client.stream_response(arguments, tx_s).await
+        self.llm_client
+            .stream_response(arguments, tx_s, max_tokens)
+            .await
     }
 }
