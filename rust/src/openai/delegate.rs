@@ -8,7 +8,7 @@ use super::{
     EmbeddingServiceError, LlmRole, LlmServiceError,
 };
 
-pub(crate) struct LanguageServiceServiceArguments<'arg> {
+pub(crate) struct LanguageServiceArguments<'arg> {
     pub(crate) system: &'arg str,
     pub(crate) documents: &'arg str,
     pub(crate) query: &'arg str,
@@ -22,7 +22,7 @@ pub(super) enum LlmClient {
 impl LlmClient {
     pub(crate) async fn get_response(
         &self,
-        arguments: LanguageServiceServiceArguments<'_>,
+        arguments: LanguageServiceArguments<'_>,
     ) -> Result<String, LlmServiceError> {
         match self {
             LlmClient::Chat(chat) => chat.get_response(arguments).await,
@@ -32,7 +32,7 @@ impl LlmClient {
 
     pub(crate) async fn stream_response(
         &self,
-        arguments: LanguageServiceServiceArguments<'_>,
+        arguments: LanguageServiceArguments<'_>,
         tx: UnboundedSender<String>,
     ) -> Result<(), LlmServiceError> {
         match self {
@@ -67,7 +67,7 @@ impl OpenAiDelegate {
 
     pub(crate) async fn get_llm_answer(
         &self,
-        arguments: LanguageServiceServiceArguments<'_>,
+        arguments: LanguageServiceArguments<'_>,
     ) -> Result<LlmMessage, LlmServiceError> {
         let message = self.llm_client.get_response(arguments).await?;
         Ok(LlmMessage {
@@ -77,7 +77,7 @@ impl OpenAiDelegate {
     }
     pub(crate) async fn stream_llm_answer(
         &self,
-        arguments: LanguageServiceServiceArguments<'_>,
+        arguments: LanguageServiceArguments<'_>,
         tx: UnboundedSender<PartialLlmMessage>,
     ) -> Result<(), LlmServiceError> {
         let (tx_s, mut rx_s) = unbounded_channel();
