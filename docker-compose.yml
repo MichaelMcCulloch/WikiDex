@@ -64,14 +64,14 @@ x-base_service_infinity: &base_infinity
     - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
 
 services:
-  ui:
-    <<:
-      - *base_service
-      - *base_ui
-    profiles: ["nvidia", "amd"]
-    build:
-      dockerfile: Dockerfile
-      context: ./typescript
+  # ui:
+  #   <<:
+  #     - *base_service
+  #     - *base_ui
+  #   profiles: ["nvidia", "amd"]
+  #   build:
+  #     dockerfile: Dockerfile
+  #     context: ./typescript
 
   vllm-nv:
     <<:
@@ -84,16 +84,16 @@ services:
         TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST}
         LLM_MODEL_NAME: ${LLM_MODEL_NAME}
 
-  omnipedia:
-    <<:
-      - *base_service
-      - *base_omnipedia
-    profiles: ["nvidia"]
-    build:
-      dockerfile: Dockerfile
-      context: ./rust
-      args:
-        LLM_MODEL_NAME: ${LLM_MODEL_NAME}
+  # omnipedia:
+  #   <<:
+  #     - *base_service
+  #     - *base_omnipedia
+  #   profiles: ["nvidia"]
+  #   build:
+  #     dockerfile: Dockerfile
+  #     context: ./rust
+  #     args:
+  #       LLM_MODEL_NAME: ${LLM_MODEL_NAME}
 
   infinity-nv:
     <<:
@@ -107,22 +107,22 @@ services:
       args:
         SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
 
-  infinity-ingest-nv:
-    <<:
-      - *base_ingest_nvidia_ingest
-      - *base_infinity
-    environment:
-      - BATCH_SIZE=4096
-    build:
-      dockerfile: Dockerfile_NVIDIA
-      context: ./infinity
-      args:
-        SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
+  # infinity-ingest-nv:
+  #   <<:
+  #     - *base_ingest_nvidia_ingest
+  #     - *base_infinity
+  #   environment:
+  #     - BATCH_SIZE=4096
+  #   build:
+  #     dockerfile: Dockerfile_NVIDIA
+  #     context: ./infinity
+  #     args:
+  #       SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
 
-  vllm-amd:
-    <<:
-      - *base_service_amd
-      - *base_vllm
-    build:
-      dockerfile: Dockerfile_AMD
-      context: ./vllm
+  # vllm-amd:
+  #   <<:
+  #     - *base_service_amd
+  #     - *base_vllm
+  #   build:
+  #     dockerfile: Dockerfile_AMD
+  #     context: ./vllm
