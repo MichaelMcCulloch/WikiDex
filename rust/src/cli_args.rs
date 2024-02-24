@@ -25,12 +25,19 @@ pub(crate) enum Commands {
 #[cfg(feature = "breeder")]
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
+#[command(group(ArgGroup::new("endpoint").args(&["llm_url", "openai_key"]).multiple(false).required(true)))]
 pub(crate) struct BreederArgs {
+    #[arg(short = 'o', long, group = "endpoint")]
+    pub(crate) openai_key: Option<String>,
     #[arg(short, long)]
     pub(crate) index: PathBuf,
     #[arg(short, long)]
     pub(crate) docstore: PathBuf,
-    #[arg(short, long)]
+    #[arg(short = 't', long)]
+    pub(crate) thinking_styles_db: PathBuf,
+    #[arg(short = 'u', long)]
+    pub(crate) mutation_prompts_db: PathBuf,
+    #[arg(short = 'f', long)]
     pub(crate) output_directory: PathBuf,
     #[arg(short, long, default_value_t = Url::parse("http://infinity:9000").unwrap())]
     pub(crate) embed_url: Url,
@@ -71,7 +78,7 @@ pub(crate) struct WikipediaIngestArgs {
 #[cfg(feature = "server")]
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
-#[command(group(ArgGroup::new("endpoint").args(&["vllm_url", "openai_key"]).multiple(false).required(true)))]
+#[command(group(ArgGroup::new("endpoint").args(&["llm_url", "openai_key"]).multiple(false).required(true)))]
 pub(crate) struct ServerArgs {
     #[arg(short = 'a' , long, default_value_t = String::from("0.0.0.0"))]
     pub(crate) host: String,
