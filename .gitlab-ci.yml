@@ -20,6 +20,8 @@ stages:
 #   - template: Security/SAST.gitlab-ci.yml
 
 check-ingest:
+  tags:
+    - cuda
   image: rust:1.75.0-bookworm
   stage: check
   script:
