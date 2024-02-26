@@ -220,15 +220,19 @@ pub(crate) async fn populate_vectorstore_db(
             .filter_map(|record| decompress_text(record).ok())
             .collect::<Vec<_>>();
 
-            let embeddings = openai
-                .embed_batch(texts)
-                .await
-                .map_err(EmbeddingServiceError)?;
-            let _ = tx.send(
-                (indices..(indices + BATCH_SIZE as i64))
-                    .zip(embeddings)
-                    .collect::<Vec<_>>(),
-            );
+            match openai.embed_batch(texts).await {
+                Ok(embeddings) => {
+                    let _ = tx.send(
+                        (indices..(indices + BATCH_SIZE as i64))
+                            .zip(embeddings)
+                            .collect::<Vec<_>>(),
+                    );
+                }
+                Err(e) => {
+                    log::error!("{e}")
+                }
+            }
+
             Ok::<(), IngestError>(())
         });
     }
