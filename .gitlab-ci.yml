@@ -11,11 +11,11 @@ variables:
 
 stages:
   - check
-  - build
-  - test
+  # - build
+  # - sast
 
 sast:
-  stage: test
+  stage: sast
 include:
   - template: Security/SAST.gitlab-ci.yml
 
@@ -26,34 +26,30 @@ check-ingest:
     - apt-get update
     - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
     - cd rust
+    - cargo check
     - cargo check --no-default-features --features ingest
-check-server:
-  image: rust:1.75.0-bookworm
-  stage: check
-  script:
-    - apt-get update
-    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
-    - cd rust
     - cargo check --no-default-features --features server
-build-ingest:
-  image: rust:1.75.0-bookworm
-  stage: build
-  script:
-    - apt-get update
-    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
-    - cd rust
-    - cargo install --no-default-features --features ingest --path . --root ./build
-  artifacts:
-    paths:
-      - "rust/build/"
-build-server:
-  image: rust:1.75.0-bookworm
-  stage: build
-  script:
-    - apt-get update
-    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
-    - cd rust
-    - cargo install --no-default-features --features server --path . --root ./build
-  artifacts:
-    paths:
-      - "rust/build/"
+    - cargo check --no-default-features --features breeder
+# build-ingest:
+#   image: rust:1.75.0-bookworm
+#   stage: build
+#   script:
+#     - apt-get update
+#     - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+#     - cd rust
+#     - cargo install --no-default-features --features ingest --path . --root ./build
+#   artifacts:
+#     paths:
+#       - "rust/build/"
+
+# build-server:
+#   image: rust:1.75.0-bookworm
+#   stage: build
+#   script:
+#     - apt-get update
+#     - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+#     - cd rust
+#     - cargo install --no-default-features --features server --path . --root ./build
+#   artifacts:
+#     paths:
+#       - "rust/build/"
