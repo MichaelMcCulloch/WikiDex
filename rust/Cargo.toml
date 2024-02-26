@@ -10,7 +10,7 @@ actix-cors = "0.7.0"
 actix-rt = "2.9.0"
 actix-web = "4.5.1"
 anyhow = "1.0.80"
-async-openai = "0.18.3"
+async-openai = { git = "https://github.com/MichaelMcCulloch/async-not-just-openai.git", branch = "main" }
 backoff = "0.4.0"
 bytes = "1.5.0"
 chrono = "0.4.34"
@@ -41,6 +41,7 @@ itertools = { version = "0.12.1", optional = true }
 utoipa = { version = "4.2.0", features = ["actix_extras"], optional = true }
 utoipa-redoc = { version = "3.0.0", features = ["actix-web"], optional = true }
 
+rand = { version = "0.8.5", optional = true }
 [profile.release]
 lto = true
 strip = true
@@ -60,4 +61,4 @@ ingest = [
     "dep:indicatif",
     "dep:indicatif-log-bridge",
 ]
-breeder = ["dep:indicatif", "dep:indicatif-log-bridge"]
+breeder = ["dep:indicatif", "dep:indicatif-log-bridge", "dep:rand"]
