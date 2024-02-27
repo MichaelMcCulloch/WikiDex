@@ -9,18 +9,7 @@ x-base_service: &base_service
 
 x-base_service_nvidia: &base_service_nvidia
   <<: *base_service
-  profiles: ["server"]
-  deploy:
-    resources:
-      reservations:
-        devices:
-          - driver: nvidia
-            device_ids: ["0"]
-            capabilities: [gpu]
-
-x-base_ingest_service_nvidia: &base_ingest_nvidia_ingest
-  <<: *base_service
-  profiles: ["ingest"]
+  profiles: ["service", "server"]
   deploy:
     resources:
       reservations:
@@ -53,29 +42,20 @@ x-base_service_omnipedia: &base_omnipedia
     - ./rust/db:/db
     - ./rust/prompt:/prompt
 
-x-base_service_omnipedia_ingest: &base_omnipedia_ingest
-  ports:
-    - "${OMNIPEDIA_HOST_PORT}:${OMNIPEDIA_CONT_PORT}"
-  volumes:
-    - ./wikidump:/wikidump
-
-x-base_service_omnipedia_breeder: &base_omnipedia_breeder
-  ports:
-    - "${OMNIPEDIA_HOST_PORT}:${OMNIPEDIA_CONT_PORT}"
-  volumes:
-    - ./rust/db:/db
-    - ./rust/breeder:/breeder
-
 x-base_service_infinity: &base_infinity
   ports:
     - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
+  build:
+    dockerfile: Dockerfile
+    context: ./infinity
+    args:
+      SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
 
 services:
   ui:
     <<:
       - *base_service
       - *base_ui
-    profiles: ["server"]
     build:
       dockerfile: Dockerfile
       context: ./typescript
@@ -84,7 +64,6 @@ services:
     <<:
       - *base_service_nvidia
       - *base_vllm
-    profiles: ["server", "breeder"]
     build:
       dockerfile: Dockerfile
       context: ./vllm
@@ -96,46 +75,13 @@ services:
     <<:
       - *base_service
       - *base_omnipedia
-    profiles: ["server"]
     build:
       dockerfile: Dockerfile
       context: ./rust
-      args:
-        LLM_MODEL_NAME: ${LLM_MODEL_NAME}
-
-  omnipedia-breeder:
-    <<:
-      - *base_service
-      - *base_omnipedia_breeder
-    profiles: ["breeder"]
-    build:
-      dockerfile: Dockerfile_Breeder
-      context: ./rust
-      args:
-        LLM_MODEL_NAME: ${LLM_MODEL_NAME}
 
   infinity:
     <<:
       - *base_service_nvidia
       - *base_infinity
-    profiles: ["server", "breeder"]
     environment:
-      - BATCH_SIZE=128
-    build:
-      dockerfile: Dockerfile
-      context: ./infinity
-      args:
-        SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
-
-  infinity-ingest:
-    <<:
-      - *base_ingest_nvidia_ingest
-      - *base_infinity
-    profiles: ["ingest"]
-    environment:
-      - BATCH_SIZE=4096
-    build:
-      dockerfile: Dockerfile
-      context: ./infinity
-      args:
-        SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
+      - BATCH_SIZE=512
