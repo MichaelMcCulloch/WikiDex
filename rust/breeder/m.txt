@@ -1,0 +1,10 @@
+- **Zero-order Prompt Generation**: Creating a new prompt without using an existing one, by concatenating a problem description with a query for new hints.
+- **First-order Prompt Generation**: Mutating an existing prompt with guidance from a mutation-prompt.
+- **EDA Mutation**: Providing the LLM (Large Language Model) with a filtered list of task-prompts to inspire the creation of new prompts.
+- **EDA Rank and Index Mutation**: Similar to EDA Mutation but with ordered prompts and manipulated wording to enhance diversity.
+- **Lineage Based Mutation**: Using the historical list of elite task-prompts of a lineage to generate a new prompt, leveraging their progression.
+- **Zero-order Hyper-Mutation**: Creating a new mutation-prompt using a randomly sampled thinking-style.
+- **First-order Hyper-Mutation**: Improving an existing mutation-prompt with guidance from a hyper-mutation-prompt.
+- **Working Out to Task-Prompt**: Generating a new task-prompt from a previously successful working out, effectively reverse-engineering the prompt from the solution.
+- **Prompt Crossover**: Introducing genetic diversity by replacing a task-prompt with one from a different unit chosen based on fitness.
+- **Context Shuffling**: Evolving the few-shot context examples by replacing or resampling correct workings out.

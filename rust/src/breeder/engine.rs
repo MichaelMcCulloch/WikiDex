@@ -1,4 +1,4 @@
-use super::PromptBreedingError;
+use super::{Operator, PromptBreedingError};
 use crate::{
     docstore::SqliteDocstore,
     formatter::CitationStyle,
@@ -7,10 +7,13 @@ use crate::{
 };
 use backoff::future::retry;
 use backoff::ExponentialBackoff;
-use std::sync::{Arc, Mutex};
+use rand::seq::SliceRandom;
+use std::{
+    fmt::Display,
+    sync::{Arc, Mutex},
+};
 use tokio::sync::mpsc::unbounded_channel;
-
-pub struct Engine {
+pub(crate) struct Engine {
     index: Mutex<FaissIndex>,
     openai: Arc<OpenAiDelegate>,
     docstore: SqliteDocstore,
@@ -18,10 +21,26 @@ pub struct Engine {
     mutation_prompts: Vec<String>,
 }
 
-pub struct Unit {
-    // task_prompts: Vec<String>,
-    mutation_prompt: String,
-    fitness_score: Option<f32>, // Fitness could be an option if not yet evaluated
+impl Display for TaskPrompt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.task_prompt)
+    }
+}
+
+pub(crate) struct TaskPrompt {
+    pub(crate) task_prompt: String,
+    pub(crate) embedding: Vec<f32>,
+    pub(crate) fitness_score: Option<f32>, // Fitness could be an option if not yet evaluated
+}
+
+impl TaskPrompt {
+    pub(crate) fn new(problem_description: &str, embedding: Vec<f32>) -> TaskPrompt {
+        TaskPrompt {
+            task_prompt: String::from(problem_description),
+            embedding,
+            fitness_score: None,
+        }
+    }
 }
 
 const NUM_DOCUMENTS_TO_RETRIEVE: usize = 4;
@@ -45,7 +64,7 @@ impl Engine {
 
         let LlmMessage { role: _, content } = self
             .openai
-            .get_llm_answer(llm_service_arguments, 256u16)
+            .get_llm_answer(llm_service_arguments, 256u16, vec!["\n"])
             .await
             .map_err(PromptBreedingError::LlmError)?;
 
@@ -110,16 +129,18 @@ impl Engine {
 
     async fn initialize_population(
         &self,
+        population_size: usize,
         thinking_styles: &[String],
         mutation_prompts: &[String],
         problem_description: &'static str,
-    ) -> Result<Vec<String>, PromptBreedingError> {
+    ) -> Result<Vec<TaskPrompt>, PromptBreedingError> {
         retry(ExponentialBackoff::default(), || async {
             log::info!("Checking LLM Awake");
             Ok(self.openai.llm_up().await?)
         })
         .await
         .unwrap();
+
         let (tx, mut rx) = unbounded_channel();
         let population_writer = actix_web::rt::spawn(async move {
             let mut intial_population = vec![];
@@ -127,42 +148,42 @@ impl Engine {
                 intial_population.push(result);
             }
 
-            Ok::<Vec<String>, PromptBreedingError>(intial_population)
+            Ok::<Vec<TaskPrompt>, PromptBreedingError>(intial_population)
         });
-        for style in thinking_styles.iter() {
-            for mutation in mutation_prompts.iter() {
-                let tx = tx.clone();
-                let openai = self.openai.clone();
-                let style = style.clone();
-                let mutation = mutation.clone();
-                actix_web::rt::spawn(async move {
-                    let mutation_instruction =
-                        format!("{mutation} INSTRUCTION: {style} {problem_description} INSTRUCTION MUTANT: ");
 
-                    match openai
-                        .get_llm_answer(
-                            LanguageServiceArguments {
-                                system: &mutation_instruction,
-                                documents: "",
-                                query: "",
-                                citation_index_begin: 0,
-                            },
-                            128u16,
-                        )
-                        .await
-                        .map_err(PromptBreedingError::LlmError)
-                    {
-                        Ok(LlmMessage { role: _, content }) => {
-                            tx.clone().send(content).unwrap();
-                        }
-                        Err(e) => {
-                            log::error!("{e}")
-                        }
-                    };
+        for _ in 0..population_size {
+            let thinking_style = thinking_styles
+                .choose(&mut rand::thread_rng())
+                .unwrap()
+                .clone();
+            let mutation_prompt = mutation_prompts
+                .choose(&mut rand::thread_rng())
+                .unwrap()
+                .clone();
+            let tx = tx.clone();
+            let openai = self.openai.clone();
+            actix_web::rt::spawn(async move {
+                let embedding = openai.embed(problem_description).await.unwrap();
+                let operator = Operator::FirstOrderPromptGeneration(
+                    thinking_style,
+                    mutation_prompt,
+                    TaskPrompt::new(problem_description, embedding),
+                );
 
-                    Ok::<(), PromptBreedingError>(())
-                });
-            }
+                match operator.new_task_prompt(&openai).await {
+                    Ok(mutants) => {
+                        for mutant in mutants {
+                            log::info!("{mutant}");
+                            let _ = tx.send(mutant);
+                        }
+                    }
+                    Err(e) => {
+                        log::error!("{e}")
+                    }
+                };
+
+                Ok::<(), PromptBreedingError>(())
+            });
         }
         drop(tx);
         let intial_population = population_writer.await.unwrap()?;
@@ -172,34 +193,37 @@ impl Engine {
 
     async fn evaluate_fitness(
         &self,
-        _unit: &Unit,
+        _unit: &TaskPrompt,
         _problem_description: &str,
     ) -> Result<f32, PromptBreedingError> {
         // Evaluate the fitness of a unit by testing its task prompts against training data
         todo!()
     }
 
-    async fn update_unit_fitness(&self, _unit: &Unit, _fitness: f32) {
+    async fn update_unit_fitness(&self, _unit: &TaskPrompt, _fitness: f32) {
         // Update the fitness score of a unit based on the evaluation
         todo!()
     }
 
-    fn select_random_competitor<'a>(&self, _population: &'a [Unit]) -> &'a Unit {
+    fn select_random_competitor<'a>(&self, _population: &'a [TaskPrompt]) -> &'a TaskPrompt {
         // Select a random unit from the population to compete with another unit
         todo!()
     }
 
-    async fn mutate_unit(&self, _unit: &Unit) -> Result<Unit, PromptBreedingError> {
+    async fn mutate_unit(&self, _unit: &TaskPrompt) -> Result<TaskPrompt, PromptBreedingError> {
         // Mutate a unit using some mutation strategy
         todo!()
     }
 
-    fn replace_unit(&mut self, _unit_to_replace: &Unit, _new_unit: Unit) {
+    fn replace_unit(&mut self, _unit_to_replace: &TaskPrompt, _new_unit: TaskPrompt) {
         // Replace a unit in the population with a new mutated unit
         todo!()
     }
 
-    fn find_best_unit(&self, _population: &[Unit]) -> Result<&Unit, PromptBreedingError> {
+    fn find_best_unit(
+        &self,
+        _population: &[TaskPrompt],
+    ) -> Result<&TaskPrompt, PromptBreedingError> {
         // Find the unit with the best fitness in the population
         todo!()
     }
@@ -209,16 +233,15 @@ impl Engine {
         problem_description: &'static str,
         _number_of_generations: usize,
     ) -> Result<String, PromptBreedingError> {
-        let population = self
+        let _population = self
             .initialize_population(
+                50usize,
                 &self.thinking_styles,
                 &self.mutation_prompts,
                 problem_description,
             )
             .await?;
-        for member in population {
-            println!("{member}");
-        }
+
         // while number_of_generations > 0 {
         //     for unit in &population {
         //         let fitness = self.evaluate_fitness(unit, problem_description).await?;
