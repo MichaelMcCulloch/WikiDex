@@ -20,7 +20,7 @@ stages:
 #   - template: Security/SAST.gitlab-ci.yml
 
 check:
-  image: rust:slim
+  image: rust:latest
   stage: check
   script:
     - apt-get update
