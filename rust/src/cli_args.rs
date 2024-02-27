@@ -49,7 +49,7 @@ pub(crate) struct BreederArgs {
     pub(crate) language_model_name: PathBuf,
     #[arg(short = 'k', long)]
     pub(crate) language_model_kind: ModelKind,
-    #[arg(short = 'n', long, default_value_t = 0)]
+    #[arg(short = 'n', long)]
     pub(crate) generation_limit: usize,
 }
 

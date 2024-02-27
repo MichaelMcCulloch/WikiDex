@@ -32,8 +32,9 @@ impl ChatClient {
     pub(crate) async fn get_response(
         &self,
         arguments: LanguageServiceArguments<'_>,
+        stop_phrases: Vec<&str>,
     ) -> Result<String, LlmServiceError> {
-        let request = self.create_chat_request(arguments)?;
+        let request = self.create_chat_request(arguments, stop_phrases)?;
         let response = self
             .chat_client
             .chat()
@@ -62,8 +63,9 @@ impl ChatClient {
         &self,
         arguments: LanguageServiceArguments<'_>,
         tx: UnboundedSender<String>,
+        stop_phrases: Vec<&str>,
     ) -> Result<(), LlmServiceError> {
-        let request = self.create_chat_request(arguments)?;
+        let request = self.create_chat_request(arguments, stop_phrases)?;
 
         let mut stream = self
             .chat_client
@@ -92,12 +94,14 @@ pub(crate) trait ChatRequest {
     fn create_chat_request(
         &self,
         arguments: LanguageServiceArguments,
+        stop_phrases: Vec<&str>,
     ) -> Result<CreateChatCompletionRequest, LlmServiceError>;
 }
 impl ChatRequest for ChatClient {
     fn create_chat_request(
         &self,
         arguments: LanguageServiceArguments,
+        stop_phrases: Vec<&str>,
     ) -> Result<CreateChatCompletionRequest, LlmServiceError> {
         let query = format!("{PROMPT_SALT}\n{}", arguments.query);
 
@@ -123,7 +127,7 @@ impl ChatRequest for ChatClient {
             .max_tokens(2048u16)
             .model(self.chat_model_name.clone())
             .messages(message_openai_compat)
-            .stop("References:")
+            .stop(stop_phrases)
             .build()
             .map_err(LlmServiceError::AsyncOpenAiError)?;
 
