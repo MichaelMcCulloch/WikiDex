@@ -34,6 +34,7 @@ impl Engine {
     pub(crate) async fn conversation(
         &self,
         Conversation(message_history): Conversation,
+        stop_phrases: Vec<&str>,
     ) -> Result<Message, QueryEngineError> {
         let num_sources = message_history.sources_count();
         match message_history.into_iter().last() {
@@ -50,7 +51,7 @@ impl Engine {
 
                 let LlmMessage { role, content } = self
                     .openai
-                    .get_llm_answer(llm_service_arguments, 2048u16)
+                    .get_llm_answer(llm_service_arguments, 2048u16, stop_phrases)
                     .await
                     .map_err(QueryEngineError::LlmError)?;
 
@@ -69,6 +70,7 @@ impl Engine {
         &self,
         Conversation(message_history): Conversation,
         tx: UnboundedSender<Bytes>,
+        stop_phrases: Vec<&str>,
     ) -> Result<(), QueryEngineError> {
         let num_sources = message_history.sources_count();
         match message_history.into_iter().last() {
@@ -99,7 +101,7 @@ impl Engine {
                     citation_index_begin: num_sources,
                 };
                 self.openai
-                    .stream_llm_answer(llm_service_arguments, tx_p, 2048u16)
+                    .stream_llm_answer(llm_service_arguments, tx_p, 2048u16, stop_phrases)
                     .await
                     .map_err(QueryEngineError::LlmError)?;
 

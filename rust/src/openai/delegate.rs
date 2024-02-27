@@ -31,10 +31,15 @@ impl LlmClient {
         &self,
         arguments: LanguageServiceArguments<'_>,
         max_tokens: u16,
+        stop_phrases: Vec<&str>,
     ) -> Result<String, LlmServiceError> {
         match self {
-            LlmClient::Chat(chat) => chat.get_response(arguments).await,
-            LlmClient::Instruct(instruct) => instruct.get_response(arguments, max_tokens).await,
+            LlmClient::Chat(chat) => chat.get_response(arguments, stop_phrases).await,
+            LlmClient::Instruct(instruct) => {
+                instruct
+                    .get_response(arguments, max_tokens, stop_phrases)
+                    .await
+            }
         }
     }
 
@@ -43,11 +48,14 @@ impl LlmClient {
         arguments: LanguageServiceArguments<'_>,
         tx: UnboundedSender<String>,
         max_tokens: u16,
+        stop_phrases: Vec<&str>,
     ) -> Result<(), LlmServiceError> {
         match self {
-            LlmClient::Chat(chat) => chat.stream_response(arguments, tx).await,
+            LlmClient::Chat(chat) => chat.stream_response(arguments, tx, stop_phrases).await,
             LlmClient::Instruct(instruct) => {
-                instruct.stream_response(arguments, tx, max_tokens).await
+                instruct
+                    .stream_response(arguments, tx, max_tokens, stop_phrases)
+                    .await
             }
         }
     }
@@ -87,8 +95,12 @@ impl OpenAiDelegate {
         &self,
         arguments: LanguageServiceArguments<'_>,
         max_tokens: u16,
+        stop_phrases: Vec<&str>,
     ) -> Result<LlmMessage, LlmServiceError> {
-        let message = self.llm_client.get_response(arguments, max_tokens).await?;
+        let message = self
+            .llm_client
+            .get_response(arguments, max_tokens, stop_phrases)
+            .await?;
         Ok(LlmMessage {
             role: LlmRole::Assistant,
             content: message,
@@ -99,6 +111,7 @@ impl OpenAiDelegate {
         arguments: LanguageServiceArguments<'_>,
         tx: UnboundedSender<PartialLlmMessage>,
         max_tokens: u16,
+        stop_phrases: Vec<&str>,
     ) -> Result<(), LlmServiceError> {
         let (tx_s, mut rx_s) = unbounded_channel();
 
@@ -111,7 +124,7 @@ impl OpenAiDelegate {
             }
         });
         self.llm_client
-            .stream_response(arguments, tx_s, max_tokens)
+            .stream_response(arguments, tx_s, max_tokens, stop_phrases)
             .await
     }
 }
