@@ -6,7 +6,7 @@ use crate::{
 };
 
 use super::PromptBreedingError;
-
+use simsimd::SimSIMD;
 pub(crate) enum Operator {
     ZeroOrderPromptGeneration(TaskPrompt),
     FirstOrderPromptGeneration(String, String, TaskPrompt),
@@ -82,14 +82,15 @@ impl Operator {
             }
             Operator::EstimationOfDistributionMutation(population_subset) => {
                 let mut new_task_prompts = vec![];
-                for _ in 0..5 {
+                let mut new_prompt_count = 0usize;
+                while new_prompt_count < 5usize {
                     let mut aggregate_task_prompts = vec![];
                     aggregate_task_prompts.extend(&population_subset);
                     aggregate_task_prompts.extend(&new_task_prompts);
                     aggregate_task_prompts.shuffle(&mut rand::thread_rng());
                     let len = aggregate_task_prompts.len();
                     let prompt_list = aggregate_task_prompts
-                        .into_iter()
+                        .iter()
                         .enumerate()
                         .map(|(index, task_prompt)| format!("{}. {task_prompt}", index + 1))
                         .collect::<Vec<_>>()
@@ -100,15 +101,20 @@ impl Operator {
                         len + 1
                     );
 
-                    let content =
+                    let new_prompt =
                         Operator::ask_llm(openai, &mutation_instruction, 0, vec!["\n"]).await?;
 
-                    let new_task_prompt = TaskPrompt {
-                        task_prompt: content.0.trim().to_string(),
-                        embedding: content.1,
-                        fitness_score: None,
-                    };
-                    new_task_prompts.push(new_task_prompt);
+                    if aggregate_task_prompts.iter().all(|existing_prompt| {
+                        f32::cosine(&existing_prompt.embedding, &new_prompt.1).unwrap() < 0.95f32
+                    }) {
+                        let new_task_prompt = TaskPrompt {
+                            task_prompt: new_prompt.0.trim().to_string(),
+                            embedding: new_prompt.1,
+                            fitness_score: None,
+                        };
+                        new_task_prompts.push(new_task_prompt);
+                        new_prompt_count += 1;
+                    }
                 }
                 Ok(new_task_prompts)
             }
