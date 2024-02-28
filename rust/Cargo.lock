@@ -1658,6 +1658,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
+ "simsimd",
  "sqlx",
  "tokio",
  "url",
@@ -2251,6 +2252,15 @@ checksum = "77549399552de45a898a580c1b41d445bf730df867cc44e6c0233bbc4b8329de"
 dependencies = [
  "digest",
  "rand_core",
+]
+
+[[package]]
+name = "simsimd"
+version = "3.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c50c29e70de9c76c99000b4369336c97cab7b89605301c724429e6d911cd17b5"
+dependencies = [
+ "cc",
 ]
 
 [[package]]
