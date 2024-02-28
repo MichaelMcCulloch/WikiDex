@@ -45,13 +45,20 @@ x-base_service_omnipedia: &base_omnipedia
 x-base_service_infinity: &base_infinity
   ports:
     - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
-  build:
-    dockerfile: Dockerfile
-    context: ./infinity
-    args:
-      SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
 
 services:
+  infinity:
+    <<:
+      - *base_service_nvidia
+      - *base_infinity
+    environment:
+      - BATCH_SIZE=512
+    build:
+      dockerfile: Dockerfile
+      context: ./infinity
+      args:
+        SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
+
   ui:
     <<:
       - *base_service
@@ -78,10 +85,3 @@ services:
     build:
       dockerfile: Dockerfile
       context: ./rust
-
-  infinity:
-    <<:
-      - *base_service_nvidia
-      - *base_infinity
-    environment:
-      - BATCH_SIZE=512
