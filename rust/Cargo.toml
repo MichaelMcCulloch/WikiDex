@@ -40,7 +40,7 @@ itertools = { version = "0.12.1", optional = true }
 
 utoipa = { version = "4.2.0", features = ["actix_extras"], optional = true }
 utoipa-redoc = { version = "3.0.0", features = ["actix-web"], optional = true }
-
+simsimd = { version = "3.8.1", optional = true }
 rand = { version = "0.8.5", optional = true }
 [profile.release]
 lto = true
@@ -61,4 +61,9 @@ ingest = [
     "dep:indicatif",
     "dep:indicatif-log-bridge",
 ]
-breeder = ["dep:indicatif", "dep:indicatif-log-bridge", "dep:rand"]
+breeder = [
+    "dep:indicatif",
+    "dep:indicatif-log-bridge",
+    "dep:rand",
+    "dep:simsimd",
+]
