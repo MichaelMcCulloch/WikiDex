@@ -11,7 +11,7 @@ variables:
 
 stages:
   - check
-  # - build
+  - test
   # - sast
 
 # sast:
@@ -30,4 +30,12 @@ check:
     - cargo check --no-default-features --features ingest
     - cargo check --no-default-features --features server
     - cargo check --no-default-features --features breeder
-    - "cargo test --package omnipedia --bin omnipedia -- breeder::operator::"
+
+test-breeder:
+  image: rust:latest
+  stage: test
+  script:
+    - apt-get update
+    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - cd rust
+    - "cargo test --package omnipedia --bin omnipedia --no-default-features --features breeder -- breeder::operator::"
