@@ -119,12 +119,12 @@ mod test {
     fn obtain_openai() -> OpenAiDelegate {
         let openai_builder =
             OpenAiDelegateBuilder::with_embedding(OpenAiDelegateBuilderArgument::Endpoint(
-                Url::parse("http://0.0.0.0:9000/").unwrap(),
+                Url::parse("https://infinity.semanticallyinvalid.net/").unwrap(),
                 String::from("thenlper/gte-small"),
             ));
 
         openai_builder.with_instruct(OpenAiDelegateBuilderArgument::Endpoint(
-            Url::parse("http://0.0.0.0:5050/v1/").unwrap(),
+            Url::parse("https://vllm.semanticallyinvalid.net/v1/").unwrap(),
             String::from("TheBloke/Mistral-7B-Instruct-v0.2-AWQ"),
         ))
     }
