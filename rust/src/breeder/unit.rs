@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use super::prompt::{MutationPrompt, ProblemDescription, TaskPrompt};
 
 #[derive(Clone)]
@@ -18,10 +20,25 @@ pub(crate) struct ScoredUnit {
 pub(crate) struct UnscoredUnit {
     pub(crate) unit: UnitData,
 }
+impl Display for UnitData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.task_prompt)
+    }
+}
+impl Display for UnscoredUnit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.unit)
+    }
+}
+impl Display for ScoredUnit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.unit)
+    }
+}
 
 #[derive(Clone)]
 pub(crate) struct Population {
-    pub(crate) members: Vec<UnscoredUnit>,
+    pub(crate) unscored: Vec<UnscoredUnit>,
     pub(crate) scored: Vec<ScoredUnit>,
     pub(crate) elites: Vec<TaskPrompt>,
     pub(crate) age: usize,
