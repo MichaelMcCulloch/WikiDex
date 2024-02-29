@@ -30,3 +30,4 @@ check:
     - cargo check --no-default-features --features ingest
     - cargo check --no-default-features --features server
     - cargo check --no-default-features --features breeder
+    - "cargo test --package omnipedia --bin omnipedia -- breeder::operator::"
