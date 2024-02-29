@@ -23,7 +23,7 @@ stages:
 # include:
 #   - template: Security/SAST.gitlab-ci.yml
 
-check:
+ingest check:
   image: rust:latest
   stage: check
   script:
@@ -32,7 +32,23 @@ check:
     - cd rust
     - cargo check
     - cargo check --no-default-features --features ingest
+server check:
+  image: rust:latest
+  stage: check
+  script:
+    - apt-get update
+    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - cd rust
+    - cargo check
     - cargo check --no-default-features --features server
+breeder check:
+  image: rust:latest
+  stage: check
+  script:
+    - apt-get update
+    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - cd rust
+    - cargo check
     - cargo check --no-default-features --features breeder
 
 test-breeder:
