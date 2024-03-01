@@ -16,6 +16,7 @@ pub(crate) struct UnitData {
 pub(crate) struct ScoredUnit {
     pub(crate) unit: UnitData,
     pub(crate) fitness: f32,
+    pub(crate) elites: Vec<ScoredUnit>,
 }
 #[derive(Clone)]
 pub(crate) struct UnscoredUnit {
@@ -41,7 +42,6 @@ impl Display for ScoredUnit {
 pub(crate) struct Population {
     pub(crate) unscored: Vec<UnscoredUnit>,
     pub(crate) scored: Vec<ScoredUnit>,
-    pub(crate) elites: Vec<ScoredUnit>,
 }
 pub trait Unit {
     fn get_problem_description(&self) -> &ProblemDescription;
