@@ -1,38 +1,23 @@
-use crate::breeder::{
-    mutator::direct::PromptForTaskPrompt, prompt::MutationPrompt, unit::Unit, ScoredUnit,
-};
+use crate::breeder::{mutator::direct::PromptForTaskPrompt, ScoredUnit};
 
-pub(crate) struct FirstOrderPromptGeneration {
-    pub(crate) mutation_prompt: MutationPrompt,
+pub(crate) struct WorkingOutToTaskPromptMutation {
+    pub(crate) correct_solution: String,
 }
-pub(crate) struct ZeroOrderPromptGeneration {}
-
-impl PromptForTaskPrompt for ZeroOrderPromptGeneration {
-    fn prompt_for_task_prompt(&self, unit: &ScoredUnit) -> String {
+impl PromptForTaskPrompt for WorkingOutToTaskPromptMutation {
+    fn prompt_for_task_prompt(&self, _unit: &ScoredUnit) -> String {
         format!(
-            "INSTRUCTION: {}\nA list of 100 hints:\n1. ",
-            unit.get_problem_description()
-        )
-    }
-}
-
-impl PromptForTaskPrompt for FirstOrderPromptGeneration {
-    fn prompt_for_task_prompt(&self, unit: &ScoredUnit) -> String {
-        format!(
-            "MUTATION: {}\nINSTRUCTION: {}\nINSTRUCTION MUTANT:",
-            self.mutation_prompt,
-            unit.get_task_prompt()
+            "I gave a friend an instruction and some advice. Here are the correct examples of his workings out\n```Correct Solution\n{}\n```\nThe instruction was:\n",
+            self.correct_solution,
         )
     }
 }
 
 #[cfg(test)]
 mod test {
-
+    use super::WorkingOutToTaskPromptMutation;
     use crate::{
         breeder::{
             mutator::direct::DirectMutator,
-            operator::prompt::{FirstOrderPromptGeneration, ZeroOrderPromptGeneration},
             prompt::{MutationPrompt, ProblemDescription, TaskPrompt},
             unit::{ScoredUnit, UnitData},
         },
@@ -87,43 +72,21 @@ mod test {
     }
 
     #[tokio::test]
-    async fn ZeroOrderPromptGeneration() {
-        let openai = obtain_openai();
-
-        let unit = obtain_scored_unit(&openai, PROBLEM_DESCRIPTION, 0.5f32).await;
-
-        let operator = ZeroOrderPromptGeneration {};
-        let new_unit = operator.mutate(&openai, &unit, vec!["\n2", "\n"]).await;
-
-        match new_unit {
-            Ok(mutant) => {
-                println!("{mutant}");
-            }
-            Err(e) => {
-                println!("{e}")
-            }
-        };
-    }
-
-    #[tokio::test]
-    async fn FirstOrderPromptGeneration() {
+    async fn WorkingOutToTaskPrompt() {
         let openai = obtain_openai();
 
         let unit = obtain_scored_unit(&openai, PROBLEM_DESCRIPTION, 0.0f32).await;
-        let operator = FirstOrderPromptGeneration {
-            mutation_prompt: MutationPrompt::new(
-                "Modify this instruction in a way that no self-respecting LLM would!",
-            ),
+        let operator = WorkingOutToTaskPromptMutation {
+            correct_solution: String::new(),
         };
-        let new_unit = operator.mutate(&openai, &unit, vec!["\n2", "\n"]).await;
-
-        match new_unit {
-            Ok(mutant) => {
-                println!("{mutant}");
-            }
-            Err(e) => {
-                println!("{e}")
-            }
-        };
+        let _new_unit = operator.mutate(&openai, &unit, vec!["\n2", "\n"]).await;
     }
+    // #[tokio::test]
+    // async fn PromptCrossover() {
+    //     todo!()
+    // }
+    // #[tokio::test]
+    // async fn ContextShuffling() {
+    //     todo!()
+    // }
 }

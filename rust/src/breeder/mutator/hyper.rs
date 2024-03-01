@@ -13,7 +13,7 @@ pub(crate) trait PromptForMutatorPrompt {
 
 impl<T> MetaMutator for T where T: PromptForMutatorPrompt {}
 pub(crate) trait MetaMutator: PromptForMutatorPrompt {
-    async fn mutate_unit(
+    async fn mutate(
         &self,
         openai: &OpenAiDelegate,
         unit: &ScoredUnit,

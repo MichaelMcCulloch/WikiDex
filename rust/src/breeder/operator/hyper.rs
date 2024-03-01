@@ -69,7 +69,6 @@ mod test {
         ScoredUnit {
             unit: obtain_unit_data(openai, problem_description).await,
             fitness: score,
-            elites: vec![],
         }
     }
 
@@ -94,9 +93,7 @@ mod test {
         let operator = ZeroOrderHyperMutation {
             thinking_style: ThinkingStyle::new("Let's think step by step."),
         };
-        let new_unit = operator
-            .mutate_unit(&openai, &unit, vec!["\n2", "\n"])
-            .await;
+        let new_unit = operator.mutate(&openai, &unit, vec!["\n2", "\n"]).await;
 
         match new_unit {
             Ok(mutant) => {
@@ -115,9 +112,7 @@ mod test {
         let operator = FirstOrderHyperMutation {
             mutation_prompt: MutationPrompt::new("Modify the following instruction creatively, giving some advice on how to solve it:"),
         };
-        let new_unit = operator
-            .mutate_unit(&openai, &unit, vec!["\n2", "\n"])
-            .await;
+        let new_unit = operator.mutate(&openai, &unit, vec!["\n2", "\n"]).await;
 
         match new_unit {
             Ok(mutant) => {

@@ -12,7 +12,7 @@ pub(crate) trait PromptForTaskPrompt {
 
 impl<T> DirectMutator for T where T: PromptForTaskPrompt {}
 pub(crate) trait DirectMutator: PromptForTaskPrompt {
-    async fn mutate_unit(
+    async fn mutate(
         &self,
         openai: &OpenAiDelegate,
         unit: &ScoredUnit,

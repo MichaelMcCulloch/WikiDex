@@ -54,7 +54,7 @@ impl GetPopulationPrompt for RankAndIndexMutation {
 pub(crate) struct LineageMutation {}
 impl PopulationSelector for LineageMutation {
     fn select<'a>(_population: &'a Population, unit: &'a ScoredUnit) -> Vec<&'a ScoredUnit> {
-        unit.elites.iter().collect::<Vec<_>>()
+        unit.get_elites().iter().collect::<Vec<_>>()
     }
 }
 
@@ -120,7 +120,6 @@ mod test {
         ScoredUnit {
             unit: obtain_unit_data(openai, problem_description).await,
             fitness: score,
-            elites: vec![],
         }
     }
 
