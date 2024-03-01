@@ -4,7 +4,7 @@
     {
       "label": "Cargo Test",
       "type": "shell",
-      "command": "cargo test  --package omnipedia --bin omnipedia -- breeder::operator::test --nocapture",
+      "command": "cargo test --package omnipedia --bin omnipedia -- breeder::operator:: --nocapture",
       "group": "test",
       "problemMatcher": "$rustc",
       "presentation": {
@@ -12,7 +12,7 @@
         "panel": "new"
       },
       "options": {
-        "cwd": "rust/",
+        "cwd": "${workspaceRoot}/rust/",
         "env": {
           "DATABASE_URL": "sqlite://sqlite_dummy.db"
         }
