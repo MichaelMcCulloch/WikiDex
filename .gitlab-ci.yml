@@ -17,12 +17,11 @@ stages:
   - build
   - check
   - test
-  # - sast
 
-# sast:
-#   stage: sast
-# include:
-#   - template: Security/SAST.gitlab-ci.yml
+sast:
+  stage: test
+include:
+  - template: Security/SAST.gitlab-ci.yml
 
 build:
   cache:
