@@ -1,5 +1,5 @@
 use crate::breeder::{
-    mutator::meta_prompt::PromptForMutatorPrompt,
+    mutator::hyper::PromptForMutatorPrompt,
     prompt::{MutationPrompt, ThinkingStyle},
     unit::Unit,
     ScoredUnit,
@@ -31,7 +31,7 @@ mod test {
     use super::{FirstOrderHyperMutation, ZeroOrderHyperMutation};
     use crate::{
         breeder::{
-            mutator::meta::MetaMutator,
+            mutator::hyper::MetaMutator,
             prompt::{MutationPrompt, ProblemDescription, TaskPrompt, ThinkingStyle},
             unit::{ScoredUnit, UnitData},
         },

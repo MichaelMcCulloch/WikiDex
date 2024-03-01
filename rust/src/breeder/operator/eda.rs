@@ -2,8 +2,7 @@ use rand::seq::SliceRandom;
 
 use crate::breeder::{
     mutator::{
-        ordering::PopulationOrdering, population_prompt::GetPopulationPrompt,
-        selector::PopulationSelector,
+        mean::GetPopulationPrompt, ordering::PopulationOrdering, selector::PopulationSelector,
     },
     unit::{Population, ScoredUnit, Unit},
 };

@@ -1,7 +1,5 @@
-use crate::{
-    breeder::{
-        mutator::unit_prompt::PromptForTaskPrompt, prompt::MutationPrompt, unit::Unit, ScoredUnit,
-    },
+use crate::breeder::{
+    mutator::direct::PromptForTaskPrompt, prompt::MutationPrompt, unit::Unit, ScoredUnit,
 };
 
 pub(crate) struct FirstOrderPromptGeneration {
