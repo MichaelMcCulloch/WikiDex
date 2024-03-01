@@ -29,10 +29,10 @@ impl ChatClient {
         }
     }
 
-    pub(crate) async fn get_response(
+    pub(crate) async fn get_response<S: AsRef<str>>(
         &self,
         arguments: LanguageServiceArguments<'_>,
-        stop_phrases: Vec<&str>,
+        stop_phrases: Vec<S>,
     ) -> Result<String, LlmServiceError> {
         let request = self.create_chat_request(arguments, stop_phrases)?;
         let response = self
@@ -91,17 +91,17 @@ impl ChatClient {
     }
 }
 pub(crate) trait ChatRequest {
-    fn create_chat_request(
+    fn create_chat_request<S: AsRef<str>>(
         &self,
         arguments: LanguageServiceArguments,
-        stop_phrases: Vec<&str>,
+        stop_phrases: Vec<S>,
     ) -> Result<CreateChatCompletionRequest, LlmServiceError>;
 }
 impl ChatRequest for ChatClient {
-    fn create_chat_request(
+    fn create_chat_request<S: AsRef<str>>(
         &self,
         arguments: LanguageServiceArguments,
-        stop_phrases: Vec<&str>,
+        stop_phrases: Vec<S>,
     ) -> Result<CreateChatCompletionRequest, LlmServiceError> {
         let query = format!("{PROMPT_SALT}\n{}", arguments.query);
 
@@ -127,7 +127,7 @@ impl ChatRequest for ChatClient {
             .max_tokens(2048u16)
             .model(self.chat_model_name.clone())
             .messages(message_openai_compat)
-            .stop(stop_phrases)
+            .stop(stop_phrases.iter().map(AsRef::as_ref).collect::<Vec<_>>())
             .build()
             .map_err(LlmServiceError::AsyncOpenAiError)?;
 

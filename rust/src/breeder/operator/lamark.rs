@@ -1,4 +1,7 @@
-use crate::breeder::{mutator::direct::PromptForTaskPrompt, ScoredUnit};
+use crate::breeder::{
+    mutator::{direct::PromptForTaskPrompt, stop_sequences::StopSequences},
+    ScoredUnit,
+};
 
 pub(crate) struct WorkingOutToTaskPromptMutation {
     pub(crate) correct_solution: String,
@@ -6,9 +9,14 @@ pub(crate) struct WorkingOutToTaskPromptMutation {
 impl PromptForTaskPrompt for WorkingOutToTaskPromptMutation {
     fn prompt_for_task_prompt(&self, _unit: &ScoredUnit) -> String {
         format!(
-            "I gave a friend an instruction and some advice. Here are the correct examples of his workings out\n```Correct Solution\n{}\n```\nThe instruction was:\n",
+            "I gave a friend an instruction and some advice. Here are the correct examples of his workings out:\nCorrect Solution\n{}\n\nThe instruction was:\n",
             self.correct_solution,
         )
+    }
+}
+impl StopSequences for WorkingOutToTaskPromptMutation {
+    fn stop_sequence() -> Vec<String> {
+        vec![]
     }
 }
 
@@ -77,9 +85,17 @@ mod test {
 
         let unit = obtain_scored_unit(&openai, PROBLEM_DESCRIPTION, 0.0f32).await;
         let operator = WorkingOutToTaskPromptMutation {
-            correct_solution: String::new(),
+            correct_solution: String::from("2+2=4"),
         };
-        let _new_unit = operator.mutate(&openai, &unit, vec!["\n2", "\n"]).await;
+        let new_unit = operator.mutate(&openai, &unit).await;
+        match new_unit {
+            Ok(mutant) => {
+                println!("{mutant}");
+            }
+            Err(e) => {
+                println!("{e}")
+            }
+        };
     }
     // #[tokio::test]
     // async fn PromptCrossover() {
