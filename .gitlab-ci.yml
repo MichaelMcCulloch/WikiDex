@@ -14,6 +14,8 @@ variables:
   DATABASE_URL: "sqlite://sqlite_dummy.db"
 
 stages:
+  - build
+  - check
   - test
   # - sast
 
@@ -22,6 +24,42 @@ stages:
 # include:
 #   - template: Security/SAST.gitlab-ci.yml
 
+build:
+  image: rust:latest
+  stage: build
+  script:
+    - apt-get update
+    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - cd rust
+    - cargo check
+
+ingest:
+  image: rust:latest
+  stage: check
+  script:
+    - apt-get update
+    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - cd rust
+    - cargo check --no-default-features --features ingest
+
+server:
+  image: rust:latest
+  stage: check
+  script:
+    - apt-get update
+    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - cd rust
+    - cargo check --no-default-features --features server
+
+breeder:
+  image: rust:latest
+  stage: check
+  script:
+    - apt-get update
+    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - cd rust
+    - cargo check --no-default-features --features breeder
+
 test:
   image: rust:latest
   stage: test
@@ -29,8 +67,4 @@ test:
     - apt-get update
     - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
     - cd rust
-    - cargo check
-    - cargo check --no-default-features --features ingest
-    - cargo check --no-default-features --features server
-    - cargo check --no-default-features --features breeder
     - "cargo test --package omnipedia --bin omnipedia --no-default-features --features breeder -- breeder::operator::"
