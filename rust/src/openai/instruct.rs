@@ -26,11 +26,11 @@ impl InstructClient {
         }
     }
 
-    pub(crate) async fn get_response(
+    pub(crate) async fn get_response<S: AsRef<str>>(
         &self,
         arguments: LanguageServiceArguments<'_>,
         max_tokens: u16,
-        stop_phrases: Vec<&str>,
+        stop_phrases: Vec<S>,
     ) -> Result<String, LlmServiceError> {
         let request = self.create_instruct_request(arguments, max_tokens, stop_phrases)?;
 
@@ -80,20 +80,20 @@ impl InstructClient {
 }
 
 pub(crate) trait InstructRequest {
-    fn create_instruct_request(
+    fn create_instruct_request<S: AsRef<str>>(
         &self,
         arguments: LanguageServiceArguments,
         max_tokens: u16,
-        stop_phrases: Vec<&str>,
+        stop_phrases: Vec<S>,
     ) -> Result<CreateCompletionRequest, LlmServiceError>;
 }
 
 impl InstructRequest for InstructClient {
-    fn create_instruct_request(
+    fn create_instruct_request<S: AsRef<str>>(
         &self,
         arguments: LanguageServiceArguments,
         max_tokens: u16,
-        stop_phrases: Vec<&str>,
+        stop_phrases: Vec<S>,
     ) -> Result<CreateCompletionRequest, LlmServiceError> {
         let c1 = arguments.citation_index_begin + 1;
         let c2 = arguments.citation_index_begin + 2;
@@ -115,7 +115,7 @@ impl InstructRequest for InstructClient {
             .model(&self.instruct_model_name)
             .n(1)
             .prompt(query)
-            .stop(stop_phrases)
+            .stop(stop_phrases.iter().map(AsRef::as_ref).collect::<Vec<_>>())
             .build()
             .map_err(LlmServiceError::AsyncOpenAiError)?;
         Ok(request)

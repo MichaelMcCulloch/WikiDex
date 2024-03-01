@@ -6,20 +6,20 @@ use crate::{
     },
     openai::{LanguageServiceArguments, LlmMessage, OpenAiDelegate},
 };
+
+use super::stop_sequences::{StopSequences};
 pub(crate) trait PromptForTaskPrompt {
     fn prompt_for_task_prompt(&self, unit: &ScoredUnit) -> String;
 }
 
-impl<T> DirectMutator for T where T: PromptForTaskPrompt {}
-pub(crate) trait DirectMutator: PromptForTaskPrompt {
+impl<T> DirectMutator for T where T: PromptForTaskPrompt + StopSequences {}
+pub(crate) trait DirectMutator: PromptForTaskPrompt + StopSequences {
     async fn mutate(
         &self,
         openai: &OpenAiDelegate,
         unit: &ScoredUnit,
-        stop_phrases: Vec<&str>,
     ) -> Result<UnscoredUnit, PromptBreedingError> {
         let prompt = self.prompt_for_task_prompt(unit);
-
         let content = openai
             .get_llm_answer(
                 LanguageServiceArguments {
@@ -29,7 +29,7 @@ pub(crate) trait DirectMutator: PromptForTaskPrompt {
                     citation_index_begin: 0,
                 },
                 128u16,
-                stop_phrases,
+                <Self as StopSequences>::stop_sequence(),
             )
             .await
             .map(|LlmMessage { role: _, content }| content)
