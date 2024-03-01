@@ -1,72 +1,16 @@
-use super::{
-    prompt::{MutationPrompt, TaskPrompt},
-    unit::{Population, ScoredUnit, Unit, UnitData, UnscoredUnit},
-    PromptBreedingError,
+use crate::{
+    breeder::{
+        mutator::{
+            ordering::PopulationOrdering, population_prompt::GetPopulationPrompt,
+            selector::PopulationSelector,
+        },
+        prompt::{MutationPrompt, TaskPrompt},
+        unit::{Population, ScoredUnit, Unit, UnitData, UnscoredUnit},
+        PromptBreedingError,
+    },
+    openai::{LanguageServiceArguments, LlmMessage, OpenAiDelegate},
 };
-use crate::openai::{LanguageServiceArguments, LlmMessage, OpenAiDelegate};
 use simsimd::SimSIMD;
-
-pub(crate) trait PromptForTaskPrompt {
-    fn prompt_for_task_prompt(&self, unit: &ScoredUnit, openai: &OpenAiDelegate) -> String;
-}
-impl<T> DirectMutator for T where T: PromptForTaskPrompt {}
-pub(crate) trait DirectMutator: PromptForTaskPrompt {
-    async fn mutate_unit(
-        &self,
-        openai: &OpenAiDelegate,
-        unit: &ScoredUnit,
-        stop_phrases: Vec<&str>,
-    ) -> Result<UnscoredUnit, PromptBreedingError> {
-        let prompt = self.prompt_for_task_prompt(unit, openai);
-
-        let content = openai
-            .get_llm_answer(
-                LanguageServiceArguments {
-                    system: prompt.as_str(),
-                    documents: "",
-                    query: "",
-                    citation_index_begin: 0,
-                },
-                128u16,
-                stop_phrases,
-            )
-            .await
-            .map(|LlmMessage { role: _, content }| content)
-            .map_err(PromptBreedingError::LlmError)?;
-        let content = content.trim().trim_start_matches("1. ").trim().to_string();
-        let embedding: Vec<f32> = openai.embed(&content).await.unwrap();
-        let task_prompt = TaskPrompt::new(content);
-        let new_unit = UnitData {
-            problem_description: unit.get_problem_description().clone(),
-            task_prompt,
-            embedding,
-            mutation_instruction: MutationPrompt::new(prompt),
-            elites: unit.get_elites().clone(),
-            age: unit.get_age() + 1usize,
-        };
-
-        Ok(UnscoredUnit { unit: new_unit })
-    }
-}
-
-pub(crate) trait PopulationSelector {
-    fn select<'a>(population: &'a Population, unit: &'a ScoredUnit) -> Vec<&'a ScoredUnit>;
-}
-
-pub(crate) trait PopulationOrdering {
-    fn ordering(population_subsample: &mut Vec<&ScoredUnit>);
-}
-pub(crate) trait GetPopulationPrompt {
-    fn get_prompt(&self, population_subsample: &[&ScoredUnit]) -> String;
-    fn format_prompt_list(population_subsample: &[&ScoredUnit]) -> String {
-        population_subsample
-            .iter()
-            .enumerate()
-            .map(|(index, unit)| format!("{}. {}", index + 1, unit.get_task_prompt()))
-            .collect::<Vec<_>>()
-            .join("\n")
-    }
-}
 
 impl<T> DistributionEstimationMutator for T where
     T: GetPopulationPrompt + PopulationOrdering + PopulationSelector
