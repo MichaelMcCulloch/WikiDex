@@ -8,7 +8,7 @@ pub(crate) struct UnitData {
     pub(crate) task_prompt: TaskPrompt,
     pub(crate) embedding: Vec<f32>,
     pub(crate) mutation_instruction: MutationPrompt,
-    pub(crate) elites: Vec<TaskPrompt>,
+    pub(crate) elites: Vec<ScoredUnit>,
     pub(crate) age: usize,
 }
 
@@ -16,7 +16,6 @@ pub(crate) struct UnitData {
 pub(crate) struct ScoredUnit {
     pub(crate) unit: UnitData,
     pub(crate) fitness: f32,
-    pub(crate) elites: Vec<ScoredUnit>,
 }
 #[derive(Clone)]
 pub(crate) struct UnscoredUnit {
@@ -48,7 +47,7 @@ pub trait Unit {
     fn get_task_prompt(&self) -> &TaskPrompt;
     fn get_embedding(&self) -> &Vec<f32>;
     fn get_mutation_instruction(&self) -> &MutationPrompt;
-    fn get_elites(&self) -> &Vec<TaskPrompt>;
+    fn get_elites(&self) -> &Vec<ScoredUnit>;
     fn get_age(&self) -> &usize;
 }
 
@@ -71,7 +70,7 @@ macro_rules! impl_unit_for_containing_unitdata {
                 &self.unit.mutation_instruction
             }
 
-            fn get_elites(&self) -> &Vec<TaskPrompt> {
+            fn get_elites(&self) -> &Vec<ScoredUnit> {
                 &self.unit.elites
             }
             fn get_age(&self) -> &usize {
