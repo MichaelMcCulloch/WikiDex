@@ -33,7 +33,7 @@ build:
     - cd rust
     - cargo check
 
-ingest check:
+ingest:
   image: rust:latest
   stage: check
   script:
@@ -42,7 +42,7 @@ ingest check:
     - cd rust
     - cargo check --no-default-features --features ingest
 
-server check:
+server:
   image: rust:latest
   stage: check
   script:
@@ -51,7 +51,7 @@ server check:
     - cd rust
     - cargo check --no-default-features --features server
 
-breeder check:
+breeder:
   image: rust:latest
   stage: check
   script:
@@ -60,7 +60,7 @@ breeder check:
     - cd rust
     - cargo check --no-default-features --features breeder
 
-test-breeder:
+test:
   image: rust:latest
   stage: test
   script:
