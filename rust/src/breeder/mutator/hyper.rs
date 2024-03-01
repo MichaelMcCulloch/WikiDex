@@ -7,7 +7,9 @@ use crate::{
     openai::{LanguageServiceArguments, LlmMessage, OpenAiDelegate},
 };
 
-use super::meta_prompt::PromptForMutatorPrompt;
+pub(crate) trait PromptForMutatorPrompt {
+    fn prompt_for_meta_prompt(&self, unit: &ScoredUnit) -> String;
+}
 
 impl<T> MetaMutator for T where T: PromptForMutatorPrompt {}
 pub(crate) trait MetaMutator: PromptForMutatorPrompt {
