@@ -25,3 +25,22 @@
     "--allow-dirty"
   ]
 }
+// "cargo",
+// "clippy",
+// "--fix",
+// "--workspace",
+// "--message-format=json",
+// "--all-targets",
+// "--allow-dirty"
+
+// "cargo",
+// "test",
+// "--message-format=json",
+// "",
+// "--package",
+// "omnipedia",
+// "--bin",
+// "omnipedia",
+// "--",
+// "breeder::operator::test",
+// "--nocapture"
