@@ -1,12 +1,14 @@
 use crate::{
     breeder::{
-        mutator::unit_prompt::PromptForTaskPrompt,
         prompt::{MutationPrompt, TaskPrompt},
         unit::{ScoredUnit, Unit, UnitData, UnscoredUnit},
         PromptBreedingError,
     },
     openai::{LanguageServiceArguments, LlmMessage, OpenAiDelegate},
 };
+pub(crate) trait PromptForTaskPrompt {
+    fn prompt_for_task_prompt(&self, unit: &ScoredUnit) -> String;
+}
 
 impl<T> DirectMutator for T where T: PromptForTaskPrompt {}
 pub(crate) trait DirectMutator: PromptForTaskPrompt {
