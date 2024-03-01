@@ -6,19 +6,18 @@ use super::{
 use crate::openai::{LanguageServiceArguments, LlmMessage, OpenAiDelegate};
 use simsimd::SimSIMD;
 
-pub(crate) trait GetUnitPrompt {
-    fn get_prompt(&self, unit: &ScoredUnit) -> String;
+pub(crate) trait PromptForTaskPrompt {
+    fn prompt_for_task_prompt(&self, unit: &ScoredUnit, openai: &OpenAiDelegate) -> String;
 }
-
-pub(crate) trait DirectMutator: GetUnitPrompt {
+impl<T> DirectMutator for T where T: PromptForTaskPrompt {}
+pub(crate) trait DirectMutator: PromptForTaskPrompt {
     async fn mutate_unit(
         &self,
         openai: &OpenAiDelegate,
         unit: &ScoredUnit,
         stop_phrases: Vec<&str>,
     ) -> Result<UnscoredUnit, PromptBreedingError> {
-        let prompt = self.get_prompt(unit);
-        println!("{prompt}");
+        let prompt = self.prompt_for_task_prompt(unit, openai);
 
         let content = openai
             .get_llm_answer(
@@ -51,7 +50,7 @@ pub(crate) trait DirectMutator: GetUnitPrompt {
 }
 
 pub(crate) trait PopulationSelector {
-    fn select(population: &Population) -> Vec<&ScoredUnit>;
+    fn select<'a>(population: &'a Population, unit: &'a ScoredUnit) -> Vec<&'a ScoredUnit>;
 }
 
 pub(crate) trait PopulationOrdering {
@@ -82,11 +81,53 @@ pub(crate) trait DistributionEstimationMutator:
         population: &Population,
         unit: ScoredUnit,
     ) -> Result<UnscoredUnit, PromptBreedingError> {
-        let mut scored_population = Self::select(population);
+        let mut scored_population = Self::select(population, &unit);
 
         Self::filter_population(&mut scored_population);
         Self::ordering(&mut scored_population);
-        self.select_member(openai, unit, scored_population).await
+        self.create_new_unit(openai, &unit, scored_population).await
+    }
+
+    async fn create_new_unit(
+        &self,
+        openai: &OpenAiDelegate,
+        unit: &ScoredUnit,
+        population_subsample: Vec<&ScoredUnit>,
+    ) -> Result<UnscoredUnit, PromptBreedingError> {
+        loop {
+            let new_unit: UnscoredUnit = self
+                .mutate_population(openai, &population_subsample, unit, vec!["\n"])
+                .await?;
+            if population_subsample
+                .iter()
+                .all(|extant_member: &&ScoredUnit| {
+                    f32::cosine(new_unit.get_embedding(), extant_member.get_embedding()).unwrap()
+                        < 0.95f32
+                })
+            {
+                break Ok(new_unit);
+            }
+        }
+    }
+
+    fn filter_population(scored_population: &mut Vec<&ScoredUnit>) {
+        let mut i = 0usize;
+        let mut len = scored_population.len();
+        while i < len {
+            if scored_population.iter().all(|extant_member: &&ScoredUnit| {
+                f32::cosine(
+                    scored_population[i].get_embedding(),
+                    extant_member.get_embedding(),
+                )
+                .unwrap()
+                    > 0.95f32
+            }) {
+                scored_population.remove(i);
+                len -= 1;
+            } else {
+                i += 1;
+            }
+        }
     }
 
     async fn mutate_population(
@@ -124,48 +165,5 @@ pub(crate) trait DistributionEstimationMutator:
         };
 
         Ok(UnscoredUnit { unit: new_unit })
-    }
-
-    async fn select_member(
-        &self,
-        openai: &OpenAiDelegate,
-        unit: ScoredUnit,
-        population_subsample: Vec<&ScoredUnit>,
-    ) -> Result<UnscoredUnit, PromptBreedingError> {
-        loop {
-            let new_unit: UnscoredUnit = self
-                .mutate_population(openai, &population_subsample, &unit, vec!["\n"])
-                .await?;
-            if population_subsample
-                .iter()
-                .all(|extant_member: &&ScoredUnit| {
-                    f32::cosine(new_unit.get_embedding(), extant_member.get_embedding()).unwrap()
-                        < 0.95f32
-                })
-            {
-                break Ok(new_unit);
-            }
-        }
-    }
-
-    fn filter_population(scored_population: &mut Vec<&ScoredUnit>) {
-        let mut i = 0usize;
-        let mut len = scored_population.len();
-        while i < len {
-            if scored_population.iter().all(|extant_member: &&ScoredUnit| {
-                f32::cosine(
-                    scored_population[i].get_embedding(),
-                    extant_member.get_embedding(),
-                )
-                .unwrap()
-                    > 0.95f32
-            }) {
-                scored_population.remove(i);
-                len -= 1;
-            } else {
-                i += 1;
-            }
-            len = scored_population.len();
-        }
     }
 }

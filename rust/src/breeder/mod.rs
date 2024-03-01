@@ -7,5 +7,4 @@ mod unit;
 pub(crate) use engine::Engine;
 pub(crate) use error::PromptBreedingError;
 
-pub(crate) use mutator::*;
-
+pub(crate) use unit::{ScoredUnit};

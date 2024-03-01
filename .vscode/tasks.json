@@ -1,0 +1,22 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Cargo Test",
+      "type": "shell",
+      "command": "cargo test  --package omnipedia --bin omnipedia -- breeder::operator::test --nocapture",
+      "group": "test",
+      "problemMatcher": "$rustc",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "options": {
+        "cwd": "rust/",
+        "env": {
+          "DATABASE_URL": "sqlite://sqlite_dummy.db"
+        }
+      }
+    }
+  ]
+}
