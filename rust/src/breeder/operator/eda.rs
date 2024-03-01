@@ -98,16 +98,16 @@ mod test {
         problem_description: &str,
     ) -> (TaskPrompt, Vec<f32>) {
         let embedding = openai.embed(problem_description).await.unwrap();
-        (TaskPrompt::new(problem_description.to_string()), embedding)
+        (TaskPrompt::new(problem_description), embedding)
     }
 
     async fn obtain_unit_data(openai: &OpenAiDelegate, problem_description: &str) -> UnitData {
         let task_prompt = obtain_task_prompt(openai, problem_description).await;
         UnitData {
-            problem_description: ProblemDescription::new(problem_description.to_string()),
+            problem_description: ProblemDescription::new(problem_description),
             task_prompt: task_prompt.0,
             embedding: task_prompt.1,
-            mutation_instruction: MutationPrompt::new(problem_description.to_string()),
+            mutation_instruction: MutationPrompt::new(problem_description),
             elites: vec![],
             age: 0,
         }

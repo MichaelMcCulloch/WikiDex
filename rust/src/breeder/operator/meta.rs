@@ -1,43 +1,38 @@
-use crate::{
-    breeder::{
-        prompt::{MutationPrompt, ThinkingStyle},
-        unit::Unit,
-        ScoredUnit,
-    },
-    openai::OpenAiDelegate,
+use crate::breeder::{
+    mutator::meta_prompt::PromptForMutatorPrompt,
+    prompt::{MutationPrompt, ThinkingStyle},
+    unit::Unit,
+    ScoredUnit,
 };
 
 pub(crate) struct FirstOrderHyperMutation {
     pub(crate) mutation_prompt: MutationPrompt,
 }
-impl FirstOrderHyperMutation {
-    fn prompt_for_task_prompt(&self, unit: &ScoredUnit, _openai: &OpenAiDelegate) -> String {
+impl PromptForMutatorPrompt for FirstOrderHyperMutation {
+    fn prompt_for_meta_prompt(&self, _unit: &ScoredUnit) -> String {
         format!(
-            "{}\nINSTRUCTION: {}\nINSTRUCTION MUTANT:",
-            self.mutation_prompt,
-            unit.get_task_prompt()
+            "Please summarize and improve the following instruction: {}",
+            self.mutation_prompt
         )
     }
 }
+
 pub(crate) struct ZeroOrderHyperMutation {
     pub(crate) thinking_style: ThinkingStyle,
 }
-impl ZeroOrderHyperMutation {
-    fn prompt_for_task_prompt(&self, unit: &ScoredUnit, _openai: &OpenAiDelegate) -> String {
-        format!(
-            "INSTRUCTION: {}\n{}\nINSTRUCTION MUTANT:",
-            self.thinking_style,
-            unit.get_task_prompt()
-        )
+impl PromptForMutatorPrompt for ZeroOrderHyperMutation {
+    fn prompt_for_meta_prompt(&self, unit: &ScoredUnit) -> String {
+        format!("{} {}", unit.get_problem_description(), self.thinking_style)
     }
 }
 
 #[cfg(test)]
 mod test {
-
+    use super::{FirstOrderHyperMutation, ZeroOrderHyperMutation};
     use crate::{
         breeder::{
-            prompt::{MutationPrompt, ProblemDescription, TaskPrompt},
+            mutator::meta::MetaMutator,
+            prompt::{MutationPrompt, ProblemDescription, TaskPrompt, ThinkingStyle},
             unit::{ScoredUnit, UnitData},
         },
         openai::{OpenAiDelegate, OpenAiDelegateBuilder, OpenAiDelegateBuilderArgument},
@@ -45,24 +40,22 @@ mod test {
     use url::Url;
 
     const PROBLEM_DESCRIPTION: &str = "Pour water out of a boot.";
-    const PROBLEM_DESCRIPTION_2: &str = "Evacuate the moisture from footwear.";
-    const PROBLEM_DESCRIPTION_3: &str = "Dry the sandals.";
 
     async fn obtain_task_prompt(
         openai: &OpenAiDelegate,
         problem_description: &str,
     ) -> (TaskPrompt, Vec<f32>) {
         let embedding = openai.embed(problem_description).await.unwrap();
-        (TaskPrompt::new(problem_description.to_string()), embedding)
+        (TaskPrompt::new(problem_description), embedding)
     }
 
     async fn obtain_unit_data(openai: &OpenAiDelegate, problem_description: &str) -> UnitData {
         let task_prompt = obtain_task_prompt(openai, problem_description).await;
         UnitData {
-            problem_description: ProblemDescription::new(problem_description.to_string()),
+            problem_description: ProblemDescription::new(problem_description),
             task_prompt: task_prompt.0,
             embedding: task_prompt.1,
-            mutation_instruction: MutationPrompt::new(problem_description.to_string()),
+            mutation_instruction: MutationPrompt::new(problem_description),
             elites: vec![],
             age: 0,
         }
@@ -95,11 +88,45 @@ mod test {
 
     #[tokio::test]
     async fn ZeroOrderHyperMutation() {
-        todo!()
+        let openai = obtain_openai();
+
+        let unit = obtain_scored_unit(&openai, PROBLEM_DESCRIPTION, 0.0f32).await;
+        let operator = ZeroOrderHyperMutation {
+            thinking_style: ThinkingStyle::new("Let's think step by step."),
+        };
+        let new_unit = operator
+            .mutate_unit(&openai, &unit, vec!["\n2", "\n"])
+            .await;
+
+        match new_unit {
+            Ok(mutant) => {
+                println!("{mutant}");
+            }
+            Err(e) => {
+                println!("{e}")
+            }
+        };
     }
     #[tokio::test]
     async fn FirstOrderHyperMutation() {
-        todo!()
+        let openai = obtain_openai();
+
+        let unit = obtain_scored_unit(&openai, PROBLEM_DESCRIPTION, 0.0f32).await;
+        let operator = FirstOrderHyperMutation {
+            mutation_prompt: MutationPrompt::new("Modify the following instruction creatively, giving some advice on how to solve it:"),
+        };
+        let new_unit = operator
+            .mutate_unit(&openai, &unit, vec!["\n2", "\n"])
+            .await;
+
+        match new_unit {
+            Ok(mutant) => {
+                println!("{mutant}");
+            }
+            Err(e) => {
+                println!("{e}")
+            }
+        };
     }
     // #[tokio::test]
     // async fn WorkingOutToTaskPrompt() {

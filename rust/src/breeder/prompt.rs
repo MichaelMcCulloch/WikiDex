@@ -47,12 +47,12 @@ pub(crate) type ProblemDescription = PromptWrapper<ProblemDescriptionMarker>;
 pub(crate) type ThinkingStyle = PromptWrapper<ThinkingStyleMarker>;
 
 impl Prompt {
-    pub(crate) fn new(prompt: String) -> Self {
-        Self(prompt)
+    pub(crate) fn new<S: AsRef<str>>(prompt: S) -> Self {
+        Self(String::from(prompt.as_ref()))
     }
 }
 impl<T> PromptWrapper<T> {
-    pub(crate) fn new(prompt: String) -> Self {
+    pub(crate) fn new<S: AsRef<str>>(prompt: S) -> Self {
         Self {
             prompt: Prompt::new(prompt),
             _marker: PhantomData,

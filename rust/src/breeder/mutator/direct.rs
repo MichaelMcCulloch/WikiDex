@@ -1,6 +1,6 @@
 use crate::{
     breeder::{
-        mutator::meta_prompt::PromptForTaskPrompt,
+        mutator::unit_prompt::PromptForTaskPrompt,
         prompt::{MutationPrompt, TaskPrompt},
         unit::{ScoredUnit, Unit, UnitData, UnscoredUnit},
         PromptBreedingError,
@@ -16,7 +16,7 @@ pub(crate) trait DirectMutator: PromptForTaskPrompt {
         unit: &ScoredUnit,
         stop_phrases: Vec<&str>,
     ) -> Result<UnscoredUnit, PromptBreedingError> {
-        let prompt = self.prompt_for_task_prompt(unit, openai);
+        let prompt = self.prompt_for_task_prompt(unit);
 
         let content = openai
             .get_llm_answer(
