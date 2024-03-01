@@ -1,6 +1,6 @@
 use super::{
-    unit::{ScoredUnit, Unit},
-    DirectMutator, EstimateDistributionMutator, GetDistributionPrompt, GetUnitPrompt,
+    unit::{Population, ScoredUnit, Unit},
+    DirectMutator, GetPopulationPrompt, GetUnitPrompt, PopulationOrdering, PopulationSelector,
 };
 use crate::breeder::prompt::{MutationPrompt, ThinkingStyle};
 use rand::seq::SliceRandom;
@@ -12,6 +12,7 @@ pub(crate) struct FirstOrderPromptGeneration {
 }
 pub(crate) struct EstimationOfDistributionMutation {}
 pub(crate) struct RankAndIndexMutation {}
+pub(crate) struct LineageMutation {}
 
 impl DirectMutator for ZeroOrderPromptGeneration {}
 impl DirectMutator for FirstOrderPromptGeneration {}
@@ -34,13 +35,17 @@ impl GetUnitPrompt for FirstOrderPromptGeneration {
         )
     }
 }
-
-impl EstimateDistributionMutator for EstimationOfDistributionMutation {
+impl PopulationSelector for EstimationOfDistributionMutation {
+    fn select(population: &Population) -> Vec<&ScoredUnit> {
+        population.scored.iter().collect::<Vec<_>>()
+    }
+}
+impl PopulationOrdering for EstimationOfDistributionMutation {
     fn ordering(population_subsample: &mut Vec<&ScoredUnit>) {
         population_subsample.shuffle(&mut rand::thread_rng())
     }
 }
-impl GetDistributionPrompt for EstimationOfDistributionMutation {
+impl GetPopulationPrompt for EstimationOfDistributionMutation {
     fn get_prompt(&self, population_subsample: &[&ScoredUnit]) -> String {
         let len = population_subsample.len();
         let prompt_list = Self::format_prompt_list(population_subsample);
@@ -50,12 +55,18 @@ impl GetDistributionPrompt for EstimationOfDistributionMutation {
         )
     }
 }
-impl EstimateDistributionMutator for RankAndIndexMutation {
+impl PopulationSelector for RankAndIndexMutation {
+    fn select(population: &Population) -> Vec<&ScoredUnit> {
+        population.scored.iter().collect::<Vec<_>>()
+    }
+}
+
+impl PopulationOrdering for RankAndIndexMutation {
     fn ordering(population_subsample: &mut Vec<&ScoredUnit>) {
         population_subsample.sort_by(|a, b| b.fitness.partial_cmp(&a.fitness).unwrap())
     }
 }
-impl GetDistributionPrompt for RankAndIndexMutation {
+impl GetPopulationPrompt for RankAndIndexMutation {
     fn get_prompt(&self, population_subsample: &[&ScoredUnit]) -> String {
         let len = population_subsample.len();
         let prompt_list = Self::format_prompt_list(population_subsample);
@@ -66,17 +77,40 @@ impl GetDistributionPrompt for RankAndIndexMutation {
     }
 }
 
+impl PopulationSelector for LineageMutation {
+    fn select(population: &Population) -> Vec<&ScoredUnit> {
+        population.elites.iter().collect::<Vec<_>>()
+    }
+}
+
+impl PopulationOrdering for LineageMutation {
+    fn ordering(population_subsample: &mut Vec<&ScoredUnit>) {
+        population_subsample.sort_by(|a, b| b.fitness.partial_cmp(&a.fitness).unwrap())
+    }
+}
+impl GetPopulationPrompt for LineageMutation {
+    fn get_prompt(&self, population_subsample: &[&ScoredUnit]) -> String {
+        let len = population_subsample.len();
+        let prompt_list = Self::format_prompt_list(population_subsample);
+
+        format!(
+            "INSTRUCTION GENOTYPES FOUND IN ASCENDING ORDER OF QUALITY\n{prompt_list}\n{}.",
+            len + 1
+        )
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::{
         breeder::{
             operator::{
-                EstimateDistributionMutator, EstimationOfDistributionMutation,
-                FirstOrderPromptGeneration, RankAndIndexMutation, ZeroOrderPromptGeneration,
+                EstimationOfDistributionMutation, FirstOrderPromptGeneration, RankAndIndexMutation,
+                ZeroOrderPromptGeneration,
             },
             prompt::{MutationPrompt, ProblemDescription, TaskPrompt, ThinkingStyle},
             unit::{Population, ScoredUnit, UnitData},
-            DirectMutator,
+            DirectMutator, DistributionEstimationMutator,
         },
         openai::{OpenAiDelegate, OpenAiDelegateBuilder, OpenAiDelegateBuilderArgument},
     };
@@ -102,6 +136,7 @@ mod test {
             embedding: task_prompt.1,
             mutation_instruction: MutationPrompt::new(problem_description.to_string()),
             elites: vec![],
+            age: 0,
         }
     }
 
@@ -136,7 +171,9 @@ mod test {
         let unit = obtain_scored_unit(&openai, PROBLEM_DESCRIPTION, 0.5f32).await;
 
         let operator = ZeroOrderPromptGeneration {};
-        let new_unit = operator.mutate(&openai, &unit, vec!["\n2", "\n"]).await;
+        let new_unit = operator
+            .mutate_unit(&openai, &unit, vec!["\n2", "\n"])
+            .await;
 
         match new_unit {
             Ok(mutant) => {
@@ -159,7 +196,9 @@ mod test {
                 "Modify this instruction in a way that no self-respecting LLM would!",
             )),
         };
-        let new_unit = operator.mutate(&openai, &unit, vec!["\n2", "\n"]).await;
+        let new_unit = operator
+            .mutate_unit(&openai, &unit, vec!["\n2", "\n"])
+            .await;
 
         match new_unit {
             Ok(mutant) => {
@@ -185,7 +224,6 @@ mod test {
             unscored: vec![],
             scored: scored_members,
             elites: vec![],
-            age: 0,
         };
 
         let operator = EstimationOfDistributionMutation {};
@@ -220,7 +258,6 @@ mod test {
             unscored: vec![],
             scored: scored_members,
             elites: vec![],
-            age: 0,
         };
 
         let operator = RankAndIndexMutation {};
@@ -241,10 +278,40 @@ mod test {
             }
         };
     }
-    // #[tokio::test]
-    // async fn LineageBasedMutation() {
-    //     todo!()
-    // }
+    #[tokio::test]
+    async fn LineageBasedMutation() {
+        let openai = obtain_openai();
+
+        let scored_members = vec![
+            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION, 0.01f32).await,
+            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION_2, 0.02f32).await,
+            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION_3, 0.03f32).await,
+        ];
+
+        let population = Population {
+            unscored: vec![],
+            scored: scored_members,
+            elites: vec![],
+        };
+
+        let operator = RankAndIndexMutation {};
+        let new_unit = operator
+            .mutate(
+                &openai,
+                &population,
+                obtain_scored_unit(&openai, PROBLEM_DESCRIPTION, 0.01f32).await,
+            )
+            .await;
+
+        match new_unit {
+            Ok(mutant) => {
+                println!("{mutant}");
+            }
+            Err(e) => {
+                println!("{e}")
+            }
+        };
+    }
     // #[tokio::test]
     // async fn ZeroOrderHyperMutation() {
     //     todo!()
