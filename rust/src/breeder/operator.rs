@@ -85,7 +85,7 @@ impl PopulationSelector for LineageMutation {
 
 impl PopulationOrdering for LineageMutation {
     fn ordering(population_subsample: &mut Vec<&ScoredUnit>) {
-        population_subsample.sort_by(|a, b| b.fitness.partial_cmp(&a.fitness).unwrap())
+        population_subsample.sort_by(|a, b| b.get_age().partial_cmp(a.get_age()).unwrap())
     }
 }
 impl GetPopulationPrompt for LineageMutation {
