@@ -1,6 +1,6 @@
 use crate::{
     breeder::{
-        mutator::PromptForTaskPrompt,
+        mutator::meta_prompt::PromptForTaskPrompt,
         prompt::{MutationPrompt, TaskPrompt},
         unit::{ScoredUnit, Unit, UnitData, UnscoredUnit},
         PromptBreedingError,
