@@ -27,11 +27,11 @@ impl LlmClient {
             LlmClient::Instruct(instruct) => instruct.up().await,
         }
     }
-    pub(crate) async fn get_response(
+    pub(crate) async fn get_response<S: AsRef<str>>(
         &self,
         arguments: LanguageServiceArguments<'_>,
         max_tokens: u16,
-        stop_phrases: Vec<&str>,
+        stop_phrases: Vec<S>,
     ) -> Result<String, LlmServiceError> {
         match self {
             LlmClient::Chat(chat) => chat.get_response(arguments, stop_phrases).await,
@@ -91,11 +91,11 @@ impl OpenAiDelegate {
         self.embed_client.embed_batch(queries).await
     }
 
-    pub(crate) async fn get_llm_answer(
+    pub(crate) async fn get_llm_answer<S: AsRef<str>>(
         &self,
         arguments: LanguageServiceArguments<'_>,
         max_tokens: u16,
-        stop_phrases: Vec<&str>,
+        stop_phrases: Vec<S>,
     ) -> Result<LlmMessage, LlmServiceError> {
         let message = self
             .llm_client

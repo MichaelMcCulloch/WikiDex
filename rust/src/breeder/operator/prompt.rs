@@ -1,5 +1,8 @@
 use crate::breeder::{
-    mutator::direct::PromptForTaskPrompt, prompt::MutationPrompt, unit::Unit, ScoredUnit,
+    mutator::{direct::PromptForTaskPrompt, stop_sequences::StopSequences},
+    prompt::MutationPrompt,
+    unit::Unit,
+    ScoredUnit,
 };
 
 pub(crate) struct FirstOrderPromptGeneration {
@@ -25,7 +28,16 @@ impl PromptForTaskPrompt for FirstOrderPromptGeneration {
         )
     }
 }
-
+impl StopSequences for ZeroOrderPromptGeneration {
+    fn stop_sequence() -> Vec<String> {
+        vec![String::from("\n2"), String::from("\n")]
+    }
+}
+impl StopSequences for FirstOrderPromptGeneration {
+    fn stop_sequence() -> Vec<String> {
+        vec![String::from("\n2"), String::from("\n")]
+    }
+}
 #[cfg(test)]
 mod test {
 
@@ -93,7 +105,7 @@ mod test {
         let unit = obtain_scored_unit(&openai, PROBLEM_DESCRIPTION, 0.5f32).await;
 
         let operator = ZeroOrderPromptGeneration {};
-        let new_unit = operator.mutate(&openai, &unit, vec!["\n2", "\n"]).await;
+        let new_unit = operator.mutate(&openai, &unit).await;
 
         match new_unit {
             Ok(mutant) => {
@@ -115,7 +127,7 @@ mod test {
                 "Modify this instruction in a way that no self-respecting LLM would!",
             ),
         };
-        let new_unit = operator.mutate(&openai, &unit, vec!["\n2", "\n"]).await;
+        let new_unit = operator.mutate(&openai, &unit).await;
 
         match new_unit {
             Ok(mutant) => {
