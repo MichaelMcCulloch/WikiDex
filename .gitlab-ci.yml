@@ -14,12 +14,13 @@ variables:
   DATABASE_URL: "sqlite://sqlite_dummy.db"
 
 stages:
+  - sast
   - build
   - check
   - test
 
 sast:
-  stage: test
+  stage: sast
 include:
   - template: Security/SAST.gitlab-ci.yml
 
