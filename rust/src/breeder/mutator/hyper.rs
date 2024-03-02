@@ -72,7 +72,7 @@ pub(crate) trait MetaMutator: PromptForMutatorPrompt {
             problem_description: unit.get_problem_description().clone(),
             task_prompt,
             embedding,
-            mutation_instruction: MutationPrompt::new(task_prompt_prompt),
+            mutation_prompt: MutationPrompt::new(task_prompt_prompt),
             elites: unit.get_elites().clone(),
             age: unit.get_age() + 1usize,
         };

@@ -74,6 +74,7 @@ impl GetPopulationPrompt for LineageMutation {
         )
     }
 }
+
 #[cfg(test)]
 mod test {
 
@@ -100,14 +101,22 @@ mod test {
         (TaskPrompt::new(problem_description), embedding)
     }
 
-    async fn obtain_unit_data(openai: &OpenAiDelegate, problem_description: &str) -> UnitData {
-        let task_prompt = obtain_task_prompt(openai, problem_description).await;
+    async fn obtain_unit_data(
+        openai: &OpenAiDelegate,
+        problem_description: &str,
+        elites: Vec<ScoredUnit>,
+    ) -> UnitData {
+        let task_prompt_and_embedding = obtain_task_prompt(openai, problem_description).await;
+        let mutation_prompt = MutationPrompt::new(problem_description);
+        let problem_description = ProblemDescription::new(problem_description);
+        let task_prompt = task_prompt_and_embedding.0;
+        let embedding = task_prompt_and_embedding.1;
         UnitData {
-            problem_description: ProblemDescription::new(problem_description),
-            task_prompt: task_prompt.0,
-            embedding: task_prompt.1,
-            mutation_instruction: MutationPrompt::new(problem_description),
-            elites: vec![],
+            problem_description,
+            task_prompt,
+            embedding,
+            mutation_prompt,
+            elites,
             age: 0,
         }
     }
@@ -116,9 +125,10 @@ mod test {
         openai: &OpenAiDelegate,
         problem_description: &str,
         score: f32,
+        elites: Vec<ScoredUnit>,
     ) -> ScoredUnit {
         ScoredUnit {
-            unit: obtain_unit_data(openai, problem_description).await,
+            unit: obtain_unit_data(openai, problem_description, elites).await,
             fitness: score,
         }
     }
@@ -141,23 +151,43 @@ mod test {
         let openai = obtain_openai();
 
         let scored_members = vec![
-            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION, 0.01f32).await,
-            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION_2, 0.02f32).await,
-            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION_3, 0.03f32).await,
+            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION, 0.01f32, vec![]).await,
+            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION_2, 0.02f32, vec![]).await,
+            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION_3, 0.03f32, vec![]).await,
+        ];
+
+        let scored_members = vec![
+            obtain_scored_unit(
+                &openai,
+                PROBLEM_DESCRIPTION,
+                0.01f32,
+                scored_members.clone(),
+            )
+            .await,
+            obtain_scored_unit(
+                &openai,
+                PROBLEM_DESCRIPTION_2,
+                0.02f32,
+                scored_members.clone(),
+            )
+            .await,
+            obtain_scored_unit(
+                &openai,
+                PROBLEM_DESCRIPTION_3,
+                0.03f32,
+                scored_members.clone(),
+            )
+            .await,
         ];
 
         let population = Population {
             unscored: vec![],
-            scored: scored_members,
+            scored: scored_members.clone(),
         };
 
         let operator = EstimationOfDistributionMutation {};
         let new_unit = operator
-            .mutate(
-                &openai,
-                &population,
-                obtain_scored_unit(&openai, PROBLEM_DESCRIPTION, 0.01f32).await,
-            )
+            .mutate(&openai, &population, scored_members.get(2).unwrap().clone())
             .await;
 
         match new_unit {
@@ -174,23 +204,43 @@ mod test {
         let openai = obtain_openai();
 
         let scored_members = vec![
-            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION, 0.01f32).await,
-            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION_2, 0.02f32).await,
-            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION_3, 0.03f32).await,
+            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION, 0.01f32, vec![]).await,
+            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION_2, 0.02f32, vec![]).await,
+            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION_3, 0.03f32, vec![]).await,
+        ];
+
+        let scored_members = vec![
+            obtain_scored_unit(
+                &openai,
+                PROBLEM_DESCRIPTION,
+                0.01f32,
+                scored_members.clone(),
+            )
+            .await,
+            obtain_scored_unit(
+                &openai,
+                PROBLEM_DESCRIPTION_2,
+                0.02f32,
+                scored_members.clone(),
+            )
+            .await,
+            obtain_scored_unit(
+                &openai,
+                PROBLEM_DESCRIPTION_3,
+                0.03f32,
+                scored_members.clone(),
+            )
+            .await,
         ];
 
         let population = Population {
             unscored: vec![],
-            scored: scored_members,
+            scored: scored_members.clone(),
         };
 
         let operator = RankAndIndexMutation {};
         let new_unit = operator
-            .mutate(
-                &openai,
-                &population,
-                obtain_scored_unit(&openai, PROBLEM_DESCRIPTION, 0.01f32).await,
-            )
+            .mutate(&openai, &population, scored_members.get(2).unwrap().clone())
             .await;
 
         match new_unit {
@@ -208,23 +258,43 @@ mod test {
         let openai = obtain_openai();
 
         let scored_members = vec![
-            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION, 0.01f32).await,
-            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION_2, 0.02f32).await,
-            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION_3, 0.03f32).await,
+            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION, 0.01f32, vec![]).await,
+            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION_2, 0.02f32, vec![]).await,
+            obtain_scored_unit(&openai, PROBLEM_DESCRIPTION_3, 0.03f32, vec![]).await,
+        ];
+
+        let scored_members = vec![
+            obtain_scored_unit(
+                &openai,
+                PROBLEM_DESCRIPTION,
+                0.01f32,
+                scored_members.clone(),
+            )
+            .await,
+            obtain_scored_unit(
+                &openai,
+                PROBLEM_DESCRIPTION_2,
+                0.02f32,
+                scored_members.clone(),
+            )
+            .await,
+            obtain_scored_unit(
+                &openai,
+                PROBLEM_DESCRIPTION_3,
+                0.03f32,
+                scored_members.clone(),
+            )
+            .await,
         ];
 
         let population = Population {
             unscored: vec![],
-            scored: scored_members,
+            scored: scored_members.clone(),
         };
 
         let operator = LineageMutation {};
         let new_unit = operator
-            .mutate(
-                &openai,
-                &population,
-                obtain_scored_unit(&openai, PROBLEM_DESCRIPTION, 0.01f32).await,
-            )
+            .mutate(&openai, &population, scored_members.get(2).unwrap().clone())
             .await;
 
         match new_unit {

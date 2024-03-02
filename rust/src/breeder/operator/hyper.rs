@@ -55,7 +55,7 @@ mod test {
             problem_description: ProblemDescription::new(problem_description),
             task_prompt: task_prompt.0,
             embedding: task_prompt.1,
-            mutation_instruction: MutationPrompt::new(problem_description),
+            mutation_prompt: MutationPrompt::new(problem_description),
             elites: vec![],
             age: 0,
         }

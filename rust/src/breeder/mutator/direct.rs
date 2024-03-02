@@ -7,7 +7,7 @@ use crate::{
     openai::{LanguageServiceArguments, LlmMessage, OpenAiDelegate},
 };
 
-use super::stop_sequences::{StopSequences};
+use super::stop_sequences::StopSequences;
 pub(crate) trait PromptForTaskPrompt {
     fn prompt_for_task_prompt(&self, unit: &ScoredUnit) -> String;
 }
@@ -41,7 +41,7 @@ pub(crate) trait DirectMutator: PromptForTaskPrompt + StopSequences {
             problem_description: unit.get_problem_description().clone(),
             task_prompt,
             embedding,
-            mutation_instruction: MutationPrompt::new(prompt),
+            mutation_prompt: MutationPrompt::new(prompt),
             elites: unit.get_elites().clone(),
             age: unit.get_age() + 1usize,
         };
