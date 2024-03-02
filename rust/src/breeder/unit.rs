@@ -7,7 +7,7 @@ pub(crate) struct UnitData {
     pub(crate) problem_description: ProblemDescription,
     pub(crate) task_prompt: TaskPrompt,
     pub(crate) embedding: Vec<f32>,
-    pub(crate) mutation_instruction: MutationPrompt,
+    pub(crate) mutation_prompt: MutationPrompt,
     pub(crate) elites: Vec<ScoredUnit>,
     pub(crate) age: usize,
 }
@@ -67,7 +67,7 @@ macro_rules! impl_unit_for_containing_unitdata {
             }
 
             fn get_mutation_instruction(&self) -> &MutationPrompt {
-                &self.unit.mutation_instruction
+                &self.unit.mutation_prompt
             }
 
             fn get_elites(&self) -> &Vec<ScoredUnit> {
