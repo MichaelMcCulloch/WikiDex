@@ -7,11 +7,12 @@
 # See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
 
 variables:
+  DATABASE_URL: "sqlite://sqlite_dummy.db"
+
   KUBERNETES_CPU_REQUEST: 400m
   KUBERNETES_CPU_LIMIT: 12000m
   KUBERNETES_MEMORY_REQUEST: 2Gi
   KUBERNETES_MEMORY_LIMIT: 8Gi
-  DATABASE_URL: "sqlite://sqlite_dummy.db"
 
 stages:
   - sast
