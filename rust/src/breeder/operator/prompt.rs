@@ -30,12 +30,12 @@ impl PromptForTaskPrompt for FirstOrderPromptGeneration {
 }
 impl StopSequences for ZeroOrderPromptGeneration {
     fn stop_sequence() -> Vec<String> {
-        vec![String::from("\n2"), String::from("\n")]
+        vec![String::from("\n2")]
     }
 }
 impl StopSequences for FirstOrderPromptGeneration {
     fn stop_sequence() -> Vec<String> {
-        vec![String::from("\n2"), String::from("\n")]
+        vec![String::from("\n2")]
     }
 }
 #[cfg(test)]
@@ -68,7 +68,7 @@ mod test {
             problem_description: ProblemDescription::new(problem_description),
             task_prompt: task_prompt.0,
             embedding: task_prompt.1,
-            mutation_instruction: MutationPrompt::new(problem_description),
+            mutation_prompt: MutationPrompt::new(problem_description),
             elites: vec![],
             age: 0,
         }

@@ -8,6 +8,7 @@ use crate::{
     openai::{LanguageServiceArguments, LlmMessage, OpenAiDelegate},
 };
 use simsimd::SimSIMD;
+
 pub(crate) trait GetPopulationPrompt {
     fn get_prompt(&self, population_subsample: &[&ScoredUnit]) -> String;
     fn format_prompt_list(population_subsample: &[&ScoredUnit]) -> String {
@@ -48,7 +49,7 @@ pub(crate) trait DistributionEstimationMutator:
     ) -> Result<UnscoredUnit, PromptBreedingError> {
         loop {
             let new_unit: UnscoredUnit = self
-                .mutate_population(openai, &population_subsample, unit, vec!["\n"])
+                .mutate_population(openai, &population_subsample, unit)
                 .await?;
             if population_subsample
                 .iter()
@@ -87,9 +88,9 @@ pub(crate) trait DistributionEstimationMutator:
         openai: &OpenAiDelegate,
         population_subsample: &[&ScoredUnit],
         unit: &ScoredUnit,
-        stop_phrases: Vec<&str>,
     ) -> Result<UnscoredUnit, PromptBreedingError> {
         let prompt = self.get_prompt(population_subsample);
+        let stop_sequence = format!("{}.", population_subsample.len() + 2);
         let content = openai
             .get_llm_answer(
                 LanguageServiceArguments {
@@ -99,19 +100,23 @@ pub(crate) trait DistributionEstimationMutator:
                     citation_index_begin: 0,
                 },
                 128u16,
-                stop_phrases,
+                vec![format!("\n{}", stop_sequence)],
             )
             .await
             .map(|LlmMessage { role: _, content }| content)
             .map_err(PromptBreedingError::LlmError)?;
-        let content = content.trim().trim_start_matches("1. ").trim().to_string();
+        let content = content
+            .trim()
+            .trim_start_matches(stop_sequence.as_str())
+            .trim()
+            .to_string();
         let embedding: Vec<f32> = openai.embed(&content).await.unwrap();
         let task_prompt = TaskPrompt::new(content);
         let new_unit = UnitData {
             problem_description: unit.get_problem_description().clone(),
             task_prompt,
             embedding,
-            mutation_instruction: MutationPrompt::new(prompt),
+            mutation_prompt: MutationPrompt::new(prompt),
             elites: unit.get_elites().clone(),
             age: unit.get_age() + 1usize,
         };
