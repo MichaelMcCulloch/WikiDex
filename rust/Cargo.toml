@@ -18,7 +18,7 @@ clap = { version = "4.5.1", features = ["derive"] }
 colored = "2.1.0"
 env_logger = "0.11.2"
 faiss = { git = "https://github.com/MichaelMcCulloch/faiss-rs.git", branch = "latest+avx2", features = [
-    "static","gpu"
+    "static",
 ] }
 flate2 = "1.0.28"
 futures = "0.3.30"

@@ -64,6 +64,21 @@ server:
     - cd rust
     - cargo check --no-default-features --features server
 
+face-service:
+  cache:
+    key: faiss-cache
+    paths:
+      - face-service/target/*
+  image: nvidia/cuda:12.3.2-devel-ubuntu22.04
+  stage: check
+  tags:
+    - cuda
+  script:
+    - apt-get update
+    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - cd face-service
+    - cargo check
+
 breeder:
   cache:
     key: binaries-cache
