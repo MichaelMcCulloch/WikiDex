@@ -72,7 +72,7 @@ face-service:
   image: nvidia/cuda:12.3.2-devel-ubuntu22.04
   stage: check
   tags:
-    - cuda
+    - CUDA
   script:
     - apt-get update
     - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
