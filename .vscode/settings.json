@@ -1,14 +1,26 @@
 {
   "rust-analyzer.server.extraEnv": {
+    "CUDA":"/opt/cuda",
+    "CC":"/opt/cuda/bin/gcc",
+    "CXX":"/opt/cuda/bin/g++",
+    "RUSTFLAGS":"-C target-cpu=native",
     "DATABASE_URL": "sqlite://sqlite_dummy.db"
   },
   "rust-analyzer.cargo.extraEnv": {
+    "CUDA":"/opt/cuda",
+    "CC":"/opt/cuda/bin/gcc",
+    "CXX":"/opt/cuda/bin/g++",
+    "RUSTFLAGS":"-C target-cpu=native",
     "DATABASE_URL": "sqlite://sqlite_dummy.db"
   },
   "rust-analyzer.runnables.extraEnv": [
     {
       // "mask": null, // null mask means that this rule will be applied for all runnables
       "env": {
+        "CUDA":"/opt/cuda",
+        "CC":"/opt/cuda/bin/gcc",
+        "CXX":"/opt/cuda/bin/g++",
+        "RUSTFLAGS":"-C target-cpu=native",
         "DATABASE_URL": "sqlite://sqlite_dummy.db"
       }
     }
