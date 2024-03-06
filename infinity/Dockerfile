@@ -24,6 +24,6 @@ RUN --mount=type=cache,target=/root/.cache/git,rw \
 # ENTRYPOINT  infinity_emb --help
 ENTRYPOINT  infinity_emb \
     --model-name-or-path /$SBERT_MODEL_NAME \
-    --port $EMBED_CONT_PORT \
+    --port $INFINITY_CONT_PORT \
     --device cuda \
     --batch-size $BATCH_SIZE

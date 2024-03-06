@@ -42,63 +42,76 @@ x-base_service_omnipedia: &base_omnipedia
   volumes:
     - ./rust/db:/db
     - ./rust/prompt:/prompt
+
+
+x-base_service_index: &base_index
+  ports:
+    - "${INDEX_HOST_PORT}:${INDEX_CONT_PORT}"
+
 x-base_service_redis: &base_redis
   image: redis:latest
   ports:
-    - "6379:6379"
+    - "${REDIS_HOST_PORT}:${REDIS_CONT_PORT}"
   volumes:
     - ./redis/data:/root/redis
     - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
   environment:
     - REDIS_PASSWORD=redis
-    - REDIS_PORT=6379
+    - "REDIS_PORT=${REDIS_CONT_PORT}"
     - REDIS_DATABASES=16
 
 x-base_service_infinity: &base_infinity
   ports:
-    - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
+    - "${INFINITY_HOST_PORT}:${INFINITY_CONT_PORT}"
 
 services:
-  infinity:
-    <<:
-      - *base_service_nvidia
-      - *base_infinity
-    environment:
-      - BATCH_SIZE=512
-    build:
-      dockerfile: Dockerfile
-      context: ./infinity
-      args:
-        SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
+  # infinity:
+  #   <<:
+  #     - *base_service_nvidia
+  #     - *base_infinity
+  #   environment:
+  #     - BATCH_SIZE=512
+  #   build:
+  #     dockerfile: Dockerfile
+  #     context: ./infinity
+  #     args:
+  #       SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
 
-  ui:
-    <<:
-      - *base_service
-      - *base_ui
-    build:
-      dockerfile: Dockerfile
-      context: ./typescript
+  # ui:
+  #   <<:
+  #     - *base_service
+  #     - *base_ui
+  #   build:
+  #     dockerfile: Dockerfile
+  #     context: ./typescript
 
-  vllm:
-    <<:
-      - *base_service_nvidia
-      - *base_vllm
-    build:
-      dockerfile: Dockerfile
-      context: ./vllm
-      args:
-        TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST}
-        LLM_MODEL_NAME: ${LLM_MODEL_NAME}
+  # vllm:
+  #   <<:
+  #     - *base_service_nvidia
+  #     - *base_vllm
+  #   build:
+  #     dockerfile: Dockerfile
+  #     context: ./vllm
+  #     args:
+  #       TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST}
+  #       LLM_MODEL_NAME: ${LLM_MODEL_NAME}
 
   redis:
     <<:
       - *base_service
       - *base_redis
 
-  omnipedia:
+  index:
     <<:
       - *base_service
-      - *base_omnipedia
+      - *base_index
     build:
       dockerfile: Dockerfile
-      context: ./rust
+      context: ./index
+  # omnipedia:
+  #   <<:
+  #     - *base_service
+  #     - *base_omnipedia
+  #   build:
+  #     dockerfile: Dockerfile
+  #     context: ./rust
