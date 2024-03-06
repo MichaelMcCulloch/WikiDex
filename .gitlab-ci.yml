@@ -65,6 +65,8 @@ server:
     - cargo check --no-default-features --features server
 
 face-service:
+  variables:
+    CUDA_PATH: "/usr/local/cuda"
   cache:
     key: faiss-cache
     paths:
