@@ -83,11 +83,10 @@ face-service:
     - CUDA
   script:
     - apt-get update
-    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev curl
     - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-    - source "$HOME/.cargo/env"
     - cd face-service
-    - cargo check
+    - $HOME/.cargo/bin/cargo check
 
 breeder:
   cache:
