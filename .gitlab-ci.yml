@@ -64,6 +64,43 @@ server:
     - cd rust
     - cargo check --no-default-features --features server
 
+face-service:
+  variables:
+    CUDA_PATH: "/usr/local/cuda"
+  cache:
+    key: faiss-cache
+    paths:
+      - face-service/target/*
+  cache:
+    key: rustup
+    paths:
+      - /root/.cargo
+  cache:
+    key: apt
+    paths:
+      - /var/cache/apt/archives
+  image: nvidia/cuda:12.3.2-devel-ubuntu22.04
+  stage: check
+  tags:
+    - CUDA
+  script:
+    - apt update
+    - apt install -y pkg-config libssl-dev liblapack-dev libblas-dev curl wget
+    - apt remove -y --purge --auto-remove cmake
+    - apt update 
+    - apt install -y software-properties-common lsb-release && \
+    - apt clean all
+    - wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
+    - apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main"
+    - apt update
+    - apt install -y kitware-archive-keyring
+    - rm /etc/apt/trusted.gpg.d/kitware.gpg
+    - apt update
+    - apt install -y cmake   
+    - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    - cd face-service
+    - $HOME/.cargo/bin/cargo check
+
 breeder:
   cache:
     key: binaries-cache
