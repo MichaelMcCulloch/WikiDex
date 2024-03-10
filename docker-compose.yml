@@ -28,10 +28,6 @@ x-base_service_nvidia: &base_service_nvidia
 #     - "/dev/dri"
 #     - "/dev/kfd"
 
-x-base_service_vllm: &base_vllm
-  ports:
-    - "${VLLM_HOST_PORT}:${VLLM_CONT_PORT}"
-
 x-base_service_ui: &base_ui
   ports:
     - "${UI_HOST_PORT}:${UI_CONT_PORT}"
@@ -54,22 +50,14 @@ x-base_service_redis: &base_redis
     - REDIS_PORT=6379
     - REDIS_DATABASES=16
 
-x-base_service_infinity: &base_infinity
-  ports:
-    - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
-
 services:
-  infinity:
+  omnipedia:
     <<:
-      - *base_service_nvidia
-      - *base_infinity
-    environment:
-      - BATCH_SIZE=512
+      - *base_service
+      - *base_omnipedia
     build:
       dockerfile: Dockerfile
-      context: ./infinity
-      args:
-        SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
+      context: ./rust
 
   ui:
     <<:
@@ -78,27 +66,3 @@ services:
     build:
       dockerfile: Dockerfile
       context: ./typescript
-
-  vllm:
-    <<:
-      - *base_service_nvidia
-      - *base_vllm
-    build:
-      dockerfile: Dockerfile
-      context: ./vllm
-      args:
-        TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST}
-        LLM_MODEL_NAME: ${LLM_MODEL_NAME}
-
-  redis:
-    <<:
-      - *base_service
-      - *base_redis
-
-  omnipedia:
-    <<:
-      - *base_service
-      - *base_omnipedia
-    build:
-      dockerfile: Dockerfile
-      context: ./rust
