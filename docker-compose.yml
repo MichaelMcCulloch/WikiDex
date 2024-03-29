@@ -74,7 +74,6 @@ services:
     <<:
       - *base_service_nvidia
       - *base_infinity
-
     entrypoint:
       [
         infinity_emb,
@@ -87,11 +86,6 @@ services:
         --batch-size,
         "$BATCH_SIZE",
       ]
-    # build:
-    #   dockerfile: Dockerfile
-    #   context: ./infinity
-    #   args:
-    #     SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
 
   ui:
     <<:
@@ -123,12 +117,6 @@ services:
         --max-model-len,
         $MAX_MODEL_LEN,
       ]
-    # build:
-    #   dockerfile: Dockerfile
-    #   context: ./vllm
-    #   args:
-    #     TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST}
-    #     LLM_MODEL_NAME: ${LLM_MODEL_NAME}
 
   redis:
     <<:
