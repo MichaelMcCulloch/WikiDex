@@ -4,7 +4,7 @@ pub(crate) trait TextFormatter {
         _document_title: &str,
         document_text: &str,
     ) -> String {
-        format!("{document_ordinal}. \n{document_text}\n`")
+        format!("1. ```{document_ordinal}\n{document_text}\n```")
     }
 }
 

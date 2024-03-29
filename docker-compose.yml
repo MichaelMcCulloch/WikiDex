@@ -46,8 +46,8 @@ x-base_service_omnipedia: &base_omnipedia
   ports:
     - "${OMNIPEDIA_HOST_PORT}:${OMNIPEDIA_CONT_PORT}"
   volumes:
-    - ./rust/db:/db
-    - ./rust/prompt:/prompt
+    - ./core/db:/db
+    - ./core/prompt:/prompt
 x-base_service_redis: &base_redis
   profiles: ["service", "server"]
   image: redis:latest
@@ -129,4 +129,4 @@ services:
       - *base_omnipedia
     build:
       dockerfile: Dockerfile
-      context: ./rust
+      context: ./core
