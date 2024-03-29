@@ -64,13 +64,13 @@ server:
     - cd core
     - cargo check --no-default-features --features server
 
-face-service:
+face:
   variables:
     CUDA_PATH: "/usr/local/cuda"
   cache:
     key: faiss-cache
     paths:
-      - face-service/target/*
+      - face/target/*
   cache:
     key: rustup
     paths:
