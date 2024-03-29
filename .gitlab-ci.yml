@@ -98,7 +98,7 @@ face:
     - apt update
     - apt install -y cmake   
     - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-    - cd face-service
+    - cd face
     - $HOME/.cargo/bin/cargo check
 
 breeder:
