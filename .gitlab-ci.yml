@@ -29,39 +29,39 @@ build:
   cache:
     key: binaries-cache
     paths:
-      - rust/target/*
+      - core/target/*
   image: rust:latest
   stage: build
   script:
     - apt-get update
     - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
-    - cd rust
+    - cd core
     - cargo check
 
 ingest:
   cache:
     key: binaries-cache
     paths:
-      - rust/target/*
+      - core/target/*
   image: rust:latest
   stage: check
   script:
     - apt-get update
     - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
-    - cd rust
+    - cd core
     - cargo check --no-default-features --features ingest
 
 server:
   cache:
     key: binaries-cache
     paths:
-      - rust/target/*
+      - core/target/*
   image: rust:latest
   stage: check
   script:
     - apt-get update
     - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
-    - cd rust
+    - cd core
     - cargo check --no-default-features --features server
 
 face-service:
@@ -105,24 +105,24 @@ breeder:
   cache:
     key: binaries-cache
     paths:
-      - rust/target/*
+      - core/target/*
   image: rust:latest
   stage: check
   script:
     - apt-get update
     - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
-    - cd rust
+    - cd core
     - cargo check --no-default-features --features breeder
 
 test:
   cache:
     key: binaries-cache
     paths:
-      - rust/target/*
+      - core/target/*
   image: rust:latest
   stage: test
   script:
     - apt-get update
     - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
-    - cd rust
+    - cd core
     - "cargo test --package omnipedia --bin omnipedia --no-default-features --features breeder -- breeder::operator::"
