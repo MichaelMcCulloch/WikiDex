@@ -9,19 +9,25 @@ use super::{
 };
 
 pub(crate) enum OpenAiDelegateBuilderArgument {
-    Endpoint(Url, String),
+    Endpoint(Url, Option<String>, String),
     OpenAiApi(String, String),
 }
 
 impl From<OpenAiDelegateBuilderArgument> for (Client<OpenAIConfig>, String) {
     fn from(val: OpenAiDelegateBuilderArgument) -> Self {
         let (openai_config, model_name) = match val {
-            OpenAiDelegateBuilderArgument::Endpoint(url, name) => {
+            OpenAiDelegateBuilderArgument::Endpoint(url, api_key, name) => {
                 let url = match url.as_str().strip_suffix('/') {
                     Some(url_safe) => url_safe,
                     None => url.as_str(),
                 };
-                (OpenAIConfig::new().with_api_base(url), name)
+                let open_aiconfig = if let Some(api_key) = api_key {
+                    OpenAIConfig::new().with_api_key(api_key).with_api_base(url)
+                } else {
+                    OpenAIConfig::new().with_api_base(url)
+                };
+
+                (open_aiconfig, name)
             }
             OpenAiDelegateBuilderArgument::OpenAiApi(api_key, name) => {
                 (OpenAIConfig::new().with_api_key(api_key), name)

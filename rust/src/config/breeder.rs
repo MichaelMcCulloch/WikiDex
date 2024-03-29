@@ -11,7 +11,7 @@ pub(crate) struct Config {
     pub(crate) output_directory: PathBuf,
     pub(crate) embed_url: Url,
     pub(crate) embed_model_name: PathBuf,
-    pub(crate) openai_key: Option<String>,
+    pub(crate) api_key: Option<String>,
     pub(crate) llm_url: Url,
     pub(crate) language_model_name: PathBuf,
     pub(crate) language_model_kind: ModelKind,
@@ -32,7 +32,7 @@ impl From<BreederArgs> for Config {
             docstore: value.docstore,
             thinking_styles_db: value.thinking_styles_db,
             mutation_prompts_db: value.mutation_prompts_db,
-            openai_key: value.openai_key,
+            api_key: value.api_key,
         }
     }
 }

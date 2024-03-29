@@ -10,7 +10,6 @@ x-base_service: &base_service
 
 x-base_service_nvidia: &base_service_nvidia
   <<: *base_service
-  profiles: ["service", "server"]
   deploy:
     resources:
       reservations:
@@ -29,20 +28,28 @@ x-base_service_nvidia: &base_service_nvidia
 #     - "/dev/kfd"
 
 x-base_service_vllm: &base_vllm
+  env_file: .env
+  image: vllm/vllm-openai:latest
+  profiles: ["service", "server"]
+  volumes:
+    - ~/.cache/huggingface/:/root/.cache/huggingface
   ports:
     - "${VLLM_HOST_PORT}:${VLLM_CONT_PORT}"
 
 x-base_service_ui: &base_ui
+  profiles: ["service", "server"]
   ports:
     - "${UI_HOST_PORT}:${UI_CONT_PORT}"
 
 x-base_service_omnipedia: &base_omnipedia
+  profiles: ["service", "server"]
   ports:
     - "${OMNIPEDIA_HOST_PORT}:${OMNIPEDIA_CONT_PORT}"
   volumes:
     - ./rust/db:/db
     - ./rust/prompt:/prompt
 x-base_service_redis: &base_redis
+  profiles: ["service", "server"]
   image: redis:latest
   ports:
     - "6379:6379"
@@ -55,6 +62,10 @@ x-base_service_redis: &base_redis
     - REDIS_DATABASES=16
 
 x-base_service_infinity: &base_infinity
+  image: michaelf34/infinity:latest
+  profiles: ["service", "server"]
+  volumes:
+    - ~/.cache/huggingface/:/root/.cache/huggingface
   ports:
     - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
 
@@ -63,13 +74,24 @@ services:
     <<:
       - *base_service_nvidia
       - *base_infinity
-    environment:
-      - BATCH_SIZE=512
-    build:
-      dockerfile: Dockerfile
-      context: ./infinity
-      args:
-        SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
+
+    entrypoint:
+      [
+        infinity_emb,
+        --model-name-or-path,
+        "$SBERT_MODEL_NAME",
+        --port,
+        "$EMBED_CONT_PORT",
+        --device,
+        cuda,
+        --batch-size,
+        "$BATCH_SIZE",
+      ]
+    # build:
+    #   dockerfile: Dockerfile
+    #   context: ./infinity
+    #   args:
+    #     SBERT_MODEL_NAME: ${SBERT_MODEL_NAME}
 
   ui:
     <<:
@@ -83,12 +105,30 @@ services:
     <<:
       - *base_service_nvidia
       - *base_vllm
-    build:
-      dockerfile: Dockerfile
-      context: ./vllm
-      args:
-        TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST}
-        LLM_MODEL_NAME: ${LLM_MODEL_NAME}
+    entrypoint:
+      [
+        python3,
+        -m,
+        vllm.entrypoints.openai.api_server,
+        --gpu-memory-utilization,
+        "0.85",
+        --model,
+        $LLM_MODEL_NAME,
+        --host,
+        "0.0.0.0",
+        --port,
+        $VLLM_CONT_PORT,
+        --dtype,
+        half,
+        --max-model-len,
+        $MAX_MODEL_LEN,
+      ]
+    # build:
+    #   dockerfile: Dockerfile
+    #   context: ./vllm
+    #   args:
+    #     TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST}
+    #     LLM_MODEL_NAME: ${LLM_MODEL_NAME}
 
   redis:
     <<:
