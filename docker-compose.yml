@@ -1,5 +1,3 @@
-version: "3.3"
-
 x-base_service: &base_service
   stop_signal: SIGTERM
   restart: always
@@ -77,6 +75,8 @@ services:
     entrypoint:
       [
         infinity_emb,
+        --url-prefix,
+        "/v1",
         --model-name-or-path,
         "$SBERT_MODEL_NAME",
         --port,

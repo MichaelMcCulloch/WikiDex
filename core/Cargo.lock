@@ -335,8 +335,9 @@ dependencies = [
 
 [[package]]
 name = "async-openai"
-version = "0.18.3"
-source = "git+https://github.com/MichaelMcCulloch/async-not-just-openai.git?branch=main#da1546bbc62211584493052e26395e08856c0375"
+version = "0.19.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fbc0b1877fb1bc415caa14d1899f0f477e8eb38f2fe16f54be196d7c4a92e15c"
 dependencies = [
  "async-convert",
  "backoff",
@@ -2256,9 +2257,9 @@ dependencies = [
 
 [[package]]
 name = "simsimd"
-version = "3.8.1"
+version = "4.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c50c29e70de9c76c99000b4369336c97cab7b89605301c724429e6d911cd17b5"
+checksum = "f4bbf7f2c6ab2e67ace0baea3f8710a434efcf74489cce63e68487088d84310b"
 dependencies = [
  "cc",
 ]

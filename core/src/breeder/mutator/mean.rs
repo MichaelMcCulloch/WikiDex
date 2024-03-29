@@ -7,8 +7,7 @@ use crate::{
     },
     openai::{LanguageServiceArguments, LlmMessage, OpenAiDelegate},
 };
-use simsimd::SimSIMD;
-
+use simsimd::SpatialSimilarity;
 pub(crate) trait GetPopulationPrompt {
     fn get_prompt(&self, population_subsample: &[&ScoredUnit]) -> String;
     fn format_prompt_list(population_subsample: &[&ScoredUnit]) -> String {
@@ -55,7 +54,7 @@ pub(crate) trait DistributionEstimationMutator:
                 .iter()
                 .all(|extant_member: &&ScoredUnit| {
                     f32::cosine(new_unit.get_embedding(), extant_member.get_embedding()).unwrap()
-                        < 0.95f32
+                        < 0.95f64
                 })
             {
                 break Ok(new_unit);
@@ -73,7 +72,7 @@ pub(crate) trait DistributionEstimationMutator:
                     extant_member.get_embedding(),
                 )
                 .unwrap()
-                    > 0.95f32
+                    > 0.95f64
             }) {
                 scored_population.remove(i);
                 len -= 1;
