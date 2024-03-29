@@ -27,8 +27,6 @@ pub(crate) enum Commands {
 #[command(author, version, about, long_about = None)]
 #[command(group(ArgGroup::new("endpoint").args(&["llm_url", "openai_key"]).multiple(false).required(true)))]
 pub(crate) struct BreederArgs {
-    #[arg(short = 'o', long, group = "endpoint")]
-    pub(crate) openai_key: Option<String>,
     #[arg(short, long)]
     pub(crate) index: PathBuf,
     #[arg(short, long)]
@@ -39,11 +37,13 @@ pub(crate) struct BreederArgs {
     pub(crate) mutation_prompts_db: PathBuf,
     #[arg(short = 'f', long)]
     pub(crate) output_directory: PathBuf,
+    #[arg(short, long)]
+    pub(crate) api_key: Option<String>,
     #[arg(short, long, default_value_t = Url::parse("http://infinity:9000").unwrap())]
     pub(crate) embed_url: Url,
     #[arg(short = 'm', long)]
     pub(crate) embed_model_name: PathBuf,
-    #[arg(short = 'v', long, default_value_t = Url::parse("http://vllm:5050/v1").unwrap(), group = "endpoint")]
+    #[arg(short = 'v', long, default_value_t = Url::parse("http://vllm:5050/v1").unwrap())]
     pub(crate) llm_url: Url,
     #[arg(short, long)]
     pub(crate) language_model_name: PathBuf,
@@ -61,6 +61,8 @@ pub(crate) struct WikipediaIngestArgs {
     pub(crate) wiki_xml: PathBuf,
     #[arg(short, long)]
     pub(crate) output_directory: PathBuf,
+    #[arg(short, long)]
+    pub(crate) api_key: Option<String>,
     #[arg(short, long, default_value_t = Url::parse("http://infinity:9000").unwrap())]
     pub(crate) embed_url: Url,
     #[arg(short = 'm', long)]
@@ -90,13 +92,13 @@ pub(crate) struct ServerArgs {
     pub(crate) docstore: PathBuf,
     #[arg(short, long)]
     pub(crate) system_prompt_path: PathBuf,
-    #[arg(short, long, group = "endpoint")]
-    pub(crate) openai_key: Option<String>,
+    #[arg(short, long)]
+    pub(crate) api_key: Option<String>,
     #[arg(short, long, default_value_t = Url::parse("http://infinity:9000/v1").unwrap())]
     pub(crate) embed_url: Url,
     #[arg(short = 'm', long)]
     pub(crate) embed_model_name: PathBuf,
-    #[arg(short = 'v', long, default_value_t = Url::parse("http://vllm:5050/v1").unwrap(), group = "endpoint")]
+    #[arg(short = 'v', long, default_value_t = Url::parse("http://vllm:5050/v1").unwrap())]
     pub(crate) llm_url: Url,
     #[arg(short, long)]
     pub(crate) language_model_name: PathBuf,

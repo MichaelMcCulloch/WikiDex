@@ -32,4 +32,5 @@ CMD omnipedia \
     --embed-model-name "${SBERT_MODEL_NAME}" \
     --host 0.0.0.0 \
     --port "${OMNIPEDIA_CONT_PORT}" \
-    --system-prompt-path "${SYSTEM_PROMPT_PATH}"
+    --system-prompt-path "${SYSTEM_PROMPT_PATH}" \
+    --api-key "$API_SECRET_KEY"

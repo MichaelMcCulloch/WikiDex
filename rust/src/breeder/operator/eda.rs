@@ -137,11 +137,13 @@ mod test {
         let openai_builder =
             OpenAiDelegateBuilder::with_embedding(OpenAiDelegateBuilderArgument::Endpoint(
                 Url::parse("https://infinity.semanticallyinvalid.net/").unwrap(),
+                Some(String::from("")),
                 String::from("thenlper/gte-small"),
             ));
 
         openai_builder.with_instruct(OpenAiDelegateBuilderArgument::Endpoint(
             Url::parse("https://vllm.semanticallyinvalid.net/v1/").unwrap(),
+            Some(String::from("")),
             String::from("TheBloke/Mistral-7B-Instruct-v0.2-AWQ"),
         ))
     }
