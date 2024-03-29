@@ -25,31 +25,30 @@ pub(crate) enum Commands {
 #[cfg(feature = "breeder")]
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
-#[command(group(ArgGroup::new("endpoint").args(&["llm_url", "openai_key"]).multiple(false).required(true)))]
 pub(crate) struct BreederArgs {
-    #[arg(short, long)]
+    #[arg(long)]
     pub(crate) index: PathBuf,
-    #[arg(short, long)]
+    #[arg(long)]
     pub(crate) docstore: PathBuf,
-    #[arg(short = 't', long)]
+    #[arg(long)]
     pub(crate) thinking_styles_db: PathBuf,
-    #[arg(short = 'u', long)]
+    #[arg(long)]
     pub(crate) mutation_prompts_db: PathBuf,
-    #[arg(short = 'f', long)]
+    #[arg(long)]
     pub(crate) output_directory: PathBuf,
-    #[arg(short, long)]
+    #[arg(long)]
     pub(crate) api_key: Option<String>,
-    #[arg(short, long, default_value_t = Url::parse("http://infinity:9000").unwrap())]
+    #[arg(long)]
     pub(crate) embed_url: Url,
-    #[arg(short = 'm', long)]
+    #[arg(long)]
     pub(crate) embed_model_name: PathBuf,
-    #[arg(short = 'v', long, default_value_t = Url::parse("http://vllm:5050/v1").unwrap())]
+    #[arg(long)]
     pub(crate) llm_url: Url,
-    #[arg(short, long)]
+    #[arg(long)]
     pub(crate) language_model_name: PathBuf,
-    #[arg(short = 'k', long)]
+    #[arg(long)]
     pub(crate) language_model_kind: ModelKind,
-    #[arg(short = 'n', long)]
+    #[arg(long)]
     pub(crate) generation_limit: usize,
 }
 
@@ -57,51 +56,50 @@ pub(crate) struct BreederArgs {
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub(crate) struct WikipediaIngestArgs {
-    #[arg(short, long)]
+    #[arg(long)]
     pub(crate) wiki_xml: PathBuf,
-    #[arg(short, long)]
+    #[arg(long)]
     pub(crate) output_directory: PathBuf,
-    #[arg(short, long)]
+    #[arg(long)]
     pub(crate) api_key: Option<String>,
-    #[arg(short, long, default_value_t = Url::parse("http://infinity:9000").unwrap())]
+    #[arg(long)]
     pub(crate) embed_url: Url,
-    #[arg(short = 'm', long)]
+    #[arg(long)]
     pub(crate) embed_model_name: PathBuf,
-    #[arg(short = 'v', long, default_value_t = Url::parse("http://vllm:5050/v1").unwrap())]
+    #[arg(long)]
     pub(crate) llm_url: Url,
-    #[arg(short, long)]
+    #[arg(long)]
     pub(crate) language_model_name: PathBuf,
-    #[arg(short = 'k', long)]
+    #[arg(long)]
     pub(crate) language_model_kind: ModelKind,
-    #[arg(short = 'n', long, default_value_t = 0)]
+    #[arg(long, default_value_t = 0)]
     pub(crate) ingest_limit: usize,
 }
 
 #[cfg(feature = "server")]
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
-#[command(group(ArgGroup::new("endpoint").args(&["llm_url", "openai_key"]).multiple(false).required(true)))]
 pub(crate) struct ServerArgs {
-    #[arg(short = 'a' , long, default_value_t = String::from("0.0.0.0"))]
+    #[arg( long, default_value_t = String::from("0.0.0.0"))]
     pub(crate) host: String,
-    #[arg(short, long, default_value_t = 5000)]
+    #[arg(long, default_value_t = 5000)]
     pub(crate) port: u16,
-    #[arg(short, long)]
+    #[arg(long)]
     pub(crate) index: PathBuf,
-    #[arg(short, long)]
+    #[arg(long)]
     pub(crate) docstore: PathBuf,
-    #[arg(short, long)]
+    #[arg(long)]
     pub(crate) system_prompt_path: PathBuf,
-    #[arg(short, long)]
+    #[arg(long)]
     pub(crate) api_key: Option<String>,
-    #[arg(short, long, default_value_t = Url::parse("http://infinity:9000/v1").unwrap())]
+    #[arg(long)]
     pub(crate) embed_url: Url,
-    #[arg(short = 'm', long)]
+    #[arg(long)]
     pub(crate) embed_model_name: PathBuf,
-    #[arg(short = 'v', long, default_value_t = Url::parse("http://vllm:5050/v1").unwrap())]
+    #[arg(long)]
     pub(crate) llm_url: Url,
-    #[arg(short, long)]
+    #[arg(long)]
     pub(crate) language_model_name: PathBuf,
-    #[arg(short = 'k', long)]
+    #[arg(long)]
     pub(crate) language_model_kind: ModelKind,
 }

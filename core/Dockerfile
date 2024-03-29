@@ -28,7 +28,7 @@ CMD omnipedia \
     --llm-url "https://vllm.semanticallyinvalid.net/v1/" \
     --language-model-name "${LLM_MODEL_NAME}" \
     --language-model-kind "${MODEL_KIND}" \
-    --embed-url "https://infinity.semanticallyinvalid.net/" \
+    --embed-url "https://infinity.semanticallyinvalid.net/v1" \
     --embed-model-name "${SBERT_MODEL_NAME}" \
     --host 0.0.0.0 \
     --port "${OMNIPEDIA_CONT_PORT}" \
