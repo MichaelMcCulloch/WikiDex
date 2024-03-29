@@ -107,7 +107,7 @@ impl ChatRequest for ChatClient {
 
         let system = arguments
             .system
-            .replace("___DOCUMENT_LIST___", arguments.documents);
+            .replace("$$$DOCUMENT_LIST$$$", arguments.documents);
 
         let system = ChatCompletionRequestSystemMessageArgs::default()
             .content(system)

@@ -102,13 +102,13 @@ impl InstructRequest for InstructClient {
 
         let query = arguments
             .system
-            .replace("___USER_QUERY___", arguments.query)
-            .replace("___URL___", "http://localhost")
-            .replace("___CITE1___", &c1.to_string())
-            .replace("___CITE2___", &c2.to_string())
-            .replace("___CITE3___", &c3.to_string())
-            .replace("___CITE4___", &c4.to_string())
-            .replace("___DOCUMENT_LIST___", arguments.documents);
+            .replace("$$$USER_QUERY$$$", arguments.query)
+            .replace("$$$URL$$$", "http://localhost")
+            .replace("$$$CITE1$$$", &c1.to_string())
+            .replace("$$$CITE2$$$", &c2.to_string())
+            .replace("$$$CITE3$$$", &c3.to_string())
+            .replace("$$$CITE4$$$", &c4.to_string())
+            .replace("$$$DOCUMENT_LIST$$$", arguments.documents);
 
         let request = CreateCompletionRequestArgs::default()
             .max_tokens(max_tokens)
