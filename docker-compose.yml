@@ -131,18 +131,22 @@ services:
   #     - *base_service
   #     - *base_redis
 
-  # omnipedia:
-  #   <<:
-  #     - *base_service
-  #     - *base_omnipedia
-  #   build:
-  #     dockerfile: Dockerfile
-  #     context: ./core
+  omnipedia:
+    <<:
+      - *base_service
+      - *base_omnipedia
+    environment:
+      RUST_LOG: $RUST_LOG
+    build:
+      dockerfile: Dockerfile
+      context: ./core
 
   index:
     <<:
       - *base_service
       - *base_index
+    environment:
+      RUST_LOG: $RUST_LOG
     build:
       dockerfile: Dockerfile
       context: ./face
