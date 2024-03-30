@@ -21,16 +21,28 @@ struct Args {
     pub(crate) port: u16,
 }
 
-fn main() -> anyhow::Result<()> {
+pub(crate) struct Config {
+    pub(crate) index_path: PathBuf,
+    pub(crate) host: String,
+    pub(crate) port: u16,
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    env_logger::init();
     let args = Args::parse();
     let index_path = args.index_path;
 
     let faiss_index = index::FaissIndex::new(&index_path)?;
 
-    let index_engine = IndexEngine::new(faiss_index);
-
-    let server = run_server(index_engine, args.host, args.port)?;
-
     let system_runner = rt::System::new();
-    system_runner.block_on(server).map_err(anyhow::Error::from)
+
+    let exec = async {
+        let index_engine = IndexEngine::new(faiss_index).await;
+        let _ = run_server(index_engine, args.host, args.port)
+            .unwrap()
+            .await;
+    };
+
+    system_runner.block_on(exec);
+    Ok(())
 }
