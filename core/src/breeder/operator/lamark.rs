@@ -69,7 +69,7 @@ mod test {
     fn obtain_openai() -> OpenAiDelegate {
         let openai_builder =
             OpenAiDelegateBuilder::with_embedding(OpenAiDelegateBuilderArgument::Endpoint(
-                Url::parse("https://infinity.semanticallyinvalid.net/").unwrap(),
+                Url::parse("https://infinity.semanticallyinvalid.net/v1/").unwrap(),
                 Some(String::from("")),
                 String::from("thenlper/gte-small"),
             ));
