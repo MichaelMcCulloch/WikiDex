@@ -51,7 +51,6 @@ mod breeder;
 use crate::breeder::Engine as PromptBreedingEngine;
 
 fn main() -> anyhow::Result<()> {
-    std::env::set_var("RUST_LOG", "info");
     match Cli::parse().command {
         #[cfg(feature = "server")]
         Commands::Server(server_args) => {

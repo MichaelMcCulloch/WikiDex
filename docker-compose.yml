@@ -46,6 +46,14 @@ x-base_service_omnipedia: &base_omnipedia
   volumes:
     - ./core/db:/db
     - ./core/prompt:/prompt
+
+x-base_service_index: &base_index
+  profiles: ["service", "server"]
+  ports:
+    - "${INDEX_HOST_PORT}:${INDEX_CONT_PORT}"
+  volumes:
+    - ./wikidump/index:/db
+
 x-base_service_redis: &base_redis
   profiles: ["service", "server"]
   image: redis:latest
@@ -68,65 +76,74 @@ x-base_service_infinity: &base_infinity
     - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
 
 services:
-  infinity:
-    <<:
-      - *base_service_nvidia
-      - *base_infinity
-    entrypoint:
-      [
-        infinity_emb,
-        --url-prefix,
-        "/v1",
-        --model-name-or-path,
-        "$SBERT_MODEL_NAME",
-        --port,
-        "$EMBED_CONT_PORT",
-        --device,
-        cuda,
-        --batch-size,
-        "$BATCH_SIZE",
-      ]
+  # infinity:
+  #   <<:
+  #     - *base_service_nvidia
+  #     - *base_infinity
+  #   entrypoint:
+  #     [
+  #       infinity_emb,
+  #       --url-prefix,
+  #       "/v1",
+  #       --model-name-or-path,
+  #       "$SBERT_MODEL_NAME",
+  #       --port,
+  #       "$EMBED_CONT_PORT",
+  #       --device,
+  #       cuda,
+  #       --batch-size,
+  #       "$BATCH_SIZE",
+  #     ]
 
-  ui:
+  # ui:
+  #   <<:
+  #     - *base_service
+  #     - *base_ui
+  #   build:
+  #     dockerfile: Dockerfile
+  #     context: ./typescript
+
+  # vllm:
+  #   <<:
+  #     - *base_service_nvidia
+  #     - *base_vllm
+  #   entrypoint:
+  #     [
+  #       python3,
+  #       -m,
+  #       vllm.entrypoints.openai.api_server,
+  #       --gpu-memory-utilization,
+  #       "0.85",
+  #       --model,
+  #       $LLM_MODEL_NAME,
+  #       --host,
+  #       "0.0.0.0",
+  #       --port,
+  #       $VLLM_CONT_PORT,
+  #       --dtype,
+  #       half,
+  #       --max-model-len,
+  #       $MAX_MODEL_LEN,
+  #     ]
+
+  # redis:
+  #   <<:
+  #     - *base_service
+  #     - *base_redis
+
+  # omnipedia:
+  #   <<:
+  #     - *base_service
+  #     - *base_omnipedia
+  #   build:
+  #     dockerfile: Dockerfile
+  #     context: ./core
+
+  index:
     <<:
       - *base_service
-      - *base_ui
+      - *base_index
     build:
       dockerfile: Dockerfile
-      context: ./typescript
-
-  vllm:
-    <<:
-      - *base_service_nvidia
-      - *base_vllm
-    entrypoint:
-      [
-        python3,
-        -m,
-        vllm.entrypoints.openai.api_server,
-        --gpu-memory-utilization,
-        "0.85",
-        --model,
-        $LLM_MODEL_NAME,
-        --host,
-        "0.0.0.0",
-        --port,
-        $VLLM_CONT_PORT,
-        --dtype,
-        half,
-        --max-model-len,
-        $MAX_MODEL_LEN,
-      ]
-
-  redis:
-    <<:
-      - *base_service
-      - *base_redis
-
-  omnipedia:
-    <<:
-      - *base_service
-      - *base_omnipedia
-    build:
-      dockerfile: Dockerfile
-      context: ./core
+      context: ./face
+    entrypoint: [face, --index-path, $INDEX_PATH]
