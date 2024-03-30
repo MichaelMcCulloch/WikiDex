@@ -1,4 +1,5 @@
 use faiss::error::Error as FsError;
+
 use std::{
     error::Error as StdError,
     fmt::{Debug, Display, Formatter, Result},

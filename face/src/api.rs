@@ -12,14 +12,14 @@ use crate::engine::IndexEngine;
 
 #[derive(Serialize, Deserialize, ToSchema, Debug)]
 #[schema(example = embedding_schema_example)]
-pub(crate) struct Embedding(pub(crate) Vec<f32>);
+pub(crate) struct Query(pub(crate) Vec<f32>, pub(crate) usize);
 
 #[derive(Serialize, Deserialize, ToSchema, Debug)]
 #[schema(example = neighbors_schema_example)]
-pub(crate) struct Neighbors(pub(crate) Vec<usize>);
+pub(crate) struct Neighbors(pub(crate) Vec<i64>);
 
 #[derive(OpenApi)]
-#[openapi(paths(query), components(schemas(Neighbors), schemas(Embedding),))]
+#[openapi(paths(query), components(schemas(Neighbors), schemas(Query),))]
 pub(crate) struct ApiDoc;
 
 #[utoipa::path(
@@ -30,15 +30,18 @@ pub(crate) struct ApiDoc;
 )]
 #[post("/query")]
 async fn query(
-    Json(Embedding(_embedding)): Json<Embedding>,
-    _index: Data<Arc<IndexEngine>>,
+    Json(Query(embedding, neighbors)): Json<Query>,
+    index: Data<Arc<IndexEngine>>,
 ) -> impl Responder {
-    HttpResponse::Ok().json(Neighbors(vec![0usize]))
+    match index.query(embedding, neighbors).await {
+        Ok(x) => HttpResponse::Ok().json(Neighbors(x)),
+        Err(_e) => HttpResponse::InternalServerError().into(),
+    }
 }
 
-fn embedding_schema_example() -> Embedding {
-    Embedding(vec![0f32, 0.0, 0.0, 0.0])
+fn embedding_schema_example() -> Query {
+    Query(vec![0f32, 0.0, 0.0, 0.0], 4)
 }
 fn neighbors_schema_example() -> Neighbors {
-    Neighbors(vec![0usize, 0, 0, 0])
+    Neighbors(vec![0i64, 0, 0, 0])
 }
