@@ -1,7 +1,8 @@
-use std::sync::Mutex;
-
 use bytes::Bytes;
-use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
+use tokio::sync::{
+    mpsc::{unbounded_channel, UnboundedSender},
+    Mutex,
+};
 
 use crate::{
     docstore::SqliteDocstore,
@@ -142,8 +143,9 @@ impl Engine {
         let document_indices = self
             .index
             .lock()
-            .map_err(|_| QueryEngineError::UnableToLockIndex)?
+            .await
             .search(&embedding, NUM_DOCUMENTS_TO_RETRIEVE)
+            .await
             .map_err(QueryEngineError::IndexError)?;
 
         let documents = self

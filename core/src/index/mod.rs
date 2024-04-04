@@ -1,3 +1,4 @@
+mod api;
 mod error;
 mod faiss_index;
 mod service;

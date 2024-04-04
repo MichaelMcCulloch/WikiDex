@@ -1,12 +1,11 @@
+use tokio::sync::Mutex;
+
 use super::PromptBreedingError;
 use crate::{
     docstore::SqliteDocstore, formatter::CitationStyle, index::FaissIndex, openai::OpenAiDelegate,
 };
 
-use std::{
-    fmt::Display,
-    sync::{Arc, Mutex},
-};
+use std::{fmt::Display, sync::Arc};
 
 pub(crate) struct Engine {
     index: Mutex<FaissIndex>,
