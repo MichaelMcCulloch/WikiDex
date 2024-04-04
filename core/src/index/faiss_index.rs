@@ -38,29 +38,29 @@ impl FaissIndex {
 impl SearchService for FaissIndex {
     type E = IndexSearchError;
 
-    fn batch_search(
-        &mut self,
-        query: &Vec<Vec<f32>>,
-        neighbors: usize,
-    ) -> Result<Vec<Vec<i64>>, IndexSearchError> {
-        let start = Instant::now();
-        let flattened_query: Vec<f32> = query
-            .iter()
-            .all(|q| q.len() == self.dims as usize)
-            .then(|| query.iter().flatten().copied().collect())
-            .ok_or(IndexSearchError::IncorrectDimensions)?;
+    // fn batch_search(
+    //     &mut self,
+    //     query: &Vec<Vec<f32>>,
+    //     neighbors: usize,
+    // ) -> Result<Vec<Vec<i64>>, IndexSearchError> {
+    //     let start = Instant::now();
+    //     let flattened_query: Vec<f32> = query
+    //         .iter()
+    //         .all(|q| q.len() == self.dims as usize)
+    //         .then(|| query.iter().flatten().copied().collect())
+    //         .ok_or(IndexSearchError::IncorrectDimensions)?;
 
-        let rs = self
-            .index
-            .search(&flattened_query, neighbors)
-            .map_err(IndexSearchError::IndexSearchError)?;
-        let x: Vec<i64> = rs.labels.iter().map(|i| i.to_native()).collect();
-        let indices = x.chunks_exact(neighbors).map(|v| v.to_vec()).collect();
-        log::debug!("Index {:?}", start.elapsed());
-        Ok(indices)
-    }
+    //     let rs = self
+    //         .index
+    //         .search(&flattened_query, neighbors)
+    //         .map_err(IndexSearchError::IndexSearchError)?;
+    //     let x: Vec<i64> = rs.labels.iter().map(|i| i.to_native()).collect();
+    //     let indices = x.chunks_exact(neighbors).map(|v| v.to_vec()).collect();
+    //     log::debug!("Index {:?}", start.elapsed());
+    //     Ok(indices)
+    // }
 
-    fn search(&mut self, query: &Vec<f32>, neighbors: usize) -> Result<Vec<i64>, Self::E> {
+    async fn search(&mut self, query: &Vec<f32>, neighbors: usize) -> Result<Vec<i64>, Self::E> {
         let start = Instant::now();
         let rs = self
             .index

@@ -32,7 +32,7 @@ use docstore::SqliteDocstore;
 use server::run_server;
 use std::fs;
 #[cfg(any(feature = "server", feature = "breeder"))]
-use std::sync::Mutex;
+use tokio::sync::Mutex;
 
 #[cfg(feature = "ingest")]
 mod ingest;
