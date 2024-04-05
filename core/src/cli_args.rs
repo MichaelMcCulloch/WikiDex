@@ -87,8 +87,6 @@ pub(crate) struct ServerArgs {
     #[arg(long, default_value_t = 5000)]
     pub(crate) port: u16,
     #[arg(long)]
-    pub(crate) index: PathBuf,
-    #[arg(long)]
     pub(crate) docstore: PathBuf,
     #[arg(long)]
     pub(crate) system_prompt_path: PathBuf,
