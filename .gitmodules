@@ -1,6 +1,6 @@
 [submodule "face"]
 	path = face
-	url = ./face
+	url = git@git.semanticallyinvalid.net:omnipedia/face.git
 [submodule "face_api"]
 	path = face_api
-	url = ./face_api
+	url = git@git.semanticallyinvalid.net:omnipedia/face_api.git
