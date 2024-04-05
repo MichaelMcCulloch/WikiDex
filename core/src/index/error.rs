@@ -1,3 +1,4 @@
+use face_api::apis::{crate_api::QueryError, Error};
 use faiss::error::Error as FsError;
 use std::{
     error::Error as StdError,
@@ -14,6 +15,7 @@ pub enum IndexError {
 #[derive(Debug)]
 pub enum IndexSearchError {
     IncorrectDimensions,
+    QueryError(Error<QueryError>),
     IndexSearchError(FsError),
 }
 
@@ -42,6 +44,9 @@ impl Display for IndexSearchError {
             }
             IndexSearchError::IndexSearchError(err) => {
                 write!(f, "SearchService: {}", err)
+            }
+            IndexSearchError::QueryError(err) => {
+                write!(f, "SearchService: {:?}", err)
             }
         }
     }

@@ -19,6 +19,7 @@ pub(crate) struct Config {
     pub(crate) embed_model_name: PathBuf,
     pub(crate) embed_url: Url,
     pub(crate) llm_url: Url,
+    pub(crate) index_url: Url,
     pub(crate) api_key: Option<String>,
 }
 
@@ -51,6 +52,7 @@ impl From<ServerArgs> for Config {
             language_model_kind: value.language_model_kind,
             embed_url: value.embed_url,
             llm_url: value.llm_url,
+            index_url: value.index_url,
             system_prompt: std::fs::read_to_string(value.system_prompt_path).unwrap(),
             api_key: value.api_key,
             embed_model_name: value.embed_model_name,

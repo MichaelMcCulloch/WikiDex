@@ -1,13 +1,10 @@
 use bytes::Bytes;
-use tokio::sync::{
-    mpsc::{unbounded_channel, UnboundedSender},
-    Mutex,
-};
+use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 use crate::{
     docstore::SqliteDocstore,
     formatter::{CitationStyle, Cite, DocumentFormatter, TextFormatter},
-    index::{FaissIndex, SearchService},
+    index::{FaceIndex, SearchService},
     openai::{LanguageServiceArguments, LlmMessage, LlmRole, OpenAiDelegate, PartialLlmMessage},
     server::{Conversation, CountSources, Message, PartialMessage, Source},
 };
@@ -15,7 +12,7 @@ use crate::{
 use super::QueryEngineError;
 
 pub struct Engine {
-    index: Mutex<FaissIndex>,
+    index: FaceIndex,
     openai: OpenAiDelegate,
     docstore: SqliteDocstore,
     system_prompt: String,
@@ -34,11 +31,11 @@ impl Engine {
 
     pub(crate) async fn conversation(
         &self,
-        Conversation(message_history): Conversation,
+        Conversation { messages }: Conversation,
         stop_phrases: Vec<&str>,
     ) -> Result<Message, QueryEngineError> {
-        let num_sources = message_history.sources_count();
-        match message_history.into_iter().last() {
+        let num_sources = messages.sources_count();
+        match messages.into_iter().last() {
             Some(Message::User(user_query)) => {
                 let (sources, formatted_documents) =
                     self.get_documents(&user_query, num_sources).await?;
@@ -69,12 +66,12 @@ impl Engine {
     }
     pub(crate) async fn streaming_conversation(
         &self,
-        Conversation(message_history): Conversation,
+        Conversation { messages }: Conversation,
         tx: UnboundedSender<Bytes>,
         stop_phrases: Vec<&str>,
     ) -> Result<(), QueryEngineError> {
-        let num_sources = message_history.sources_count();
-        match message_history.into_iter().last() {
+        let num_sources = messages.sources_count();
+        match messages.into_iter().last() {
             Some(Message::User(user_query)) => {
                 let (sources, formatted_documents) =
                     self.get_documents(&user_query, num_sources).await?;
@@ -116,7 +113,7 @@ impl Engine {
 
 impl Engine {
     pub(crate) fn new(
-        index: Mutex<FaissIndex>,
+        index: FaceIndex,
         openai: OpenAiDelegate,
         docstore: SqliteDocstore,
         system_prompt: String,
@@ -142,9 +139,7 @@ impl Engine {
 
         let document_indices = self
             .index
-            .lock()
-            .await
-            .search(&embedding, NUM_DOCUMENTS_TO_RETRIEVE)
+            .search(embedding, NUM_DOCUMENTS_TO_RETRIEVE)
             .await
             .map_err(QueryEngineError::IndexError)?;
 

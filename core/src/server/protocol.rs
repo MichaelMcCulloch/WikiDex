@@ -55,14 +55,16 @@ impl PartialMessage {
 
     pub(crate) fn message(self) -> Bytes {
         let message_string = &serde_json::to_string(&self).unwrap();
-        
+
         Bytes::from(["event: message\ndata: ", message_string, "\n\n"].concat())
     }
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug)]
 #[schema(example = conversation_schema_example)]
-pub(crate) struct Conversation(pub(crate) Vec<Message>);
+pub(crate) struct Conversation {
+    pub(crate) messages: Vec<Message>,
+}
 
 pub(crate) trait CountSources {
     fn sources_count(&self) -> usize;
@@ -77,17 +79,21 @@ impl CountSources for Vec<Message> {
 }
 impl CountSources for Conversation {
     fn sources_count(&self) -> usize {
-        self.0.sources_count()
+        self.messages.sources_count()
     }
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug)]
 #[schema(example = query_schema_example)]
-pub(crate) struct Query(pub(crate) String);
+pub(crate) struct Query {
+    pub(crate) message: String,
+}
 
 #[derive(Serialize, Deserialize, ToSchema, Debug)]
 #[schema(example = answer_schema_example)]
-pub(crate) struct Answer(pub(crate) String);
+pub(crate) struct Answer {
+    pub(crate) message: String,
+}
 
 fn assistant_message_schema_example() -> Message {
     Message::Assistant(
@@ -117,14 +123,20 @@ fn user_message_schema_example() -> Message {
     Message::User(String::from("String"))
 }
 fn query_schema_example() -> Query {
-    Query(String::from("String"))
+    Query {
+        message: String::from("String"),
+    }
 }
 fn answer_schema_example() -> Answer {
-    Answer(String::from("String"))
+    Answer {
+        message: String::from("String"),
+    }
 }
 fn conversation_schema_example() -> Conversation {
-    Conversation(vec![
-        user_message_schema_example(),
-        assistant_message_schema_example(),
-    ])
+    Conversation {
+        messages: vec![
+            user_message_schema_example(),
+            assistant_message_schema_example(),
+        ],
+    }
 }

@@ -4,6 +4,7 @@ use actix_cors::Cors;
 use actix_web::{dev::Server, middleware, web::Data, App, HttpServer};
 use utoipa::OpenApi;
 use utoipa_redoc::{Redoc, Servable};
+use utoipa_swagger_ui::SwaggerUi;
 
 use crate::inference::Engine;
 
@@ -23,6 +24,9 @@ pub(crate) fn run_server<S: AsRef<str>>(
             .wrap(middleware::Logger::default())
             .wrap(Cors::permissive())
             .app_data(Data::new(engine.clone()))
+            .service(
+                SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-docs/openapi.json", openapi.clone()),
+            )
             .service(streaming_conversation)
             .service(conversation)
             .service(query)

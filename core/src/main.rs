@@ -5,8 +5,8 @@ mod openai;
 
 use crate::{
     cli_args::{Cli, Commands},
-    openai::ModelKind,
-    openai::{OpenAiDelegateBuilder, OpenAiDelegateBuilderArgument},
+    index::FaceIndex,
+    openai::{ModelKind, OpenAiDelegateBuilder, OpenAiDelegateBuilderArgument},
 };
 use actix_web::rt;
 use clap::Parser;
@@ -22,8 +22,7 @@ mod formatter;
 mod inference;
 #[cfg(feature = "server")]
 mod server;
-#[cfg(any(feature = "server", feature = "breeder"))]
-use crate::index::FaissIndex;
+
 #[cfg(feature = "server")]
 use crate::inference::Engine as InferenceEngine;
 #[cfg(any(feature = "server", feature = "breeder"))]
@@ -31,8 +30,6 @@ use docstore::SqliteDocstore;
 #[cfg(feature = "server")]
 use server::run_server;
 use std::fs;
-#[cfg(any(feature = "server", feature = "breeder"))]
-use tokio::sync::Mutex;
 
 #[cfg(feature = "ingest")]
 mod ingest;
@@ -61,7 +58,7 @@ fn main() -> anyhow::Result<()> {
             log::info!("\n{config}");
 
             let docstore = system_runner.block_on(SqliteDocstore::new(&config.docstore))?;
-            let index = FaissIndex::new(&config.index)?;
+            let index = FaceIndex::new(config.index_url);
 
             let openai_builder =
                 OpenAiDelegateBuilder::with_embedding(OpenAiDelegateBuilderArgument::Endpoint(
@@ -87,8 +84,7 @@ fn main() -> anyhow::Result<()> {
                 }
             };
 
-            let engine =
-                InferenceEngine::new(Mutex::new(index), openai, docstore, config.system_prompt);
+            let engine = InferenceEngine::new(index, openai, docstore, config.system_prompt);
 
             let server = run_server(engine, config.host, config.port)?;
             system_runner.block_on(server).map_err(anyhow::Error::from)
@@ -159,7 +155,7 @@ fn main() -> anyhow::Result<()> {
             let system_runner = rt::System::new();
 
             let docstore = system_runner.block_on(SqliteDocstore::new(&config.docstore))?;
-            let index = FaissIndex::new(&config.index)?;
+            let index = FaceIndex::new(config.index_url);
 
             let thinking_styles = fs::read_to_string(config.thinking_styles_db)?
                 .split('\n')
@@ -195,7 +191,7 @@ fn main() -> anyhow::Result<()> {
             };
 
             let engine = PromptBreedingEngine::new(
-                Mutex::new(index),
+                index,
                 openai,
                 docstore,
                 thinking_styles,
