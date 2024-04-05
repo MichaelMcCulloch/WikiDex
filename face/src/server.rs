@@ -3,7 +3,7 @@ use std::sync::Arc;
 use actix_cors::Cors;
 use actix_web::{dev::Server, middleware, web::Data, App, HttpServer};
 use utoipa::OpenApi;
-use utoipa_redoc::{Redoc, Servable};
+use utoipa_swagger_ui::SwaggerUi;
 
 use crate::api::query;
 use crate::api::ApiDoc;
@@ -24,7 +24,9 @@ pub(crate) fn run_server<S: AsRef<str>>(
             .wrap(Cors::permissive())
             .app_data(Data::new(engine.clone()))
             .service(query)
-            .service(Redoc::with_url("/api-doc", openapi.clone()))
+            .service(
+                SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-docs/openapi.json", openapi.clone()),
+            )
     });
 
     server = server.bind((host.as_ref(), port))?;
