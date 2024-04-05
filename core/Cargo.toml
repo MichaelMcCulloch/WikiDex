@@ -23,7 +23,7 @@ env_logger = "0.11.2"
 face_api = { git = "https://git.semanticallyinvalid.net/omnipedia/face_api", branch = "master", optional = true }
 faiss = { git = "https://github.com/MichaelMcCulloch/faiss-rs.git", branch = "latest+avx2", features = [
     "static",
-] }
+], optional = true }
 flate2 = "1.0.28"
 futures = "0.3.30"
 log = "0.4.20"
@@ -76,6 +76,7 @@ ingest = [
     "dep:parse_wiki_text",
     "dep:indicatif",
     "dep:indicatif-log-bridge",
+    "dep:faiss",
 ]
 breeder = [
     "dep:indicatif",

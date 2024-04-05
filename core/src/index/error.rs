@@ -1,14 +1,18 @@
 use face_api::apis::{crate_api::QueryError, Error};
-use faiss::error::Error as FsError;
 use std::{
     error::Error as StdError,
     fmt::{Debug, Display, Formatter, Result},
 };
 
+#[cfg(feature = "ingest")]
+use faiss::error::Error as FsError;
+
 #[derive(Debug)]
 pub enum IndexError {
     FileNotFound,
+    #[cfg(feature = "ingest")]
     IndexReadError(FsError),
+    #[cfg(feature = "ingest")]
     IndexFormatError(FsError),
 }
 
@@ -16,7 +20,6 @@ pub enum IndexError {
 pub enum IndexSearchError {
     IncorrectDimensions,
     QueryError(Error<QueryError>),
-    IndexSearchError(FsError),
 }
 
 impl StdError for IndexError {}
@@ -26,9 +29,11 @@ impl Display for IndexError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
             IndexError::FileNotFound => write!(f, "SearchService: Index not found"),
+            #[cfg(feature = "ingest")]
             IndexError::IndexReadError(err) => {
                 write!(f, "SearchService: {}", err)
             }
+            #[cfg(feature = "ingest")]
             IndexError::IndexFormatError(err) => {
                 write!(f, "SearchService: {}", err)
             }
@@ -41,9 +46,6 @@ impl Display for IndexSearchError {
         match self {
             IndexSearchError::IncorrectDimensions => {
                 write!(f, "SearchService: Incorrect dimensions for search")
-            }
-            IndexSearchError::IndexSearchError(err) => {
-                write!(f, "SearchService: {}", err)
             }
             IndexSearchError::QueryError(err) => {
                 write!(f, "SearchService: {:?}", err)
