@@ -1,14 +1,12 @@
-use tokio::sync::Mutex;
-
 use super::PromptBreedingError;
 use crate::{
-    docstore::SqliteDocstore, formatter::CitationStyle, index::FaissIndex, openai::OpenAiDelegate,
+    docstore::SqliteDocstore, formatter::CitationStyle, index::FaceIndex, openai::OpenAiDelegate,
 };
 
 use std::{fmt::Display, sync::Arc};
 
 pub(crate) struct Engine {
-    index: Mutex<FaissIndex>,
+    index: FaceIndex,
     openai: Arc<OpenAiDelegate>,
     docstore: SqliteDocstore,
     thinking_styles: Vec<String>,
@@ -43,7 +41,7 @@ const CITATION_STYLE: CitationStyle = CitationStyle::MLA;
 
 impl Engine {
     pub(crate) fn new(
-        index: Mutex<FaissIndex>,
+        index: FaceIndex,
         openai: OpenAiDelegate,
         docstore: SqliteDocstore,
         thinking_styles: Vec<String>,

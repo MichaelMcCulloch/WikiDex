@@ -45,6 +45,8 @@ pub(crate) struct BreederArgs {
     #[arg(long)]
     pub(crate) llm_url: Url,
     #[arg(long)]
+    pub(crate) index_url: Url,
+    #[arg(long)]
     pub(crate) language_model_name: PathBuf,
     #[arg(long)]
     pub(crate) language_model_kind: ModelKind,
@@ -98,6 +100,8 @@ pub(crate) struct ServerArgs {
     pub(crate) embed_model_name: PathBuf,
     #[arg(long)]
     pub(crate) llm_url: Url,
+    #[arg(long)]
+    pub(crate) index_url: Url,
     #[arg(long)]
     pub(crate) language_model_name: PathBuf,
     #[arg(long)]

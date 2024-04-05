@@ -14,5 +14,4 @@ USER static
 WORKDIR /home/static
 COPY --from=builder /app/build .
 
-RUN echo "Ready on ${UI_CONT_PORT}"
-CMD busybox httpd -f -v -p "${UI_CONT_PORT}"
+ENTRYPOINT busybox httpd -f -v -p "${UI_CONT_PORT}"

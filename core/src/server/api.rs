@@ -35,11 +35,11 @@ pub(crate) struct ApiDoc;
 )]
 #[post("/query")]
 async fn query(
-    Json(Query(question)): Json<Query>,
+    Json(Query { message }): Json<Query>,
     query_engine: Data<Arc<Engine>>,
 ) -> impl Responder {
-    match query_engine.query(&question).await {
-        Ok(message) => HttpResponse::Ok().json(Answer(message)),
+    match query_engine.query(&message).await {
+        Ok(message) => HttpResponse::Ok().json(Answer { message }),
         Err(e) => {
             log::error!("{e}");
             match e {
