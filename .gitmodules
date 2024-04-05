@@ -1,0 +1,6 @@
+[submodule "face"]
+	path = face
+	url = ./face
+[submodule "face_api"]
+	path = face_api
+	url = ./face_api
