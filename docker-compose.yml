@@ -44,7 +44,7 @@ x-base_service_omnipedia: &base_omnipedia
   ports:
     - "${OMNIPEDIA_HOST_PORT}:${OMNIPEDIA_CONT_PORT}"
   volumes:
-    - ./core/db:/db
+    - /home/michael/Documents/WIKIDUMPS/20240220/docstore:/db
     - ./core/prompt:/prompt
 
 x-base_service_index: &base_index
@@ -52,7 +52,7 @@ x-base_service_index: &base_index
   ports:
     - "${INDEX_HOST_PORT}:${INDEX_CONT_PORT}"
   volumes:
-    - ./wikidump/index:/db
+    - /home/michael/Documents/WIKIDUMPS/20240220/index/thenlper/gte-small:/db
 
 x-base_service_redis: &base_redis
   profiles: ["service", "server"]
@@ -112,6 +112,10 @@ services:
         python3,
         -m,
         vllm.entrypoints.openai.api_server,
+        --max-log-len,
+        "0",
+        --disable-log-stats,
+        --disable-log-requests,
         --gpu-memory-utilization,
         "0.85",
         --model,
