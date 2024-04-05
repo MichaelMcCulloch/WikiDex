@@ -1,6 +1,8 @@
 [submodule "face"]
 	path = face
 	url = git@git.semanticallyinvalid.net:omnipedia/face.git
+	branch = master
 [submodule "face_api"]
 	path = face_api
 	url = git@git.semanticallyinvalid.net:omnipedia/face_api.git
+	branch = master
