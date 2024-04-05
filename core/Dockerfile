@@ -23,7 +23,6 @@ COPY ./sqlite_dummy.db ./sqlite_dummy.db
 
 CMD omnipedia \
     server \
-    --index "${INDEX_PATH}" \
     --docstore "${DOCSTORE_PATH}" \
     --llm-url "https://vllm.semanticallyinvalid.net/v1/" \
     --language-model-name "${LLM_MODEL_NAME}" \
