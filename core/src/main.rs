@@ -3,6 +3,8 @@ mod config;
 mod index;
 mod openai;
 
+use std::fs;
+
 use crate::{
     cli_args::{Cli, Commands},
     index::FaceIndex,
@@ -29,7 +31,6 @@ use crate::inference::Engine as InferenceEngine;
 use docstore::SqliteDocstore;
 #[cfg(feature = "server")]
 use server::run_server;
-use std::fs;
 
 #[cfg(feature = "ingest")]
 mod ingest;
@@ -58,6 +59,7 @@ fn main() -> anyhow::Result<()> {
             log::info!("\n{config}");
 
             let docstore = system_runner.block_on(SqliteDocstore::new(&config.docstore))?;
+
             let index = FaceIndex::new(config.index_url);
 
             let openai_builder =

@@ -30,6 +30,7 @@ CMD omnipedia \
     --language-model-kind "${MODEL_KIND}" \
     --embed-url "https://infinity.semanticallyinvalid.net/v1" \
     --embed-model-name "${SBERT_MODEL_NAME}" \
+    --index-url "http://face:$INDEX_HOST_PORT"\
     --host 0.0.0.0 \
     --port "${OMNIPEDIA_CONT_PORT}" \
     --system-prompt-path "${SYSTEM_PROMPT_PATH}" \

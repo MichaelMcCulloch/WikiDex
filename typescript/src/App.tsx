@@ -122,7 +122,7 @@ function App() {
       "https://oracle-rs.semanticallyinvalid.net/streaming_conversation",
       {
         headers: { "Content-Type": "application/json" },
-        payload: JSON.stringify([...conversation, userMessage]),
+        payload: JSON.stringify({ messages: [...conversation, userMessage] }),
       }
     );
     let emptyAssistant: [string, []] = ["", []];

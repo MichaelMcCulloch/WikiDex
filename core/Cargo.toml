@@ -20,7 +20,7 @@ chrono = "0.4.34"
 clap = { version = "4.5.1", features = ["derive"] }
 colored = "2.1.0"
 env_logger = "0.11.2"
-face_api = { path = "../face_api", optional = true }
+face_api = { git = "https://git.semanticallyinvalid.net/omnipedia/face_api", branch = "master", optional = true }
 faiss = { git = "https://github.com/MichaelMcCulloch/faiss-rs.git", branch = "latest+avx2", features = [
     "static",
 ] }
@@ -67,6 +67,7 @@ server = [
     "dep:utoipa",
     "dep:utoipa-redoc",
     "dep:utoipa-swagger-ui",
+    "dep:reqwest",
     "dep:face_api",
 ]
 ingest = [
