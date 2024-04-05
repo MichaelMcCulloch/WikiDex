@@ -14,6 +14,10 @@ pub(crate) struct FaceIndex {
 
 impl FaceIndex {
     pub fn new(url: Url) -> Self {
+        let url = match url.as_str().strip_suffix('/') {
+            Some(url_safe) => url_safe,
+            None => url.as_str(),
+        };
         let configuration = Configuration {
             base_path: url.to_string(),
             user_agent: Some("Oracle-Core/0.1.0/rust".to_owned()),
