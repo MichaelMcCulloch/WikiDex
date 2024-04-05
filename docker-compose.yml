@@ -76,60 +76,60 @@ x-base_service_infinity: &base_infinity
     - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
 
 services:
-  # infinity:
-  #   <<:
-  #     - *base_service_nvidia
-  #     - *base_infinity
-  #   entrypoint:
-  #     [
-  #       infinity_emb,
-  #       --url-prefix,
-  #       "/v1",
-  #       --model-name-or-path,
-  #       "$SBERT_MODEL_NAME",
-  #       --port,
-  #       "$EMBED_CONT_PORT",
-  #       --device,
-  #       cuda,
-  #       --batch-size,
-  #       "$BATCH_SIZE",
-  #     ]
+  infinity:
+    <<:
+      - *base_service_nvidia
+      - *base_infinity
+    entrypoint:
+      [
+        infinity_emb,
+        --url-prefix,
+        "/v1",
+        --model-name-or-path,
+        "$SBERT_MODEL_NAME",
+        --port,
+        "$EMBED_CONT_PORT",
+        --device,
+        cuda,
+        --batch-size,
+        "$BATCH_SIZE",
+      ]
 
-  # ui:
-  #   <<:
-  #     - *base_service
-  #     - *base_ui
-  #   build:
-  #     dockerfile: Dockerfile
-  #     context: ./typescript
+  ui:
+    <<:
+      - *base_service
+      - *base_ui
+    build:
+      dockerfile: Dockerfile
+      context: ./typescript
 
-  # vllm:
-  #   <<:
-  #     - *base_service_nvidia
-  #     - *base_vllm
-  #   entrypoint:
-  #     [
-  #       python3,
-  #       -m,
-  #       vllm.entrypoints.openai.api_server,
-  #       --gpu-memory-utilization,
-  #       "0.85",
-  #       --model,
-  #       $LLM_MODEL_NAME,
-  #       --host,
-  #       "0.0.0.0",
-  #       --port,
-  #       $VLLM_CONT_PORT,
-  #       --dtype,
-  #       half,
-  #       --max-model-len,
-  #       $MAX_MODEL_LEN,
-  #     ]
+  vllm:
+    <<:
+      - *base_service_nvidia
+      - *base_vllm
+    entrypoint:
+      [
+        python3,
+        -m,
+        vllm.entrypoints.openai.api_server,
+        --gpu-memory-utilization,
+        "0.85",
+        --model,
+        $LLM_MODEL_NAME,
+        --host,
+        "0.0.0.0",
+        --port,
+        $VLLM_CONT_PORT,
+        --dtype,
+        half,
+        --max-model-len,
+        $MAX_MODEL_LEN,
+      ]
 
-  # redis:
-  #   <<:
-  #     - *base_service
-  #     - *base_redis
+  # # redis:
+  # #   <<:
+  # #     - *base_service
+  # #     - *base_redis
 
   omnipedia:
     <<:
