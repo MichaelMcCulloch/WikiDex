@@ -39,7 +39,7 @@ Format your response as a long-form essay structured as markdown.
 1. "This statement cites a source. And this statement cites the same source.[[$$$CITE1$$$]($$$URL$$$/#$$$CITE1$$$)]"
 1. "This statement cites a source.[[$$$CITE1$$$]($$$URL$$$/#$$$CITE1$$$)]"
 1. "This statement cites two sources.[[$$$CITE2$$$]($$$URL$$$/#$$$CITE2$$$),[$$$CITE3$$$]($$$URL$$$/#$$$CITE3$$$)]"
-1. "This statement cites all sources.[[$$$CITE1$$$]($$$URL$$$/#$$$CITE1$$$),[$$$CITE2$$$]($$$URL$$$/#$$$CITE2$$$),[$$$CITE3$$$]($$$URL$$$/#$$$CITE3$$$),[$$$CITE4$$$\_]($$$URL$$$/#$$$CITE4$$$_)]."
+1. "This statement cites all sources.[[$$$CITE1$$$]($$$URL$$$/#$$$CITE1$$$),[$$$CITE2$$$]($$$URL$$$/#$$$CITE2$$$),[$$$CITE3$$$]($$$URL$$$/#$$$CITE3$$$),[$$$CITE4$$$]($$$URL$$$/#$$$CITE4$$$)]."
 
 ### Bibliography / Reference section
 
