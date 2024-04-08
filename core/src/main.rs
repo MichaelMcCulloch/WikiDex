@@ -3,19 +3,11 @@ mod config;
 mod index;
 mod openai;
 
-use std::fs;
-
-use crate::{
-    cli_args::{Cli, Commands},
-    index::FaceIndex,
-    openai::{ModelKind, OpenAiDelegateBuilder, OpenAiDelegateBuilderArgument},
-};
-use actix_web::rt;
-use clap::Parser;
-
 #[cfg(test)]
 mod test_data;
 
+#[cfg(feature = "breeder")]
+mod breeder;
 #[cfg(any(feature = "server", feature = "breeder"))]
 mod docstore;
 #[cfg(any(feature = "server", feature = "breeder"))]
@@ -25,24 +17,29 @@ mod inference;
 #[cfg(feature = "server")]
 mod server;
 
-#[cfg(feature = "server")]
-use crate::inference::Engine as InferenceEngine;
 #[cfg(any(feature = "server", feature = "breeder"))]
 use docstore::SqliteDocstore;
+#[cfg(feature = "breeder")]
+use indicatif::MultiProgress;
+#[cfg(feature = "breeder")]
+use indicatif_log_bridge::LogWrapper;
 #[cfg(feature = "server")]
 use server::run_server;
 
-#[cfg(any(feature = "ingest", feature = "breeder"))]
-use indicatif::MultiProgress;
-#[cfg(any(feature = "ingest", feature = "breeder"))]
-use indicatif_log_bridge::LogWrapper;
+use crate::{
+    cli_args::{Cli, Commands},
+    index::FaceIndex,
+    openai::{ModelKind, OpenAiDelegateBuilder, OpenAiDelegateBuilderArgument},
+};
 
-// #[cfg(any(feature = "ingest",feature = "breeder"))]
-
-#[cfg(feature = "breeder")]
-mod breeder;
 #[cfg(feature = "breeder")]
 use crate::breeder::Engine as PromptBreedingEngine;
+#[cfg(feature = "server")]
+use crate::inference::Engine as InferenceEngine;
+
+use actix_web::rt;
+use clap::Parser;
+use std::fs;
 
 fn main() -> anyhow::Result<()> {
     match Cli::parse().command {
