@@ -32,10 +32,6 @@ use docstore::SqliteDocstore;
 #[cfg(feature = "server")]
 use server::run_server;
 
-#[cfg(feature = "ingest")]
-mod ingest;
-#[cfg(feature = "ingest")]
-use crate::ingest::wikipedia::Engine as WikipediaIngestEngine;
 #[cfg(any(feature = "ingest", feature = "breeder"))]
 use indicatif::MultiProgress;
 #[cfg(any(feature = "ingest", feature = "breeder"))]
@@ -90,56 +86,6 @@ fn main() -> anyhow::Result<()> {
 
             let server = run_server(engine, config.host, config.port)?;
             system_runner.block_on(server).map_err(anyhow::Error::from)
-        }
-        #[cfg(feature = "ingest")]
-        Commands::Wikipedia(ingest_args) => {
-            let logger =
-                env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
-                    .build();
-
-            let multi_progress = MultiProgress::new();
-
-            LogWrapper::new(multi_progress.clone(), logger)
-                .try_init()
-                .unwrap();
-
-            let config = config::ingest::Config::from(ingest_args);
-            let system_runner = rt::System::new();
-
-            log::info!("\n{config}");
-
-            let openai_builder =
-                OpenAiDelegateBuilder::with_embedding(OpenAiDelegateBuilderArgument::Endpoint(
-                    config.embed_url,
-                    config.api_key.clone(),
-                    config.embed_model_name.to_str().unwrap().to_string(),
-                ));
-            let openai = match config.language_model_kind {
-                ModelKind::Instruct => {
-                    openai_builder.with_instruct(OpenAiDelegateBuilderArgument::Endpoint(
-                        config.llm_url,
-                        config.api_key,
-                        config.language_model_name.to_str().unwrap().to_string(),
-                    ))
-                }
-                ModelKind::Chat => {
-                    openai_builder.with_chat(OpenAiDelegateBuilderArgument::Endpoint(
-                        config.llm_url,
-                        config.api_key,
-                        config.language_model_name.to_str().unwrap().to_string(),
-                    ))
-                }
-            };
-
-            let engine = WikipediaIngestEngine::new(openai, multi_progress, 1024, 128);
-            system_runner
-                .block_on(engine.ingest_wikipedia(
-                    &config.wiki_xml,
-                    &config.output_directory,
-                    config.ingest_limit,
-                ))
-                .map_err(anyhow::Error::from)?;
-            Ok(())
         }
         #[cfg(feature = "breeder")]
         Commands::Breed(breeder_args) => {
