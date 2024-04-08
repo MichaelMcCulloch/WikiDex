@@ -3,7 +3,6 @@ use std::{fmt::Display, path::PathBuf};
 use colored::Colorize;
 use url::Url;
 
-#[cfg(feature = "server")]
 use crate::{cli_args::ServerArgs, openai::ModelKind};
 
 #[derive(Debug)]

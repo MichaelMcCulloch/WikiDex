@@ -47,6 +47,7 @@ async fn query(
                     HttpResponse::BadRequest().into()
                 }
                 QueryEngineError::InvalidAgentResponse
+                | QueryEngineError::UnableToLockIndex
                 | QueryEngineError::LlmError(_)
                 | QueryEngineError::IndexError(_)
                 | QueryEngineError::DocstoreError(_)
@@ -84,6 +85,7 @@ async fn conversation(
                     HttpResponse::BadRequest().into()
                 }
                 QueryEngineError::InvalidAgentResponse
+                | QueryEngineError::UnableToLockIndex
                 | QueryEngineError::LlmError(_)
                 | QueryEngineError::IndexError(_)
                 | QueryEngineError::DocstoreError(_)

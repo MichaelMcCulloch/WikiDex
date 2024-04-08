@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub(crate) enum QueryEngineError {
+pub(crate) enum PromptBreedingError {
     DocstoreError(DocstoreRetrieveError),
     EmbeddingServiceError(EmbeddingServiceError),
     EmptyConversation,
@@ -15,30 +15,34 @@ pub(crate) enum QueryEngineError {
     InvalidAgentResponse,
     LastMessageIsNotUser,
     LlmError(LlmServiceError),
+    UnableToLockIndex,
 }
 
-impl std::error::Error for QueryEngineError {}
+impl std::error::Error for PromptBreedingError {}
 
-impl Display for QueryEngineError {
+impl Display for PromptBreedingError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
-            QueryEngineError::DocstoreError(err) => {
+            PromptBreedingError::DocstoreError(err) => {
                 write!(f, "{}", err)
             }
 
-            QueryEngineError::EmbeddingServiceError(err) => {
+            PromptBreedingError::EmbeddingServiceError(err) => {
                 write!(f, "{}", err)
             }
-            QueryEngineError::IndexError(err) => write!(f, "{}", err),
-            QueryEngineError::LlmError(err) => write!(f, "{}", err),
-            QueryEngineError::EmptyConversation => {
+            PromptBreedingError::IndexError(err) => write!(f, "{}", err),
+            PromptBreedingError::LlmError(err) => write!(f, "{}", err),
+            PromptBreedingError::EmptyConversation => {
                 write!(f, "QueryEngine: Empty conversation error")
             }
-            QueryEngineError::InvalidAgentResponse => {
+            PromptBreedingError::InvalidAgentResponse => {
                 write!(f, "QueryEngine: Invalid agent response error")
             }
-            QueryEngineError::LastMessageIsNotUser => {
+            PromptBreedingError::LastMessageIsNotUser => {
                 write!(f, "QueryEngine: Last message is not from a user error")
+            }
+            PromptBreedingError::UnableToLockIndex => {
+                write!(f, "QueryEngine: Unable to lock index error")
             }
         }
     }

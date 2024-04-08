@@ -21,18 +21,19 @@ env_logger = "0.11.2"
 face-api = { git = "https://github.com/MichaelMcCulloch/face-api.git", tag = "0.1.0" }
 flate2 = "1.0.28"
 futures = "0.3.30"
+indicatif = { version = "0.17.8" }
+indicatif-log-bridge = { version = "0.2.2" }
 log = "0.4.20"
+rand = { version = "0.8.5" }
 rayon = "1.8.1"
 regex = "1.10.3"
 reqwest = { version = "0.11.27" }
 serde = "1.0.197"
 serde_json = "1.0.114"
+simsimd = { version = "4.2.1" }
 sqlx = { version = "0.7.3", features = ["sqlite", "runtime-tokio"] }
 tokio = { version = "1.36.0", features = ["rt", "macros"] }
 url = "2.4.1"
-utoipa = { version = "4.2.0", features = ["actix_extras"] }
-utoipa-redoc = { version = "3.0.0", features = ["actix-web"] }
-utoipa-swagger-ui = { version = "6.0.0", features = ['actix-web'] }
 
 
 [profile.release]
