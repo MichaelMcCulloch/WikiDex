@@ -3,8 +3,6 @@ name = "omnipedia"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 actix-cors = "0.7.0"
 actix-rt = "2.9.0"
@@ -22,12 +20,12 @@ faiss = { git = "https://github.com/MichaelMcCulloch/faiss-rs.git", tag = "maste
 ] }
 flate2 = "1.0.28"
 futures = "0.3.30"
-indicatif = { version = "0.17.8" }
-indicatif-log-bridge = { version = "0.2.2" }
-itertools = { version = "0.12.1" }
+indicatif = "0.17.8"
+indicatif-log-bridge = "0.2.2"
+itertools = "0.12.1"
 log = "0.4.20"
-parse_mediawiki_dump_reboot = { version = "1.0.1" }
-parse_wiki_text = { version = "0.1.5" }
+parse_mediawiki_dump_reboot = "1.0.1"
+parse_wiki_text = "0.1.5"
 rayon = "1.8.1"
 regex = "1.10.3"
 serde = "1.0.197"
@@ -35,7 +33,6 @@ serde_json = "1.0.114"
 sqlx = { version = "0.7.3", features = ["sqlite", "runtime-tokio"] }
 tokio = { version = "1.36.0", features = ["rt", "macros"] }
 url = "2.4.1"
-
 
 [profile.release]
 lto = true
