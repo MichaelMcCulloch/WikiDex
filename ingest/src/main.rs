@@ -3,15 +3,17 @@ mod config;
 mod index;
 mod ingest;
 mod openai;
+
+#[cfg(test)]
+mod test_data;
+
+use crate::ingest::wikipedia::Engine as WikipediaIngestEngine;
 use crate::{
     cli_args::{Cli, Commands},
     openai::{ModelKind, OpenAiDelegateBuilder, OpenAiDelegateBuilderArgument},
 };
 use actix_web::rt;
 use clap::Parser;
-#[cfg(test)]
-mod test_data;
-use crate::ingest::wikipedia::Engine as WikipediaIngestEngine;
 use indicatif::MultiProgress;
 use indicatif_log_bridge::LogWrapper;
 
