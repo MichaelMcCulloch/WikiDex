@@ -15,6 +15,7 @@ pub(crate) enum QueryEngineError {
     InvalidAgentResponse,
     LastMessageIsNotUser,
     LlmError(LlmServiceError),
+    UnableToLockIndex,
 }
 
 impl std::error::Error for QueryEngineError {}
@@ -39,6 +40,9 @@ impl Display for QueryEngineError {
             }
             QueryEngineError::LastMessageIsNotUser => {
                 write!(f, "QueryEngine: Last message is not from a user error")
+            }
+            QueryEngineError::UnableToLockIndex => {
+                write!(f, "QueryEngine: Unable to lock index error")
             }
         }
     }

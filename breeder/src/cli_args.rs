@@ -14,20 +14,22 @@ pub(crate) struct Cli {
 }
 #[derive(Subcommand)]
 pub(crate) enum Commands {
-    Server(ServerArgs),
+    Breed(BreederArgs),
 }
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
-pub(crate) struct ServerArgs {
-    #[arg( long, default_value_t = String::from("0.0.0.0"))]
-    pub(crate) host: String,
-    #[arg(long, default_value_t = 5000)]
-    pub(crate) port: u16,
+pub(crate) struct BreederArgs {
+    #[arg(long)]
+    pub(crate) index: PathBuf,
     #[arg(long)]
     pub(crate) docstore: PathBuf,
     #[arg(long)]
-    pub(crate) system_prompt_path: PathBuf,
+    pub(crate) thinking_styles_db: PathBuf,
+    #[arg(long)]
+    pub(crate) mutation_prompts_db: PathBuf,
+    #[arg(long)]
+    pub(crate) output_directory: PathBuf,
     #[arg(long)]
     pub(crate) api_key: Option<String>,
     #[arg(long)]
@@ -42,4 +44,6 @@ pub(crate) struct ServerArgs {
     pub(crate) language_model_name: PathBuf,
     #[arg(long)]
     pub(crate) language_model_kind: ModelKind,
+    #[arg(long)]
+    pub(crate) generation_limit: usize,
 }
