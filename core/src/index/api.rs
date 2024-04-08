@@ -3,7 +3,6 @@ use face_api::{
     models::Query as FaceQuery,
 };
 
-use reqwest::Client;
 use url::Url;
 
 use super::{IndexSearchError, SearchService};
@@ -18,15 +17,12 @@ impl FaceIndex {
             Some(url_safe) => url_safe,
             None => url.as_str(),
         };
-        let configuration = Configuration {
-            base_path: url.to_string(),
-            user_agent: Some("Oracle-Core/0.1.0/rust".to_owned()),
-            client: Client::new(),
-            basic_auth: None,
-            oauth_access_token: None,
-            bearer_access_token: None,
-            api_key: None,
-        };
+
+        let mut configuration = Configuration::new();
+
+        configuration.base_path = url.to_string();
+        configuration.user_agent = Some("Oracle-Core/0.1.0/rust".to_owned());
+
         Self { configuration }
     }
 }
