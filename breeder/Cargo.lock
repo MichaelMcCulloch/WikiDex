@@ -1727,7 +1727,6 @@ dependencies = [
  "log",
  "rand",
  "regex",
- "reqwest 0.11.27",
  "serde",
  "serde_json",
  "simsimd",
@@ -2366,9 +2365,9 @@ dependencies = [
 
 [[package]]
 name = "simsimd"
-version = "4.2.2"
+version = "4.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3dea5b0128a1ddc947cd21358fbc4928bcde932f75b1e0aaf93c795b92adfa4e"
+checksum = "65cb8bf8f601703f92882318fed308d8be9839464567542158b17297f56ebffa"
 dependencies = [
  "cc",
 ]
