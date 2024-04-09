@@ -1,3 +1,2 @@
-
-wikidump/**
-wikipedia_markup.sqlite
+redis/**
+postgres/**
