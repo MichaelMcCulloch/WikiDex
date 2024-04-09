@@ -54,6 +54,10 @@ x-base_service_index: &base_index
   volumes:
     - /home/michael/Documents/WIKIDUMPS/20240220/index/thenlper/gte-small:/db
 
+x-base_rust: &base_rust
+  environment:
+    RUST_LOG: $RUST_LOG
+
 x-base_service_redis: &base_redis
   profiles: ["service", "server"]
   image: redis:latest
@@ -63,9 +67,20 @@ x-base_service_redis: &base_redis
     - ./redis/data:/root/redis
     - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
   environment:
-    - REDIS_PASSWORD=redis
-    - REDIS_PORT=6379
-    - REDIS_DATABASES=16
+    REDIS_PASSWORD: redis
+    REDIS_PORT: 6379
+    REDIS_DATABASES: 16
+
+x-base_service_postgres: &base_postgres
+  image: postgres
+  shm_size: 1gb
+  volumes:
+    - ./postgres:/var/lib/postgresql/data
+  environment:
+    POSTGRES_PASSWORD: example
+  profiles: ["service", "server"]
+  ports:
+    - "5432:5432"
 
 x-base_service_infinity: &base_infinity
   image: michaelf34/infinity:latest
@@ -130,17 +145,21 @@ services:
         $MAX_MODEL_LEN,
       ]
 
-  # # redis:
-  # #   <<:
-  # #     - *base_service
-  # #     - *base_redis
+  redis:
+    <<:
+      - *base_service
+      - *base_redis
+
+  postgres:
+    <<:
+      - *base_service
+      - *base_postgres
 
   omnipedia:
     <<:
       - *base_service
       - *base_omnipedia
-    environment:
-      RUST_LOG: $RUST_LOG
+      - *base_rust
     build:
       dockerfile: Dockerfile
       context: ./core
@@ -149,7 +168,6 @@ services:
     <<:
       - *base_service
       - *base_index
-    environment:
-      RUST_LOG: $RUST_LOG
+      - *base_rust
     build: https://github.com/MichaelMcCulloch/face.git#0.1.1
     entrypoint: [face, --index-path, $INDEX_PATH]
