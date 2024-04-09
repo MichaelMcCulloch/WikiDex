@@ -15,7 +15,7 @@ chrono = "0.4.37"
 clap = { version = "4.5.4", features = ["derive"] }
 colored = "2.1.0"
 env_logger = "0.11.3"
-face-api = { git = "https://github.com/MichaelMcCulloch/face-api.git", tag = "0.1.0" }
+face-api = { git = "https://github.com/MichaelMcCulloch/face-api.git", tag = "0.1.1" }
 flate2 = "1.0.28"
 futures = "0.3.30"
 log = "0.4.21"

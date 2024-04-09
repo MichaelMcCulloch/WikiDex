@@ -890,7 +890,7 @@ dependencies = [
 [[package]]
 name = "face-api"
 version = "0.1.0"
-source = "git+https://github.com/MichaelMcCulloch/face-api.git?tag=0.1.0#a36029ce0a09b6f56773a7246bdbf7815d98947c"
+source = "git+https://github.com/MichaelMcCulloch/face-api.git?tag=0.1.1#a36029ce0a09b6f56773a7246bdbf7815d98947c"
 dependencies = [
  "reqwest 0.11.27",
  "serde",

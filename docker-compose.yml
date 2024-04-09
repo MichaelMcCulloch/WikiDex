@@ -151,5 +151,5 @@ services:
       - *base_index
     environment:
       RUST_LOG: $RUST_LOG
-    build: https://github.com/MichaelMcCulloch/face.git#0.1.0
+    build: https://github.com/MichaelMcCulloch/face.git#0.1.1
     entrypoint: [face, --index-path, $INDEX_PATH]
