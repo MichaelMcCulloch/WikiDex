@@ -10,7 +10,7 @@ COPY ./sqlite_dummy.db ./sqlite_dummy.db
 COPY ./src ./src
 ARG DATABASE_URL="sqlite://sqlite_dummy.db"
 RUN  \
-    --mount=type=cache,target=/usr/src/omnipedia/target,sharing=locked,rw cargo install --no-default-features --features server --path . --root ./build 
+    --mount=type=cache,target=/usr/src/omnipedia/target,sharing=locked,rw cargo install --path . --root ./build 
 
 FROM ubuntu:22.04
 ARG TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST}"
