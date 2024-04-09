@@ -25,7 +25,7 @@ pub(crate) async fn write_completion_timestamp(
     article_count: i64,
 ) -> Result<(), IngestError> {
     let naive_utc = chrono::Utc::now().naive_utc();
-    let timestamp = naive_utc.timestamp_millis();
+    let timestamp = naive_utc.and_utc().timestamp_millis();
 
     let _rows = sqlx::query!(
         "INSERT INTO completed_on (db_date, article_count) VALUES (?1, ?2);",
@@ -63,7 +63,7 @@ pub(crate) async fn populate_markup_db(
     } in pages_compressed.into_iter()
     {
         let article_id = article_count.fetch_add(1, Ordering::Relaxed);
-        let access_millis = access_date.timestamp_millis();
+        let access_millis = access_date.and_utc().timestamp_millis();
         let _rows = sqlx::query!(
             "INSERT INTO wiki_markup (id, title, text, access_date) VALUES (?1, ?2, ?3, ?4)",
             article_id,
@@ -109,8 +109,8 @@ pub(crate) async fn populate_docstore_db(
     } in pages_compressed.into_iter()
     {
         let article_id = article_count.fetch_add(1, Ordering::Relaxed);
-        let access_millis = access_date.timestamp_millis();
-        let modification_millis = modification_date.timestamp_millis();
+        let access_millis = access_date.and_utc().timestamp_millis();
+        let modification_millis = modification_date.and_utc().timestamp_millis();
         let _rows = sqlx::query!(
             "INSERT INTO article (id , title, access_date, modification_date) VALUES (?1, ?2, ?3, ?4)",
             article_id,
