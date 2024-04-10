@@ -86,7 +86,7 @@ x-base_service_infinity: &base_infinity
   image: michaelf34/infinity:latest
   profiles: ["service", "server"]
   volumes:
-    - ~/.cache/huggingface/:/root/.cache/huggingface
+    - ~/.cache/huggingface/hub/:/app/.cache/torch
   ports:
     - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
 
