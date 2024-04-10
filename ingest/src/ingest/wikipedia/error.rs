@@ -14,7 +14,7 @@ pub(crate) enum IngestError {
     XmlNotFound(PathBuf),
     IoError(io::Error),
     DirectoryNotFound(PathBuf),
-    Sqlite(sqlx::Error),
+    SqlX(sqlx::Error),
     XmlDateReadError,
     EmbeddingServiceError(EmbeddingServiceError),
     Timeout(String),
@@ -37,7 +37,7 @@ impl Display for IngestError {
             IngestError::IoError(error) => {
                 write!(f, "IngestEngine: IO Error: {error}",)
             }
-            IngestError::Sqlite(error) => {
+            IngestError::SqlX(error) => {
                 write!(f, "IngestEngine: Sqlite Error: {error}",)
             }
             IngestError::XmlDateReadError => {

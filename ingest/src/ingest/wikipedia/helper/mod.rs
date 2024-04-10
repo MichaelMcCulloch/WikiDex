@@ -1,6 +1,9 @@
 pub(super) mod faiss;
 pub(super) mod gzip_helper;
+#[cfg(feature = "postgres")]
+pub(super) mod postgres;
 pub(super) mod progress;
-pub(super) mod sql;
+#[cfg(feature = "sqlite")]
+pub(super) mod sqlite;
 pub(super) mod text;
 pub(super) mod wiki;
