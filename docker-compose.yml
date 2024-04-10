@@ -61,22 +61,27 @@ x-base_rust: &base_rust
 x-base_service_redis: &base_redis
   profiles: ["service", "server"]
   image: redis:latest
+  command: >
+    --requirepass ${REDIS_PASSWORD}
   ports:
-    - 6379:6379
+    - $REDIS_PORT:$REDIS_PORT
   volumes:
-    - ./redis/data:/root/redis
-    - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    - /home/michael/ContainerData/Redis/oracle/data:/root/redis
+    - /home/michael/ContainerData/Redis/oracle/redis.conf:/usr/local/etc/redis/redis.conf
 
 x-base_service_postgres: &base_postgres
   image: postgres
   shm_size: 1gb
   volumes:
-    - ./postgres:/var/lib/postgresql/data
-  environment:
-    POSTGRES_PASSWORD: example
+    - /home/michael/ContainerData/PostgreSQL/oracle:/var/lib/postgresql/data
   profiles: ["service", "server"]
   ports:
-    - 5432:5432
+    - $POSTGRES_PORT:$POSTGRES_PORT
+
+x-base_service_postgres_gid: &base_postgres_gid_fix
+  <<:
+    - *base_postgres
+  user: 1000:1000
 
 x-base_service_infinity: &base_infinity
   image: michaelf34/infinity:latest
@@ -149,7 +154,7 @@ services:
   postgres:
     <<:
       - *base_service
-      - *base_postgres
+      - *base_postgres_gid_fix
 
   omnipedia:
     <<:
