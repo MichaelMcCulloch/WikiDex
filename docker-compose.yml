@@ -62,14 +62,10 @@ x-base_service_redis: &base_redis
   profiles: ["service", "server"]
   image: redis:latest
   ports:
-    - "6379:6379"
+    - 6379:6379
   volumes:
     - ./redis/data:/root/redis
     - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
-  environment:
-    REDIS_PASSWORD: redis
-    REDIS_PORT: 6379
-    REDIS_DATABASES: 16
 
 x-base_service_postgres: &base_postgres
   image: postgres
@@ -80,7 +76,7 @@ x-base_service_postgres: &base_postgres
     POSTGRES_PASSWORD: example
   profiles: ["service", "server"]
   ports:
-    - "5432:5432"
+    - 5432:5432
 
 x-base_service_infinity: &base_infinity
   image: michaelf34/infinity:latest
