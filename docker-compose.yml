@@ -44,7 +44,6 @@ x-base_service_omnipedia: &base_omnipedia
   ports:
     - "${OMNIPEDIA_HOST_PORT}:${OMNIPEDIA_CONT_PORT}"
   volumes:
-    - /home/michael/Documents/WIKIDUMPS/${EXTRACT_DATE}/docstore:/db
     - ./core/prompt:/prompt
 
 x-base_service_index: &base_index
