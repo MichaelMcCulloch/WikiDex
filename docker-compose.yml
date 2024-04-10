@@ -44,7 +44,7 @@ x-base_service_omnipedia: &base_omnipedia
   ports:
     - "${OMNIPEDIA_HOST_PORT}:${OMNIPEDIA_CONT_PORT}"
   volumes:
-    - /home/michael/Documents/WIKIDUMPS/20240220/docstore:/db
+    - /home/michael/Documents/WIKIDUMPS/${EXTRACT_DATE}/docstore:/db
     - ./core/prompt:/prompt
 
 x-base_service_index: &base_index
@@ -52,7 +52,7 @@ x-base_service_index: &base_index
   ports:
     - "${INDEX_HOST_PORT}:${INDEX_CONT_PORT}"
   volumes:
-    - /home/michael/Documents/WIKIDUMPS/20240220/index/thenlper/gte-small:/db
+    - /home/michael/Documents/WIKIDUMPS/${EXTRACT_DATE}/index/thenlper/gte-small:/db
 
 x-base_rust: &base_rust
   environment:
@@ -73,7 +73,7 @@ x-base_service_postgres: &base_postgres
   image: postgres
   shm_size: 1gb
   volumes:
-    - /home/michael/ContainerData/PostgreSQL/oracle:/var/lib/postgresql/data
+    - /home/michael/ContainerData/PostgreSQL/oracle/${EXTRACT_DATE}:/var/lib/postgresql/data
   profiles: ["service", "server"]
   ports:
     - $POSTGRES_PORT:$POSTGRES_PORT
