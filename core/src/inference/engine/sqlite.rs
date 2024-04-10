@@ -1,28 +1,4 @@
-use bytes::Bytes;
-use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
-
-use crate::{
-    docstore::SqliteDocstore,
-    formatter::{CitationStyle, Cite, DocumentFormatter, TextFormatter},
-    index::{FaceIndex, SearchService},
-    openai::{LanguageServiceArguments, LlmMessage, LlmRole, OpenAiDelegate, PartialLlmMessage},
-    server::{Conversation, CountSources, Message, PartialMessage, Source},
-};
-
-use super::QueryEngineError;
-
-pub struct Engine {
-    index: FaceIndex,
-    openai: OpenAiDelegate,
-    docstore: SqliteDocstore,
-    system_prompt: String,
-}
-
-const NUM_DOCUMENTS_TO_RETRIEVE: usize = 4;
-
-const CITATION_STYLE: CitationStyle = CitationStyle::MLA;
-
-impl Engine {
+impl Engine<Sqlite> {
     pub(crate) async fn query(&self, question: &str) -> Result<String, QueryEngineError> {
         let (_, formatted_documents) = self.get_documents(question, 0usize).await?;
 
@@ -109,13 +85,11 @@ impl Engine {
             None => Err(QueryEngineError::EmptyConversation)?,
         }
     }
-}
 
-impl Engine {
     pub(crate) fn new(
         index: FaceIndex,
         openai: OpenAiDelegate,
-        docstore: SqliteDocstore,
+        docstore: Docstore<Sqlite>,
         system_prompt: String,
     ) -> Self {
         Self {

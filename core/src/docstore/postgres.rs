@@ -1,18 +1,15 @@
 use crate::formatter::Provenance;
 use chrono::DateTime;
 use flate2::read::GzDecoder;
-use sqlx::{Row, Sqlite, SqlitePool};
+use sqlx::{postgres::PgPool, Postgres, Row};
 use std::{io::Read, path::Path};
 
 use super::{Docstore, DocstoreLoadError, DocstoreRetrieveError};
 
-impl Docstore<Sqlite> {
+impl Docstore<Postgres> {
     pub async fn new<P: AsRef<Path>>(docstore_path: &P) -> Result<Self, DocstoreLoadError> {
         let docstore_path = docstore_path.as_ref();
-        if !docstore_path.exists() {
-            return Err(DocstoreLoadError::FileNotFound);
-        }
-        let pool = SqlitePool::connect(
+        let pool = PgPool::connect(
             docstore_path
                 .to_str()
                 .expect("Docstore path is not a string"),
@@ -24,7 +21,7 @@ impl Docstore<Sqlite> {
 
     pub(crate) async fn retreive(
         &self,
-        indices: &Vec<i64>,
+        indices: &[i64],
     ) -> Result<Vec<(usize, String, Provenance)>, DocstoreRetrieveError> {
         let start = std::time::Instant::now();
 

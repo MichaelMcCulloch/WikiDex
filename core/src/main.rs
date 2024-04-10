@@ -13,7 +13,7 @@ mod server;
 
 use actix_web::rt;
 use cli_args::Commands;
-use docstore::SqliteDocstore;
+use docstore::Docstore;
 
 use crate::{
     cli_args::Cli,
@@ -34,7 +34,7 @@ fn main() -> anyhow::Result<()> {
 
             log::info!("\n{config}");
 
-            let docstore = system_runner.block_on(SqliteDocstore::new(&config.docstore))?;
+            let docstore = system_runner.block_on(Docstore::new(&config.docstore))?;
 
             let index = FaceIndex::new(config.index_url);
 
