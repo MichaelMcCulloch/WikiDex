@@ -40,6 +40,6 @@ opt-level = 3
 debug = 0
 
 [features]
-default = ["postgres"]
+default = ["postgres", "sqlite"]
 postgres = ["sqlx/postgres"]
 sqlite = ["sqlx/sqlite"]
