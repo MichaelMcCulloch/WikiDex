@@ -7,18 +7,19 @@ use crate::{cli_args::ServerArgs, openai::ModelKind};
 
 #[derive(Debug)]
 pub(crate) struct Config {
-    pub(crate) protocol: String,
-    pub(crate) host: String,
-    pub(crate) port: u16,
+    pub(crate) api_key: Option<String>,
     pub(crate) docstore_url: Url,
-    pub(crate) system_prompt: String,
-    pub(crate) language_model_name: PathBuf,
-    pub(crate) language_model_kind: ModelKind,
     pub(crate) embed_model_name: PathBuf,
     pub(crate) embed_url: Url,
-    pub(crate) llm_url: Url,
+    pub(crate) host: String,
     pub(crate) index_url: Url,
-    pub(crate) api_key: Option<String>,
+    pub(crate) language_model_kind: ModelKind,
+    pub(crate) language_model_name: PathBuf,
+    pub(crate) llm_url: Url,
+    pub(crate) port: u16,
+    pub(crate) protocol: String,
+    pub(crate) redis_url: Url,
+    pub(crate) system_prompt: String,
 }
 
 pub(crate) trait ConfigUrl {
@@ -41,18 +42,19 @@ impl ConfigUrl for Config {
 impl From<ServerArgs> for Config {
     fn from(value: ServerArgs) -> Self {
         Config {
-            protocol: "http".to_string(),
-            host: value.host,
-            port: value.port,
-            docstore_url: value.docstore_url,
-            language_model_name: value.language_model_name,
-            language_model_kind: value.language_model_kind,
-            embed_url: value.embed_url,
-            llm_url: value.llm_url,
-            index_url: value.index_url,
-            system_prompt: std::fs::read_to_string(value.system_prompt_path).unwrap(),
             api_key: value.api_key,
+            docstore_url: value.docstore_url,
             embed_model_name: value.embed_model_name,
+            embed_url: value.embed_url,
+            host: value.host,
+            index_url: value.index_url,
+            language_model_kind: value.language_model_kind,
+            language_model_name: value.language_model_name,
+            llm_url: value.llm_url,
+            port: value.port,
+            protocol: "http".to_string(),
+            redis_url: value.redis_url,
+            system_prompt: std::fs::read_to_string(value.system_prompt_path).unwrap(),
         }
     }
 }
@@ -66,11 +68,13 @@ impl Display for Config {
             embed_url,
             llm_url,
             index_url,
+            redis_url,
             ..
         } = self;
 
         let engine_docstore = docstore.as_str().green();
         let index_url = index_url.as_str().green();
+        let redis_url = redis_url.as_str().green();
 
         let embed_url = embed_url.as_str().blue();
         let infinity_model = infinity_model.display().to_string().bright_blue();
@@ -92,6 +96,7 @@ impl Display for Config {
     Serving conversations on {engine_conversation_path}.
     Service queries on {engine_query_path}.
     Serving OpenAPI documentation on {engine_api_doc_path}.
+Using redis at {redis_url}.
 Using index at {index_url}.
 Using docstore at {engine_docstore}.
 Using Infinity embedding service at {embed_url}.

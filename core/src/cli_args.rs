@@ -27,6 +27,8 @@ pub(crate) struct ServerArgs {
     #[arg(long)]
     pub(crate) docstore_url: Url,
     #[arg(long)]
+    pub(crate) redis_url: Url,
+    #[arg(long)]
     pub(crate) system_prompt_path: PathBuf,
     #[arg(long)]
     pub(crate) api_key: Option<String>,

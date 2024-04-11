@@ -2,13 +2,14 @@ use std::fmt::{self, Debug, Display, Formatter};
 
 #[derive(Debug)]
 pub enum DocstoreLoadError {
-    FileNotFound,
+    Database(sqlx::error::Error),
+    Redis(redis::RedisError),
 }
 #[derive(Debug)]
 pub enum DocstoreRetrieveError {
     IndexOutOfRange,
     InvalidDocument,
-    SqlxError(sqlx::error::Error),
+    Database(sqlx::error::Error),
 }
 
 impl std::error::Error for DocstoreLoadError {}
@@ -17,7 +18,8 @@ impl std::error::Error for DocstoreRetrieveError {}
 impl Display for DocstoreLoadError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            DocstoreLoadError::FileNotFound => write!(f, "DocumentService: File not found"),
+            DocstoreLoadError::Database(e) => write!(f, "DocumentService: {e}"),
+            DocstoreLoadError::Redis(e) => write!(f, "DocumentService: {e}"),
         }
     }
 }
@@ -31,7 +33,7 @@ impl Display for DocstoreRetrieveError {
             DocstoreRetrieveError::InvalidDocument => {
                 write!(f, "DocumentService: Invalid document")
             }
-            DocstoreRetrieveError::SqlxError(e) => {
+            DocstoreRetrieveError::Database(e) => {
                 write!(f, "DocumentService: {e}")
             }
         }

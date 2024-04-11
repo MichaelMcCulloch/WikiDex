@@ -2,7 +2,7 @@ use crate::formatter::Provenance;
 use chrono::DateTime;
 use flate2::read::GzDecoder;
 use sqlx::{postgres::PgPool, Postgres};
-use std::{io::Read};
+use std::io::Read;
 use url::Url;
 
 use super::{Docstore, DocstoreLoadError, DocstoreRetrieveError, DocumentStore};
@@ -81,11 +81,14 @@ impl DocumentStore for Docstore<Postgres> {
 }
 
 impl Docstore<Postgres> {
-    pub async fn new(docstore_path: &Url) -> Result<Self, DocstoreLoadError> {
+    pub async fn new(docstore_path: &Url, redis_url: &Url) -> Result<Self, DocstoreLoadError> {
         let docstore_path = docstore_path.as_ref();
         let pool = PgPool::connect(docstore_path)
             .await
-            .map_err(|_| DocstoreLoadError::FileNotFound)?;
-        Ok(Docstore { pool })
+            .map_err(DocstoreLoadError::Database)?;
+
+        let cache = redis::Client::open(redis_url.to_string()).map_err(DocstoreLoadError::Redis)?;
+
+        Ok(Docstore { pool, cache })
     }
 }

@@ -16,6 +16,7 @@ use sqlx::Sqlite;
 use crate::formatter::Provenance;
 
 pub(crate) struct Docstore<DB: Database> {
+    cache: redis::Client,
     pool: Pool<DB>,
 }
 

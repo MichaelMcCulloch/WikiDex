@@ -43,15 +43,19 @@ fn main() -> anyhow::Result<()> {
             let docstore = match config.docstore_url.scheme() {
                 #[cfg(feature = "sqlite")]
                 "sqlite" => {
-                    let docstore =
-                        system_runner.block_on(Docstore::<Sqlite>::new(&config.docstore_url))?;
+                    let docstore = system_runner.block_on(Docstore::<Sqlite>::new(
+                        &config.docstore_url,
+                        &config.redis_url,
+                    ))?;
 
                     DocumentStoreKind::Sqlite(docstore)
                 }
                 #[cfg(feature = "postgres")]
                 "postgres" => {
-                    let docstore =
-                        system_runner.block_on(Docstore::<Postgres>::new(&config.docstore_url))?;
+                    let docstore = system_runner.block_on(Docstore::<Postgres>::new(
+                        &config.docstore_url,
+                        &config.redis_url,
+                    ))?;
 
                     DocumentStoreKind::Postgres(docstore)
                 }

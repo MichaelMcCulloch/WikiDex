@@ -23,14 +23,15 @@ COPY ./sqlite_dummy.db ./sqlite_dummy.db
 
 CMD omnipedia \
     server \
+    --api-key "$API_SECRET_KEY" \
     --docstore-url "${DOCSTORE_URL}" \
-    --llm-url "${VLLM_URL}" \
-    --language-model-name "${LLM_MODEL_NAME}" \
-    --language-model-kind "${MODEL_KIND}" \
-    --embed-url "${EMBED_URL}" \
     --embed-model-name "${SBERT_MODEL_NAME}" \
-    --index-url "${INDEX_URL}"\
+    --embed-url "${EMBED_URL}" \
     --host 0.0.0.0 \
+    --index-url "${INDEX_URL}"\
+    --language-model-kind "${MODEL_KIND}" \
+    --language-model-name "${LLM_MODEL_NAME}" \
+    --llm-url "${VLLM_URL}" \
     --port "${OMNIPEDIA_CONT_PORT}" \
     --system-prompt-path "${SYSTEM_PROMPT_PATH}" \
-    --api-key "$API_SECRET_KEY"
+    --redis-url "${REDIS_URL}"
