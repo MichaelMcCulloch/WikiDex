@@ -8,7 +8,7 @@ WORKDIR /usr/src/omnipedia
 COPY ./Cargo.toml ./Cargo.toml
 COPY ./sqlite_dummy.db ./sqlite_dummy.db
 COPY ./src ./src
-ARG DATABASE_URL="sqlite://sqlite_dummy.db"
+ARG DATABASE_URL="postgres://postgres:postgres@192.168.1.120:5433/postgres"
 RUN  \
     --mount=type=cache,target=/usr/src/omnipedia/target,sharing=locked,rw cargo install --path . --root ./build 
 
