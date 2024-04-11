@@ -23,13 +23,13 @@ COPY ./sqlite_dummy.db ./sqlite_dummy.db
 
 CMD omnipedia \
     server \
-    --docstore "${DOCSTORE_PATH}" \
-    --llm-url "https://vllm.semanticallyinvalid.net/v1/" \
+    --docstore "${DOCSTORE_URL}" \
+    --llm-url "${VLLM_URL}" \
     --language-model-name "${LLM_MODEL_NAME}" \
     --language-model-kind "${MODEL_KIND}" \
-    --embed-url "https://infinity.semanticallyinvalid.net/v1" \
+    --embed-url "${EMBED_URL}" \
     --embed-model-name "${SBERT_MODEL_NAME}" \
-    --index-url "https://face.semanticallyinvalid.net/"\
+    --index-url "${INDEX_URL}"\
     --host 0.0.0.0 \
     --port "${OMNIPEDIA_CONT_PORT}" \
     --system-prompt-path "${SYSTEM_PROMPT_PATH}" \
