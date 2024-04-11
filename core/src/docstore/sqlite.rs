@@ -4,27 +4,11 @@ use flate2::read::GzDecoder;
 use sqlx::{Row, Sqlite, SqlitePool};
 use std::{io::Read, path::Path};
 
-use super::{Docstore, DocstoreLoadError, DocstoreRetrieveError};
-
-impl Docstore<Sqlite> {
-    pub async fn new<P: AsRef<Path>>(docstore_path: &P) -> Result<Self, DocstoreLoadError> {
-        let docstore_path = docstore_path.as_ref();
-        if !docstore_path.exists() {
-            return Err(DocstoreLoadError::FileNotFound);
-        }
-        let pool = SqlitePool::connect(
-            docstore_path
-                .to_str()
-                .expect("Docstore path is not a string"),
-        )
-        .await
-        .map_err(|_| DocstoreLoadError::FileNotFound)?;
-        Ok(Docstore { pool })
-    }
-
-    pub(crate) async fn retreive(
+use super::{Docstore, DocstoreLoadError, DocstoreRetrieveError, DocumentStore};
+impl DocumentStore for Docstore<Sqlite> {
+    async fn retreive(
         &self,
-        indices: &Vec<i64>,
+        indices: &[i64],
     ) -> Result<Vec<(usize, String, Provenance)>, DocstoreRetrieveError> {
         let start = std::time::Instant::now();
 
@@ -86,5 +70,22 @@ impl Docstore<Sqlite> {
         log::debug!("SQL Query {:?}", start.elapsed());
 
         Ok(result)
+    }
+}
+
+impl Docstore<Sqlite> {
+    pub async fn new<P: AsRef<Path>>(docstore_path: &P) -> Result<Self, DocstoreLoadError> {
+        let docstore_path = docstore_path.as_ref();
+        if !docstore_path.exists() {
+            return Err(DocstoreLoadError::FileNotFound);
+        }
+        let pool = SqlitePool::connect(
+            docstore_path
+                .to_str()
+                .expect("Docstore path is not a string"),
+        )
+        .await
+        .map_err(|_| DocstoreLoadError::FileNotFound)?;
+        Ok(Docstore { pool })
     }
 }

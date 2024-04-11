@@ -1,13 +1,12 @@
 use bytes::Bytes;
+
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
-#[cfg(feature = "postgres")]
-use sqlx::Postgres;
-#[cfg(feature = "sqlite")]
-use sqlx::Sqlite;
+
+
 
 use crate::{
-    docstore::Docstore,
+    docstore::{DocumentStore, DocumentStoreKind},
     formatter::{CitationStyle, Cite, DocumentFormatter, TextFormatter},
     index::{FaceIndex, SearchService},
     openai::{LanguageServiceArguments, LlmMessage, LlmRole, OpenAiDelegate, PartialLlmMessage},
@@ -16,44 +15,18 @@ use crate::{
 
 use super::QueryEngineError;
 
-#[cfg(feature = "postgres")]
 pub struct Engine {
     index: FaceIndex,
     openai: OpenAiDelegate,
-    docstore: Docstore<Postgres>,
+    docstore: DocumentStoreKind,
     system_prompt: String,
 }
 
-#[cfg(feature = "sqlite")]
-pub struct Engine {
-    index: FaceIndex,
-    openai: OpenAiDelegate,
-    docstore: Docstore<Sqlite>,
-    system_prompt: String,
-}
-
-#[cfg(feature = "postgres")]
 impl Engine {
     pub(crate) fn new(
         index: FaceIndex,
         openai: OpenAiDelegate,
-        docstore: Docstore<Postgres>,
-        system_prompt: String,
-    ) -> Self {
-        Self {
-            index,
-            openai,
-            docstore,
-            system_prompt,
-        }
-    }
-}
-#[cfg(feature = "sqlite")]
-impl Engine {
-    pub(crate) fn new(
-        index: FaceIndex,
-        openai: OpenAiDelegate,
-        docstore: Docstore<Sqlite>,
+        docstore: DocumentStoreKind,
         system_prompt: String,
     ) -> Self {
         Self {

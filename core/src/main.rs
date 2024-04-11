@@ -14,11 +14,14 @@ mod server;
 use actix_web::rt;
 use cli_args::Commands;
 use docstore::Docstore;
+use sqlx::Postgres;
 
 use crate::{
     cli_args::Cli,
+    config::server::Config,
+    docstore::DocumentStoreKind,
     index::FaceIndex,
-    inference::Engine as InferenceEngine,
+    inference::Engine,
     openai::{ModelKind, OpenAiDelegateBuilder, OpenAiDelegateBuilderArgument},
     server::run_server,
 };
@@ -29,12 +32,14 @@ fn main() -> anyhow::Result<()> {
     match Cli::parse().command {
         Commands::Server(server_args) => {
             env_logger::init();
-            let config = config::server::Config::from(server_args);
+            let config = Config::from(server_args);
             let system_runner = rt::System::new();
 
             log::info!("\n{config}");
 
-            let docstore = system_runner.block_on(Docstore::new(&config.docstore))?;
+            let docstore = system_runner.block_on(Docstore::<Postgres>::new(&config.docstore))?;
+
+            let docstore = DocumentStoreKind::Postgres(docstore);
 
             let index = FaceIndex::new(config.index_url);
 
@@ -62,7 +67,7 @@ fn main() -> anyhow::Result<()> {
                 }
             };
 
-            let engine = InferenceEngine::new(index, openai, docstore, config.system_prompt);
+            let engine = Engine::new(index, openai, docstore, config.system_prompt);
 
             let server = run_server(engine, config.host, config.port)?;
             system_runner.block_on(server).map_err(anyhow::Error::from)
