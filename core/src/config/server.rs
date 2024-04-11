@@ -62,7 +62,7 @@ impl From<ServerArgs> for Config {
 impl Display for Config {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let Config {
-            docstore_url: docstore,
+            docstore_url,
             language_model_name: vllm_model,
             embed_model_name: infinity_model,
             embed_url,
@@ -72,7 +72,7 @@ impl Display for Config {
             ..
         } = self;
 
-        let engine_docstore = docstore.as_str().green();
+        let docstore_url = docstore_url.as_str().green();
         let index_url = index_url.as_str().green();
         let redis_url = redis_url.as_str().green();
 
@@ -98,7 +98,7 @@ impl Display for Config {
     Serving OpenAPI documentation on {engine_api_doc_path}.
 Using redis at {redis_url}.
 Using index at {index_url}.
-Using docstore at {engine_docstore}.
+Using docstore at {docstore_url}.
 Using Infinity embedding service at {embed_url}.
     Using {infinity_model}.
 Using vLLM service at {llm_url}.
