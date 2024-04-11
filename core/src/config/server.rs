@@ -61,32 +61,43 @@ impl Display for Config {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let Config {
             docstore,
-            language_model_name: model,
+            language_model_name: vllm_model,
+            embed_model_name: infinity_model,
             embed_url,
             llm_url,
             index_url,
             ..
         } = self;
 
-        let engine_docstore = docstore.display();
+        let engine_docstore = docstore.display().to_string().green();
+        let index_url = index_url.as_str().green();
+
+        let embed_url = embed_url.as_str().blue();
+        let infinity_model = infinity_model.display().to_string().bright_blue();
+
+        let llm_url = llm_url.as_str().blue();
+        let vllm_model = vllm_model.display().to_string().bright_blue();
+
         let engine_url = self.url();
-
-        let model = model.display();
-
-        let [engine_conversation_path, engine_query_path, engine_api_doc_path, embed_url, llm_url, index_url] =
-            [
-                engine_url.join("streaming_conversation").unwrap(),
-                engine_url.join("query").unwrap(),
-                engine_url.join("api-doc").unwrap(),
-                embed_url.clone(),
-                llm_url.clone(),
-                index_url.clone(),
-            ]
-            .map(|url| url.as_str().yellow());
+        let [engine_conversation_path, engine_query_path, engine_api_doc_path] = [
+            engine_url.join("streaming_conversation").unwrap(),
+            engine_url.join("query").unwrap(),
+            engine_url.join("api-doc").unwrap(),
+        ]
+        .map(|url| url.as_str().yellow());
 
         write!(
             f,
-            "Engine running.\n\tServing conversations on {engine_conversation_path}.\n\tService queries on {engine_query_path}.\n\tServing OpenAPI documentation on {engine_api_doc_path}.\n\tUsing index at {index_url}.\n\tUsing docstore at {engine_docstore}.\nUsing Huggingface embedding service at {embed_url}.\nUsing vLLM service at {llm_url}.\n\tUsing {model}.",
+            r#"Engine running.
+    Serving conversations on {engine_conversation_path}.
+    Service queries on {engine_query_path}.
+    Serving OpenAPI documentation on {engine_api_doc_path}.
+Using index at {index_url}.
+Using docstore at {engine_docstore}.
+Using Infinity embedding service at {embed_url}.
+    Using {infinity_model}.
+Using vLLM service at {llm_url}.
+    Using {vllm_model}."#,
         )
     }
 }
