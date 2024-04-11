@@ -14,7 +14,7 @@ mod server;
 use actix_web::rt;
 use cli_args::Commands;
 use docstore::Docstore;
-use sqlx::Postgres;
+use sqlx::{Postgres, Sqlite};
 
 use crate::{
     cli_args::Cli,
@@ -37,9 +37,21 @@ fn main() -> anyhow::Result<()> {
 
             log::info!("\n{config}");
 
-            let docstore = system_runner.block_on(Docstore::<Postgres>::new(&config.docstore))?;
+            let docstore = match config.docstore_url.scheme() {
+                "sqlite" => {
+                    let docstore =
+                        system_runner.block_on(Docstore::<Sqlite>::new(&config.docstore_url))?;
 
-            let docstore = DocumentStoreKind::Postgres(docstore);
+                    DocumentStoreKind::Sqlite(docstore)
+                }
+                "postgres" => {
+                    let docstore =
+                        system_runner.block_on(Docstore::<Postgres>::new(&config.docstore_url))?;
+
+                    DocumentStoreKind::Postgres(docstore)
+                }
+                _ => todo!(),
+            };
 
             let index = FaceIndex::new(config.index_url);
 
