@@ -1,7 +1,7 @@
 use crate::formatter::Provenance;
 use chrono::DateTime;
 use flate2::read::GzDecoder;
-use sqlx::{postgres::PgPool, Postgres, Row};
+use sqlx::{postgres::PgPool, Postgres};
 use std::{io::Read, path::Path};
 
 use super::{Docstore, DocstoreLoadError, DocstoreRetrieveError};
@@ -25,33 +25,38 @@ impl Docstore<Postgres> {
     ) -> Result<Vec<(usize, String, Provenance)>, DocstoreRetrieveError> {
         let start = std::time::Instant::now();
 
-        // build dynamic query statement
-        let ids = indices
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<_>>()
-            .join(",");
-
-        let query = format!("SELECT document.id, document.text, article.title, article.access_date, article.modification_date FROM document INNER JOIN article ON document.article = article.id WHERE document.id IN ({})", ids);
-
-        let docs_rows = sqlx::query(&query)
-            .fetch_all(&self.pool)
-            .await
-            .map_err(|_| DocstoreRetrieveError::IndexOutOfRange)?;
+        let docs_rows = sqlx::query!(
+            r#"
+            SELECT document.id,
+                document.text,
+                article.title,
+                article.access_date,
+                article.modification_date
+            FROM document
+            INNER JOIN article ON document.article = article.id
+            WHERE document.id IN
+                (SELECT *
+                FROM UNNEST($1::bigint[]))
+            "#,
+            &indices[..]
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|_| DocstoreRetrieveError::IndexOutOfRange)?;
 
         let docs = docs_rows
             .into_iter()
             .filter_map(|row| {
-                let index = row.get::<i64, _>("id");
+                let index = row.id;
 
-                let binary_data = row.get::<Vec<u8>, _>("text");
+                let binary_data = row.text.unwrap();
                 let mut gz = GzDecoder::new(&*binary_data);
                 let mut document = String::new();
                 gz.read_to_string(&mut document).ok()?;
 
-                let article_title = row.get::<String, _>("title");
-                let access_date = row.get::<i64, _>("access_date");
-                let modification_date = row.get::<i64, _>("modification_date");
+                let article_title = row.title.unwrap();
+                let access_date = row.access_date.unwrap();
+                let modification_date = row.modification_date.unwrap();
 
                 let access_date = DateTime::from_timestamp_millis(access_date)?
                     .naive_utc()

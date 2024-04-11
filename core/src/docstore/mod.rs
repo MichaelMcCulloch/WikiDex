@@ -1,8 +1,9 @@
 mod error;
+
 #[cfg(feature = "postgres")]
 mod postgres;
 #[cfg(feature = "sqlite")]
-mod sqlite_docstore;
+mod sqlite;
 
 pub(crate) use error::{DocstoreLoadError, DocstoreRetrieveError};
 
