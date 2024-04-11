@@ -36,7 +36,6 @@ pub(crate) async fn write_completion_timestamp(
     .execute(pool)
     .await
     .map_err(SqlX)?;
-    // let rows = sqlx::query_with(&query).execute(connection).await.map_err(Sqlite)?;
 
     Ok(())
 }

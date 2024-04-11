@@ -1,4 +1,75 @@
-impl Engine<Sqlite> {
+use bytes::Bytes;
+use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
+
+#[cfg(feature = "postgres")]
+use sqlx::Postgres;
+#[cfg(feature = "sqlite")]
+use sqlx::Sqlite;
+
+use crate::{
+    docstore::Docstore,
+    formatter::{CitationStyle, Cite, DocumentFormatter, TextFormatter},
+    index::{FaceIndex, SearchService},
+    openai::{LanguageServiceArguments, LlmMessage, LlmRole, OpenAiDelegate, PartialLlmMessage},
+    server::{Conversation, CountSources, Message, PartialMessage, Source},
+};
+
+use super::QueryEngineError;
+
+#[cfg(feature = "postgres")]
+pub struct Engine {
+    index: FaceIndex,
+    openai: OpenAiDelegate,
+    docstore: Docstore<Postgres>,
+    system_prompt: String,
+}
+
+#[cfg(feature = "sqlite")]
+pub struct Engine {
+    index: FaceIndex,
+    openai: OpenAiDelegate,
+    docstore: Docstore<Sqlite>,
+    system_prompt: String,
+}
+
+#[cfg(feature = "postgres")]
+impl Engine {
+    pub(crate) fn new(
+        index: FaceIndex,
+        openai: OpenAiDelegate,
+        docstore: Docstore<Postgres>,
+        system_prompt: String,
+    ) -> Self {
+        Self {
+            index,
+            openai,
+            docstore,
+            system_prompt,
+        }
+    }
+}
+#[cfg(feature = "sqlite")]
+impl Engine {
+    pub(crate) fn new(
+        index: FaceIndex,
+        openai: OpenAiDelegate,
+        docstore: Docstore<Sqlite>,
+        system_prompt: String,
+    ) -> Self {
+        Self {
+            index,
+            openai,
+            docstore,
+            system_prompt,
+        }
+    }
+}
+
+const NUM_DOCUMENTS_TO_RETRIEVE: usize = 4;
+
+const CITATION_STYLE: CitationStyle = CitationStyle::MLA;
+
+impl Engine {
     pub(crate) async fn query(&self, question: &str) -> Result<String, QueryEngineError> {
         let (_, formatted_documents) = self.get_documents(question, 0usize).await?;
 
@@ -83,20 +154,6 @@ impl Engine<Sqlite> {
             }
             Some(Message::Assistant(_, _)) => Err(QueryEngineError::LastMessageIsNotUser)?,
             None => Err(QueryEngineError::EmptyConversation)?,
-        }
-    }
-
-    pub(crate) fn new(
-        index: FaceIndex,
-        openai: OpenAiDelegate,
-        docstore: Docstore<Sqlite>,
-        system_prompt: String,
-    ) -> Self {
-        Self {
-            index,
-            openai,
-            docstore,
-            system_prompt,
         }
     }
 
