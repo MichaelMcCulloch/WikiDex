@@ -25,7 +25,7 @@ pub(crate) struct ServerArgs {
     #[arg(long, default_value_t = 5000)]
     pub(crate) port: u16,
     #[arg(long)]
-    pub(crate) docstore: PathBuf,
+    pub(crate) docstore_url: Url,
     #[arg(long)]
     pub(crate) system_prompt_path: PathBuf,
     #[arg(long)]
