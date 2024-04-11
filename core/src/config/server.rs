@@ -10,7 +10,7 @@ pub(crate) struct Config {
     pub(crate) protocol: String,
     pub(crate) host: String,
     pub(crate) port: u16,
-    pub(crate) docstore: PathBuf,
+    pub(crate) docstore_url: Url,
     pub(crate) system_prompt: String,
     pub(crate) language_model_name: PathBuf,
     pub(crate) language_model_kind: ModelKind,
@@ -44,7 +44,7 @@ impl From<ServerArgs> for Config {
             protocol: "http".to_string(),
             host: value.host,
             port: value.port,
-            docstore: value.docstore,
+            docstore_url: value.docstore_url,
             language_model_name: value.language_model_name,
             language_model_kind: value.language_model_kind,
             embed_url: value.embed_url,
@@ -60,7 +60,7 @@ impl From<ServerArgs> for Config {
 impl Display for Config {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let Config {
-            docstore,
+            docstore_url: docstore,
             language_model_name: vllm_model,
             embed_model_name: infinity_model,
             embed_url,
@@ -69,7 +69,7 @@ impl Display for Config {
             ..
         } = self;
 
-        let engine_docstore = docstore.display().to_string().green();
+        let engine_docstore = docstore.as_str().green();
         let index_url = index_url.as_str().green();
 
         let embed_url = embed_url.as_str().blue();

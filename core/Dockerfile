@@ -23,7 +23,7 @@ COPY ./sqlite_dummy.db ./sqlite_dummy.db
 
 CMD omnipedia \
     server \
-    --docstore "${DOCSTORE_URL}" \
+    --docstore-url "${DOCSTORE_URL}" \
     --llm-url "${VLLM_URL}" \
     --language-model-name "${LLM_MODEL_NAME}" \
     --language-model-kind "${MODEL_KIND}" \
