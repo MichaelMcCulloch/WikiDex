@@ -14,7 +14,10 @@ mod server;
 use actix_web::rt;
 use cli_args::Commands;
 use docstore::Docstore;
-use sqlx::{Postgres, Sqlite};
+#[cfg(feature = "postgres")]
+use sqlx::Postgres;
+#[cfg(feature = "sqlite")]
+use sqlx::Sqlite;
 
 use crate::{
     cli_args::Cli,
@@ -38,12 +41,14 @@ fn main() -> anyhow::Result<()> {
             log::info!("\n{config}");
 
             let docstore = match config.docstore_url.scheme() {
+                #[cfg(feature = "sqlite")]
                 "sqlite" => {
                     let docstore =
                         system_runner.block_on(Docstore::<Sqlite>::new(&config.docstore_url))?;
 
                     DocumentStoreKind::Sqlite(docstore)
                 }
+                #[cfg(feature = "postgres")]
                 "postgres" => {
                     let docstore =
                         system_runner.block_on(Docstore::<Postgres>::new(&config.docstore_url))?;
