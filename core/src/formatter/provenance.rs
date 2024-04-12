@@ -8,7 +8,7 @@ type WikipediaArticleTitle = String;
 type AccessDate = NaiveDate;
 type LastModificationDate = NaiveDate;
 
-#[derive(Clone, Serialize, Deserialize, Archive)]
+#[derive(Clone, Serialize, Deserialize, Archive, Debug)]
 pub(crate) enum Provenance {
     Wikipedia(WikipediaArticleTitle, AccessDate, LastModificationDate),
 }

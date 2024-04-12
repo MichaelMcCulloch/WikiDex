@@ -6,17 +6,16 @@ mod postgres;
 #[cfg(feature = "sqlite")]
 mod sqlite;
 
+use actix_web::rt;
 pub(crate) use error::{DocstoreLoadError, DocstoreRetrieveError};
 
-use redis::{aio::MultiplexedConnection, AsyncCommands};
+use redis::{aio::MultiplexedConnection, AsyncCommands, RedisError};
 use sqlx::{Database, Pool};
 
 #[cfg(feature = "postgres")]
 use sqlx::Postgres;
 #[cfg(feature = "sqlite")]
 use sqlx::Sqlite;
-
-
 
 use self::document::Document;
 
@@ -32,7 +31,7 @@ pub(crate) enum DocumentStoreKind {
     Sqlite(Docstore<Sqlite>),
 }
 
-pub(crate) trait DocumentStore: Send + Sync {
+pub(crate) trait DocumentStore: Send + Sync + DocumentDatabase {
     async fn retreive(&self, indices: &[i64]) -> Result<Vec<Document>, DocstoreRetrieveError>;
 }
 pub(crate) trait DocumentDatabase: Send + Sync {
@@ -45,12 +44,12 @@ pub(crate) trait DocumentCache: Send + Sync {
     async fn insert_into_cache(
         &self,
         index: i64,
-        data: Vec<Document>,
+        data: Document,
     ) -> Result<(), DocstoreRetrieveError>;
     async fn retreive_from_cache(
         &self,
         indices: &[i64],
-    ) -> Result<Vec<Document>, DocstoreRetrieveError>;
+    ) -> Result<(Vec<Document>, Vec<i64>), DocstoreRetrieveError>;
 }
 
 impl DocumentStore for DocumentStoreKind {
@@ -64,35 +63,101 @@ impl DocumentStore for DocumentStoreKind {
     }
 }
 
+impl DocumentDatabase for DocumentStoreKind {
+    async fn retreive_from_db(
+        &self,
+        indices: &[i64],
+    ) -> Result<Vec<Document>, DocstoreRetrieveError> {
+        match self {
+            #[cfg(feature = "postgres")]
+            DocumentStoreKind::Postgres(docstore) => docstore.retreive_from_db(indices).await,
+            #[cfg(feature = "sqlite")]
+            DocumentStoreKind::Sqlite(docstore) => docstore.retreive_from_db(indices).await,
+        }
+    }
+}
+
 impl<DB: Database> DocumentCache for Docstore<DB> {
     async fn retreive_from_cache(
         &self,
         indices: &[i64],
-    ) -> Result<Vec<Document>, DocstoreRetrieveError> {
+    ) -> Result<(Vec<Document>, Vec<i64>), DocstoreRetrieveError> {
         let mut cache = self.cache.clone();
-        let result: Vec<Document> = redis::cmd("MGET")
+        let result: Result<Vec<Document>, RedisError> = redis::cmd("MGET")
             .arg(indices)
             .query_async(&mut cache)
-            .await
-            .map_err(DocstoreRetrieveError::Redis)?;
-        Ok(result)
+            .await;
+
+        if let Err(_e) = result {
+            log::warn!("Cache Miss: {indices:?}");
+            return Ok((vec![], indices.to_vec()));
+        }
+
+        let result = result.map_err(DocstoreRetrieveError::Redis)?;
+        let cache_hits = result.iter().map(|d| d.index).collect::<Vec<_>>();
+        let cache_misses = indices
+            .iter()
+            .filter_map(|index| {
+                if cache_hits.contains(index) {
+                    None
+                } else {
+                    Some(*index)
+                }
+            })
+            .collect::<Vec<_>>();
+        if !cache_misses.is_empty() {
+            log::warn!("Cache Miss: {cache_misses:?}");
+        }
+        Ok((result, cache_misses))
     }
     async fn insert_into_cache(
         &self,
         index: i64,
-        data: Vec<Document>,
+        data: Document,
     ) -> Result<(), DocstoreRetrieveError> {
         let mut cache = self.cache.clone();
-        cache
-            .set(index, data)
-            .await
-            .map_err(DocstoreRetrieveError::Redis)?;
+        rt::spawn(async move {
+            let result: Result<(), DocstoreRetrieveError> = cache
+                .set(index, data)
+                .await
+                .map_err(DocstoreRetrieveError::Redis);
+            if let Err(e) = result {
+                log::error!("{e}");
+                Err(e)
+            } else {
+                Ok::<(), DocstoreRetrieveError>(())
+            }
+        });
+
         Ok(())
     }
 }
-impl<DB: Database> DocumentStore for Docstore<DB> {
+impl<T> DocumentStore for T
+where
+    T: DocumentDatabase + DocumentCache,
+{
     async fn retreive(&self, indices: &[i64]) -> Result<Vec<Document>, DocstoreRetrieveError> {
-        let _cached_documents = self.retreive_from_cache(indices).await?;
-        Ok(vec![])
+        let (cached_documents, cache_misses) = self.retreive_from_cache(indices).await?;
+
+        let missed_documents = if !cache_misses.is_empty() {
+            let documents = self.retreive_from_db(&cache_misses).await?;
+            for document in documents.iter() {
+                let result = self
+                    .insert_into_cache(document.index, document.clone())
+                    .await;
+                if let Err(e) = result {
+                    log::error!("{e}")
+                }
+            }
+            documents
+        } else {
+            vec![]
+        };
+
+        let mut documents = vec![];
+        documents.extend(cached_documents);
+        documents.extend(missed_documents);
+
+        Ok(documents)
     }
 }
