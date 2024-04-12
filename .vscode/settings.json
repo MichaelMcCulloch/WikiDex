@@ -37,7 +37,12 @@
     "--message-format=json",
     "--all-targets",
     "--allow-dirty"
-  ]
+  ],
+  "workbench.colorCustomizations": {
+    "activityBar.background": "#002044",
+    "titleBar.activeBackground": "#0358a8",
+    "titleBar.activeForeground": "#e3f3fd"
+  }
 }
 // "cargo",
 // "clippy",
