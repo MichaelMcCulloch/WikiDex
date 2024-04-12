@@ -7,7 +7,7 @@ use url::Url;
 
 use super::{Docstore, DocstoreLoadError, DocstoreRetrieveError, DocumentStore};
 impl DocumentStore for Docstore<Sqlite> {
-    async fn retreive(
+    async fn retreive_from_db(
         &self,
         indices: &[i64],
     ) -> Result<Vec<(usize, String, Provenance)>, DocstoreRetrieveError> {
@@ -80,7 +80,12 @@ impl Docstore<Sqlite> {
         let pool = SqlitePool::connect(docstore_path)
             .await
             .map_err(DocstoreLoadError::Database)?;
-        let cache = redis::Client::open(redis_url.to_string()).map_err(DocstoreLoadError::Redis)?;
+        let client =
+            redis::Client::open(redis_url.to_string()).map_err(DocstoreLoadError::Redis)?;
+        let cache = client
+            .get_multiplexed_tokio_connection()
+            .await
+            .map_err(DocstoreLoadError::Redis)?;
         Ok(Docstore { pool, cache })
     }
 }
