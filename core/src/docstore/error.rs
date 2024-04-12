@@ -10,6 +10,7 @@ pub enum DocstoreRetrieveError {
     IndexOutOfRange,
     InvalidDocument,
     Database(sqlx::error::Error),
+    Redis(redis::RedisError),
 }
 
 impl std::error::Error for DocstoreLoadError {}
@@ -34,6 +35,9 @@ impl Display for DocstoreRetrieveError {
                 write!(f, "DocumentService: Invalid document")
             }
             DocstoreRetrieveError::Database(e) => {
+                write!(f, "DocumentService: {e}")
+            }
+            DocstoreRetrieveError::Redis(e) => {
                 write!(f, "DocumentService: {e}")
             }
         }

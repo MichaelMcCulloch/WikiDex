@@ -1,6 +1,5 @@
 use bytes::Bytes;
 
-
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 use crate::{
@@ -147,7 +146,7 @@ impl Engine {
 
         let documents = self
             .docstore
-            .retreive(&document_indices)
+            .retreive_from_db(&document_indices)
             .await
             .map_err(QueryEngineError::DocstoreError)?;
 

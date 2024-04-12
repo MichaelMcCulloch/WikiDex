@@ -1,4 +1,4 @@
-use crate::formatter::Provenance;
+use crate::{formatter::Provenance};
 use chrono::DateTime;
 use flate2::read::GzDecoder;
 use sqlx::{postgres::PgPool, Postgres};
@@ -8,12 +8,11 @@ use url::Url;
 use super::{Docstore, DocstoreLoadError, DocstoreRetrieveError, DocumentStore};
 
 impl DocumentStore for Docstore<Postgres> {
-    async fn retreive(
+    async fn retreive_from_db(
         &self,
         indices: &[i64],
     ) -> Result<Vec<(usize, String, Provenance)>, DocstoreRetrieveError> {
         let start = std::time::Instant::now();
-
         let docs_rows = sqlx::query!(
             r#"
             SELECT document.id,
@@ -87,8 +86,12 @@ impl Docstore<Postgres> {
             .await
             .map_err(DocstoreLoadError::Database)?;
 
-        let cache = redis::Client::open(redis_url.to_string()).map_err(DocstoreLoadError::Redis)?;
-
+        let client =
+            redis::Client::open(redis_url.to_string()).map_err(DocstoreLoadError::Redis)?;
+        let cache = client
+            .get_multiplexed_tokio_connection()
+            .await
+            .map_err(DocstoreLoadError::Redis)?;
         Ok(Docstore { pool, cache })
     }
 }
