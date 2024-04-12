@@ -39,12 +39,12 @@ x-base_service_ui: &base_ui
   ports:
     - "${UI_HOST_PORT}:${UI_CONT_PORT}"
 
-x-base_service_omnipedia: &base_omnipedia
+x-base_service_wikidex: &base_wikidex
   profiles: ["service", "server"]
   ports:
-    - "${OMNIPEDIA_HOST_PORT}:${OMNIPEDIA_CONT_PORT}"
+    - "${WIKIDEX_HOST_PORT}:${WIKIDEX_CONT_PORT}"
   volumes:
-    - ./core/prompt:/prompt
+    - ./wikidex/prompt:/prompt
 
 x-base_service_index: &base_index
   profiles: ["service", "server"]
@@ -140,13 +140,14 @@ services:
     <<:
       - *base_service_nvidia
       - *base_vllm
-    entrypoint: [
+    entrypoint:
+      [
         python3,
         -m,
         vllm.entrypoints.openai.api_server,
         --max-log-len,
         "0",
-        # --disable-log-stats,
+        --disable-log-stats,
         --disable-log-requests,
         --gpu-memory-utilization,
         "0.85",
@@ -177,14 +178,14 @@ services:
       - *base_service
       - *base_postgres_dummy_gid_fix
 
-  omnipedia:
+  wikidex:
     <<:
       - *base_service
-      - *base_omnipedia
+      - *base_wikidex
       - *base_rust
     build:
       dockerfile: Dockerfile
-      context: ./core
+      context: ./wikidex
 
   index:
     <<:

@@ -1656,38 +1656,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "omnipedia"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "actix-web",
- "anyhow",
- "async-openai",
- "backoff",
- "bytes",
- "chrono",
- "clap",
- "colored",
- "env_logger",
- "faiss",
- "flate2",
- "futures",
- "indicatif",
- "indicatif-log-bridge",
- "itertools",
- "log",
- "parse_mediawiki_dump_reboot",
- "parse_wiki_text",
- "rayon",
- "regex",
- "serde",
- "serde_json",
- "sqlx",
- "tokio",
- "url",
-]
-
-[[package]]
 name = "once_cell"
 version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3006,6 +2974,38 @@ checksum = "a44ab49fad634e88f55bf8f9bb3abd2f27d7204172a112c7c9987e01c1c94ea9"
 dependencies = [
  "redox_syscall",
  "wasite",
+]
+
+[[package]]
+name = "wikidex"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "anyhow",
+ "async-openai",
+ "backoff",
+ "bytes",
+ "chrono",
+ "clap",
+ "colored",
+ "env_logger",
+ "faiss",
+ "flate2",
+ "futures",
+ "indicatif",
+ "indicatif-log-bridge",
+ "itertools",
+ "log",
+ "parse_mediawiki_dump_reboot",
+ "parse_wiki_text",
+ "rayon",
+ "regex",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "url",
 ]
 
 [[package]]
