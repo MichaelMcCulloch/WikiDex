@@ -21,7 +21,7 @@ impl FaceIndex {
         let mut configuration = Configuration::new();
 
         configuration.base_path = url.to_string();
-        configuration.user_agent = Some("Oracle-Core/0.1.0/rust".to_owned());
+        configuration.user_agent = Some("WikiDex-Core/0.1.0/rust".to_owned());
 
         Self { configuration }
     }

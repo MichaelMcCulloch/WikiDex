@@ -119,7 +119,7 @@ function App() {
     setInputText("");
     // Open a connection to the SSE endpoint
     const source = new SSE(
-      "https://oracle-rs.semanticallyinvalid.net/streaming_conversation",
+      "https://wikidex-rs.semanticallyinvalid.net/streaming_conversation",
       {
         headers: { "Content-Type": "application/json" },
         payload: JSON.stringify({ messages: [...conversation, userMessage] }),
