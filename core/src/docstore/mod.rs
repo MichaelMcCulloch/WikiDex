@@ -9,7 +9,7 @@ mod sqlite;
 use actix_web::rt;
 pub(crate) use error::{DocstoreLoadError, DocstoreRetrieveError};
 
-use redis::{aio::MultiplexedConnection, AsyncCommands, RedisError};
+use redis::{aio::MultiplexedConnection, AsyncCommands};
 use sqlx::{Database, Pool};
 
 #[cfg(feature = "postgres")]
@@ -83,18 +83,18 @@ impl<DB: Database> DocumentCache for Docstore<DB> {
         indices: &[i64],
     ) -> Result<(Vec<Document>, Vec<i64>), DocstoreRetrieveError> {
         let mut cache = self.cache.clone();
-        let result: Result<Vec<Document>, RedisError> = redis::cmd("MGET")
+        let result: Vec<Option<Document>> = redis::cmd("MGET")
             .arg(indices)
             .query_async(&mut cache)
-            .await;
-
-        if let Err(_e) = result {
-            log::warn!("Cache Miss: {indices:?}");
+            .await
+            .map_err(DocstoreRetrieveError::Redis)?;
+        let hits = result.into_iter().flatten().collect::<Vec<_>>();
+        if hits.is_empty() {
+            log::debug!("Cache Miss: {indices:?}");
             return Ok((vec![], indices.to_vec()));
         }
 
-        let result = result.map_err(DocstoreRetrieveError::Redis)?;
-        let cache_hits = result.iter().map(|d| d.index).collect::<Vec<_>>();
+        let cache_hits = hits.iter().map(|d| d.index).collect::<Vec<_>>();
         let cache_misses = indices
             .iter()
             .filter_map(|index| {
@@ -106,9 +106,9 @@ impl<DB: Database> DocumentCache for Docstore<DB> {
             })
             .collect::<Vec<_>>();
         if !cache_misses.is_empty() {
-            log::warn!("Cache Miss: {cache_misses:?}");
+            log::debug!("Cache Miss: {cache_misses:?}");
         }
-        Ok((result, cache_misses))
+        Ok((hits, cache_misses))
     }
     async fn insert_into_cache(
         &self,
