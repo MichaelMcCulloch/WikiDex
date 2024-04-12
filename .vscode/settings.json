@@ -52,9 +52,9 @@
 // "--message-format=json",
 // "",
 // "--package",
-// "omnipedia",
+// "wikidex",
 // "--bin",
-// "omnipedia",
+// "wikidex",
 // "--",
 // "breeder::operator::test",
 // "--nocapture"

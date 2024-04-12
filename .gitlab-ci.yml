@@ -125,4 +125,4 @@ test:
     - apt-get update
     - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
     - cd core
-    - "cargo test --package omnipedia --bin omnipedia --no-default-features --features breeder -- breeder::operator::"
+    - "cargo test --package wikidex --bin wikidex --no-default-features --features breeder -- breeder::operator::"
