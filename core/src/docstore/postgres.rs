@@ -5,7 +5,7 @@ use sqlx::{postgres::PgPool, Postgres};
 use std::io::Read;
 use url::Url;
 
-use super::{Docstore, DocstoreLoadError, DocstoreRetrieveError, DocumentDatabase};
+use super::{database::DocumentDatabase, Docstore, DocstoreLoadError, DocstoreRetrieveError};
 
 impl DocumentDatabase for Docstore<Postgres> {
     async fn retreive_from_db(

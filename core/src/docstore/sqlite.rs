@@ -13,9 +13,6 @@ impl DocumentDatabase for Docstore<Sqlite> {
         &self,
         indices: &[i64],
     ) -> Result<Vec<Document>, DocstoreRetrieveError> {
-        let start = std::time::Instant::now();
-
-        // build dynamic query statement
         let ids = indices
             .iter()
             .map(|x| x.to_string())
@@ -70,8 +67,6 @@ impl DocumentDatabase for Docstore<Sqlite> {
                 })
             })
             .collect::<Vec<Document>>();
-
-        log::debug!("SQL Query {:?}", start.elapsed());
 
         Ok(result)
     }
