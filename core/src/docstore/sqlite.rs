@@ -5,12 +5,14 @@ use sqlx::{Row, Sqlite, SqlitePool};
 use std::io::Read;
 use url::Url;
 
-use super::{Docstore, DocstoreLoadError, DocstoreRetrieveError, DocumentStore};
-impl DocumentStore for Docstore<Sqlite> {
+use super::{
+    document::Document, Docstore, DocstoreLoadError, DocstoreRetrieveError, DocumentDatabase,
+};
+impl DocumentDatabase for Docstore<Sqlite> {
     async fn retreive_from_db(
         &self,
         indices: &[i64],
-    ) -> Result<Vec<(usize, String, Provenance)>, DocstoreRetrieveError> {
+    ) -> Result<Vec<Document>, DocstoreRetrieveError> {
         let start = std::time::Instant::now();
 
         // build dynamic query statement
@@ -58,15 +60,16 @@ impl DocumentStore for Docstore<Sqlite> {
             .iter()
             .enumerate()
             .filter_map(|(array_index, docstore_index)| {
-                let (_, doc_text, document_provenance) =
+                let (index, doc_text, document_provenance) =
                     docs.iter().find(|d| d.0 == *docstore_index)?;
-                Some((
-                    array_index + 1,
-                    doc_text.clone(),
-                    document_provenance.clone(),
-                ))
+                Some(Document {
+                    index: *index,
+                    ordinal: array_index + 1,
+                    text: doc_text.clone(),
+                    provenance: document_provenance.clone(),
+                })
             })
-            .collect::<Vec<(usize, String, Provenance)>>();
+            .collect::<Vec<Document>>();
 
         log::debug!("SQL Query {:?}", start.elapsed());
 
