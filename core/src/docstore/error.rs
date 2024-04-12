@@ -19,8 +19,8 @@ impl std::error::Error for DocstoreRetrieveError {}
 impl Display for DocstoreLoadError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            DocstoreLoadError::Database(e) => write!(f, "DocumentService: {e}"),
-            DocstoreLoadError::Redis(e) => write!(f, "DocumentService: {e}"),
+            DocstoreLoadError::Database(e) => write!(f, "DocstoreLoadError: Database: {e}"),
+            DocstoreLoadError::Redis(e) => write!(f, "DocstoreLoadError: Redis: {e}"),
         }
     }
 }
@@ -29,16 +29,16 @@ impl Display for DocstoreRetrieveError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             DocstoreRetrieveError::IndexOutOfRange => {
-                write!(f, "DocumentService: Index out of range")
+                write!(f, "DocstoreRetrieveError: Index out of range")
             }
             DocstoreRetrieveError::InvalidDocument => {
-                write!(f, "DocumentService: Invalid document")
+                write!(f, "DocstoreRetrieveError: Invalid document")
             }
             DocstoreRetrieveError::Database(e) => {
-                write!(f, "DocumentService: {e}")
+                write!(f, "DocstoreRetrieveError: Database: {e}")
             }
             DocstoreRetrieveError::Redis(e) => {
-                write!(f, "DocumentService: {e}")
+                write!(f, "DocstoreRetrieveError: Redis: {e}")
             }
         }
     }

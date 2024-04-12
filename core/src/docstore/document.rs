@@ -2,7 +2,7 @@ use redis::{FromRedisValue, RedisError, RedisResult, ToRedisArgs, Value};
 use rkyv::{archived_root, Archive, Deserialize, Infallible, Serialize};
 
 use crate::formatter::Provenance;
-#[derive(Clone, Serialize, Deserialize, Archive)]
+#[derive(Clone, Serialize, Deserialize, Archive, Debug)]
 pub(crate) struct Document {
     pub(crate) index: i64,
     pub(crate) ordinal: usize,
@@ -31,7 +31,7 @@ impl ToRedisArgs for Document {
     where
         W: ?Sized + redis::RedisWrite,
     {
-        let bytes = rkyv::to_bytes::<_, 1024>(self).unwrap();
+        let bytes = rkyv::to_bytes::<_, 2048>(self).unwrap();
         out.write_arg(&bytes);
     }
 }

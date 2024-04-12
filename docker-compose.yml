@@ -58,10 +58,10 @@ x-base_rust: &base_rust
     RUST_LOG: $RUST_LOG
 
 x-base_service_redis: &base_redis
-  profiles: ["service", "server"]
+  profiles: ["service", "server", "redis"]
   image: redis:latest
   command: >
-    --requirepass ${REDIS_PASSWORD}
+    --requirepass redis
   ports:
     - $REDIS_PORT:$REDIS_PORT
   volumes:
