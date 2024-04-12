@@ -12,7 +12,6 @@ impl DocumentDatabase for Docstore<Postgres> {
         &self,
         indices: &[i64],
     ) -> Result<Vec<Document>, DocstoreRetrieveError> {
-        let start = std::time::Instant::now();
         let docs_rows = sqlx::query!(
             r#"
             SELECT document.id,
@@ -73,8 +72,6 @@ impl DocumentDatabase for Docstore<Postgres> {
                 })
             })
             .collect::<Vec<Document>>();
-
-        log::debug!("SQL Query {:?}", start.elapsed());
 
         Ok(result)
     }
