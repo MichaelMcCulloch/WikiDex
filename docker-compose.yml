@@ -65,8 +65,8 @@ x-base_service_redis: &base_redis
   ports:
     - $REDIS_PORT:$REDIS_PORT
   volumes:
-    - /home/michael/ContainerData/Redis/oracle/data:/root/redis
-    - /home/michael/ContainerData/Redis/oracle/redis.conf:/usr/local/etc/redis/redis.conf
+    - /home/michael/ContainerData/Redis/wikidex/data:/root/redis
+    - /home/michael/ContainerData/Redis/wikidex/redis.conf:/usr/local/etc/redis/redis.conf
 
 x-base_service_postgres: &base_postgres
   image: postgres
@@ -76,7 +76,7 @@ x-base_service_postgres_prod: &base_postgres_prod
   <<:
     - *base_postgres
   volumes:
-    - /home/michael/ContainerData/PostgreSQL/oracle/${EXTRACT_DATE}:/var/lib/postgresql/data
+    - /home/michael/ContainerData/PostgreSQL/wikidex/${EXTRACT_DATE}:/var/lib/postgresql/data
   profiles: ["service", "server"]
   ports:
     - $POSTGRES_PORT:$POSTGRES_PORT
@@ -85,7 +85,7 @@ x-base_service_postgres_dummy: &base_postgres_dummy
   <<:
     - *base_postgres
   volumes:
-    - /home/michael/ContainerData/PostgreSQL/oracle/dummy/:/var/lib/postgresql/data
+    - /home/michael/ContainerData/PostgreSQL/wikidex/dummy/:/var/lib/postgresql/data
   profiles: ["dummy"]
   ports:
     - $POSTGRES_DUMMY_PORT:$POSTGRES_PORT
@@ -140,14 +140,13 @@ services:
     <<:
       - *base_service_nvidia
       - *base_vllm
-    entrypoint:
-      [
+    entrypoint: [
         python3,
         -m,
         vllm.entrypoints.openai.api_server,
         --max-log-len,
         "0",
-        --disable-log-stats,
+        # --disable-log-stats,
         --disable-log-requests,
         --gpu-memory-utilization,
         "0.85",

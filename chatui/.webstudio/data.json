@@ -7,13 +7,13 @@
     "updatedAt": "2023-12-20T13:48:17.876Z",
     "pages": {
       "meta": {
-        "siteName": "The Oracle Machine",
+        "siteName": "WikiDex",
         "faviconAssetId": "cbd960cc-04e2-4e5a-8275-136d327e1843"
       },
       "homePage": {
         "id": "10PeZ7doCpHTiFlPdnkAs",
-        "name": "The Oracle Machine",
-        "title": "The Oracle Machine",
+        "name": "WikiDex",
+        "title": "WikiDex",
         "meta": {},
         "rootInstanceId": "01p1EhI7IXyULnZnDshGo",
         "path": ""
@@ -1509,9 +1509,7 @@
           "property": "fontFamily",
           "value": {
             "type": "fontFamily",
-            "value": [
-              "Aquatico"
-            ]
+            "value": ["Aquatico"]
           }
         }
       ],
@@ -1523,9 +1521,7 @@
           "property": "fontFamily",
           "value": {
             "type": "fontFamily",
-            "value": [
-              "Aquatico"
-            ]
+            "value": ["Aquatico"]
           }
         }
       ],
@@ -1537,9 +1533,7 @@
           "property": "fontFamily",
           "value": {
             "type": "fontFamily",
-            "value": [
-              "Space Grotesk"
-            ]
+            "value": ["Space Grotesk"]
           }
         }
       ],
@@ -1551,9 +1545,7 @@
           "property": "fontFamily",
           "value": {
             "type": "fontFamily",
-            "value": [
-              "Space Grotesk"
-            ]
+            "value": ["Space Grotesk"]
           }
         }
       ],
@@ -1565,9 +1557,7 @@
           "property": "fontFamily",
           "value": {
             "type": "fontFamily",
-            "value": [
-              "Space Grotesk"
-            ]
+            "value": ["Space Grotesk"]
           }
         }
       ],
@@ -1829,189 +1819,147 @@
         "99Dp8-NRrfj9kcpEEysLo",
         {
           "instanceId": "99Dp8-NRrfj9kcpEEysLo",
-          "values": [
-            "w-xcJ_HnmSAPRFVOO10ZU"
-          ]
+          "values": ["w-xcJ_HnmSAPRFVOO10ZU"]
         }
       ],
       [
         "-6tQDIL8whFLc2LhVDcHl",
         {
           "instanceId": "-6tQDIL8whFLc2LhVDcHl",
-          "values": [
-            "_mofl-PII2P3MM5rUemOe"
-          ]
+          "values": ["_mofl-PII2P3MM5rUemOe"]
         }
       ],
       [
         "12QgLXoQAM9285L0PMt1U",
         {
           "instanceId": "12QgLXoQAM9285L0PMt1U",
-          "values": [
-            "AXQiy_cVCdajyYc97J09c"
-          ]
+          "values": ["AXQiy_cVCdajyYc97J09c"]
         }
       ],
       [
         "h7p__CTeFKSFmNOfL8uLh",
         {
           "instanceId": "h7p__CTeFKSFmNOfL8uLh",
-          "values": [
-            "O5-tuMhqBclwOmBjjkKZa"
-          ]
+          "values": ["O5-tuMhqBclwOmBjjkKZa"]
         }
       ],
       [
         "8R88L19pIzjN3hFZSn8mA",
         {
           "instanceId": "8R88L19pIzjN3hFZSn8mA",
-          "values": [
-            "urnSlMQoufx_4wuEkGo0k"
-          ]
+          "values": ["urnSlMQoufx_4wuEkGo0k"]
         }
       ],
       [
         "GcGqBsXEUDM6JcpQwmjJN",
         {
           "instanceId": "GcGqBsXEUDM6JcpQwmjJN",
-          "values": [
-            "Idzb5F3nhwIpzAqnETw_Y"
-          ]
+          "values": ["Idzb5F3nhwIpzAqnETw_Y"]
         }
       ],
       [
         "RI1WXKSVgMJ3CH7AV2oWI",
         {
           "instanceId": "RI1WXKSVgMJ3CH7AV2oWI",
-          "values": [
-            "bUfngoXRgUFW-ueWfy3d0"
-          ]
+          "values": ["bUfngoXRgUFW-ueWfy3d0"]
         }
       ],
       [
         "EPjean7Cx2gClNw5T2JDt",
         {
           "instanceId": "EPjean7Cx2gClNw5T2JDt",
-          "values": [
-            "X_ePPSDe6e8loIXrLl43g"
-          ]
+          "values": ["X_ePPSDe6e8loIXrLl43g"]
         }
       ],
       [
         "rxEJV1Kw2wKUY6Rl6Xqw0",
         {
           "instanceId": "rxEJV1Kw2wKUY6Rl6Xqw0",
-          "values": [
-            "oX9Bwxxu-Ho1ks0RnZcHT"
-          ]
+          "values": ["oX9Bwxxu-Ho1ks0RnZcHT"]
         }
       ],
       [
         "xBBTBEvtiROjYV5c4t8Fv",
         {
           "instanceId": "xBBTBEvtiROjYV5c4t8Fv",
-          "values": [
-            "rorlxh3V8sZvC6lUyRrjo"
-          ]
+          "values": ["rorlxh3V8sZvC6lUyRrjo"]
         }
       ],
       [
         "WjgibvYYWwksoNZMZThB-",
         {
           "instanceId": "WjgibvYYWwksoNZMZThB-",
-          "values": [
-            "zy1AKJDr-UwEPoGUkzKoY"
-          ]
+          "values": ["zy1AKJDr-UwEPoGUkzKoY"]
         }
       ],
       [
         "Sv4rAey1MCfJXaKLRJAWg",
         {
           "instanceId": "Sv4rAey1MCfJXaKLRJAWg",
-          "values": [
-            "fQE_dDDLRr6lAjCgvTh1_"
-          ]
+          "values": ["fQE_dDDLRr6lAjCgvTh1_"]
         }
       ],
       [
         "ceMnvd2ATWjKR4vWMKUc1",
         {
           "instanceId": "ceMnvd2ATWjKR4vWMKUc1",
-          "values": [
-            "zpuYvPI7jFoEiI3cbTK5R"
-          ]
+          "values": ["zpuYvPI7jFoEiI3cbTK5R"]
         }
       ],
       [
         "LTt_qWB0BItmb5APCONgU",
         {
           "instanceId": "LTt_qWB0BItmb5APCONgU",
-          "values": [
-            "gNpRUlJVgXqTRnfpbdocf"
-          ]
+          "values": ["gNpRUlJVgXqTRnfpbdocf"]
         }
       ],
       [
         "MGX2woJ4jQYV_mwmuhbE4",
         {
           "instanceId": "MGX2woJ4jQYV_mwmuhbE4",
-          "values": [
-            "-VggPFJRpMART8v6M7Q7U"
-          ]
+          "values": ["-VggPFJRpMART8v6M7Q7U"]
         }
       ],
       [
         "01p1EhI7IXyULnZnDshGo",
         {
           "instanceId": "01p1EhI7IXyULnZnDshGo",
-          "values": [
-            "ICZM8dP33liSYZR22ukQ0"
-          ]
+          "values": ["ICZM8dP33liSYZR22ukQ0"]
         }
       ],
       [
         "zGZi5yg7yHQNVBBqMinj0",
         {
           "instanceId": "zGZi5yg7yHQNVBBqMinj0",
-          "values": [
-            "uwpmcHEqZIos26m0oHwO0"
-          ]
+          "values": ["uwpmcHEqZIos26m0oHwO0"]
         }
       ],
       [
         "XqKEHAvdogpMU1ZSOBtD7",
         {
           "instanceId": "XqKEHAvdogpMU1ZSOBtD7",
-          "values": [
-            "lWxC7wGT8t7CE6gWUrhZ6"
-          ]
+          "values": ["lWxC7wGT8t7CE6gWUrhZ6"]
         }
       ],
       [
         "pEV_rwe60BEI_HWjDDsno",
         {
           "instanceId": "pEV_rwe60BEI_HWjDDsno",
-          "values": [
-            "xGd4NvNRBy2d_Sgty-MFW"
-          ]
+          "values": ["xGd4NvNRBy2d_Sgty-MFW"]
         }
       ],
       [
         "scoaQhPYvF5XiZYEPeWIh",
         {
           "instanceId": "scoaQhPYvF5XiZYEPeWIh",
-          "values": [
-            "xt50pRNwDsyLRFvprkYIZ"
-          ]
+          "values": ["xt50pRNwDsyLRFvprkYIZ"]
         }
       ],
       [
         "VZ-0wov4vLX2T8fSA-dTO",
         {
           "instanceId": "VZ-0wov4vLX2T8fSA-dTO",
-          "values": [
-            "ZIzPh2YWn_9gEymgHmyS4"
-          ]
+          "values": ["ZIzPh2YWn_9gEymgHmyS4"]
         }
       ]
     ],
@@ -2371,8 +2319,8 @@
   },
   "page": {
     "id": "10PeZ7doCpHTiFlPdnkAs",
-    "name": "The Oracle Machine",
-    "title": "The Oracle Machine",
+    "name": "WikiDex",
+    "title": "WikiDex",
     "meta": {},
     "rootInstanceId": "01p1EhI7IXyULnZnDshGo",
     "path": ""
@@ -2380,8 +2328,8 @@
   "pages": [
     {
       "id": "10PeZ7doCpHTiFlPdnkAs",
-      "name": "The Oracle Machine",
-      "title": "The Oracle Machine",
+      "name": "WikiDex",
+      "title": "WikiDex",
       "meta": {},
       "rootInstanceId": "01p1EhI7IXyULnZnDshGo",
       "path": ""
