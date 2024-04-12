@@ -1,17 +1,17 @@
-use crate::{formatter::Provenance};
+use crate::{docstore::document::Document, formatter::Provenance};
 use chrono::DateTime;
 use flate2::read::GzDecoder;
 use sqlx::{postgres::PgPool, Postgres};
 use std::io::Read;
 use url::Url;
 
-use super::{Docstore, DocstoreLoadError, DocstoreRetrieveError, DocumentStore};
+use super::{Docstore, DocstoreLoadError, DocstoreRetrieveError, DocumentDatabase};
 
-impl DocumentStore for Docstore<Postgres> {
+impl DocumentDatabase for Docstore<Postgres> {
     async fn retreive_from_db(
         &self,
         indices: &[i64],
-    ) -> Result<Vec<(usize, String, Provenance)>, DocstoreRetrieveError> {
+    ) -> Result<Vec<Document>, DocstoreRetrieveError> {
         let start = std::time::Instant::now();
         let docs_rows = sqlx::query!(
             r#"
@@ -63,15 +63,16 @@ impl DocumentStore for Docstore<Postgres> {
             .iter()
             .enumerate()
             .filter_map(|(array_index, docstore_index)| {
-                let (_, doc_text, document_provenance) =
+                let (index, doc_text, document_provenance) =
                     docs.iter().find(|d| d.0 == *docstore_index)?;
-                Some((
-                    array_index + 1,
-                    doc_text.clone(),
-                    document_provenance.clone(),
-                ))
+                Some(Document {
+                    index: *index,
+                    ordinal: array_index + 1,
+                    text: doc_text.clone(),
+                    provenance: document_provenance.clone(),
+                })
             })
-            .collect::<Vec<(usize, String, Provenance)>>();
+            .collect::<Vec<Document>>();
 
         log::debug!("SQL Query {:?}", start.elapsed());
 

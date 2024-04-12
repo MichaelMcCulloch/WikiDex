@@ -146,17 +146,17 @@ impl Engine {
 
         let documents = self
             .docstore
-            .retreive_from_db(&document_indices)
+            .retreive(&document_indices)
             .await
             .map_err(QueryEngineError::DocstoreError)?;
 
         let formatted_documents = documents
             .iter()
-            .map(|(ordianal, document, provenance)| {
+            .map(|document| {
                 DocumentFormatter::format_document(
-                    *ordianal + num_sources_already_in_chat,
-                    &provenance.title(),
-                    document,
+                    document.ordinal + num_sources_already_in_chat,
+                    &document.provenance.title(),
+                    &document.text,
                 )
             })
             .collect::<Vec<String>>()
@@ -164,13 +164,12 @@ impl Engine {
 
         let sources = documents
             .into_iter()
-            .zip(document_indices)
-            .map(|((ordinal, origin_text, provenance), index)| Source {
-                ordinal: ordinal + num_sources_already_in_chat,
-                index,
-                citation: provenance.format(&CITATION_STYLE),
-                url: provenance.url(),
-                origin_text,
+            .map(|document| Source {
+                ordinal: document.ordinal + num_sources_already_in_chat,
+                index: document.index,
+                citation: document.provenance.format(&CITATION_STYLE),
+                url: document.provenance.url(),
+                origin_text: document.text,
             })
             .collect::<Vec<_>>();
 
