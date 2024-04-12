@@ -1,5 +1,5 @@
 x-base_service: &base_service
-  stop_signal: SIGTERM
+  stop_signal: SIGINT
   restart: always
   tty: true
   stdin_open: true
@@ -150,9 +150,11 @@ services:
         --disable-log-stats,
         --disable-log-requests,
         --gpu-memory-utilization,
-        "0.85",
+        $VLLM_MEM_MAX,
         --model,
         $LLM_MODEL_NAME,
+        --quantization,
+        $QUANTIZATION,
         --host,
         "0.0.0.0",
         --port,
