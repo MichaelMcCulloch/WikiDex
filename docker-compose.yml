@@ -188,6 +188,8 @@ services:
     build:
       dockerfile: Dockerfile
       context: ./wikidex
+    depends_on:
+      - postgres
 
   index:
     <<:
