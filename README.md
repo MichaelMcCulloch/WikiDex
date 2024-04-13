@@ -5,7 +5,7 @@ This project aims to provide a powerful backend for a RESTful API that serves as
 # Quickstart
 
 ## Nvidia
-run ```docker compose --profile nvidia up -d --build```
+run ```docker compose --profile server up -d --build```
 
 # API
 - `/query` supports a single question.
