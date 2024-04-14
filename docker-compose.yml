@@ -18,7 +18,7 @@ x-base_service_nvidia: &base_service_nvidia
 
 # x-base_service_amd: &base_service_amd
 #   <<: *base_service
-#   profiles: ["amd"]
+#
 #   group_add:
 #     - video
 #   devices:
@@ -28,26 +28,41 @@ x-base_service_nvidia: &base_service_nvidia
 x-base_service_vllm: &base_vllm
   env_file: .env
   image: vllm/vllm-openai:latest
-  profiles: ["service", "server"]
+  profiles:
+    - vllm
   volumes:
     - ~/.cache/huggingface/:/root/.cache/huggingface
   ports:
     - "${VLLM_HOST_PORT}:${VLLM_CONT_PORT}"
 
+x-base_service_triton: &base_triton
+  env_file: .env
+  image: triton/triton-openai:latest
+  profiles:
+    - triton
+  build:
+    context: ./triton
+    dockerfile: Dockerfile
+  volumes:
+    - ~/.cache/huggingface/hub/:/root/.cache/huggingface/hub
+    - ./triton/all_models:/all_models
+    - ./triton/scripts:/opt/scripts
+  ports:
+    - 8000:8000
+    - 8001:8001
+    - 8002:8002
+
 x-base_service_ui: &base_ui
-  profiles: ["service", "server"]
   ports:
     - "${UI_HOST_PORT}:${UI_CONT_PORT}"
 
 x-base_service_wikidex: &base_wikidex
-  profiles: ["service", "server"]
   ports:
     - "${WIKIDEX_HOST_PORT}:${WIKIDEX_CONT_PORT}"
   volumes:
     - ./wikidex/prompt:/prompt
 
 x-base_service_index: &base_index
-  profiles: ["service", "server"]
   ports:
     - "${INDEX_HOST_PORT}:${INDEX_CONT_PORT}"
   volumes:
@@ -58,7 +73,6 @@ x-base_rust: &base_rust
     RUST_LOG: $RUST_LOG
 
 x-base_service_redis: &base_redis
-  profiles: ["service", "server", "redis"]
   image: redis:latest
   command: >
     --requirepass redis
@@ -77,7 +91,6 @@ x-base_service_postgres_prod: &base_postgres_prod
     - *base_postgres
   volumes:
     - /home/michael/ContainerData/PostgreSQL/wikidex/${EXTRACT_DATE}:/var/lib/postgresql/data
-  profiles: ["service", "server"]
   ports:
     - $POSTGRES_PORT:$POSTGRES_PORT
 
@@ -86,7 +99,6 @@ x-base_service_postgres_dummy: &base_postgres_dummy
     - *base_postgres
   volumes:
     - /home/michael/ContainerData/PostgreSQL/wikidex/dummy/:/var/lib/postgresql/data
-  profiles: ["dummy"]
   ports:
     - $POSTGRES_DUMMY_PORT:$POSTGRES_PORT
 
@@ -102,7 +114,7 @@ x-base_service_postgres_dummy_gid: &base_postgres_dummy_gid_fix
 
 x-base_service_infinity: &base_infinity
   image: michaelf34/infinity:latest
-  profiles: ["service", "server"]
+
   volumes:
     - ~/.cache/huggingface/hub/:/app/.cache/torch
   ports:
@@ -165,6 +177,22 @@ services:
         $MAX_MODEL_LEN,
       ]
 
+  triton:
+    <<:
+      - *base_service_nvidia
+      - *base_triton
+    entrypoint:
+      [
+        python3,
+        /opt/scripts/launch_triton_server.py,
+        --model_repo,
+        /all_models/inflight_batcher_llm,
+        --tensorrt_llm_model_name,
+        mistral,
+        --world_size,
+        "1",
+      ]
+
   redis:
     <<:
       - *base_service
@@ -176,6 +204,8 @@ services:
       - *base_postgres_prod_gid_fix
 
   postgres_dummy:
+    profiles:
+      - dummy
     <<:
       - *base_service
       - *base_postgres_dummy_gid_fix
