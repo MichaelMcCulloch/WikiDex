@@ -37,9 +37,13 @@ pub(crate) struct ServerArgs {
     #[arg(long)]
     pub(crate) embed_model_name: PathBuf,
     #[arg(long)]
+    pub(crate) index_url: Url,
+    #[arg(long)]
+    #[cfg(feature = "triton")]
     pub(crate) triton_url: Url,
     #[arg(long)]
-    pub(crate) index_url: Url,
+    #[cfg(feature = "openai")]
+    pub(crate) openai_url: Url,
     #[arg(long)]
     pub(crate) language_model_name: PathBuf,
     #[arg(long)]

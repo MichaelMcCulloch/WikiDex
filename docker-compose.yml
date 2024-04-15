@@ -216,7 +216,7 @@ services:
       - *base_service
       - *base_postgres_dummy_gid_fix
 
-  # wikidex-vllm:
+  # wikidex:
   #   <<:
   #     - *base_service
   #     - *base_wikidex
@@ -246,7 +246,7 @@ services:
   #       "$MODEL_KIND",
   #       --language-model-name,
   #       "$LLM_MODEL_NAME",
-  #       --llm-url,
+  #       --openai-url,
   #       "$VLLM_URL",
   #       --port,
   #       "$WIKIDEX_CONT_PORT",
@@ -257,13 +257,14 @@ services:
   #     ]
   #   depends_on:
   #     - postgres
+
   wikidex:
     <<:
       - *base_service
       - *base_wikidex
       - *base_rust
     profiles:
-      - vllm
+      - triton
     build:
       dockerfile: Dockerfile
       context: ./wikidex
@@ -287,8 +288,8 @@ services:
         "$MODEL_KIND",
         --language-model-name,
         "$LLM_MODEL_NAME",
-        --llm-url,
-        "$VLLM_URL",
+        --triton-url,
+        "$TRITON_GRPC_URL",
         --port,
         "$WIKIDEX_CONT_PORT",
         --system-prompt-path,
