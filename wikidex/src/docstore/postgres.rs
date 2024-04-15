@@ -78,7 +78,10 @@ impl DocumentDatabase for Docstore<Postgres> {
 }
 
 impl Docstore<Postgres> {
-    pub async fn new(docstore_path: &Url, redis_url: &Url) -> Result<Self, DocstoreLoadError> {
+    pub(crate) async fn new(
+        docstore_path: &Url,
+        redis_url: &Url,
+    ) -> Result<Self, DocstoreLoadError> {
         let docstore_path = docstore_path.as_ref();
         let pool = PgPool::connect(docstore_path)
             .await

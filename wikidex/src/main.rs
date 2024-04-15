@@ -1,19 +1,25 @@
-mod cli_args;
-mod config;
-mod index;
-mod openai;
-
 #[cfg(test)]
 mod test_data;
 
+mod cli_args;
+mod config;
 mod docstore;
 mod formatter;
+mod index;
 mod inference;
+mod llm_client;
+mod openai;
 mod server;
+
+#[cfg(feature = "openai")]
+use crate::llm_client::OpenAiInstructClient;
+#[cfg(feature = "triton")]
+use crate::llm_client::TritonClient;
 
 use actix_web::rt;
 use cli_args::Commands;
 use docstore::Docstore;
+
 #[cfg(feature = "postgres")]
 use sqlx::Postgres;
 #[cfg(feature = "sqlite")]
@@ -25,6 +31,7 @@ use crate::{
     docstore::DocumentStoreKind,
     index::FaceIndex,
     inference::Engine,
+    llm_client::{LlmClient, LlmClientKind},
     openai::{ModelKind, OpenAiDelegateBuilder, OpenAiDelegateBuilderArgument},
     server::run_server,
 };
@@ -64,6 +71,23 @@ fn main() -> anyhow::Result<()> {
 
             let index = FaceIndex::new(config.index_url);
 
+            #[cfg(feature = "triton")]
+            let llm_client = {
+                let triton_client = system_runner
+                    .block_on(LlmClient::<TritonClient>::new(config.triton_url.as_str()))?;
+
+                LlmClientKind::Triton(triton_client)
+            };
+            #[cfg(feature = "openai")]
+            let llm_client = {
+                let triton_client =
+                    system_runner.block_on(LlmClient::<OpenAiInstructClient>::new(
+                        config.triton_url.clone(), // Clone here because temporary use below
+                        config.language_model_name.to_str().unwrap(),
+                    ))?;
+
+                LlmClientKind::OpenAiInstruct(triton_client)
+            };
             let openai_builder =
                 OpenAiDelegateBuilder::with_embedding(OpenAiDelegateBuilderArgument::Endpoint(
                     config.embed_url,
@@ -74,21 +98,21 @@ fn main() -> anyhow::Result<()> {
             let openai = match config.language_model_kind {
                 ModelKind::Instruct => {
                     openai_builder.with_instruct(OpenAiDelegateBuilderArgument::Endpoint(
-                        config.llm_url,
+                        config.triton_url,
                         config.api_key,
                         config.language_model_name.to_str().unwrap().to_string(),
                     ))
                 }
                 ModelKind::Chat => {
                     openai_builder.with_chat(OpenAiDelegateBuilderArgument::Endpoint(
-                        config.llm_url,
+                        config.triton_url,
                         config.api_key,
                         config.language_model_name.to_str().unwrap().to_string(),
                     ))
                 }
             };
 
-            let engine = Engine::new(index, openai, docstore, config.system_prompt);
+            let engine = Engine::new(index, openai, llm_client, docstore, config.system_prompt);
 
             let server = run_server(engine, config.host, config.port)?;
             system_runner.block_on(server).map_err(anyhow::Error::from)
