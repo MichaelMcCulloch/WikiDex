@@ -6,6 +6,7 @@ use crate::{
     docstore::{DocumentStore, DocumentStoreKind},
     formatter::{CitationStyle, Cite, DocumentFormatter, TextFormatter},
     index::{FaceIndex, SearchService},
+    llm_client::LlmClientKind,
     openai::{LanguageServiceArguments, LlmMessage, LlmRole, OpenAiDelegate, PartialLlmMessage},
     server::{Conversation, CountSources, Message, PartialMessage, Source},
 };
@@ -16,6 +17,7 @@ pub struct Engine {
     index: FaceIndex,
     openai: OpenAiDelegate,
     docstore: DocumentStoreKind,
+    llm_client: LlmClientKind,
     system_prompt: String,
 }
 
@@ -23,6 +25,7 @@ impl Engine {
     pub(crate) fn new(
         index: FaceIndex,
         openai: OpenAiDelegate,
+        llm_client: LlmClientKind,
         docstore: DocumentStoreKind,
         system_prompt: String,
     ) -> Self {
@@ -30,6 +33,7 @@ impl Engine {
             index,
             openai,
             docstore,
+            llm_client,
             system_prompt,
         }
     }

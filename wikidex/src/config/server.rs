@@ -15,7 +15,7 @@ pub(crate) struct Config {
     pub(crate) index_url: Url,
     pub(crate) language_model_kind: ModelKind,
     pub(crate) language_model_name: PathBuf,
-    pub(crate) llm_url: Url,
+    pub(crate) triton_url: Url,
     pub(crate) port: u16,
     pub(crate) protocol: String,
     pub(crate) redis_url: Url,
@@ -50,7 +50,7 @@ impl From<ServerArgs> for Config {
             index_url: value.index_url,
             language_model_kind: value.language_model_kind,
             language_model_name: value.language_model_name,
-            llm_url: value.llm_url,
+            triton_url: value.triton_url,
             port: value.port,
             protocol: "http".to_string(),
             redis_url: value.redis_url,
@@ -66,7 +66,7 @@ impl Display for Config {
             language_model_name: vllm_model,
             embed_model_name: infinity_model,
             embed_url,
-            llm_url,
+            triton_url,
             index_url,
             redis_url,
             ..
@@ -79,7 +79,7 @@ impl Display for Config {
         let embed_url = embed_url.as_str().blue();
         let infinity_model = infinity_model.display().to_string().bright_blue();
 
-        let llm_url = llm_url.as_str().blue();
+        let llm_url = triton_url.as_str().blue();
         let vllm_model = vllm_model.display().to_string().bright_blue();
 
         let engine_url = self.url();

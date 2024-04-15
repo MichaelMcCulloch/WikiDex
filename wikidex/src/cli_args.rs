@@ -37,7 +37,7 @@ pub(crate) struct ServerArgs {
     #[arg(long)]
     pub(crate) embed_model_name: PathBuf,
     #[arg(long)]
-    pub(crate) llm_url: Url,
+    pub(crate) triton_url: Url,
     #[arg(long)]
     pub(crate) index_url: Url,
     #[arg(long)]
