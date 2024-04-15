@@ -4,7 +4,7 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 use crate::{
     docstore::{DocumentStore, DocumentStoreKind},
-    embedding_client::EmbeddingClient,
+    embedding_client::{EmbeddingClient, EmbeddingClientService},
     formatter::{CitationStyle, Cite, DocumentFormatter, TextFormatter},
     index::{FaceIndex, SearchService},
     llm_client::{
