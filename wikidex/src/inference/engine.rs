@@ -6,8 +6,11 @@ use crate::{
     docstore::{DocumentStore, DocumentStoreKind},
     formatter::{CitationStyle, Cite, DocumentFormatter, TextFormatter},
     index::{FaceIndex, SearchService},
-    llm_client::LlmClientKind,
-    openai::{LanguageServiceArguments, LlmMessage, LlmRole, OpenAiDelegate, PartialLlmMessage},
+    llm_client::{LlmClientKind, LlmClientService},
+    openai::{
+        EmbeddingClient, LanguageServiceArguments, LlmMessage, LlmRole,
+        PartialLlmMessage,
+    },
     server::{Conversation, CountSources, Message, PartialMessage, Source},
 };
 
@@ -15,7 +18,7 @@ use super::QueryEngineError;
 
 pub struct Engine {
     index: FaceIndex,
-    openai: OpenAiDelegate,
+    embed_client: EmbeddingClient,
     docstore: DocumentStoreKind,
     llm_client: LlmClientKind,
     system_prompt: String,
@@ -24,14 +27,14 @@ pub struct Engine {
 impl Engine {
     pub(crate) fn new(
         index: FaceIndex,
-        openai: OpenAiDelegate,
+        embed_client: EmbeddingClient,
         llm_client: LlmClientKind,
         docstore: DocumentStoreKind,
         system_prompt: String,
     ) -> Self {
         Self {
             index,
-            openai,
+            embed_client,
             docstore,
             llm_client,
             system_prompt,
@@ -69,7 +72,7 @@ impl Engine {
                 };
 
                 let LlmMessage { role, content } = self
-                    .openai
+                    .llm_client
                     .get_llm_answer(llm_service_arguments, 2048u16, stop_phrases)
                     .await
                     .map_err(QueryEngineError::LlmError)?;
@@ -119,7 +122,7 @@ impl Engine {
                     query: &user_query,
                     citation_index_begin: num_sources,
                 };
-                self.openai
+                self.llm_client
                     .stream_llm_answer(llm_service_arguments, tx_p, 2048u16, stop_phrases)
                     .await
                     .map_err(QueryEngineError::LlmError)?;
@@ -137,7 +140,7 @@ impl Engine {
         num_sources_already_in_chat: usize,
     ) -> Result<(Vec<Source>, String), QueryEngineError> {
         let embedding = self
-            .openai
+            .embed_client
             .embed(user_query)
             .await
             .map_err(QueryEngineError::EmbeddingServiceError)?;

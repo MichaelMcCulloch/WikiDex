@@ -17,6 +17,7 @@ use crate::llm_client::OpenAiInstructClient;
 use crate::llm_client::TritonClient;
 
 use actix_web::rt;
+use async_openai::{config::OpenAIConfig, Client};
 use cli_args::Commands;
 use docstore::Docstore;
 
@@ -30,7 +31,10 @@ use crate::{
     config::server::Config,
     docstore::DocumentStoreKind,
     index::FaceIndex,
+    inference::Engine,
     llm_client::{LlmClient, LlmClientKind},
+    openai::EmbeddingClient,
+    server::run_server,
 };
 
 use clap::Parser;
@@ -44,7 +48,7 @@ fn main() -> anyhow::Result<()> {
 
             log::info!("\n{config}");
 
-            let _docstore = match config.docstore_url.scheme() {
+            let docstore = match config.docstore_url.scheme() {
                 #[cfg(feature = "sqlite")]
                 "sqlite" => {
                     let docstore = system_runner.block_on(Docstore::<Sqlite>::new(
@@ -66,17 +70,17 @@ fn main() -> anyhow::Result<()> {
                 _ => todo!(),
             };
 
-            let _index = FaceIndex::new(config.index_url);
+            let index = FaceIndex::new(config.index_url);
 
             #[cfg(feature = "triton")]
-            let _llm_client = {
+            let llm_client = {
                 let triton_client = system_runner
                     .block_on(LlmClient::<TritonClient>::new(config.triton_url.as_str()))?;
 
                 LlmClientKind::Triton(triton_client)
             };
             #[cfg(feature = "openai")]
-            let _llm_client = {
+            let llm_client = {
                 let triton_client =
                     system_runner.block_on(LlmClient::<OpenAiInstructClient>::new(
                         config.openai_url.clone(), // Clone here because temporary use below
@@ -85,7 +89,14 @@ fn main() -> anyhow::Result<()> {
 
                 LlmClientKind::OpenAiInstruct(triton_client)
             };
-            Ok(())
+            let embed_client = {
+                let openai_config = OpenAIConfig::new().with_api_base(config.embed_url.as_ref());
+                let open_ai_client = Client::with_config(openai_config);
+                EmbeddingClient::new(
+                    open_ai_client,
+                    config.embed_model_name.to_string_lossy().to_string(),
+                )
+            };
             // let openai_builder =
             //     OpenAiDelegateBuilder::with_embedding(OpenAiDelegateBuilderArgument::Endpoint(
             //         config.embed_url,
@@ -110,10 +121,17 @@ fn main() -> anyhow::Result<()> {
             //     }
             // };
 
-            // let engine = Engine::new(index, openai, llm_client, docstore, config.system_prompt);
+            let engine = Engine::new(
+                index,
+                embed_client,
+                llm_client,
+                docstore,
+                config.system_prompt,
+            );
 
-            // let server = run_server(engine, config.host, config.port)?;
-            // system_runner.block_on(server).map_err(anyhow::Error::from)
+            let run_server = run_server(engine, config.host, config.port);
+            let server = run_server?;
+            system_runner.block_on(server).map_err(anyhow::Error::from)
         }
     }
 }

@@ -216,55 +216,13 @@ services:
       - *base_service
       - *base_postgres_dummy_gid_fix
 
-  # wikidex:
-  #   <<:
-  #     - *base_service
-  #     - *base_wikidex
-  #     - *base_rust
-  #   profiles:
-  #     - vllm
-  #   build:
-  #     dockerfile: Dockerfile
-  #     context: ./wikidex
-  #   entrypoint:
-  #     [
-  #       wikidex,
-  #       server,
-  #       --api-key,
-  #       "$API_SECRET_KEY",
-  #       --docstore-url,
-  #       "$DOCSTORE_URL",
-  #       --embed-model-name,
-  #       "$SBERT_MODEL_NAME",
-  #       --embed-url,
-  #       "$EMBED_URL",
-  #       --host,
-  #       0.0.0.0,
-  #       --index-url,
-  #       "$INDEX_URL",
-  #       --language-model-kind,
-  #       "$MODEL_KIND",
-  #       --language-model-name,
-  #       "$LLM_MODEL_NAME",
-  #       --openai-url,
-  #       "$VLLM_URL",
-  #       --port,
-  #       "$WIKIDEX_CONT_PORT",
-  #       --system-prompt-path,
-  #       "$SYSTEM_PROMPT_PATH",
-  #       --redis-url,
-  #       "$REDIS_URL",
-  #     ]
-  #   depends_on:
-  #     - postgres
-
   wikidex:
     <<:
       - *base_service
       - *base_wikidex
       - *base_rust
     profiles:
-      - triton
+      - vllm
     build:
       dockerfile: Dockerfile
       context: ./wikidex
@@ -288,8 +246,8 @@ services:
         "$MODEL_KIND",
         --language-model-name,
         "$LLM_MODEL_NAME",
-        --triton-url,
-        "$TRITON_GRPC_URL",
+        --openai-url,
+        "$VLLM_URL",
         --port,
         "$WIKIDEX_CONT_PORT",
         --system-prompt-path,
@@ -299,6 +257,49 @@ services:
       ]
     depends_on:
       - postgres
+
+  # wikidex:
+  #   <<:
+  #     - *base_service
+  #     - *base_wikidex
+  #     - *base_rust
+  #   profiles:
+  #     - triton
+  #   build:
+  #     dockerfile: Dockerfile
+  #     context: ./wikidex
+  #   entrypoint:
+  #     [
+  #       wikidex,
+  #       server,
+  #       --api-key,
+  #       "$API_SECRET_KEY",
+  #       --docstore-url,
+  #       "$DOCSTORE_URL",
+  #       --embed-model-name,
+  #       "$SBERT_MODEL_NAME",
+  #       --embed-url,
+  #       "$EMBED_URL",
+  #       --host,
+  #       0.0.0.0,
+  #       --index-url,
+  #       "$INDEX_URL",
+  #       --language-model-kind,
+  #       "$MODEL_KIND",
+  #       --language-model-name,
+  #       "$LLM_MODEL_NAME",
+  #       --triton-url,
+  #       "$TRITON_GRPC_URL",
+  #       --port,
+  #       "$WIKIDEX_CONT_PORT",
+  #       --system-prompt-path,
+  #       "$SYSTEM_PROMPT_PATH",
+  #       --redis-url,
+  #       "$REDIS_URL",
+  #     ]
+  #   depends_on:
+  #     - postgres
+
   index:
     <<:
       - *base_service
