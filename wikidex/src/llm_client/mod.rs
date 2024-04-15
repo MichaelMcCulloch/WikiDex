@@ -1,4 +1,6 @@
+mod arguments;
 mod error;
+mod protocol;
 
 #[cfg(feature = "openai")]
 mod openai;
@@ -12,8 +14,9 @@ pub(crate) use triton_client::Client as TritonClient;
 
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
-use crate::openai::{LanguageServiceArguments, LlmMessage, LlmRole, PartialLlmMessage};
+pub(crate) use arguments::LanguageServiceArguments;
 pub(crate) use error::LlmClientError;
+pub(crate) use protocol::{LlmMessage, LlmRole, PartialLlmMessage};
 
 pub(crate) trait LlmClientBackend {
     async fn get_response<S: AsRef<str>>(

@@ -4,11 +4,11 @@ mod test_data;
 mod cli_args;
 mod config;
 mod docstore;
+mod embedding_client;
 mod formatter;
 mod index;
 mod inference;
 mod llm_client;
-mod openai;
 mod server;
 
 #[cfg(feature = "openai")]
@@ -30,10 +30,10 @@ use crate::{
     cli_args::Cli,
     config::server::Config,
     docstore::DocumentStoreKind,
+    embedding_client::EmbeddingClient,
     index::FaceIndex,
     inference::Engine,
     llm_client::{LlmClient, LlmClientKind},
-    openai::EmbeddingClient,
     server::run_server,
 };
 

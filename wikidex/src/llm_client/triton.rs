@@ -1,8 +1,8 @@
 use tokio::sync::mpsc::UnboundedSender;
 
-use crate::openai::LanguageServiceArguments;
-
-use super::{error::LlmClientError, LlmClient, LlmClientBackend, TritonClient};
+use super::{
+    error::LlmClientError, LanguageServiceArguments, LlmClient, LlmClientBackend, TritonClient,
+};
 
 impl LlmClient<TritonClient> {
     pub(crate) async fn new<S: AsRef<str>>(triton_url: S) -> Result<Self, LlmClientError> {

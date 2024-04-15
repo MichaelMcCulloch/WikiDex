@@ -1,4 +1,4 @@
-use crate::openai::{LanguageServiceArguments};
+use crate::openai::LanguageServiceArguments;
 use async_openai::{config::OpenAIConfig, types::CreateCompletionRequestArgs, Client};
 use futures::StreamExt;
 use tokio::sync::mpsc::UnboundedSender;

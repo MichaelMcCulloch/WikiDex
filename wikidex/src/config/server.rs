@@ -3,7 +3,7 @@ use std::{fmt::Display, path::PathBuf};
 use colored::Colorize;
 use url::Url;
 
-use crate::{cli_args::ServerArgs, openai::ModelKind};
+use crate::cli_args::ServerArgs;
 
 #[derive(Debug)]
 pub(crate) struct Config {
@@ -13,7 +13,6 @@ pub(crate) struct Config {
     pub(crate) embed_url: Url,
     pub(crate) host: String,
     pub(crate) index_url: Url,
-    pub(crate) language_model_kind: ModelKind,
     pub(crate) language_model_name: PathBuf,
     #[cfg(feature = "openai")]
     pub(crate) openai_url: Url,
@@ -51,7 +50,6 @@ impl From<ServerArgs> for Config {
             embed_url: value.embed_url,
             host: value.host,
             index_url: value.index_url,
-            language_model_kind: value.language_model_kind,
             language_model_name: value.language_model_name,
             #[cfg(feature = "openai")]
             openai_url: value.openai_url,
