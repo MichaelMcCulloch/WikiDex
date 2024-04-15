@@ -5,7 +5,7 @@ use async_openai::{
     Client,
 };
 
-use super::error::EmbeddingServiceError;
+use super::{error::EmbeddingServiceError, EmbeddingClientService};
 
 pub(crate) struct EmbeddingClient {
     embedding_client: Client<OpenAIConfig>,
@@ -13,10 +13,6 @@ pub(crate) struct EmbeddingClient {
 }
 
 impl EmbeddingClient {
-    pub(crate) async fn up(&self) -> Result<ListModelResponse, OpenAIError> {
-        self.embedding_client.models().list().await
-    }
-
     pub(crate) fn new(
         embedding_client: Client<OpenAIConfig>,
         embedding_model_name: String,
@@ -26,8 +22,14 @@ impl EmbeddingClient {
             embedding_model_name,
         }
     }
+}
 
-    pub(crate) async fn embed_batch(
+impl EmbeddingClientService for EmbeddingClient {
+    async fn up(&self) -> Result<ListModelResponse, OpenAIError> {
+        self.embedding_client.models().list().await
+    }
+
+    async fn embed_batch(
         &self,
         queries: Vec<String>,
     ) -> Result<Vec<Vec<f32>>, EmbeddingServiceError> {
@@ -58,7 +60,7 @@ impl EmbeddingClient {
                 .collect::<Vec<_>>())
         }
     }
-    pub(crate) async fn embed(&self, query: &str) -> Result<Vec<f32>, EmbeddingServiceError> {
+    async fn embed(&self, query: &str) -> Result<Vec<f32>, EmbeddingServiceError> {
         let request = CreateEmbeddingRequestArgs::default()
             .model(&self.embedding_model_name)
             .input([query])
