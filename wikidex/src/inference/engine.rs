@@ -4,11 +4,11 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 use crate::{
     docstore::{DocumentStore, DocumentStoreKind},
+    embedding_client::EmbeddingClient,
     formatter::{CitationStyle, Cite, DocumentFormatter, TextFormatter},
     index::{FaceIndex, SearchService},
-    llm_client::{LlmClientKind, LlmClientService},
-    openai::{
-        EmbeddingClient, LanguageServiceArguments, LlmMessage, LlmRole,
+    llm_client::{
+        LanguageServiceArguments, LlmClientKind, LlmClientService, LlmMessage, LlmRole,
         PartialLlmMessage,
     },
     server::{Conversation, CountSources, Message, PartialMessage, Source},

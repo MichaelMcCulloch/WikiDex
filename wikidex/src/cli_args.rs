@@ -3,8 +3,6 @@ use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 use url::Url;
 
-use crate::openai::ModelKind;
-
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 #[command(propagate_version = true)]
@@ -46,6 +44,4 @@ pub(crate) struct ServerArgs {
     pub(crate) openai_url: Url,
     #[arg(long)]
     pub(crate) language_model_name: PathBuf,
-    #[arg(long)]
-    pub(crate) language_model_kind: ModelKind,
 }

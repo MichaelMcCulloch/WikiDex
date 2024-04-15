@@ -1,10 +1,8 @@
 use std::fmt::{Display, Formatter, Result};
 
 use crate::{
-    docstore::DocstoreRetrieveError,
-    index::IndexSearchError,
-    llm_client::LlmClientError,
-    openai::{EmbeddingServiceError},
+    docstore::DocstoreRetrieveError, embedding_client::EmbeddingServiceError,
+    index::IndexSearchError, llm_client::LlmClientError,
 };
 
 #[derive(Debug)]
