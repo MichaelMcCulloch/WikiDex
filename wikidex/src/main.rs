@@ -30,10 +30,7 @@ use crate::{
     config::server::Config,
     docstore::DocumentStoreKind,
     index::FaceIndex,
-    inference::Engine,
     llm_client::{LlmClient, LlmClientKind},
-    openai::{ModelKind, OpenAiDelegateBuilder, OpenAiDelegateBuilderArgument},
-    server::run_server,
 };
 
 use clap::Parser;
@@ -47,7 +44,7 @@ fn main() -> anyhow::Result<()> {
 
             log::info!("\n{config}");
 
-            let docstore = match config.docstore_url.scheme() {
+            let _docstore = match config.docstore_url.scheme() {
                 #[cfg(feature = "sqlite")]
                 "sqlite" => {
                     let docstore = system_runner.block_on(Docstore::<Sqlite>::new(
@@ -69,53 +66,54 @@ fn main() -> anyhow::Result<()> {
                 _ => todo!(),
             };
 
-            let index = FaceIndex::new(config.index_url);
+            let _index = FaceIndex::new(config.index_url);
 
             #[cfg(feature = "triton")]
-            let llm_client = {
+            let _llm_client = {
                 let triton_client = system_runner
                     .block_on(LlmClient::<TritonClient>::new(config.triton_url.as_str()))?;
 
                 LlmClientKind::Triton(triton_client)
             };
             #[cfg(feature = "openai")]
-            let llm_client = {
+            let _llm_client = {
                 let triton_client =
                     system_runner.block_on(LlmClient::<OpenAiInstructClient>::new(
-                        config.triton_url.clone(), // Clone here because temporary use below
+                        config.openai_url.clone(), // Clone here because temporary use below
                         config.language_model_name.to_str().unwrap(),
                     ))?;
 
                 LlmClientKind::OpenAiInstruct(triton_client)
             };
-            let openai_builder =
-                OpenAiDelegateBuilder::with_embedding(OpenAiDelegateBuilderArgument::Endpoint(
-                    config.embed_url,
-                    config.api_key.clone(),
-                    config.embed_model_name.to_str().unwrap().to_string(),
-                ));
+            Ok(())
+            // let openai_builder =
+            //     OpenAiDelegateBuilder::with_embedding(OpenAiDelegateBuilderArgument::Endpoint(
+            //         config.embed_url,
+            //         config.api_key.clone(),
+            //         config.embed_model_name.to_str().unwrap().to_string(),
+            //     ));
 
-            let openai = match config.language_model_kind {
-                ModelKind::Instruct => {
-                    openai_builder.with_instruct(OpenAiDelegateBuilderArgument::Endpoint(
-                        config.triton_url,
-                        config.api_key,
-                        config.language_model_name.to_str().unwrap().to_string(),
-                    ))
-                }
-                ModelKind::Chat => {
-                    openai_builder.with_chat(OpenAiDelegateBuilderArgument::Endpoint(
-                        config.triton_url,
-                        config.api_key,
-                        config.language_model_name.to_str().unwrap().to_string(),
-                    ))
-                }
-            };
+            // let openai = match config.language_model_kind {
+            //     ModelKind::Instruct => {
+            //         openai_builder.with_instruct(OpenAiDelegateBuilderArgument::Endpoint(
+            //             config.openai_url,
+            //             config.api_key,
+            //             config.language_model_name.to_str().unwrap().to_string(),
+            //         ))
+            //     }
+            //     ModelKind::Chat => {
+            //         openai_builder.with_chat(OpenAiDelegateBuilderArgument::Endpoint(
+            //             config.openai_url,
+            //             config.api_key,
+            //             config.language_model_name.to_str().unwrap().to_string(),
+            //         ))
+            //     }
+            // };
 
-            let engine = Engine::new(index, openai, llm_client, docstore, config.system_prompt);
+            // let engine = Engine::new(index, openai, llm_client, docstore, config.system_prompt);
 
-            let server = run_server(engine, config.host, config.port)?;
-            system_runner.block_on(server).map_err(anyhow::Error::from)
+            // let server = run_server(engine, config.host, config.port)?;
+            // system_runner.block_on(server).map_err(anyhow::Error::from)
         }
     }
 }
