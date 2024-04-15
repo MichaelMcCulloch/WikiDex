@@ -1,8 +1,8 @@
-mod embedding;
+mod client;
 mod error;
 
 use async_openai::{error::OpenAIError, types::ListModelResponse};
-pub(crate) use embedding::EmbeddingClient;
+pub(crate) use client::EmbeddingClient;
 pub(crate) use error::EmbeddingServiceError;
 
 pub(crate) trait EmbeddingClientService {
