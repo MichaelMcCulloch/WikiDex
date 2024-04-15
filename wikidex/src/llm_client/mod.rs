@@ -10,12 +10,12 @@ pub(crate) use openai::OpenAiInstructClient;
 #[cfg(feature = "triton")]
 pub(crate) use triton_client::Client as TritonClient;
 
-use tokio::sync::mpsc::UnboundedSender;
+use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
-use crate::openai::LanguageServiceArguments;
-use error::LlmClientError;
+use crate::openai::{LanguageServiceArguments, LlmMessage, LlmRole, PartialLlmMessage};
+pub(crate) use error::LlmClientError;
 
-pub(crate) trait LlmClientService {
+pub(crate) trait LlmClientBackend {
     async fn get_response<S: AsRef<str>>(
         &self,
         arguments: LanguageServiceArguments<'_>,
@@ -30,6 +30,45 @@ pub(crate) trait LlmClientService {
         max_tokens: u16,
         stop_phrases: Vec<S>,
     ) -> Result<(), LlmClientError>;
+}
+
+impl<T> LlmClientService for T where T: LlmClientBackend {}
+pub(crate) trait LlmClientService: LlmClientBackend {
+    async fn get_llm_answer<S: AsRef<str>>(
+        &self,
+        arguments: LanguageServiceArguments<'_>,
+        max_tokens: u16,
+        stop_phrases: Vec<S>,
+    ) -> Result<LlmMessage, LlmClientError> {
+        let message = self
+            .get_response(arguments, max_tokens, stop_phrases)
+            .await?;
+        Ok(LlmMessage {
+            role: LlmRole::Assistant,
+            content: message,
+        })
+    }
+    async fn stream_llm_answer(
+        &self,
+        arguments: LanguageServiceArguments<'_>,
+        tx: UnboundedSender<PartialLlmMessage>,
+        max_tokens: u16,
+        stop_phrases: Vec<&str>,
+    ) -> Result<(), LlmClientError> {
+        let (tx_s, mut rx_s) = unbounded_channel();
+
+        actix_web::rt::spawn(async move {
+            while let Some(content) = rx_s.recv().await {
+                let _ = tx.send(PartialLlmMessage {
+                    role: None,
+                    content: Some(content),
+                });
+            }
+        });
+        self.stream_response(arguments, tx_s, max_tokens, stop_phrases)
+            .await
+    }
+
     fn fill_rag_template(&self, arguments: LanguageServiceArguments) -> String {
         let c1 = arguments.citation_index_begin + 1;
         let c2 = arguments.citation_index_begin + 2;
@@ -52,14 +91,38 @@ pub(crate) struct LlmClient<Backend: LlmClientService> {
     client: Backend,
 }
 
+impl<Backend: LlmClientService> LlmClientBackend for LlmClient<Backend> {
+    async fn get_response<S: AsRef<str>>(
+        &self,
+        arguments: LanguageServiceArguments<'_>,
+        max_tokens: u16,
+        stop_phrases: Vec<S>,
+    ) -> Result<String, LlmClientError> {
+        self.client
+            .get_response(arguments, max_tokens, stop_phrases)
+            .await
+    }
+
+    async fn stream_response<S: AsRef<str>>(
+        &self,
+        arguments: LanguageServiceArguments<'_>,
+        tx: UnboundedSender<String>,
+        max_tokens: u16,
+        stop_phrases: Vec<S>,
+    ) -> Result<(), LlmClientError> {
+        self.client
+            .stream_response(arguments, tx, max_tokens, stop_phrases)
+            .await
+    }
+}
+
 pub(crate) enum LlmClientKind {
     #[cfg(feature = "triton")]
     Triton(LlmClient<TritonClient>),
     #[cfg(feature = "openai")]
     OpenAiInstruct(LlmClient<OpenAiInstructClient>),
 }
-
-impl LlmClientService for LlmClientKind {
+impl LlmClientBackend for LlmClientKind {
     async fn get_response<S: AsRef<str>>(
         &self,
         arguments: LanguageServiceArguments<'_>,

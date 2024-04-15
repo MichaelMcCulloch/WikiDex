@@ -17,7 +17,7 @@ impl EmbeddingClient {
         self.embedding_client.models().list().await
     }
 
-    pub(super) fn new(
+    pub(crate) fn new(
         embedding_client: Client<OpenAIConfig>,
         embedding_model_name: String,
     ) -> Self {

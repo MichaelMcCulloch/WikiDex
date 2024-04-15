@@ -3,7 +3,8 @@ use std::fmt::{Display, Formatter, Result};
 use crate::{
     docstore::DocstoreRetrieveError,
     index::IndexSearchError,
-    openai::{EmbeddingServiceError, LlmServiceError},
+    llm_client::LlmClientError,
+    openai::{EmbeddingServiceError},
 };
 
 #[derive(Debug)]
@@ -14,7 +15,7 @@ pub(crate) enum QueryEngineError {
     IndexError(IndexSearchError),
     InvalidAgentResponse,
     LastMessageIsNotUser,
-    LlmError(LlmServiceError),
+    LlmError(LlmClientError),
 }
 
 impl std::error::Error for QueryEngineError {}

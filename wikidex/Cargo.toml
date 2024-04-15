@@ -42,7 +42,7 @@ opt-level = 3
 debug = 0
 
 [features]
-default = ["postgres", "triton"]
+default = ["postgres", "openai"]
 postgres = ["sqlx/postgres"]
 sqlite = ["sqlx/sqlite"]
 triton = ["dep:triton-client"]

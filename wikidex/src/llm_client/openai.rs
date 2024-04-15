@@ -1,9 +1,9 @@
-use crate::openai::LanguageServiceArguments;
+use crate::openai::{LanguageServiceArguments};
 use async_openai::{config::OpenAIConfig, types::CreateCompletionRequestArgs, Client};
 use futures::StreamExt;
 use tokio::sync::mpsc::UnboundedSender;
 
-use super::{error::LlmClientError, LlmClient, LlmClientService};
+use super::{error::LlmClientError, LlmClient, LlmClientBackend, LlmClientService};
 
 pub(crate) struct OpenAiInstructClient {
     client: Client<OpenAIConfig>,
@@ -39,7 +39,7 @@ impl LlmClient<OpenAiInstructClient> {
     }
 }
 
-impl LlmClientService for OpenAiInstructClient {
+impl LlmClientBackend for OpenAiInstructClient {
     async fn get_response<S: AsRef<str>>(
         &self,
         arguments: LanguageServiceArguments<'_>,
@@ -106,30 +106,5 @@ impl LlmClientService for OpenAiInstructClient {
         }
 
         Ok(())
-    }
-}
-
-impl LlmClientService for LlmClient<OpenAiInstructClient> {
-    async fn get_response<S: AsRef<str>>(
-        &self,
-        arguments: LanguageServiceArguments<'_>,
-        max_tokens: u16,
-        stop_phrases: Vec<S>,
-    ) -> Result<String, LlmClientError> {
-        self.client
-            .get_response(arguments, max_tokens, stop_phrases)
-            .await
-    }
-
-    async fn stream_response<S: AsRef<str>>(
-        &self,
-        arguments: LanguageServiceArguments<'_>,
-        tx: UnboundedSender<String>,
-        max_tokens: u16,
-        stop_phrases: Vec<S>,
-    ) -> Result<(), LlmClientError> {
-        self.client
-            .stream_response(arguments, tx, max_tokens, stop_phrases)
-            .await
     }
 }

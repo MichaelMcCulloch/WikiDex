@@ -1,7 +1,7 @@
 use std::fmt::{self, Debug, Display, Formatter};
 
 #[derive(Debug)]
-pub enum LlmClientError {
+pub(crate) enum LlmClientError {
     #[cfg(feature = "triton")]
     TritonClient(triton_client::client::Error),
     #[cfg(feature = "openai")]
