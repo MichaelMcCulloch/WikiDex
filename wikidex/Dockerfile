@@ -20,18 +20,3 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update  &
 COPY --from=builder /usr/src/wikidex/build/bin/wikidex /usr/local/bin/wikidex
 
 COPY ./sqlite_dummy.db ./sqlite_dummy.db
-
-CMD wikidex \
-    server \
-    --api-key "$API_SECRET_KEY" \
-    --docstore-url "${DOCSTORE_URL}" \
-    --embed-model-name "${SBERT_MODEL_NAME}" \
-    --embed-url "${EMBED_URL}" \
-    --host 0.0.0.0 \
-    --index-url "${INDEX_URL}"\
-    --language-model-kind "${MODEL_KIND}" \
-    --language-model-name "${LLM_MODEL_NAME}" \
-    --llm-url "${VLLM_URL}" \
-    --port "${WIKIDEX_CONT_PORT}" \
-    --system-prompt-path "${SYSTEM_PROMPT_PATH}" \
-    --redis-url "${REDIS_URL}"

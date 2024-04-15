@@ -216,6 +216,35 @@ services:
     build:
       dockerfile: Dockerfile
       context: ./wikidex
+    entrypoint:
+      [
+        wikidex,
+        server,
+        --api-key,
+        "$API_SECRET_KEY",
+        --docstore-url,
+        "$DOCSTORE_URL",
+        --embed-model-name,
+        "$SBERT_MODEL_NAME",
+        --embed-url,
+        "$EMBED_URL",
+        --host,
+        0.0.0.0,
+        --index-url,
+        "$INDEX_URL",
+        --language-model-kind,
+        "$MODEL_KIND",
+        --language-model-name,
+        "$LLM_MODEL_NAME",
+        --llm-url,
+        "$VLLM_URL",
+        --port,
+        "$WIKIDEX_CONT_PORT",
+        --system-prompt-path,
+        "$SYSTEM_PROMPT_PATH",
+        --redis-url,
+        "$REDIS_URL",
+      ]
     depends_on:
       - postgres
 
