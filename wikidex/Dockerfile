@@ -8,7 +8,10 @@ WORKDIR /usr/src/wikidex
 COPY ./Cargo.toml ./Cargo.toml
 COPY ./sqlite_dummy.db ./sqlite_dummy.db
 COPY ./src ./src
+
+# TODO: REALLY FRAGILE, Migrate this to build an actual postgres image within the build container and execute sqlite_dummy.sql
 ARG DATABASE_URL="postgres://postgres:postgres@192.168.1.120:5433/postgres"
+
 RUN  \
     --mount=type=cache,target=/usr/src/wikidex/target,sharing=locked,rw cargo install --path . --root ./build 
 
