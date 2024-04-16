@@ -84,7 +84,7 @@ impl LlmClientBackend for LlmClient<TritonClient> {
             .map_err(LlmClientError::Anyhow)?
             .into_inner();
 
-        let mut contents: Vec<String> = Vec::new();
+        let mut contents: String = String::new();
         while let Some(response) = stream
             .message()
             .await
@@ -104,10 +104,10 @@ impl LlmClientBackend for LlmClient<TritonClient> {
                 .into_iter()
                 .collect();
 
-            contents.push(content);
+            contents = content;
         }
 
-        Ok(contents.into_iter().collect())
+        Ok(contents)
     }
 
     async fn stream_response<S: AsRef<str>>(
