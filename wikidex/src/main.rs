@@ -97,29 +97,6 @@ fn main() -> anyhow::Result<()> {
                     config.embed_model_name.to_string_lossy().to_string(),
                 )
             };
-            // let openai_builder =
-            //     OpenAiDelegateBuilder::with_embedding(OpenAiDelegateBuilderArgument::Endpoint(
-            //         config.embed_url,
-            //         config.api_key.clone(),
-            //         config.embed_model_name.to_str().unwrap().to_string(),
-            //     ));
-
-            // let openai = match config.language_model_kind {
-            //     ModelKind::Instruct => {
-            //         openai_builder.with_instruct(OpenAiDelegateBuilderArgument::Endpoint(
-            //             config.openai_url,
-            //             config.api_key,
-            //             config.language_model_name.to_str().unwrap().to_string(),
-            //         ))
-            //     }
-            //     ModelKind::Chat => {
-            //         openai_builder.with_chat(OpenAiDelegateBuilderArgument::Endpoint(
-            //             config.openai_url,
-            //             config.api_key,
-            //             config.language_model_name.to_str().unwrap().to_string(),
-            //         ))
-            //     }
-            // };
 
             let engine = Engine::new(
                 index,

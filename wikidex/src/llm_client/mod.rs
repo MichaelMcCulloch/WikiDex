@@ -9,8 +9,9 @@ mod triton;
 
 #[cfg(feature = "openai")]
 pub(crate) use openai::OpenAiInstructClient;
+use tonic::transport::Channel;
 #[cfg(feature = "triton")]
-pub(crate) use triton_client::Client as TritonClient;
+pub(crate) use trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient;
 
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
@@ -18,6 +19,10 @@ pub(crate) use arguments::LanguageServiceArguments;
 pub(crate) use error::LlmClientError;
 pub(crate) use protocol::{LlmMessage, LlmRole, PartialLlmMessage};
 
+#[cfg(feature = "triton")]
+pub(crate) type TritonClient = GrpcInferenceServiceClient<Channel>;
+
+pub(crate) trait LlmClientBackendKind {}
 pub(crate) trait LlmClientBackend {
     async fn get_response<S: AsRef<str>>(
         &self,
@@ -90,33 +95,8 @@ pub(crate) trait LlmClientService: LlmClientBackend {
     }
 }
 
-pub(crate) struct LlmClient<Backend: LlmClientService> {
+pub(crate) struct LlmClient<Backend: LlmClientBackendKind> {
     client: Backend,
-}
-
-impl<Backend: LlmClientService> LlmClientBackend for LlmClient<Backend> {
-    async fn get_response<S: AsRef<str>>(
-        &self,
-        arguments: LanguageServiceArguments<'_>,
-        max_tokens: u16,
-        stop_phrases: Vec<S>,
-    ) -> Result<String, LlmClientError> {
-        self.client
-            .get_response(arguments, max_tokens, stop_phrases)
-            .await
-    }
-
-    async fn stream_response<S: AsRef<str>>(
-        &self,
-        arguments: LanguageServiceArguments<'_>,
-        tx: UnboundedSender<String>,
-        max_tokens: u16,
-        stop_phrases: Vec<S>,
-    ) -> Result<(), LlmClientError> {
-        self.client
-            .stream_response(arguments, tx, max_tokens, stop_phrases)
-            .await
-    }
 }
 
 pub(crate) enum LlmClientKind {

@@ -1,9 +1,11 @@
-use crate::openai::LanguageServiceArguments;
 use async_openai::{config::OpenAIConfig, types::CreateCompletionRequestArgs, Client};
 use futures::StreamExt;
 use tokio::sync::mpsc::UnboundedSender;
 
-use super::{error::LlmClientError, LlmClient, LlmClientBackend, LlmClientService};
+use super::{
+    error::LlmClientError, LanguageServiceArguments, LlmClient, LlmClientBackend,
+    LlmClientBackendKind, LlmClientService,
+};
 
 pub(crate) struct OpenAiInstructClient {
     client: Client<OpenAIConfig>,
@@ -39,7 +41,9 @@ impl LlmClient<OpenAiInstructClient> {
     }
 }
 
-impl LlmClientBackend for OpenAiInstructClient {
+impl LlmClientBackendKind for OpenAiInstructClient {}
+
+impl LlmClientBackend for LlmClient<OpenAiInstructClient> {
     async fn get_response<S: AsRef<str>>(
         &self,
         arguments: LanguageServiceArguments<'_>,
@@ -49,7 +53,7 @@ impl LlmClientBackend for OpenAiInstructClient {
         let prompt = self.fill_rag_template(arguments);
         let request = CreateCompletionRequestArgs::default()
             .max_tokens(max_tokens)
-            .model(&self.model_name)
+            .model(&self.client.model_name)
             .n(1)
             .prompt(prompt)
             .stop(stop_phrases.iter().map(AsRef::as_ref).collect::<Vec<_>>())
@@ -57,6 +61,7 @@ impl LlmClientBackend for OpenAiInstructClient {
             .map_err(LlmClientError::OpenAiClient)?;
 
         let response = self
+            .client
             .client
             .completions()
             .create(request)
@@ -81,7 +86,7 @@ impl LlmClientBackend for OpenAiInstructClient {
         let prompt = self.fill_rag_template(arguments);
         let request = CreateCompletionRequestArgs::default()
             .max_tokens(max_tokens)
-            .model(&self.model_name)
+            .model(&self.client.model_name)
             .n(1)
             .prompt(prompt)
             .stop(stop_phrases.iter().map(AsRef::as_ref).collect::<Vec<_>>())
@@ -89,6 +94,7 @@ impl LlmClientBackend for OpenAiInstructClient {
             .map_err(LlmClientError::OpenAiClient)?;
 
         let mut stream = self
+            .client
             .client
             .completions()
             .create_stream(request)

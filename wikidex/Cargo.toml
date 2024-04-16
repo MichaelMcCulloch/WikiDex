@@ -9,6 +9,7 @@ actix-rt = "2.9.0"
 actix-web = "4.5.1"
 anyhow = "1.0.81"
 async-openai = { git = "https://github.com/MichaelMcCulloch/async-not-just-openai.git", tag = "0.20.0" }
+async-stream = { version = "0.3.5", optional = true }
 backoff = "0.4.0"
 bytes = "1.6.0"
 chrono = { version = "0.4.37", features = ["rkyv"] }
@@ -26,7 +27,8 @@ serde = "1.0.197"
 serde_json = "1.0.115"
 sqlx = { version = "0.7.4", features = ["runtime-tokio"] }
 tokio = { version = "1.37.0", features = ["rt", "macros"] }
-triton-client = { version = "0.2.0", optional = true }
+tonic = { version = "0.10.2", optional = true }
+trtllm = { git = "https://github.com/MichaelMcCulloch/trtllm.git", tag = "0.2.1-lib", optional = true }
 url = "2.5.0"
 utoipa = { version = "4.2.0", features = ["actix_extras"] }
 utoipa-redoc = { version = "3.0.0", features = ["actix-web"] }
@@ -45,5 +47,5 @@ debug = 0
 default = ["postgres", "triton"]
 postgres = ["sqlx/postgres"]
 sqlite = ["sqlx/sqlite"]
-triton = ["dep:triton-client"]
+triton = ["dep:trtllm", "dep:tonic", "dep:async-stream"]
 openai = []
