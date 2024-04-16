@@ -2,7 +2,7 @@ FROM rust:1.75.0-bookworm as builder
 
 RUN \
     --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update  && \
-    apt-get install -y ca-certificates cmake pkg-config libssl-dev liblapack-dev libblas-dev && \
+    apt-get install -y ca-certificates cmake pkg-config libssl-dev liblapack-dev libblas-dev protobuf-compiler && \
     rm -rf /var/lib/apt/lists/*
 WORKDIR /usr/src/wikidex
 COPY ./Cargo.toml ./Cargo.toml
