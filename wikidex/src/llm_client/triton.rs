@@ -91,7 +91,7 @@ impl LlmClientBackend for LlmClient<TritonClient> {
             .map_err(LlmClientError::TonicStatus)?
         {
             if !response.error_message.is_empty() {
-                return Err(LlmClientError::EmptyResponse);
+                break;
             }
             let infer_response = response
                 .infer_response
@@ -175,9 +175,7 @@ impl LlmClientBackend for LlmClient<TritonClient> {
             .map_err(LlmClientError::TonicStatus)?
         {
             if !response.error_message.is_empty() {
-                // Corresponds to https://github.com/openai/openai-python/blob/17ac6779958b2b74999c634c4ea4c7b74906027a/src/openai/_streaming.py#L113
-
-                return Err(LlmClientError::EmptyResponse);
+                break;
             }
             let infer_response = response
                 .infer_response
