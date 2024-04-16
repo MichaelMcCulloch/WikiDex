@@ -120,7 +120,7 @@ impl LlmClientBackend for LlmClient<TritonClient> {
         let prompt = self.fill_rag_template(arguments);
 
         let request = Builder::new()
-            .model_name("ensemble".to_string())
+            .model_name("tensorrt_llm_bls".to_string())
             .input(
                 "text_input",
                 [1, 1],
@@ -169,6 +169,7 @@ impl LlmClientBackend for LlmClient<TritonClient> {
             .context("failed to call triton grpc method model_stream_infer")
             .map_err(LlmClientError::Anyhow)?
             .into_inner();
+        let mut previous_response = String::new();
         while let Some(response) = stream
             .message()
             .await
@@ -189,9 +190,16 @@ impl LlmClientBackend for LlmClient<TritonClient> {
                 .map_err(LlmClientError::Utf8Error)?
                 .into_iter()
                 .collect::<String>();
+            let new_response = content.clone();
+            // https://github.com/triton-inference-server/tensorrtllm_backend/issues/112
+            let content = match content.as_str().strip_prefix(&previous_response) {
+                Some(content) => content,
+                None => content.as_str(),
+            };
+            previous_response = new_response;
 
             if !content.is_empty() {
-                let _ = tx.send(content);
+                let _ = tx.send(content.to_string());
             }
         }
         Ok(())
