@@ -6,9 +6,12 @@ mod protocol;
 mod openai;
 #[cfg(feature = "triton")]
 mod triton;
+#[cfg(feature = "triton")]
+mod triton_helper;
 
 #[cfg(feature = "openai")]
 pub(crate) use openai::OpenAiInstructClient;
+#[cfg(feature = "triton")]
 use tonic::transport::Channel;
 #[cfg(feature = "triton")]
 pub(crate) use trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient;
@@ -56,12 +59,12 @@ pub(crate) trait LlmClientService: LlmClientBackend {
             content: message,
         })
     }
-    async fn stream_llm_answer(
+    async fn stream_llm_answer<S: AsRef<str>>(
         &self,
         arguments: LanguageServiceArguments<'_>,
         tx: UnboundedSender<PartialLlmMessage>,
         max_tokens: u16,
-        stop_phrases: Vec<&str>,
+        stop_phrases: Vec<S>,
     ) -> Result<(), LlmClientError> {
         let (tx_s, mut rx_s) = unbounded_channel();
 

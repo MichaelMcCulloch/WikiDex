@@ -7,14 +7,40 @@ pub(crate) enum LlmClientError {
     #[cfg(feature = "triton")]
     Anyhow(anyhow::Error),
     #[cfg(feature = "triton")]
-    TritonClient(trtllm::error::AppError),
-    #[cfg(feature = "triton")]
     TonicError(tonic::transport::Error),
     #[cfg(feature = "triton")]
     TonicStatus(tonic::Status),
     #[cfg(feature = "openai")]
     OpenAiClient(async_openai::error::OpenAIError),
     EmptyResponse,
+}
+
+impl From<tonic::Status> for LlmClientError {
+    fn from(value: tonic::Status) -> Self {
+        Self::TonicStatus(value)
+    }
+}
+
+impl From<std::str::Utf8Error> for LlmClientError {
+    fn from(value: std::str::Utf8Error) -> Self {
+        Self::Utf8Error(value)
+    }
+}
+impl From<anyhow::Error> for LlmClientError {
+    fn from(value: anyhow::Error) -> Self {
+        Self::Anyhow(value)
+    }
+}
+impl From<tonic::transport::Error> for LlmClientError {
+    fn from(value: tonic::transport::Error) -> Self {
+        Self::TonicError(value)
+    }
+}
+#[cfg(feature = "openai")]
+impl From<async_openai::error::OpenAIError> for LlmClientError {
+    fn from(value: async_openai::error::OpenAIError) -> Self {
+        Self::OpenAiClient(value)
+    }
 }
 
 impl std::error::Error for LlmClientError {}
@@ -26,8 +52,6 @@ impl Display for LlmClientError {
             LlmClientError::Utf8Error(e) => write!(f, "LlmClientError: Utf8Error: {e:?}"),
             #[cfg(feature = "triton")]
             LlmClientError::Anyhow(e) => write!(f, "LlmClientError: Anyhow: {e:?}"),
-            #[cfg(feature = "triton")]
-            LlmClientError::TritonClient(e) => write!(f, "LlmClientError: TritonClient: {e:?}"),
             #[cfg(feature = "triton")]
             LlmClientError::TonicError(e) => write!(f, "LlmClientError: TonicError: {e:?}"),
             #[cfg(feature = "triton")]
