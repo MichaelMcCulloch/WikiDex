@@ -16,6 +16,27 @@ pub(crate) enum QueryEngineError {
     LlmError(LlmClientError),
 }
 
+impl From<DocstoreRetrieveError> for QueryEngineError {
+    fn from(value: DocstoreRetrieveError) -> Self {
+        Self::DocstoreError(value)
+    }
+}
+impl From<EmbeddingServiceError> for QueryEngineError {
+    fn from(value: EmbeddingServiceError) -> Self {
+        Self::EmbeddingServiceError(value)
+    }
+}
+impl From<IndexSearchError> for QueryEngineError {
+    fn from(value: IndexSearchError) -> Self {
+        Self::IndexError(value)
+    }
+}
+impl From<LlmClientError> for QueryEngineError {
+    fn from(value: LlmClientError) -> Self {
+        Self::LlmError(value)
+    }
+}
+
 impl std::error::Error for QueryEngineError {}
 
 impl Display for QueryEngineError {

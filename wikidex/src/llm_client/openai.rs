@@ -57,16 +57,9 @@ impl LlmClientBackend for LlmClient<OpenAiInstructClient> {
             .n(1)
             .prompt(prompt)
             .stop(stop_phrases.iter().map(AsRef::as_ref).collect::<Vec<_>>())
-            .build()
-            .map_err(LlmClientError::OpenAiClient)?;
+            .build()?;
 
-        let response = self
-            .client
-            .client
-            .completions()
-            .create(request)
-            .await
-            .map_err(LlmClientError::OpenAiClient)?;
+        let response = self.client.client.completions().create(request).await?;
 
         let response = response
             .choices
@@ -90,16 +83,14 @@ impl LlmClientBackend for LlmClient<OpenAiInstructClient> {
             .n(1)
             .prompt(prompt)
             .stop(stop_phrases.iter().map(AsRef::as_ref).collect::<Vec<_>>())
-            .build()
-            .map_err(LlmClientError::OpenAiClient)?;
+            .build()?;
 
         let mut stream = self
             .client
             .client
             .completions()
             .create_stream(request)
-            .await
-            .map_err(LlmClientError::OpenAiClient)?;
+            .await?;
 
         while let Some(Ok(fragment)) = stream.next().await {
             let response = fragment

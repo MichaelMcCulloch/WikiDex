@@ -51,8 +51,7 @@ impl<DB: Database> DocumentCache for Docstore<DB> {
         let result: Vec<Option<Document>> = redis::cmd("MGET")
             .arg(indices)
             .query_async(&mut cache)
-            .await
-            .map_err(DocstoreRetrieveError::Redis)?;
+            .await?;
         let hits = result.into_iter().flatten().collect::<Vec<_>>();
         if hits.is_empty() {
             log::debug!("Cache Miss: {indices:?}");

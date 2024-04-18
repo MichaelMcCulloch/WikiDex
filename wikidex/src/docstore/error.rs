@@ -8,9 +8,29 @@ pub enum DocstoreLoadError {
 #[derive(Debug)]
 pub enum DocstoreRetrieveError {
     IndexOutOfRange,
-    InvalidDocument,
     Database(sqlx::error::Error),
     Redis(redis::RedisError),
+}
+
+impl From<sqlx::error::Error> for DocstoreLoadError {
+    fn from(value: sqlx::error::Error) -> Self {
+        Self::Database(value)
+    }
+}
+impl From<redis::RedisError> for DocstoreLoadError {
+    fn from(value: redis::RedisError) -> Self {
+        Self::Redis(value)
+    }
+}
+impl From<sqlx::error::Error> for DocstoreRetrieveError {
+    fn from(value: sqlx::error::Error) -> Self {
+        Self::Database(value)
+    }
+}
+impl From<redis::RedisError> for DocstoreRetrieveError {
+    fn from(value: redis::RedisError) -> Self {
+        Self::Redis(value)
+    }
 }
 
 impl std::error::Error for DocstoreLoadError {}
@@ -30,9 +50,6 @@ impl Display for DocstoreRetrieveError {
         match self {
             DocstoreRetrieveError::IndexOutOfRange => {
                 write!(f, "DocstoreRetrieveError: Index out of range")
-            }
-            DocstoreRetrieveError::InvalidDocument => {
-                write!(f, "DocstoreRetrieveError: Invalid document")
             }
             DocstoreRetrieveError::Database(e) => {
                 write!(f, "DocstoreRetrieveError: Database: {e}")

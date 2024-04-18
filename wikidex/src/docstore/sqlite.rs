@@ -75,15 +75,9 @@ impl DocumentDatabase for Docstore<Sqlite> {
 impl Docstore<Sqlite> {
     pub async fn new(docstore_path: &Url, redis_url: &Url) -> Result<Self, DocstoreLoadError> {
         let docstore_path = docstore_path.as_ref();
-        let pool = SqlitePool::connect(docstore_path)
-            .await
-            .map_err(DocstoreLoadError::Database)?;
-        let client =
-            redis::Client::open(redis_url.to_string()).map_err(DocstoreLoadError::Redis)?;
-        let cache = client
-            .get_multiplexed_tokio_connection()
-            .await
-            .map_err(DocstoreLoadError::Redis)?;
+        let pool = SqlitePool::connect(docstore_path).await?;
+        let client = redis::Client::open(redis_url.to_string())?;
+        let cache = client.get_multiplexed_tokio_connection().await?;
         Ok(Docstore { pool, cache })
     }
 }

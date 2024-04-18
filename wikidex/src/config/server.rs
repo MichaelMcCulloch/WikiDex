@@ -72,8 +72,8 @@ impl Display for Config {
             embed_url,
             #[cfg(feature = "openai")]
                 openai_url: llm_url,
-            #[cfg(feature = "triton")]
-                triton_url: llm_url,
+            // #[cfg(feature = "triton")]
+            //     triton_url: llm_url,
             index_url,
             redis_url,
             ..
