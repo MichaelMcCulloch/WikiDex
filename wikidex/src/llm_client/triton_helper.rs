@@ -3,7 +3,9 @@ use std::str::Utf8Error;
 
 use anyhow::Context;
 use bytes::{Buf, Bytes};
-use trtllm::triton::request::{Builder, InferTensorData};
+use trtllm::triton::request::{Builder, InferTensorData as IFT};
+
+const UNIT: [i64; 2] = [1, 1];
 
 pub fn deserialize_bytes_tensor(encoded_tensor: Vec<u8>) -> Result<Vec<String>, Utf8Error> {
     let mut bytes = Bytes::from(encoded_tensor);
@@ -25,42 +27,31 @@ pub(crate) fn create_request<S: AsRef<str>>(
     max_tokens: u16,
     stop_phrases: Vec<S>,
 ) -> Result<trtllm::triton::ModelInferRequest, anyhow::Error> {
-    Builder::new()
+    Builder::default()
         .model_name("ensemble".to_string())
         .input(
             "text_input",
-            [1, 1],
-            InferTensorData::Bytes(vec![prompt.as_bytes().to_vec()]),
+            UNIT,
+            IFT::Bytes(vec![prompt.as_bytes().to_vec()]),
         )
-        .input(
-            "max_tokens",
-            [1, 1],
-            InferTensorData::Int32(vec![max_tokens as i32]),
-        )
-        .input(
-            "bad_words",
-            [1, 1],
-            InferTensorData::Bytes(vec!["".as_bytes().to_vec()]),
-        )
+        .input("max_tokens", UNIT, IFT::Int32(vec![max_tokens as i32]))
+        .input("bad_words", UNIT, IFT::Bytes(vec!["".as_bytes().to_vec()]))
         .input(
             "stop_words",
-            [1, 1],
-            InferTensorData::Bytes(
+            UNIT,
+            IFT::Bytes(
                 stop_phrases
                     .into_iter()
                     .map(|s| s.as_ref().to_string().into_bytes())
                     .collect(),
             ),
         )
-        .input("top_p", [1, 1], InferTensorData::FP32(vec![1.0f32]))
-        .input("temperature", [1, 1], InferTensorData::FP32(vec![1.0f32]))
-        .input(
-            "presence_penalty",
-            [1, 1],
-            InferTensorData::FP32(vec![0.0f32]),
-        )
-        .input("beam_width", [1, 1], InferTensorData::Int32(vec![1i32]))
-        .input("stream", [1, 1], InferTensorData::Bool(vec![stream]))
+        .input("top_p", UNIT, IFT::FP32(vec![1.0f32]))
+        .input("temperature", UNIT, IFT::FP32(vec![1.0f32]))
+        .input("frequency_penalty", UNIT, IFT::FP32(vec![0.0f32]))
+        .input("presence_penalty", UNIT, IFT::FP32(vec![0.0f32]))
+        .input("beam_width", UNIT, IFT::Int32(vec![1i32]))
+        .input("stream", UNIT, IFT::Bool(vec![stream]))
         .output("text_output")
         .build()
         .context("Failed")
