@@ -64,8 +64,8 @@ mod test {
 
         let provenance = Provenance::Wikipedia(
             "Austrian German".to_string(),
-            NaiveDate::from_ymd_opt(2023, 10, 01).unwrap(),
-            NaiveDate::from_ymd_opt(2023, 10, 01).unwrap(),
+            NaiveDate::from_ymd_opt(2023, 10, 1).unwrap(),
+            NaiveDate::from_ymd_opt(2023, 10, 1).unwrap(),
         );
 
         assert_eq!(expected, provenance.format(&CitationStyle::MLA))
@@ -76,8 +76,8 @@ mod test {
 
         let provenance = Provenance::Wikipedia(
             "Austrian German".to_string(),
-            NaiveDate::from_ymd_opt(2023, 10, 01).unwrap(),
-            NaiveDate::from_ymd_opt(2023, 10, 01).unwrap(),
+            NaiveDate::from_ymd_opt(2023, 10, 1).unwrap(),
+            NaiveDate::from_ymd_opt(2023, 10, 1).unwrap(),
         );
 
         assert_eq!(expected, provenance.format(&CitationStyle::APA))
@@ -88,8 +88,8 @@ mod test {
 
         let provenance = Provenance::Wikipedia(
             "Austrian German".to_string(),
-            NaiveDate::from_ymd_opt(2023, 10, 01).unwrap(),
-            NaiveDate::from_ymd_opt(2023, 10, 01).unwrap(),
+            NaiveDate::from_ymd_opt(2023, 10, 1).unwrap(),
+            NaiveDate::from_ymd_opt(2023, 10, 1).unwrap(),
         );
 
         assert_eq!(expected, provenance.format(&CitationStyle::Chigago))
