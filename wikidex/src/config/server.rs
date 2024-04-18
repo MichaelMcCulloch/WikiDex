@@ -7,6 +7,7 @@ use crate::cli_args::ServerArgs;
 
 #[derive(Debug)]
 pub(crate) struct Config {
+    #[cfg(feature = "openai")]
     pub(crate) api_key: Option<String>,
     pub(crate) docstore_url: Url,
     pub(crate) embed_model_name: PathBuf,
@@ -44,6 +45,7 @@ impl ConfigUrl for Config {
 impl From<ServerArgs> for Config {
     fn from(value: ServerArgs) -> Self {
         Config {
+            #[cfg(feature = "openai")]
             api_key: value.api_key,
             docstore_url: value.docstore_url,
             embed_model_name: value.embed_model_name,
