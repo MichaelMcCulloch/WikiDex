@@ -6,6 +6,12 @@ pub(crate) enum EmbeddingServiceError {
     EmbeddingSizeMismatch(usize, usize),
 }
 
+impl From<async_openai::error::OpenAIError> for EmbeddingServiceError {
+    fn from(value: async_openai::error::OpenAIError) -> Self {
+        Self::AsyncOpenAiError(value)
+    }
+}
+
 impl std::error::Error for EmbeddingServiceError {}
 
 impl Display for EmbeddingServiceError {

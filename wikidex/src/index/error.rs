@@ -9,6 +9,12 @@ pub enum IndexSearchError {
     QueryError(Error<QueryError>),
 }
 
+impl From<Error<QueryError>> for IndexSearchError {
+    fn from(value: Error<QueryError>) -> Self {
+        IndexSearchError::QueryError(value)
+    }
+}
+
 impl StdError for IndexSearchError {}
 
 impl Display for IndexSearchError {

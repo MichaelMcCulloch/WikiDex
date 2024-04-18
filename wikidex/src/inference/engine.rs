@@ -1,5 +1,3 @@
-
-
 use bytes::Bytes;
 
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
@@ -76,8 +74,7 @@ impl Engine {
                 let LlmMessage { role, content } = self
                     .llm_client
                     .get_llm_answer(llm_service_arguments, 2048u16, stop_phrases)
-                    .await
-                    .map_err(QueryEngineError::LlmError)?;
+                    .await?;
 
                 match role {
                     LlmRole::Assistant => {
@@ -126,8 +123,7 @@ impl Engine {
                 };
                 self.llm_client
                     .stream_llm_answer(llm_service_arguments, tx_p, 2048u16, stop_phrases)
-                    .await
-                    .map_err(QueryEngineError::LlmError)?;
+                    .await?;
 
                 Ok(())
             }
@@ -141,23 +137,14 @@ impl Engine {
         user_query: &str,
         num_sources_already_in_chat: usize,
     ) -> Result<(Vec<Source>, String), QueryEngineError> {
-        let embedding = self
-            .embed_client
-            .embed(user_query)
-            .await
-            .map_err(QueryEngineError::EmbeddingServiceError)?;
+        let embedding = self.embed_client.embed(user_query).await?;
 
         let document_indices = self
             .index
             .search(embedding, NUM_DOCUMENTS_TO_RETRIEVE)
-            .await
-            .map_err(QueryEngineError::IndexError)?;
+            .await?;
 
-        let documents = self
-            .docstore
-            .retreive(&document_indices)
-            .await
-            .map_err(QueryEngineError::DocstoreError)?;
+        let documents = self.docstore.retreive(&document_indices).await?;
 
         let formatted_documents = documents
             .iter()

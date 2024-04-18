@@ -37,15 +37,9 @@ impl EmbeddingClientService for EmbeddingClient {
             CreateEmbeddingRequestArgs::default()
                 .model(&self.embedding_model_name)
                 .input(&queries)
-                .build()
-                .map_err(EmbeddingServiceError::AsyncOpenAiError)?;
+                .build()?;
 
-        let response = self
-            .embedding_client
-            .embeddings()
-            .create(request)
-            .await
-            .map_err(EmbeddingServiceError::AsyncOpenAiError)?;
+        let response = self.embedding_client.embeddings().create(request).await?;
 
         if response.data.len() != queries.len() {
             Err(EmbeddingServiceError::EmbeddingSizeMismatch(
@@ -64,15 +58,9 @@ impl EmbeddingClientService for EmbeddingClient {
         let request = CreateEmbeddingRequestArgs::default()
             .model(&self.embedding_model_name)
             .input([query])
-            .build()
-            .map_err(EmbeddingServiceError::AsyncOpenAiError)?;
+            .build()?;
 
-        let response = self
-            .embedding_client
-            .embeddings()
-            .create(request)
-            .await
-            .map_err(EmbeddingServiceError::AsyncOpenAiError)?;
+        let response = self.embedding_client.embeddings().create(request).await?;
 
         if response.data.len() > 1 {
             Err(EmbeddingServiceError::EmbeddingSizeMismatch(

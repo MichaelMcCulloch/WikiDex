@@ -15,22 +15,26 @@ pub(crate) enum LlmClientError {
     EmptyResponse,
 }
 
+#[cfg(feature = "triton")]
 impl From<tonic::Status> for LlmClientError {
     fn from(value: tonic::Status) -> Self {
         Self::TonicStatus(value)
     }
 }
 
+#[cfg(feature = "triton")]
 impl From<std::str::Utf8Error> for LlmClientError {
     fn from(value: std::str::Utf8Error) -> Self {
         Self::Utf8Error(value)
     }
 }
+#[cfg(feature = "triton")]
 impl From<anyhow::Error> for LlmClientError {
     fn from(value: anyhow::Error) -> Self {
         Self::Anyhow(value)
     }
 }
+#[cfg(feature = "triton")]
 impl From<tonic::transport::Error> for LlmClientError {
     fn from(value: tonic::transport::Error) -> Self {
         Self::TonicError(value)
