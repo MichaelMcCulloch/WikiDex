@@ -73,7 +73,7 @@ fn main() -> anyhow::Result<()> {
             let index = FaceIndex::new(config.index_url);
 
             #[cfg(feature = "triton")]
-            let _llm_client = {
+            let llm_client = {
                 let triton_client = system_runner
                     .block_on(LlmClient::<TritonClient>::new(config.triton_url.as_str()))?;
 

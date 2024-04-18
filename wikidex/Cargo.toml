@@ -44,7 +44,7 @@ opt-level = 3
 debug = 0
 
 [features]
-default = ["postgres", "openai", "triton"]
+default = ["postgres", "triton"]
 postgres = ["sqlx/postgres"]
 sqlite = ["sqlx/sqlite"]
 triton = ["dep:trtllm", "dep:tonic", "dep:async-stream"]
