@@ -60,13 +60,11 @@ impl DocumentDatabase for Docstore<Postgres> {
 
         let result = indices
             .iter()
-            .enumerate()
-            .filter_map(|(array_index, docstore_index)| {
+            .filter_map(|docstore_index| {
                 let (index, doc_text, document_provenance) =
                     docs.iter().find(|d| d.0 == *docstore_index)?;
                 Some(Document {
                     index: *index,
-                    ordinal: array_index + 1,
                     text: doc_text.clone(),
                     provenance: document_provenance.clone(),
                 })

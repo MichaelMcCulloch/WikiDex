@@ -61,7 +61,6 @@ impl DocumentDatabase for Docstore<Sqlite> {
                     docs.iter().find(|d| d.0 == *docstore_index)?;
                 Some(Document {
                     index: *index,
-                    ordinal: array_index + 1,
                     text: doc_text.clone(),
                     provenance: document_provenance.clone(),
                 })

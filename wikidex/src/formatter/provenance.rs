@@ -23,13 +23,13 @@ impl Cite for Provenance {
                     let edit_date = edit_date.format("%-d %B %Y");
                     format!("\"{title}\" Wikipedia. Last modified {edit_date}, Accessed {access_date}, {article_url}.")
                 }
-                CitationStyle::MLA => {
+                CitationStyle::Mla => {
                     let article_url = self.url();
                     let access_date = access_date.format("%-d %B %Y");
                     let edit_date = edit_date.format("%-d %B %Y");
                     format!("\"{title}\" Wikipedia, Wikimedia Foundation, {edit_date}, {article_url}. Accessed {access_date}.")
                 }
-                CitationStyle::APA => {
+                CitationStyle::Apa => {
                     let article_url = self.url();
                     let access_date = access_date.format("%B %-d, %Y");
                     let edit_date = edit_date.format("%Y, %B %-d");
@@ -68,7 +68,7 @@ mod test {
             NaiveDate::from_ymd_opt(2023, 10, 1).unwrap(),
         );
 
-        assert_eq!(expected, provenance.format(&CitationStyle::MLA))
+        assert_eq!(expected, provenance.format(&CitationStyle::Mla))
     }
     #[test]
     fn wiki_apa() {
@@ -80,7 +80,7 @@ mod test {
             NaiveDate::from_ymd_opt(2023, 10, 1).unwrap(),
         );
 
-        assert_eq!(expected, provenance.format(&CitationStyle::APA))
+        assert_eq!(expected, provenance.format(&CitationStyle::Apa))
     }
     #[test]
     fn wiki_chicago() {
