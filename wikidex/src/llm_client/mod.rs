@@ -81,20 +81,18 @@ pub(crate) trait LlmClientService: LlmClientBackend {
     }
 
     fn fill_rag_template(&self, arguments: LanguageServiceArguments) -> String {
-        let c1 = arguments.citation_index_begin + 1;
-        let c2 = arguments.citation_index_begin + 2;
-        let c3 = arguments.citation_index_begin + 3;
-        let c4 = arguments.citation_index_begin + 4;
-
-        arguments
+        let mut replace_query = arguments
             .system
-            .replace("$$$USER_QUERY$$$", arguments.query)
-            .replace("$$$URL$$$", "http://localhost")
-            .replace("$$$CITE1$$$", &c1.to_string())
-            .replace("$$$CITE2$$$", &c2.to_string())
-            .replace("$$$CITE3$$$", &c3.to_string())
-            .replace("$$$CITE4$$$", &c4.to_string())
-            .replace("$$$DOCUMENT_LIST$$$", arguments.documents)
+            .replace("$$$USER_QUERY$$$", arguments.query);
+
+        for (index, source) in arguments.sources.iter().enumerate() {
+            replace_query = replace_query.replace(
+                format!("$$$CITE{}$$$", index + 1).as_str(),
+                format!("{}", source.index).as_str(),
+            );
+        }
+
+        replace_query.replace("$$$DOCUMENT_LIST$$$", arguments.documents)
     }
 }
 

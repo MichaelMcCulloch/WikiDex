@@ -44,8 +44,8 @@ x-base_service_triton: &base_triton
     dockerfile: Dockerfile
   volumes:
     - ~/.cache/huggingface/hub/:/root/.cache/huggingface/hub
-    - ~/.cache/TensorRT/TritonConfigs/Mistral-7B-Instruct-v0.2-AWQ-TRT/:/all_models/inflight_batcher_llm/
-    - ~/.cache/TensorRT/Engine/Mistral-7B-Instruct-v0.2-AWQ-TRT-128x32768/:/all_models/inflight_batcher_llm/tensorrt_llm/1/
+    - ~/.cache/TensorRT/TritonConfigs/${TRITON_ENGINE_NAME}/:/all_models/inflight_batcher_llm/
+    - ~/.cache/TensorRT/Engine/${TRITON_ENGINE_NAME}-128x32768/:/all_models/inflight_batcher_llm/tensorrt_llm/1/
   ports:
     - 8000:8000
     - 8001:8001
@@ -312,7 +312,7 @@ services:
     entrypoint: [face, --index-path, $INDEX_PATH]
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 1
 
   haproxy:
     <<:

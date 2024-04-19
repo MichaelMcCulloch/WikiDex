@@ -5,7 +5,7 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 use crate::{
     docstore::{DocumentStore, DocumentStoreKind},
     embedding_client::{EmbeddingClient, EmbeddingClientService},
-    formatter::{CitationStyle, Cite, DocumentFormatter, TextFormatter},
+    formatter::{CitationStyle, Cite, TextFormatter},
     index::{FaceIndex, SearchService},
     llm_client::{
         LanguageServiceArguments, LlmClientKind, LlmClientService, LlmMessage, LlmRole,
@@ -68,7 +68,7 @@ impl Engine {
                     system: &self.system_prompt,
                     documents: &formatted_documents,
                     query: &user_query,
-                    citation_index_begin: num_sources,
+                    sources: &sources,
                 };
 
                 let LlmMessage { role, content } = self
@@ -100,10 +100,10 @@ impl Engine {
                     self.get_documents(&user_query, num_sources).await?;
 
                 let (tx_p, mut rx_p) = unbounded_channel();
-
-                sources.into_iter().for_each(|source| {
-                    let _ = tx.send(PartialMessage::source(source).message());
-                });
+                // TODO, send the correct source when the llm mentions it
+                // sources.clone().into_iter().for_each(|source| {
+                //     let _ = tx.send(PartialMessage::source(source).message());
+                // });
 
                 actix_web::rt::spawn(async move {
                     while let Some(PartialLlmMessage {
@@ -119,7 +119,7 @@ impl Engine {
                     system: &self.system_prompt,
                     documents: &formatted_documents,
                     query: &user_query,
-                    citation_index_begin: num_sources,
+                    sources: &sources,
                 };
                 self.llm_client
                     .stream_llm_answer(llm_service_arguments, tx_p, 2048u16, stop_phrases)
@@ -148,13 +148,7 @@ impl Engine {
 
         let formatted_documents = documents
             .iter()
-            .map(|document| {
-                DocumentFormatter::format_document(
-                    document.ordinal + num_sources_already_in_chat,
-                    &document.provenance.title(),
-                    &document.text,
-                )
-            })
+            .map(|document| document.format_document())
             .collect::<Vec<String>>()
             .join("\n\n");
 
