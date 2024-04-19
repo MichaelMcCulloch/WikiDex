@@ -217,7 +217,6 @@ impl Engine {
                 origin_text: document.text,
             })
             .collect::<Vec<_>>();
-        log::info!("{sources:?}");
         Ok((sources, formatted_documents))
     }
 }
