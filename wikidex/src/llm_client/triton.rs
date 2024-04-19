@@ -64,7 +64,6 @@ impl LlmClientBackend for LlmClient<TritonClient> {
         stop_phrases: Vec<S>,
     ) -> Result<(), LlmClientError> {
         let prompt = self.fill_rag_template(arguments);
-        log::info!("{prompt}");
         let request = create_request(prompt, true, max_tokens, stop_phrases)?;
         let request = stream! { yield request };
         let request = tonic::Request::new(request);
