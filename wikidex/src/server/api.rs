@@ -112,7 +112,7 @@ async fn streaming_conversation(
     let (client, sender) = Client::new();
     actix_web::rt::spawn(async move {
         let _ = query_engine
-            .streaming_conversation(conversation_1, sender, vec![&"References:"])
+            .streaming_conversation(conversation_1, sender, vec![&"References"])
             .await
             .map_err(|e| log::error!("{e}"));
     });

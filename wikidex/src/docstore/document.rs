@@ -1,7 +1,7 @@
 use redis::{FromRedisValue, RedisError, RedisResult, ToRedisArgs, Value};
 use rkyv::{archived_root, Archive, Deserialize, Infallible, Serialize};
 
-use crate::formatter::Provenance;
+use crate::formatter::{Provenance, TextFormatter};
 #[derive(Clone, Serialize, Deserialize, Archive, Debug)]
 pub(crate) struct Document {
     pub(crate) index: i64,
@@ -33,5 +33,11 @@ impl ToRedisArgs for Document {
     {
         let bytes = rkyv::to_bytes::<_, 2048>(self).unwrap();
         out.write_arg(&bytes);
+    }
+}
+
+impl TextFormatter for Document {
+    fn format_document(&self) -> String {
+        format!("{}.\n{}\n", self.index, self.text)
     }
 }
