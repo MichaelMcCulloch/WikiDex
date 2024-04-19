@@ -5,7 +5,6 @@ use crate::formatter::{Provenance, TextFormatter};
 #[derive(Clone, Serialize, Deserialize, Archive, Debug)]
 pub(crate) struct Document {
     pub(crate) index: i64,
-    pub(crate) ordinal: usize,
     pub(crate) text: String,
     pub(crate) provenance: Provenance,
 }

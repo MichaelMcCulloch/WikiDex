@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 // type Source = (String, String, String, String);
-#[derive(Serialize, Deserialize, ToSchema, Debug)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 #[schema(example = assistant_message_schema_example)]
 pub(crate) struct Source {
     pub(crate) ordinal: usize,
