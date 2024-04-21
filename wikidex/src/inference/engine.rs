@@ -68,7 +68,7 @@ impl Engine {
                     system: &self.system_prompt,
                     documents: &formatted_documents,
                     query: &user_query,
-                    sources: &sources,
+                    indices: &sources.iter().map(|d| d.index).collect(),
                 };
 
                 let LlmMessage { role, content } = self
@@ -173,7 +173,7 @@ impl Engine {
                     system: &self.system_prompt,
                     documents: &formatted_documents,
                     query: &user_query,
-                    sources: &sources,
+                    indices: &sources.iter().map(|d| d.index).collect(),
                 };
                 self.llm_client
                     .stream_llm_answer(llm_service_arguments, tx_p, 2048u16, stop_phrases)

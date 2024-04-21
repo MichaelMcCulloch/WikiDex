@@ -64,7 +64,7 @@ opt-level = 3
 debug = 0
 
 [features]
-default = ["postgres", "triton", "server", "ingest"]
+default = ["postgres", "triton", "server"]
 server = [
     "dep:actix-cors",
     "dep:async-stream",
