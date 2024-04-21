@@ -10,6 +10,7 @@ actix-rt = "2.9.0"
 actix-web = "4.5.1"
 anyhow = "1.0.81"
 async-openai = { git = "https://github.com/MichaelMcCulloch/async-not-just-openai.git", tag = "0.20.0" }
+async-stream = { version = "0.3.5" }
 backoff = "0.4.0"
 bytes = "1.6.0"
 chrono = { version = "0.4.37", features = ["rkyv"] }
@@ -24,19 +25,18 @@ serde = "1.0.197"
 serde_json = "1.0.115"
 sqlx = { version = "0.7.4", features = ["runtime-tokio"] }
 tokio = { version = "1.37.0", features = ["rt", "macros"] }
+tonic = { version = "0.11.0" }
+trtllm = { git = "https://github.com/MichaelMcCulloch/trtllm.git", tag = "0.2.1-lib" }
 url = "2.5.0"
 
 # Server
 actix-cors = { version = "0.7.0", optional = true }
-async-stream = { version = "0.3.5", optional = true }
 face-api = { git = "https://github.com/MichaelMcCulloch/face-api.git", tag = "0.1.1", optional = true }
 redis = { version = "0.25.3", features = [
     "aio",
     "tokio-comp",
 ], optional = true }
 rkyv = { version = "0.7.44", features = ["std", "bytecheck"], optional = true }
-tonic = { version = "0.11.0", optional = true }
-trtllm = { git = "https://github.com/MichaelMcCulloch/trtllm.git", tag = "0.2.1-lib", optional = true }
 utoipa = { version = "4.2.0", features = ["actix_extras"], optional = true }
 utoipa-redoc = { version = "3.0.0", features = ["actix-web"], optional = true }
 utoipa-swagger-ui = { version = "6.0.0", features = [
@@ -64,15 +64,12 @@ opt-level = 3
 debug = 0
 
 [features]
-default = ["postgres", "triton", "server", "ingest"]
+default = ["postgres", "server", "ingest"]
 server = [
     "dep:actix-cors",
-    "dep:async-stream",
     "dep:face-api",
     "dep:redis",
     "dep:rkyv",
-    "dep:tonic",
-    "dep:trtllm",
     "dep:utoipa",
     "dep:utoipa-redoc",
     "dep:utoipa-swagger-ui",
@@ -88,5 +85,3 @@ ingest = [
 ]
 postgres = ["sqlx/postgres"]
 sqlite = ["sqlx/sqlite"]
-triton = ["dep:trtllm", "dep:tonic", "dep:async-stream"]
-openai = []

@@ -20,9 +20,9 @@ mod ingest;
 mod server;
 #[cfg(feature = "ingest")]
 use crate::ingest::wikipedia::Engine as WikipediaIngestEngine;
-#[cfg(feature = "openai")]
+
+use crate::llm_client::ModelEndpoint;
 use crate::llm_client::OpenAiInstructClient;
-#[cfg(feature = "triton")]
 use crate::llm_client::TritonClient;
 
 use actix_web::rt;
@@ -50,8 +50,7 @@ use config::ingest::Config as IngestConfig;
 use config::server::Config as ServerConfig;
 
 use clap::Parser;
-#[cfg(all(feature = "triton", feature = "openai"))]
-compile_error!("features `triton` and `openai` are mutually exclusive");
+
 #[cfg(all(feature = "sqlite", feature = "postgres"))]
 compile_error!("features `sqlite` and `postgres` are mutually exclusive");
 fn main() -> anyhow::Result<()> {
@@ -73,30 +72,35 @@ fn main() -> anyhow::Result<()> {
 
             log::info!("\n{config}");
 
-            #[cfg(feature = "triton")]
-            let llm_client = {
-                let triton_client = system_runner
-                    .block_on(LlmClient::<TritonClient>::new(config.triton_url.as_str()))?;
+            let llm_client = match config.llm_endpoint {
+                ModelEndpoint::Triton => {
+                    let triton_client = system_runner
+                        .block_on(LlmClient::<TritonClient>::new(config.llm_url.as_str()))?;
 
-                LlmClientImpl::Triton(triton_client)
-            };
-            #[cfg(feature = "openai")]
-            let llm_client = {
-                let triton_client =
-                    system_runner.block_on(LlmClient::<OpenAiInstructClient>::new(
-                        config.openai_url.clone(), // Clone here because temporary use below
-                        config.language_model_name.to_str().unwrap(),
-                    ))?;
+                    LlmClientImpl::Triton(triton_client)
+                }
+                ModelEndpoint::OpenAi => {
+                    let triton_client =
+                        system_runner.block_on(LlmClient::<OpenAiInstructClient>::new(
+                            config.llm_url.clone(), // Clone here because temporary use below
+                            config.llm_name.to_str().unwrap(),
+                        ))?;
 
-                LlmClientImpl::OpenAiInstruct(triton_client)
+                    LlmClientImpl::OpenAiInstruct(triton_client)
+                }
             };
-            let embed_client = {
-                let openai_config = OpenAIConfig::new().with_api_base(config.embed_url.as_ref());
-                let open_ai_client: Client<OpenAIConfig> = Client::with_config(openai_config);
-                EmbeddingClient::new(
-                    open_ai_client,
-                    config.embed_model_name.to_string_lossy().to_string(),
-                )
+
+            let embed_client = match config.embed_endpoint {
+                ModelEndpoint::Triton => todo!(),
+                ModelEndpoint::OpenAi => {
+                    let openai_config =
+                        OpenAIConfig::new().with_api_base(config.embed_url.as_ref());
+                    let open_ai_client: Client<OpenAIConfig> = Client::with_config(openai_config);
+                    EmbeddingClient::new(
+                        open_ai_client,
+                        config.embed_name.to_string_lossy().to_string(),
+                    )
+                }
             };
 
             let engine =
@@ -143,30 +147,35 @@ fn main() -> anyhow::Result<()> {
 
             let index = FaceIndex::new(config.index_url);
 
-            #[cfg(feature = "triton")]
-            let llm_client = {
-                let triton_client = system_runner
-                    .block_on(LlmClient::<TritonClient>::new(config.triton_url.as_str()))?;
+            let llm_client = match config.llm_endpoint {
+                ModelEndpoint::Triton => {
+                    let triton_client = system_runner
+                        .block_on(LlmClient::<TritonClient>::new(config.llm_url.as_str()))?;
 
-                LlmClientImpl::Triton(triton_client)
-            };
-            #[cfg(feature = "openai")]
-            let llm_client = {
-                let triton_client =
-                    system_runner.block_on(LlmClient::<OpenAiInstructClient>::new(
-                        config.openai_url.clone(), // Clone here because temporary use below
-                        config.language_model_name.to_str().unwrap(),
-                    ))?;
+                    LlmClientImpl::Triton(triton_client)
+                }
+                ModelEndpoint::OpenAi => {
+                    let triton_client =
+                        system_runner.block_on(LlmClient::<OpenAiInstructClient>::new(
+                            config.llm_url.clone(), // Clone here because temporary use below
+                            config.llm_name.to_str().unwrap(),
+                        ))?;
 
-                LlmClientImpl::OpenAiInstruct(triton_client)
+                    LlmClientImpl::OpenAiInstruct(triton_client)
+                }
             };
-            let embed_client = {
-                let openai_config = OpenAIConfig::new().with_api_base(config.embed_url.as_ref());
-                let open_ai_client: Client<OpenAIConfig> = Client::with_config(openai_config);
-                EmbeddingClient::new(
-                    open_ai_client,
-                    config.embed_model_name.to_string_lossy().to_string(),
-                )
+
+            let embed_client = match config.embed_endpoint {
+                ModelEndpoint::Triton => todo!(),
+                ModelEndpoint::OpenAi => {
+                    let openai_config =
+                        OpenAIConfig::new().with_api_base(config.embed_url.as_ref());
+                    let open_ai_client: Client<OpenAIConfig> = Client::with_config(openai_config);
+                    EmbeddingClient::new(
+                        open_ai_client,
+                        config.embed_name.to_string_lossy().to_string(),
+                    )
+                }
             };
 
             let engine = Engine::new(

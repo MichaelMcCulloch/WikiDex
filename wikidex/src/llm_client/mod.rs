@@ -1,20 +1,17 @@
 mod arguments;
+mod endpoint;
 mod error;
 mod kind;
-mod protocol;
-
-#[cfg(feature = "openai")]
 mod openai;
-#[cfg(feature = "triton")]
+mod protocol;
 mod triton;
-#[cfg(feature = "triton")]
 mod triton_helper;
 
-#[cfg(feature = "openai")]
+pub(crate) use endpoint::{ModelEndpoint};
 pub(crate) use openai::OpenAiInstructClient;
-#[cfg(feature = "triton")]
+
 use tonic::transport::Channel;
-#[cfg(feature = "triton")]
+
 pub(crate) use trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient;
 
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
@@ -24,7 +21,6 @@ pub(crate) use error::LlmClientError;
 pub(crate) use kind::ModelKind;
 pub(crate) use protocol::{LlmMessage, LlmRole, PartialLlmMessage};
 
-#[cfg(feature = "triton")]
 pub(crate) type TritonClient = GrpcInferenceServiceClient<Channel>;
 
 pub(crate) trait LlmClientBackendKind {}
@@ -103,9 +99,8 @@ pub(crate) struct LlmClient<Backend: LlmClientBackendKind> {
 }
 
 pub(crate) enum LlmClientImpl {
-    #[cfg(feature = "triton")]
     Triton(LlmClient<TritonClient>),
-    #[cfg(feature = "openai")]
+
     OpenAiInstruct(LlmClient<OpenAiInstructClient>),
 }
 impl LlmClientBackend for LlmClientImpl {
@@ -116,9 +111,8 @@ impl LlmClientBackend for LlmClientImpl {
         stop_phrases: Vec<S>,
     ) -> Result<String, LlmClientError> {
         match self {
-            #[cfg(feature = "triton")]
             LlmClientImpl::Triton(t) => t.get_response(arguments, max_tokens, stop_phrases).await,
-            #[cfg(feature = "openai")]
+
             LlmClientImpl::OpenAiInstruct(o) => {
                 o.get_response(arguments, max_tokens, stop_phrases).await
             }
@@ -133,12 +127,11 @@ impl LlmClientBackend for LlmClientImpl {
         stop_phrases: Vec<S>,
     ) -> Result<(), LlmClientError> {
         match self {
-            #[cfg(feature = "triton")]
             LlmClientImpl::Triton(t) => {
                 t.stream_response(arguments, tx, max_tokens, stop_phrases)
                     .await
             }
-            #[cfg(feature = "openai")]
+
             LlmClientImpl::OpenAiInstruct(o) => {
                 o.stream_response(arguments, tx, max_tokens, stop_phrases)
                     .await
