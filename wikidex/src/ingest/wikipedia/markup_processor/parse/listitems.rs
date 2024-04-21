@@ -6,7 +6,7 @@ use super::{
 };
 
 pub(super) fn unordered_list_items_to_string(
-    list_items: &Vec<ListItem<'_>>,
+    list_items: &[ListItem<'_>],
     regexes: &Regexes,
 ) -> ParseResult {
     let mut documents = vec![];
@@ -19,7 +19,7 @@ pub(super) fn unordered_list_items_to_string(
 }
 
 pub(super) fn ordered_list_items_to_string(
-    list_items: &Vec<ListItem<'_>>,
+    list_items: &[ListItem<'_>],
     regexes: &Regexes,
 ) -> ParseResult {
     let mut documents = vec![];
