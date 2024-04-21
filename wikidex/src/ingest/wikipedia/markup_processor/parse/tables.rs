@@ -9,8 +9,8 @@ use super::{
 
 pub(super) fn table_to_string(
     regexes: &Regexes,
-    captions: &Vec<TableCaption<'_>>,
-    rows: &Vec<TableRow<'_>>,
+    captions: &[TableCaption<'_>],
+    rows: &[TableRow<'_>],
 ) -> Result<String, WikiMarkupProcessingError> {
     let captions = table_captions_to_string(captions, regexes)?;
 
@@ -28,7 +28,7 @@ pub(super) fn table_to_string(
 }
 
 pub(super) fn table_captions_to_string(
-    table_captions: &Vec<TableCaption<'_>>,
+    table_captions: &[TableCaption<'_>],
     regexes: &Regexes,
 ) -> Result<Option<String>, WikiMarkupProcessingError> {
     if table_captions.is_empty() {
@@ -43,7 +43,7 @@ pub(super) fn table_captions_to_string(
 }
 
 pub(super) fn table_rows_to_string(
-    table_rows: &Vec<TableRow<'_>>,
+    table_rows: &[TableRow<'_>],
     regexes: &Regexes,
 ) -> Result<Option<String>, WikiMarkupProcessingError> {
     if table_rows.is_empty() {
@@ -59,7 +59,7 @@ pub(super) fn table_rows_to_string(
 }
 
 pub(super) fn table_cells_to_string(
-    table_cells: &Vec<TableCell<'_>>,
+    table_cells: &[TableCell<'_>],
     regexes: &Regexes,
 ) -> Result<Option<String>, WikiMarkupProcessingError> {
     if table_cells.is_empty() {
@@ -216,7 +216,7 @@ mod tests_table_cell_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_cells_to_string(&vec![input, input2], &regex)
+        let extraction = table_cells_to_string(&[input, input2], &regex)
             .unwrap()
             .unwrap();
         assert_eq!(
@@ -265,7 +265,7 @@ mod tests_table_cell_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_cells_to_string(&vec![input, input2], &regex)
+        let extraction = table_cells_to_string(&[input, input2], &regex)
             .unwrap()
             .unwrap();
         assert_eq!(
@@ -382,7 +382,7 @@ mod tests_table_cell_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_rows_to_string(&vec![input, input2], &regex)
+        let extraction = table_rows_to_string(&[input, input2], &regex)
             .unwrap()
             .unwrap();
         assert_eq!(
@@ -452,7 +452,7 @@ mod tests_table_cell_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_to_string(&regex, &vec![caption], &vec![row]).unwrap();
+        let extraction = table_to_string(&regex, &[caption], &[row]).unwrap();
         assert_eq!(
             format!("\ncaption='{caption_content_text}'\n|{row_content_text}|\n"),
             extraction

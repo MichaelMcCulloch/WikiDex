@@ -24,7 +24,7 @@ pub(super) fn definition_list_item_to_string(
 }
 
 pub(super) fn definition_list_items_to_string(
-    definition_list_items: &Vec<DefinitionListItem<'_>>,
+    definition_list_items: &[DefinitionListItem<'_>],
     regexes: &Regexes,
 ) -> ParseResult {
     let mut documents = vec![];
