@@ -1,0 +1,47 @@
+x-base_service_infinity: &base_infinity
+  profiles:
+    - server
+    - ingest
+  image: michaelf34/infinity:latest
+  volumes:
+    - ~/.cache/huggingface/hub/:/app/.cache/torch
+  ports:
+    - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
+
+x-base_service: &base_service
+  stop_signal: SIGINT
+  restart: always
+  tty: true
+  stdin_open: true
+  env_file: .env
+  ipc: host
+
+x-base_service_nvidia: &base_service_nvidia
+  <<: *base_service
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            device_ids: ["0"]
+            capabilities: [gpu]
+
+services:
+  infinity:
+    <<:
+      - *base_service_nvidia
+      - *base_infinity
+    entrypoint:
+      [
+        infinity_emb,
+        --url-prefix,
+        "/v1",
+        --model-name-or-path,
+        "$SBERT_MODEL_NAME",
+        --port,
+        "$EMBED_CONT_PORT",
+        --device,
+        cuda,
+        --batch-size,
+        "$BATCH_SIZE",
+      ]
