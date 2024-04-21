@@ -36,10 +36,6 @@ use indicatif::MultiProgress;
 #[cfg(feature = "ingest")]
 use indicatif_log_bridge::LogWrapper;
 
-#[cfg(feature = "postgres")]
-use sqlx::Postgres;
-
-
 use crate::{
     cli_args::Cli,
     embedding_client::EmbeddingClient,
@@ -126,7 +122,7 @@ fn main() -> anyhow::Result<()> {
             let docstore = match config.docstore_url.scheme() {
                 #[cfg(feature = "sqlite")]
                 "sqlite" => {
-                    let docstore = system_runner.block_on(Docstore::<Sqlite>::new(
+                    let docstore = system_runner.block_on(Docstore::<sqlx::Sqlite>::new(
                         &config.docstore_url,
                         &config.redis_url,
                     ))?;
@@ -135,7 +131,7 @@ fn main() -> anyhow::Result<()> {
                 }
                 #[cfg(feature = "postgres")]
                 "postgres" => {
-                    let docstore = system_runner.block_on(Docstore::<Postgres>::new(
+                    let docstore = system_runner.block_on(Docstore::<sqlx::Postgres>::new(
                         &config.docstore_url,
                         &config.redis_url,
                     ))?;

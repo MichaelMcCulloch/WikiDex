@@ -21,21 +21,21 @@
     {
       "label": "All",
       "dependsOn": [
-        "Cargo check Sqlite + Triton + Server",
-        "Cargo check Postgres + Triton + Server",
-        "Cargo check Sqlite + vLLM + Server",
-        "Cargo check Postgres + vLLM + Server",
-        "Cargo check Sqlite + Triton + Ingest",
-        "Cargo check Postgres + Triton + Ingest",
-        "Cargo check Sqlite + vLLM + Ingest",
-        "Cargo check Postgres + vLLM + Ingest"
+        "Sqlite + Triton + Server",
+        "Postgres + Triton + Server",
+        "Sqlite + vLLM + Server",
+        "Postgres + vLLM + Server",
+        "Sqlite + Triton + Ingest",
+        "Postgres + Triton + Ingest",
+        "Sqlite + vLLM + Ingest",
+        "Postgres + vLLM + Ingest"
       ],
       "problemMatcher": "$rustc"
     },
     {
-      "label": "Cargo check Sqlite + Triton + Server",
+      "label": "Sqlite + Triton + Server",
       "type": "shell",
-      "command": "cargo clippy --fix --workspace --all-targets --allow-dirty --no-default-features --features sqlite --features triton --features server",
+      "command": "cargo clippy --workspace --all-targets --no-default-features --features sqlite,triton,server",
       "group": "test",
       "problemMatcher": "$rustc",
       "presentation": {
@@ -50,9 +50,9 @@
       }
     },
     {
-      "label": "Cargo check Postgres + Triton + Server",
+      "label": "Postgres + Triton + Server",
       "type": "shell",
-      "command": "cargo clippy --fix --workspace --all-targets --allow-dirty --no-default-features --features postgres --features triton --features server",
+      "command": "cargo clippy --workspace --all-targets --no-default-features --features postgres,triton,server",
       "group": "test",
       "problemMatcher": "$rustc",
       "presentation": {
@@ -67,9 +67,9 @@
       }
     },
     {
-      "label": "Cargo check Sqlite + vLLM + Server",
+      "label": "Sqlite + vLLM + Server",
       "type": "shell",
-      "command": "cargo clippy --fix --workspace --all-targets --allow-dirty --no-default-features --features sqlite --features openai --features server",
+      "command": "cargo clippy --workspace --all-targets --no-default-features --features sqlite,openai,server",
       "group": "test",
       "problemMatcher": "$rustc",
       "presentation": {
@@ -84,9 +84,9 @@
       }
     },
     {
-      "label": "Cargo check Postgres + vLLM + Server",
+      "label": "Postgres + vLLM + Server",
       "type": "shell",
-      "command": "cargo clippy --fix --workspace --all-targets --allow-dirty --no-default-features --features postgres --features openai --features server",
+      "command": "cargo clippy --workspace --all-targets --no-default-features --features postgres,openai,server",
       "group": "test",
       "problemMatcher": "$rustc",
       "presentation": {
@@ -101,9 +101,9 @@
       }
     },
     {
-      "label": "Cargo check Sqlite + Triton + Ingest",
+      "label": "Sqlite + Triton + Ingest",
       "type": "shell",
-      "command": "cargo clippy --fix --workspace --all-targets --allow-dirty --no-default-features --features sqlite --features triton --features ingest",
+      "command": "cargo clippy --workspace --all-targets --no-default-features --features sqlite,triton,ingest",
       "group": "test",
       "problemMatcher": "$rustc",
       "presentation": {
@@ -121,9 +121,9 @@
       }
     },
     {
-      "label": "Cargo check Postgres + Triton + Ingest",
+      "label": "Postgres + Triton + Ingest",
       "type": "shell",
-      "command": "cargo clippy --fix --workspace --all-targets --allow-dirty --no-default-features --features postgres --features triton --features ingest",
+      "command": "cargo clippy --workspace --all-targets --no-default-features --features postgres,triton,ingest",
       "group": "test",
       "problemMatcher": "$rustc",
       "presentation": {
@@ -141,9 +141,9 @@
       }
     },
     {
-      "label": "Cargo check Sqlite + vLLM + Ingest",
+      "label": "Sqlite + vLLM + Ingest",
       "type": "shell",
-      "command": "cargo clippy --fix --workspace --all-targets --allow-dirty --no-default-features --features sqlite --features openai --features ingest",
+      "command": "cargo clippy --workspace --all-targets --no-default-features --features sqlite,openai,ingest",
       "group": "test",
       "problemMatcher": "$rustc",
       "presentation": {
@@ -161,9 +161,9 @@
       }
     },
     {
-      "label": "Cargo check Postgres + vLLM + Ingest",
+      "label": "Postgres + vLLM + Ingest",
       "type": "shell",
-      "command": "cargo clippy --fix --workspace --all-targets --allow-dirty --no-default-features --features postgres --features openai --features ingest",
+      "command": "cargo clippy --workspace --all-targets --no-default-features --features postgres,openai,ingest",
       "group": "test",
       "problemMatcher": "$rustc",
       "presentation": {
