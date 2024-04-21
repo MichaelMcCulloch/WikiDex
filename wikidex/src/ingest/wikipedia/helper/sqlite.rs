@@ -3,7 +3,11 @@ use super::{
     gzip_helper::decompress_text,
     wiki::{CompressedPage, CompressedPageWithAccessDate, DocumentFragments},
 };
-use crate::{ingest::wikipedia::IngestError, openai::OpenAiDelegate};
+use crate::{
+    embedding_client::{EmbeddingClient, EmbeddingClientService},
+    ingest::wikipedia::IngestError,
+    llm_client::LlmClientImpl,
+};
 
 use chrono::NaiveDateTime;
 use indicatif::ProgressBar;
@@ -185,7 +189,8 @@ pub(crate) async fn write_vectorstore(
     Ok(())
 }
 pub(crate) async fn populate_vectorstore_db(
-    openai: Arc<OpenAiDelegate>,
+    openai: Arc<LlmClientImpl>,
+    embed: Arc<EmbeddingClient>,
     pool: &SqlitePool,
     document_count: i64,
     tx: UnboundedSender<Vec<(i64, Vec<f32>)>>,
@@ -200,7 +205,8 @@ pub(crate) async fn populate_vectorstore_db(
     // .unwrap();
     for indices in (0..document_count).step_by(BATCH_SIZE) {
         let tx = tx.clone();
-        let openai = openai.clone();
+        let _openai = openai.clone();
+        let embed = embed.clone();
         let mut connection = pool.acquire().await.map_err(SqlX)?;
         let start = indices;
         let end = indices + BATCH_SIZE as i64;
@@ -219,7 +225,7 @@ pub(crate) async fn populate_vectorstore_db(
             .filter_map(|record| decompress_text(record).ok())
             .collect::<Vec<_>>();
 
-            match openai.embed_batch(texts).await {
+            match embed.embed_batch(texts).await {
                 Ok(embeddings) => {
                     let _ = tx.send(
                         (indices..(indices + BATCH_SIZE as i64))

@@ -6,7 +6,7 @@ use crate::{
         IngestError::{self, *},
         WikiMarkupProcessor,
     },
-    llm_client::LlmClientKind,
+    llm_client::LlmClientImpl,
 };
 
 use indicatif::MultiProgress;
@@ -18,7 +18,7 @@ use super::{Engine, MINIMUM_PASSAGE_LENGTH_IN_WORDS, PCA_DIMENSIONS};
 
 impl Engine<Sqlite> {
     pub(crate) fn new(
-        llm: LlmClientKind,
+        llm: LlmClientImpl,
         embed: EmbeddingClient,
         multi_progress: MultiProgress,
         chunk_size: usize,
@@ -125,8 +125,14 @@ impl Engine<Sqlite> {
             h::sqlite::write_vectorstore(rx, tmp_vector_pool_clone, create_vectors_bar_clone).await
         });
 
-        h::sqlite::populate_vectorstore_db(self.llm.clone(), &docstore_pool, document_count, tx)
-            .await?;
+        h::sqlite::populate_vectorstore_db(
+            self.llm.clone(),
+            self.embed.clone(),
+            &docstore_pool,
+            document_count,
+            tx,
+        )
+        .await?;
         h::sqlite::write_completion_timestamp(tmp_vector_pool, document_count).await?;
         create_vectors_bar.set_message("Writing vectorstore to DB...DONE");
 

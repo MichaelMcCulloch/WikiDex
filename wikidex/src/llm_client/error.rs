@@ -12,6 +12,8 @@ pub(crate) enum LlmClientError {
     TonicStatus(tonic::Status),
     #[cfg(feature = "openai")]
     OpenAiClient(async_openai::error::OpenAIError),
+    #[cfg(feature = "openai")]
+    EmptyResponse,
 }
 
 #[cfg(feature = "triton")]
@@ -61,6 +63,8 @@ impl Display for LlmClientError {
             LlmClientError::TonicStatus(e) => write!(f, "LlmClientError: TonicStatus: {e:?}"),
             #[cfg(feature = "openai")]
             LlmClientError::OpenAiClient(e) => write!(f, "LlmClientError: OpenAiClient: {e}"),
+            #[cfg(feature = "openai")]
+            LlmClientError::EmptyResponse => write!(f, "LlmClientError: Empty Response"),
         }
     }
 }
