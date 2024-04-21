@@ -195,11 +195,11 @@ pub(crate) async fn populate_vectorstore_db(
     document_count: i64,
     tx: UnboundedSender<Vec<(i64, Vec<f32>)>>,
 ) -> Result<(), IngestError> {
-    retry(ExponentialBackoff::default(), || async {
+    let _ = retry(ExponentialBackoff::default(), || async {
         Ok(embed.up().await?)
     })
-    .await
-    .unwrap();
+    .await;
+
     for indices in (0..document_count).step_by(BATCH_SIZE) {
         let tx = tx.clone();
         let embed = embed.clone();

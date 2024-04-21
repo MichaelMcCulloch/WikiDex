@@ -51,7 +51,7 @@ impl Display for Config {
             llm_url,
             embed_name,
             embed_endpoint,
-            ingest_limit: _,
+            ingest_limit,
             api_key: _,
         } = self;
 
@@ -59,15 +59,23 @@ impl Display for Config {
         let output_directory = output_directory.display();
         let embed_url = embed_url.as_str().blue();
         let embed_endpoint = format!("{embed_endpoint}").as_str().blue();
-        let _embed_name = embed_name.display().to_string().bright_blue();
+        let embed_name = embed_name.display().to_string().bright_blue();
 
-        let _llm_url = llm_url.as_str().blue();
-        let _llm_endpoint = format!("{llm_endpoint}").as_str().blue();
-        let _llm_model = llm_name.display().to_string().bright_blue();
+        let llm_url = llm_url.as_str().blue();
+        let llm_endpoint = format!("{llm_endpoint}").as_str().blue();
+        let llm_model = llm_name.display().to_string().bright_blue();
 
         write!(
             f,
-            "Ingest running.\n\tUsing wikipedia xml dump at {wiki_xml}.\n\tWriting output at {output_directory}.\nUsing {embed_endpoint} embedding service at {embed_url}.",
+            r###"Ingest running.
+    Using wikipedia xml dump at {wiki_xml}.
+    Writing output at {output_directory}.
+    Maximum {ingest_limit} articles.
+Using {llm_endpoint} llm service at {llm_url}.
+    Using {llm_model}.
+Using {embed_endpoint} embed service at {embed_url}.
+    Using {embed_name}.
+"###,
         )
     }
 }

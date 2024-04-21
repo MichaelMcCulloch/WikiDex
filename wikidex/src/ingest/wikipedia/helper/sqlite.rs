@@ -9,6 +9,7 @@ use crate::{
     llm_client::LlmClientImpl,
 };
 
+use backoff::{future::retry, ExponentialBackoff};
 use chrono::NaiveDateTime;
 use indicatif::ProgressBar;
 use sqlx::{migrate::MigrateDatabase, SqliteConnection, SqlitePool};
@@ -197,12 +198,10 @@ pub(crate) async fn populate_vectorstore_db(
 ) -> Result<(), IngestError> {
     let openai = Arc::new(openai);
 
-    /// TODO: https://github.com/michaelfeil/infinity/issues/114#issuecomment-1965382083
-    // retry(ExponentialBackoff::default(), || async {
-    //     Ok(openai.embed_up().await?)
-    // })
-    // .await
-    // .unwrap();
+    let _ = retry(ExponentialBackoff::default(), || async {
+        Ok(embed.up().await?)
+    })
+    .await;
     for indices in (0..document_count).step_by(BATCH_SIZE) {
         let tx = tx.clone();
         let _openai = openai.clone();
