@@ -4,20 +4,16 @@ use std::path::Path;
 
 use faiss::{index_factory, Index, MetricType};
 
-use crate::{
-    index::IndexError,
-    ingest::wikipedia::IngestError::{self, FaissError},
-};
+use crate::ingest::wikipedia::IngestError::{self, FaissError};
+
+use super::error::IndexError;
 
 pub(crate) fn populate_vectorestore_index<P: AsRef<Path>>(
     index_path: &P,
     vector_embeddings: Vec<Vec<f32>>,
     pca_dimensions: usize,
 ) -> Result<(), IngestError> {
-    let vector_contiguous = vector_embeddings
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>();
+    let vector_contiguous = vector_embeddings.into_iter().flatten().collect::<Vec<_>>();
 
     let mut index = index_factory(384, format!("PCA{pca_dimensions},Flat"), MetricType::L2)
         .map_err(FaissError)?;

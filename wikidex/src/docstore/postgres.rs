@@ -1,8 +1,9 @@
+use std::io::Read;
+
 use crate::{docstore::document::Document, formatter::Provenance};
 use chrono::DateTime;
 use flate2::read::GzDecoder;
 use sqlx::{postgres::PgPool, Postgres};
-use std::io::Read;
 use url::Url;
 
 use super::{database::DocumentDatabase, Docstore, DocstoreLoadError, DocstoreRetrieveError};

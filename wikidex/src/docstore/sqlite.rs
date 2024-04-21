@@ -6,7 +6,8 @@ use std::io::Read;
 use url::Url;
 
 use super::{
-    document::Document, Docstore, DocstoreLoadError, DocstoreRetrieveError, DocumentDatabase,
+    database::DocumentDatabase, document::Document, Docstore, DocstoreLoadError,
+    DocstoreRetrieveError,
 };
 impl DocumentDatabase for Docstore<Sqlite> {
     async fn retreive_from_db(
@@ -56,7 +57,7 @@ impl DocumentDatabase for Docstore<Sqlite> {
         let result = indices
             .iter()
             .enumerate()
-            .filter_map(|(array_index, docstore_index)| {
+            .filter_map(|(_array_index, docstore_index)| {
                 let (index, doc_text, document_provenance) =
                     docs.iter().find(|d| d.0 == *docstore_index)?;
                 Some(Document {

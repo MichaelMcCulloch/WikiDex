@@ -3,8 +3,13 @@ use super::{
     gzip_helper::decompress_text,
     wiki::{CompressedPage, CompressedPageWithAccessDate, DocumentFragments},
 };
-use crate::{ingest::wikipedia::IngestError, openai::OpenAiDelegate};
+use crate::{
+    embedding_client::{EmbeddingClient, EmbeddingClientService},
+    ingest::wikipedia::IngestError,
+    llm_client::LlmClientKind,
+};
 
+use backoff::{future::retry, ExponentialBackoff};
 use chrono::{DateTime, NaiveDateTime};
 use futures::TryFutureExt;
 use indicatif::ProgressBar;
@@ -185,22 +190,20 @@ pub(crate) async fn write_vectorstore(
     Ok(())
 }
 pub(crate) async fn populate_vectorstore_db(
-    openai: Arc<OpenAiDelegate>,
+    _llm: Arc<LlmClientKind>,
+    embed: Arc<EmbeddingClient>,
     pool: &PgPool,
     document_count: i64,
     tx: UnboundedSender<Vec<(i64, Vec<f32>)>>,
 ) -> Result<(), IngestError> {
-    let openai = Arc::new(openai);
-
-    /// TODO: https://github.com/michaelfeil/infinity/issues/114#issuecomment-1965382083
-    // retry(ExponentialBackoff::default(), || async {
-    //     Ok(openai.embed_up().await?)
-    // })
-    // .await
-    // .unwrap();
+    retry(ExponentialBackoff::default(), || async {
+        Ok(embed.up().await?)
+    })
+    .await
+    .unwrap();
     for indices in (0..document_count).step_by(BATCH_SIZE) {
         let tx = tx.clone();
-        let openai = openai.clone();
+        let embed = embed.clone();
         let mut connection = pool.acquire().await.map_err(SqlX)?;
         let start = indices;
         let end = indices + BATCH_SIZE as i64;
@@ -219,7 +222,7 @@ pub(crate) async fn populate_vectorstore_db(
             .filter_map(|record| record.and_then(|record| decompress_text(record).ok()))
             .collect::<Vec<_>>();
 
-            match openai.embed_batch(texts).await {
+            match embed.embed_batch(texts).await {
                 Ok(embeddings) => {
                     let _ = tx.send(
                         (indices..(indices + BATCH_SIZE as i64))

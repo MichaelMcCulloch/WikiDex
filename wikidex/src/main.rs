@@ -11,6 +11,10 @@ mod inference;
 mod llm_client;
 mod server;
 
+#[cfg(feature = "ingest")]
+mod ingest;
+#[cfg(feature = "ingest")]
+use crate::ingest::wikipedia::Engine as WikipediaIngestEngine;
 #[cfg(feature = "openai")]
 use crate::llm_client::OpenAiInstructClient;
 #[cfg(feature = "triton")]
@@ -21,6 +25,10 @@ use async_openai::{config::OpenAIConfig, Client};
 use cli_args::Commands;
 use docstore::Docstore;
 
+#[cfg(feature = "ingest")]
+use indicatif::MultiProgress;
+#[cfg(feature = "ingest")]
+use indicatif_log_bridge::LogWrapper;
 #[cfg(feature = "postgres")]
 use sqlx::Postgres;
 #[cfg(feature = "sqlite")]
@@ -41,6 +49,61 @@ use clap::Parser;
 
 fn main() -> anyhow::Result<()> {
     match Cli::parse().command {
+        #[cfg(feature = "ingest")]
+        Commands::Wikipedia(ingest_args) => {
+            let logger =
+                env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+                    .build();
+
+            let multi_progress = MultiProgress::new();
+
+            LogWrapper::new(multi_progress.clone(), logger)
+                .try_init()
+                .unwrap();
+
+            let config = config::ingest::Config::from(ingest_args);
+            let system_runner = rt::System::new();
+
+            log::info!("\n{config}");
+
+            #[cfg(feature = "triton")]
+            let llm_client = {
+                let triton_client = system_runner
+                    .block_on(LlmClient::<TritonClient>::new(config.triton_url.as_str()))?;
+
+                LlmClientKind::Triton(triton_client)
+            };
+            #[cfg(feature = "openai")]
+            let llm_client = {
+                let triton_client =
+                    system_runner.block_on(LlmClient::<OpenAiInstructClient>::new(
+                        config.openai_url.clone(), // Clone here because temporary use below
+                        config.language_model_name.to_str().unwrap(),
+                    ))?;
+
+                LlmClientKind::OpenAiInstruct(triton_client)
+            };
+            let embed_client = {
+                let openai_config = OpenAIConfig::new().with_api_base(config.embed_url.as_ref());
+                let open_ai_client: Client<OpenAIConfig> = Client::with_config(openai_config);
+                EmbeddingClient::new(
+                    open_ai_client,
+                    config.embed_model_name.to_string_lossy().to_string(),
+                )
+            };
+            let engine =
+                WikipediaIngestEngine::new(llm_client, embed_client, multi_progress, 1024, 128);
+            system_runner
+                .block_on(engine.ingest_wikipedia(
+                    &config.wiki_xml,
+                    &config.output_directory,
+                    config.ingest_limit,
+                ))
+                .map_err(anyhow::Error::from)?;
+            Ok(())
+        }
+
+        #[cfg(feature = "server")]
         Commands::Server(server_args) => {
             env_logger::init();
             let config = Config::from(server_args);
@@ -91,7 +154,7 @@ fn main() -> anyhow::Result<()> {
             };
             let embed_client = {
                 let openai_config = OpenAIConfig::new().with_api_base(config.embed_url.as_ref());
-                let open_ai_client = Client::with_config(openai_config);
+                let open_ai_client: Client<OpenAIConfig> = Client::with_config(openai_config);
                 EmbeddingClient::new(
                     open_ai_client,
                     config.embed_model_name.to_string_lossy().to_string(),

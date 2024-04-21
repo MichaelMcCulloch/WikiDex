@@ -1,5 +1,6 @@
 mod arguments;
 mod error;
+mod kind;
 mod protocol;
 
 #[cfg(feature = "openai")]
@@ -20,6 +21,7 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 pub(crate) use arguments::LanguageServiceArguments;
 pub(crate) use error::LlmClientError;
+pub(crate) use kind::{ModelKind};
 pub(crate) use protocol::{LlmMessage, LlmRole, PartialLlmMessage};
 
 #[cfg(feature = "triton")]

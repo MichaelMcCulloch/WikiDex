@@ -1,11 +1,12 @@
 use crate::{
+    embedding_client::EmbeddingClient,
     ingest::wikipedia::{
         engine::{DOCSTORE_DB_NAME, MARKUP_DB_NAME, VECTOR_INDEX_NAME, VECTOR_TMP_DB_NAME},
         helper::{self as h, text::RecursiveCharacterTextSplitter},
         IngestError::{self, *},
         WikiMarkupProcessor,
     },
-    openai::OpenAiDelegate,
+    llm_client::LlmClientKind,
 };
 
 use indicatif::MultiProgress;
@@ -17,7 +18,8 @@ use super::{Engine, MINIMUM_PASSAGE_LENGTH_IN_WORDS, PCA_DIMENSIONS};
 
 impl Engine<Postgres> {
     pub(crate) fn new(
-        openai: OpenAiDelegate,
+        llm: LlmClientKind,
+        embed: EmbeddingClient,
         multi_progress: MultiProgress,
         chunk_size: usize,
         chunk_overlap: usize,
@@ -25,7 +27,8 @@ impl Engine<Postgres> {
         let markup_processor = WikiMarkupProcessor::new();
 
         Self {
-            openai: Arc::new(openai),
+            llm: Arc::new(llm),
+            embed: Arc::new(embed),
             markup_processor,
             multi_progress,
             text_splitter: RecursiveCharacterTextSplitter::new(
@@ -128,7 +131,8 @@ impl Engine<Postgres> {
         });
 
         h::postgres::populate_vectorstore_db(
-            self.openai.clone(),
+            self.llm.clone(),
+            self.embed.clone(),
             &docstore_pool,
             document_count,
             tx,
@@ -204,7 +208,7 @@ impl Engine<Postgres> {
                 log::info!("Vector DB is ready at {}", tmp_vector_db_path.display());
 
                 let index_path = output_directory.join(VECTOR_INDEX_NAME);
-                if !h::faiss::index_is_complete(&index_path).map_err(IndexError)? {
+                if !h::faiss::index_is_complete(&index_path).map_err(IngestError::IndexError)? {
                     log::info!("Preparing Vector Index...");
 
                     self.create_vector_index(&tmp_vector_pool, &index_path)

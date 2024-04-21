@@ -8,6 +8,7 @@ mod postgres;
 mod sqlite;
 
 use self::document::Document;
+
 pub(super) use error::{DocstoreLoadError, DocstoreRetrieveError};
 use redis::aio::MultiplexedConnection;
 use sqlx::{Database, Pool};
