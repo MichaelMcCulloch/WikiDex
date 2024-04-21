@@ -5,9 +5,9 @@ use std::{
     path::PathBuf,
 };
 
-use crate::{index::IndexError, openai::EmbeddingServiceError};
+use crate::embedding_client::EmbeddingServiceError;
 
-use super::markup_processor::WikiMarkupProcessingError;
+use super::{helper::error::IndexError, markup_processor::WikiMarkupProcessingError};
 
 #[derive(Debug)]
 pub(crate) enum IngestError {

@@ -1,3 +1,4 @@
+pub(super) mod error;
 pub(super) mod faiss;
 pub(super) mod gzip_helper;
 #[cfg(feature = "postgres")]
