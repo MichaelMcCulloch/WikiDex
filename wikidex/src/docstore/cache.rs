@@ -2,7 +2,7 @@ use actix_web::rt;
 use redis::AsyncCommands;
 use sqlx::Database;
 
-use super::{document::Document, Docstore, DocstoreRetrieveError, DocumentStoreKind};
+use super::{document::Document, Docstore, DocstoreRetrieveError, DocumentStoreImpl};
 
 pub(super) trait DocumentCache: Send + Sync {
     async fn insert_into_cache(
@@ -16,7 +16,7 @@ pub(super) trait DocumentCache: Send + Sync {
     ) -> Result<(Vec<Document>, Vec<i64>), DocstoreRetrieveError>;
 }
 
-impl DocumentCache for DocumentStoreKind {
+impl DocumentCache for DocumentStoreImpl {
     async fn insert_into_cache(
         &self,
         index: i64,
@@ -24,9 +24,9 @@ impl DocumentCache for DocumentStoreKind {
     ) -> Result<(), DocstoreRetrieveError> {
         match self {
             #[cfg(feature = "postgres")]
-            DocumentStoreKind::Postgres(docstore) => docstore.insert_into_cache(index, data).await,
+            DocumentStoreImpl::Postgres(docstore) => docstore.insert_into_cache(index, data).await,
             #[cfg(feature = "sqlite")]
-            DocumentStoreKind::Sqlite(docstore) => docstore.insert_into_cache(index, data).await,
+            DocumentStoreImpl::Sqlite(docstore) => docstore.insert_into_cache(index, data).await,
         }
     }
 
@@ -36,9 +36,9 @@ impl DocumentCache for DocumentStoreKind {
     ) -> Result<(Vec<Document>, Vec<i64>), DocstoreRetrieveError> {
         match self {
             #[cfg(feature = "postgres")]
-            DocumentStoreKind::Postgres(docstore) => docstore.retreive_from_cache(indices).await,
+            DocumentStoreImpl::Postgres(docstore) => docstore.retreive_from_cache(indices).await,
             #[cfg(feature = "sqlite")]
-            DocumentStoreKind::Sqlite(docstore) => docstore.retreive_from_cache(indices).await,
+            DocumentStoreImpl::Sqlite(docstore) => docstore.retreive_from_cache(indices).await,
         }
     }
 }

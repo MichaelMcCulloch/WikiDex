@@ -3,12 +3,12 @@ use std::collections::HashMap;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 use crate::{
-    docstore::{DocumentStore, DocumentStoreKind},
+    docstore::{DocumentStore, DocumentStoreImpl},
     embedding_client::{EmbeddingClient, EmbeddingClientService},
     formatter::{CitationStyle, Cite, TextFormatter},
     index::{FaceIndex, SearchService},
     llm_client::{
-        LanguageServiceArguments, LlmClientKind, LlmClientService, LlmMessage, LlmRole,
+        LanguageServiceArguments, LlmClientImpl, LlmClientService, LlmMessage, LlmRole,
         PartialLlmMessage,
     },
     server::{Conversation, CountSources, Message, PartialMessage, Source},
@@ -19,8 +19,8 @@ use super::QueryEngineError;
 pub struct Engine {
     index: FaceIndex,
     embed_client: EmbeddingClient,
-    docstore: DocumentStoreKind,
-    llm_client: LlmClientKind,
+    docstore: DocumentStoreImpl,
+    llm_client: LlmClientImpl,
     system_prompt: String,
 }
 
@@ -28,8 +28,8 @@ impl Engine {
     pub(crate) fn new(
         index: FaceIndex,
         embed_client: EmbeddingClient,
-        llm_client: LlmClientKind,
-        docstore: DocumentStoreKind,
+        llm_client: LlmClientImpl,
+        docstore: DocumentStoreImpl,
         system_prompt: String,
     ) -> Self {
         Self {
@@ -111,7 +111,7 @@ impl Engine {
                 let (sources, formatted_documents) =
                     self.get_documents(&user_query, num_sources).await?;
 
-                let (tx_p, mut rx_p) = unbounded_channel();
+                let (partial_message_sender, mut partial_message_receiver) = unbounded_channel();
 
                 let mut sources_list = sources.clone();
                 actix_web::rt::spawn(async move {
@@ -144,7 +144,7 @@ impl Engine {
                     while let Some(PartialLlmMessage {
                         content: Some(content),
                         ..
-                    }) = rx_p.recv().await
+                    }) = partial_message_receiver.recv().await
                     {
                         // Check if the token is numeric (ignoring any leading/trailing whitespace)
                         if content.trim().parse::<i64>().is_ok() {
@@ -176,7 +176,12 @@ impl Engine {
                     indices: &sources.iter().map(|d| d.index).collect(),
                 };
                 self.llm_client
-                    .stream_llm_answer(llm_service_arguments, tx_p, 2048u16, stop_phrases)
+                    .stream_llm_answer(
+                        llm_service_arguments,
+                        partial_message_sender,
+                        2048u16,
+                        stop_phrases,
+                    )
                     .await?;
 
                 Ok(())

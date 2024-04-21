@@ -6,7 +6,7 @@ use crate::{
         IngestError::{self, *},
         WikiMarkupProcessor,
     },
-    llm_client::LlmClientKind,
+    llm_client::LlmClientImpl,
 };
 
 use indicatif::MultiProgress;
@@ -18,7 +18,7 @@ use super::{Engine, MINIMUM_PASSAGE_LENGTH_IN_WORDS, PCA_DIMENSIONS};
 
 impl Engine<Postgres> {
     pub(crate) fn new(
-        llm: LlmClientKind,
+        llm: LlmClientImpl,
         embed: EmbeddingClient,
         multi_progress: MultiProgress,
         chunk_size: usize,

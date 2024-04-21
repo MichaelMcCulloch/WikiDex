@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-pub struct RecursiveCharacterTextSplitter<'a> {
+pub(crate) struct RecursiveCharacterTextSplitter<'a> {
     chunk_size: usize,
     chunk_overlap: usize,
     separators: Vec<&'a str>,

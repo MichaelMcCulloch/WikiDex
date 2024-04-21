@@ -6,12 +6,11 @@ use super::{
 use crate::{
     embedding_client::{EmbeddingClient, EmbeddingClientService},
     ingest::wikipedia::IngestError,
-    llm_client::LlmClientKind,
+    llm_client::LlmClientImpl,
 };
 
 use backoff::{future::retry, ExponentialBackoff};
 use chrono::{DateTime, NaiveDateTime};
-use futures::TryFutureExt;
 use indicatif::ProgressBar;
 use sqlx::{migrate::MigrateDatabase, PgConnection, PgPool};
 use std::{
@@ -190,7 +189,7 @@ pub(crate) async fn write_vectorstore(
     Ok(())
 }
 pub(crate) async fn populate_vectorstore_db(
-    _llm: Arc<LlmClientKind>,
+    _llm: Arc<LlmClientImpl>,
     embed: Arc<EmbeddingClient>,
     pool: &PgPool,
     document_count: i64,
