@@ -41,6 +41,7 @@ x-base_service_triton: &base_triton
   env_file: .env
   profiles:
     - triton
+    - ingest
   build:
     context: ./triton
     dockerfile: Dockerfile
@@ -55,6 +56,8 @@ x-base_service_triton: &base_triton
 
 x-base_service_ui: &base_ui
   container_name: ui
+  profiles:
+    - server
   ports:
     - "${UI_HOST_PORT}:${UI_CONT_PORT}"
 
@@ -64,6 +67,26 @@ x-base_service_wikidex: &base_wikidex
     - "${WIKIDEX_HOST_PORT}:${WIKIDEX_CONT_PORT}"
   volumes:
     - ./wikidex/prompt:/prompt
+  build:
+    dockerfile: Dockerfile
+    context: ./wikidex
+    args:
+      DATABASE_URL: postgres://postgres:postgres@192.168.1.120:5433/postgres
+
+x-base_service_ingest: &base_ingest
+  profiles:
+    - ingest
+  depends_on:
+    - triton
+    - infinity
+  volumes:
+    - /home/michael/Documents/WIKIDUMPS/20240401/:/wikipedia/
+  container_name: ingest
+  build:
+    dockerfile: Dockerfile.ingest
+    context: ./wikidex
+    args:
+      DATABASE_URL: "sqlite:///sqlite_dummy.db"
 
 x-base_service_index: &base_index
   ports:
@@ -119,6 +142,9 @@ x-base_service_postgres_dummy_gid: &base_postgres_dummy_gid_fix
 
 x-base_service_infinity: &base_infinity
   container_name: infinity
+  profiles:
+    - server
+    - ingest
   image: michaelf34/infinity:latest
   volumes:
     - ~/.cache/huggingface/hub/:/app/.cache/torch
@@ -127,8 +153,6 @@ x-base_service_infinity: &base_infinity
 
 services:
   infinity:
-    profiles:
-      - server
     <<:
       - *base_service_nvidia
       - *base_infinity
@@ -148,8 +172,6 @@ services:
       ]
 
   ui:
-    profiles:
-      - server
     <<:
       - *base_service
       - *base_ui
@@ -225,16 +247,47 @@ services:
       - *base_service
       - *base_postgres_dummy_gid_fix
 
+  ingest:
+    <<:
+      - *base_service
+      - *base_ingest
+      - *base_rust
+    build:
+      dockerfile: Dockerfile.ingest
+      context: ./wikidex
+    entrypoint:
+      [
+        wikidex,
+        wikipedia,
+        --wiki-xml,
+        /wikipedia/$WIKIPEDIA_FILE,
+        --output-directory,
+        /wikipedia/,
+        --ingest-limit,
+        "1000",
+        --embed-name,
+        "$SBERT_MODEL_NAME",
+        --embed-url,
+        "$EMBED_URL",
+        --embed-endpoint,
+        openai,
+        --llm-name,
+        "$LLM_MODEL_NAME",
+        --llm-url,
+        "$TRITON_GRPC_URL",
+        --llm-endpoint,
+        triton,
+        --llm-kind,
+        "$MODEL_KIND",
+      ]
+
   wikidex-vllm:
     <<:
       - *base_service
       - *base_wikidex
       - *base_rust
     profiles:
-      - vllm
-    build:
-      dockerfile: Dockerfile
-      context: ./wikidex
+      - wikidex-local
     entrypoint:
       [
         wikidex,
@@ -278,7 +331,7 @@ services:
       - *base_wikidex
       - *base_rust
     profiles:
-      - triton
+      - wikidex
     build:
       dockerfile: Dockerfile
       context: ./wikidex
