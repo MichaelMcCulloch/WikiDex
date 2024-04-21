@@ -36,10 +36,9 @@ use indicatif::MultiProgress;
 #[cfg(feature = "ingest")]
 use indicatif_log_bridge::LogWrapper;
 
-#[cfg(feature = "server")]
+#[cfg(feature = "postgres")]
 use sqlx::Postgres;
-#[cfg(feature = "sqlite")]
-use sqlx::Sqlite;
+
 
 use crate::{
     cli_args::Cli,

@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Cargo Test",
+      "label": "Cargo Test SQLite",
       "type": "shell",
       "command": "cargo test --package wikidex --bin wikidex -- breeder::operator:: --nocapture",
       "group": "test",
@@ -15,6 +15,168 @@
         "cwd": "${workspaceRoot}/rust/",
         "env": {
           "DATABASE_URL": "sqlite://sqlite_dummy.db"
+        }
+      }
+    },
+    {
+      "label": "All",
+      "dependsOn": [
+        "Cargo check Sqlite + Triton + Server",
+        "Cargo check Postgres + Triton + Server",
+        "Cargo check Sqlite + vLLM + Server",
+        "Cargo check Postgres + vLLM + Server",
+        "Cargo check Sqlite + Triton + Ingest",
+        "Cargo check Postgres + Triton + Ingest",
+        "Cargo check Sqlite + vLLM + Ingest",
+        "Cargo check Postgres + vLLM + Ingest"
+      ],
+      "problemMatcher": "$rustc"
+    },
+    {
+      "label": "Cargo check Sqlite + Triton + Server",
+      "type": "shell",
+      "command": "cargo clippy --fix --workspace --all-targets --allow-dirty --no-default-features --features sqlite --features triton --features server",
+      "group": "test",
+      "problemMatcher": "$rustc",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "options": {
+        "cwd": "${workspaceRoot}/wikidex/",
+        "env": {
+          "DATABASE_URL": "sqlite://sqlite_dummy.db"
+        }
+      }
+    },
+    {
+      "label": "Cargo check Postgres + Triton + Server",
+      "type": "shell",
+      "command": "cargo clippy --fix --workspace --all-targets --allow-dirty --no-default-features --features postgres --features triton --features server",
+      "group": "test",
+      "problemMatcher": "$rustc",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "options": {
+        "cwd": "${workspaceRoot}/wikidex/",
+        "env": {
+          "DATABASE_URL": "postgres://postgres:postgres@192.168.1.120:5433/postgres"
+        }
+      }
+    },
+    {
+      "label": "Cargo check Sqlite + vLLM + Server",
+      "type": "shell",
+      "command": "cargo clippy --fix --workspace --all-targets --allow-dirty --no-default-features --features sqlite --features openai --features server",
+      "group": "test",
+      "problemMatcher": "$rustc",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "options": {
+        "cwd": "${workspaceRoot}/wikidex/",
+        "env": {
+          "DATABASE_URL": "sqlite://sqlite_dummy.db"
+        }
+      }
+    },
+    {
+      "label": "Cargo check Postgres + vLLM + Server",
+      "type": "shell",
+      "command": "cargo clippy --fix --workspace --all-targets --allow-dirty --no-default-features --features postgres --features openai --features server",
+      "group": "test",
+      "problemMatcher": "$rustc",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "options": {
+        "cwd": "${workspaceRoot}/wikidex/",
+        "env": {
+          "DATABASE_URL": "postgres://postgres:postgres@192.168.1.120:5433/postgres"
+        }
+      }
+    },
+    {
+      "label": "Cargo check Sqlite + Triton + Ingest",
+      "type": "shell",
+      "command": "cargo clippy --fix --workspace --all-targets --allow-dirty --no-default-features --features sqlite --features triton --features ingest",
+      "group": "test",
+      "problemMatcher": "$rustc",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "options": {
+        "cwd": "${workspaceRoot}/wikidex/",
+        "env": {
+          "DATABASE_URL": "sqlite://sqlite_dummy.db",
+          "CUDA": "/opt/cuda",
+          "CC": "/opt/cuda/bin/gcc",
+          "CXX": "/opt/cuda/bin/g++"
+        }
+      }
+    },
+    {
+      "label": "Cargo check Postgres + Triton + Ingest",
+      "type": "shell",
+      "command": "cargo clippy --fix --workspace --all-targets --allow-dirty --no-default-features --features postgres --features triton --features ingest",
+      "group": "test",
+      "problemMatcher": "$rustc",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "options": {
+        "cwd": "${workspaceRoot}/wikidex/",
+        "env": {
+          "DATABASE_URL": "postgres://postgres:postgres@192.168.1.120:5433/postgres",
+          "CUDA": "/opt/cuda",
+          "CC": "/opt/cuda/bin/gcc",
+          "CXX": "/opt/cuda/bin/g++"
+        }
+      }
+    },
+    {
+      "label": "Cargo check Sqlite + vLLM + Ingest",
+      "type": "shell",
+      "command": "cargo clippy --fix --workspace --all-targets --allow-dirty --no-default-features --features sqlite --features openai --features ingest",
+      "group": "test",
+      "problemMatcher": "$rustc",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "options": {
+        "cwd": "${workspaceRoot}/wikidex/",
+        "env": {
+          "DATABASE_URL": "sqlite://sqlite_dummy.db",
+          "CUDA": "/opt/cuda",
+          "CC": "/opt/cuda/bin/gcc",
+          "CXX": "/opt/cuda/bin/g++"
+        }
+      }
+    },
+    {
+      "label": "Cargo check Postgres + vLLM + Ingest",
+      "type": "shell",
+      "command": "cargo clippy --fix --workspace --all-targets --allow-dirty --no-default-features --features postgres --features openai --features ingest",
+      "group": "test",
+      "problemMatcher": "$rustc",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "options": {
+        "cwd": "${workspaceRoot}/wikidex/",
+        "env": {
+          "DATABASE_URL": "postgres://postgres:postgres@192.168.1.120:5433/postgres",
+          "CUDA": "/opt/cuda",
+          "CC": "/opt/cuda/bin/gcc",
+          "CXX": "/opt/cuda/bin/g++"
         }
       }
     }
