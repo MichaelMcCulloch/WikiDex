@@ -3,16 +3,21 @@ mod test_data;
 
 mod cli_args;
 mod config;
-mod docstore;
 mod embedding_client;
-mod formatter;
-mod index;
-mod inference;
 mod llm_client;
-mod server;
 
+#[cfg(feature = "server")]
+mod docstore;
+#[cfg(feature = "server")]
+mod formatter;
+#[cfg(feature = "server")]
+mod index;
+#[cfg(feature = "server")]
+mod inference;
 #[cfg(feature = "ingest")]
 mod ingest;
+#[cfg(feature = "server")]
+mod server;
 #[cfg(feature = "ingest")]
 use crate::ingest::wikipedia::Engine as WikipediaIngestEngine;
 #[cfg(feature = "openai")]
@@ -23,27 +28,31 @@ use crate::llm_client::TritonClient;
 use actix_web::rt;
 use async_openai::{config::OpenAIConfig, Client};
 use cli_args::Commands;
+#[cfg(feature = "server")]
 use docstore::Docstore;
 
 #[cfg(feature = "ingest")]
 use indicatif::MultiProgress;
 #[cfg(feature = "ingest")]
 use indicatif_log_bridge::LogWrapper;
-#[cfg(feature = "postgres")]
+
+#[cfg(feature = "server")]
 use sqlx::Postgres;
 #[cfg(feature = "sqlite")]
 use sqlx::Sqlite;
 
 use crate::{
     cli_args::Cli,
-    config::server::Config,
-    docstore::DocumentStoreKind,
     embedding_client::EmbeddingClient,
-    index::FaceIndex,
-    inference::Engine,
     llm_client::{LlmClient, LlmClientKind},
-    server::run_server,
 };
+#[cfg(feature = "server")]
+use crate::{docstore::DocumentStoreKind, index::FaceIndex, inference::Engine, server::run_server};
+
+#[cfg(feature = "ingest")]
+use config::ingest::Config as IngestConfig;
+#[cfg(feature = "server")]
+use config::server::Config as ServerConfig;
 
 use clap::Parser;
 
@@ -61,7 +70,7 @@ fn main() -> anyhow::Result<()> {
                 .try_init()
                 .unwrap();
 
-            let config = config::ingest::Config::from(ingest_args);
+            let config = IngestConfig::from(ingest_args);
             let system_runner = rt::System::new();
 
             log::info!("\n{config}");
@@ -106,7 +115,7 @@ fn main() -> anyhow::Result<()> {
         #[cfg(feature = "server")]
         Commands::Server(server_args) => {
             env_logger::init();
-            let config = Config::from(server_args);
+            let config = ServerConfig::from(server_args);
             let system_runner = rt::System::new();
 
             log::info!("\n{config}");

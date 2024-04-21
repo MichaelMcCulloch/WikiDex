@@ -21,7 +21,7 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 pub(crate) use arguments::LanguageServiceArguments;
 pub(crate) use error::LlmClientError;
-pub(crate) use kind::{ModelKind};
+pub(crate) use kind::ModelKind;
 pub(crate) use protocol::{LlmMessage, LlmRole, PartialLlmMessage};
 
 #[cfg(feature = "triton")]
@@ -87,10 +87,10 @@ pub(crate) trait LlmClientService: LlmClientBackend {
             .system
             .replace("$$$USER_QUERY$$$", arguments.query);
 
-        for (index, source) in arguments.sources.iter().enumerate() {
+        for (index, source) in arguments.indices.iter().enumerate() {
             replace_query = replace_query.replace(
                 format!("$$$CITE{}$$$", index + 1).as_str(),
-                format!("{}", source.index).as_str(),
+                format!("{}", source).as_str(),
             );
         }
 

@@ -49,6 +49,8 @@ pub(crate) struct ServerArgs {
     #[cfg(feature = "openai")]
     pub(crate) openai_url: Url,
     #[arg(long)]
+    pub(crate) language_model_kind: ModelKind,
+    #[arg(long)]
     pub(crate) language_model_name: PathBuf,
 }
 #[cfg(feature = "ingest")]
