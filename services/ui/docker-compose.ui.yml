@@ -1,0 +1,22 @@
+x-base_service_ui: &base_ui
+  profiles:
+    - server
+  ports:
+    - "${UI_HOST_PORT}:${UI_CONT_PORT}"
+
+x-base_service: &base_service
+  stop_signal: SIGINT
+  restart: always
+  tty: true
+  stdin_open: true
+  env_file: .env
+  ipc: host
+
+services:
+  ui:
+    <<:
+      - *base_service
+      - *base_ui
+    build:
+      dockerfile: Dockerfile
+      context: ../../../typescript

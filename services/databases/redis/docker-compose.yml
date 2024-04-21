@@ -1,0 +1,23 @@
+x-base_service: &base_service
+  stop_signal: SIGINT
+  restart: always
+  tty: true
+  stdin_open: true
+  env_file: .env
+  ipc: host
+x-base_service_redis: &base_redis
+  image: redis:latest
+  command: >
+    --requirepass redis
+  ports:
+    - $REDIS_PORT:$REDIS_PORT
+  volumes:
+    - ~/ContainerData/Redis/wikidex/data:/root/redis
+    - ~/ContainerData/Redis/wikidex/redis.conf:/usr/local/etc/redis/redis.conf
+services:
+  redis:
+    profiles:
+      - server
+    <<:
+      - *base_service
+      - *base_redis

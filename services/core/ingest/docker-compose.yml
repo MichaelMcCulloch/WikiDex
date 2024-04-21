@@ -1,0 +1,60 @@
+x-base_service: &base_service
+  stop_signal: SIGINT
+  restart: always
+  tty: true
+  stdin_open: true
+  env_file: .env
+  ipc: host
+
+x-base_service_ingest: &base_ingest
+  profiles:
+    - ingest
+  depends_on:
+    - triton
+    - infinity
+  volumes:
+    - ~/Documents/WIKIDUMPS/20240401/:/wikipedia/
+
+  build:
+    dockerfile: Dockerfile.ingest
+    context: ../../../wikidex
+    args:
+      DATABASE_URL: "sqlite:///sqlite_dummy.db"
+x-base_rust: &base_rust
+  environment:
+    RUST_LOG: $RUST_LOG
+
+services:
+  ingest:
+    <<:
+      - *base_service
+      - *base_ingest
+      - *base_rust
+    build:
+      dockerfile: Dockerfile.ingest
+      context: ../../../wikidex
+    entrypoint:
+      [
+        wikidex,
+        wikipedia,
+        --wiki-xml,
+        /wikipedia/$WIKIPEDIA_FILE,
+        --output-directory,
+        /wikipedia/,
+        --ingest-limit,
+        "1000",
+        --embed-name,
+        "$SBERT_MODEL_NAME",
+        --embed-url,
+        "$EMBED_URL",
+        --embed-endpoint,
+        openai,
+        --llm-name,
+        "$LLM_MODEL_NAME",
+        --llm-url,
+        "$TRITON_GRPC_URL",
+        --llm-endpoint,
+        triton,
+        --llm-kind,
+        "$MODEL_KIND",
+      ]
