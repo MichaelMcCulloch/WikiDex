@@ -165,8 +165,6 @@ impl Engine {
                         send_message(accumulated_index);
                     }
 
-                    log::info!("{index_ordinal_map:?}");
-
                     let _ = tx.send(PartialMessage::done().message());
                 });
                 let llm_service_arguments = LanguageServiceArguments {

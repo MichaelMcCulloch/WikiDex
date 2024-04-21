@@ -21,21 +21,17 @@
     {
       "label": "All",
       "dependsOn": [
-        "Sqlite + Triton + Server",
-        "Postgres + Triton + Server",
-        "Sqlite + vLLM + Server",
-        "Postgres + vLLM + Server",
-        "Sqlite + Triton + Ingest",
-        "Postgres + Triton + Ingest",
-        "Sqlite + vLLM + Ingest",
-        "Postgres + vLLM + Ingest"
+        "Sqlite + Server",
+        "Postgres + Server",
+        "Sqlite + Ingest",
+        "Postgres + Ingest"
       ],
       "problemMatcher": "$rustc"
     },
     {
-      "label": "Sqlite + Triton + Server",
+      "label": "Sqlite + Server",
       "type": "shell",
-      "command": "cargo clippy --workspace --all-targets --no-default-features --features sqlite,triton,server",
+      "command": "cargo clippy --workspace --all-targets --no-default-features --features sqlite,server",
       "group": "test",
       "problemMatcher": "$rustc",
       "presentation": {
@@ -50,9 +46,9 @@
       }
     },
     {
-      "label": "Postgres + Triton + Server",
+      "label": "Postgres + Server",
       "type": "shell",
-      "command": "cargo clippy --workspace --all-targets --no-default-features --features postgres,triton,server",
+      "command": "cargo clippy --workspace --all-targets --no-default-features --features postgres,server",
       "group": "test",
       "problemMatcher": "$rustc",
       "presentation": {
@@ -67,43 +63,9 @@
       }
     },
     {
-      "label": "Sqlite + vLLM + Server",
+      "label": "Sqlite + Ingest",
       "type": "shell",
-      "command": "cargo clippy --workspace --all-targets --no-default-features --features sqlite,openai,server",
-      "group": "test",
-      "problemMatcher": "$rustc",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
-      "options": {
-        "cwd": "${workspaceRoot}/wikidex/",
-        "env": {
-          "DATABASE_URL": "sqlite://sqlite_dummy.db"
-        }
-      }
-    },
-    {
-      "label": "Postgres + vLLM + Server",
-      "type": "shell",
-      "command": "cargo clippy --workspace --all-targets --no-default-features --features postgres,openai,server",
-      "group": "test",
-      "problemMatcher": "$rustc",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
-      "options": {
-        "cwd": "${workspaceRoot}/wikidex/",
-        "env": {
-          "DATABASE_URL": "postgres://postgres:postgres@192.168.1.120:5433/postgres"
-        }
-      }
-    },
-    {
-      "label": "Sqlite + Triton + Ingest",
-      "type": "shell",
-      "command": "cargo clippy --workspace --all-targets --no-default-features --features sqlite,triton,ingest",
+      "command": "cargo clippy --workspace --all-targets --no-default-features --features sqlite,ingest",
       "group": "test",
       "problemMatcher": "$rustc",
       "presentation": {
@@ -121,49 +83,9 @@
       }
     },
     {
-      "label": "Postgres + Triton + Ingest",
+      "label": "Postgres + Ingest",
       "type": "shell",
-      "command": "cargo clippy --workspace --all-targets --no-default-features --features postgres,triton,ingest",
-      "group": "test",
-      "problemMatcher": "$rustc",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
-      "options": {
-        "cwd": "${workspaceRoot}/wikidex/",
-        "env": {
-          "DATABASE_URL": "postgres://postgres:postgres@192.168.1.120:5433/postgres",
-          "CUDA": "/opt/cuda",
-          "CC": "/opt/cuda/bin/gcc",
-          "CXX": "/opt/cuda/bin/g++"
-        }
-      }
-    },
-    {
-      "label": "Sqlite + vLLM + Ingest",
-      "type": "shell",
-      "command": "cargo clippy --workspace --all-targets --no-default-features --features sqlite,openai,ingest",
-      "group": "test",
-      "problemMatcher": "$rustc",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
-      "options": {
-        "cwd": "${workspaceRoot}/wikidex/",
-        "env": {
-          "DATABASE_URL": "sqlite://sqlite_dummy.db",
-          "CUDA": "/opt/cuda",
-          "CC": "/opt/cuda/bin/gcc",
-          "CXX": "/opt/cuda/bin/g++"
-        }
-      }
-    },
-    {
-      "label": "Postgres + vLLM + Ingest",
-      "type": "shell",
-      "command": "cargo clippy --workspace --all-targets --no-default-features --features postgres,openai,ingest",
+      "command": "cargo clippy --workspace --all-targets --no-default-features --features postgres,ingest",
       "group": "test",
       "problemMatcher": "$rustc",
       "presentation": {

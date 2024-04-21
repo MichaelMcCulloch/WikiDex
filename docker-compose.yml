@@ -26,6 +26,7 @@ x-base_service_nvidia: &base_service_nvidia
 #     - "/dev/kfd"
 
 x-base_service_vllm: &base_vllm
+  container_name: vllm
   env_file: .env
   image: vllm/vllm-openai:latest
   profiles:
@@ -36,6 +37,7 @@ x-base_service_vllm: &base_vllm
     - "${VLLM_HOST_PORT}:${VLLM_CONT_PORT}"
 
 x-base_service_triton: &base_triton
+  container_name: triton
   env_file: .env
   profiles:
     - triton
@@ -52,10 +54,12 @@ x-base_service_triton: &base_triton
     - 8002:8002
 
 x-base_service_ui: &base_ui
+  container_name: ui
   ports:
     - "${UI_HOST_PORT}:${UI_CONT_PORT}"
 
 x-base_service_wikidex: &base_wikidex
+  container_name: wikidex
   ports:
     - "${WIKIDEX_HOST_PORT}:${WIKIDEX_CONT_PORT}"
   volumes:
@@ -69,9 +73,10 @@ x-base_service_index: &base_index
 
 x-base_rust: &base_rust
   environment:
-    RUST_LOG: $RUST_LOG
+    RUST_LOG: actix_server=warn,face=info,actix_web=info,wikidex=info
 
 x-base_service_redis: &base_redis
+  container_name: redis
   image: redis:latest
   command: >
     --requirepass redis
@@ -82,6 +87,7 @@ x-base_service_redis: &base_redis
     - /home/michael/ContainerData/Redis/wikidex/redis.conf:/usr/local/etc/redis/redis.conf
 
 x-base_service_postgres: &base_postgres
+  container_name: postgres
   image: postgres
   shm_size: 1gb
 
@@ -112,8 +118,8 @@ x-base_service_postgres_dummy_gid: &base_postgres_dummy_gid_fix
   user: 1000:1000
 
 x-base_service_infinity: &base_infinity
+  container_name: infinity
   image: michaelf34/infinity:latest
-
   volumes:
     - ~/.cache/huggingface/hub/:/app/.cache/torch
   ports:
@@ -237,29 +243,36 @@ services:
         "$API_SECRET_KEY",
         --docstore-url,
         "$DOCSTORE_URL",
-        --embed-model-name,
-        "$SBERT_MODEL_NAME",
-        --embed-url,
-        "$EMBED_URL",
+        --redis-url,
+        "$REDIS_URL",
         --host,
         0.0.0.0,
-        --index-url,
-        "$INDEX_URL",
-        --language-model-name,
-        "$LLM_MODEL_NAME",
-        --openai-url,
-        "$VLLM_URL",
         --port,
         "$WIKIDEX_CONT_PORT",
         --system-prompt-path,
         "$SYSTEM_PROMPT_PATH",
-        --redis-url,
-        "$REDIS_URL",
+        --index-url,
+        "$INDEX_URL",
+        --embed-name,
+        "$SBERT_MODEL_NAME",
+        --embed-url,
+        "$EMBED_URL",
+        --embed-endpoint,
+        openai,
+        --llm-name,
+        "$LLM_MODEL_NAME",
+        --llm-url,
+        "$VLLM_URL",
+        --llm-endpoint,
+        openai,
+        --llm-kind,
+        "$MODEL_KIND",
       ]
     depends_on:
       - postgres
 
   wikidex-trt:
+    container_name: wikidex
     <<:
       - *base_service
       - *base_wikidex
@@ -277,24 +290,30 @@ services:
         "$API_SECRET_KEY",
         --docstore-url,
         "$DOCSTORE_URL",
-        --embed-model-name,
-        "$SBERT_MODEL_NAME",
-        --embed-url,
-        "$EMBED_URL",
+        --redis-url,
+        "$REDIS_URL",
         --host,
         0.0.0.0,
-        --index-url,
-        "$INDEX_URL",
-        --language-model-name,
-        "$LLM_MODEL_NAME",
-        --triton-url,
-        "$TRITON_GRPC_URL",
         --port,
         "$WIKIDEX_CONT_PORT",
         --system-prompt-path,
         "$SYSTEM_PROMPT_PATH",
-        --redis-url,
-        "$REDIS_URL",
+        --index-url,
+        "$INDEX_URL",
+        --embed-name,
+        "$SBERT_MODEL_NAME",
+        --embed-url,
+        "$EMBED_URL",
+        --embed-endpoint,
+        openai,
+        --llm-name,
+        "$LLM_MODEL_NAME",
+        --llm-url,
+        "$TRITON_GRPC_URL",
+        --llm-endpoint,
+        triton,
+        --llm-kind,
+        "$MODEL_KIND",
       ]
     depends_on:
       - postgres
