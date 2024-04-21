@@ -1,3 +1,19 @@
+x-base_service: &base_service
+  stop_signal: SIGINT
+  restart: always
+  tty: true
+  stdin_open: true
+  env_file: .env
+  ipc: host
+x-base_service_nvidia: &base_service_nvidia
+  <<: *base_service
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            device_ids: ["0"]
+            capabilities: [gpu]
 # x-base_service_amd: &base_service_amd
 #   <<: *base_service
 #
@@ -7,16 +23,488 @@
 #     - "/dev/dri"
 #     - "/dev/kfd"
 
-include:
-  - path:
-      - services/databases/nebula/docker-compose.nebula.yml
-      - services/databases/postgres/docker-compose.yml
-      - services/databases/index/docker-compose.yml
-      - services/databases/redis/docker-compose.yml
-      - services/nlp/triton/docker-compose.yml
-      - services/nlp/vllm/docker-compose.yml
-      - services/nlp/infinity/docker-compose.yml
-      - services/core/wikidex/docker-compose.yml
-      - services/core/ingest/docker-compose.yml
-      - services/ui/docker-compose.ui.yml
-      - services/infra/haproxy/docker-compose.yml
+x-base_service_vllm: &base_vllm
+  container_name: vllm
+  env_file: .env
+  image: vllm/vllm-openai:latest
+  profiles:
+    - vllm
+  volumes:
+    - ~/.cache/huggingface/:/root/.cache/huggingface
+  ports:
+    - "${VLLM_HOST_PORT}:${VLLM_CONT_PORT}"
+
+x-base_service_triton: &base_triton
+  container_name: triton
+  env_file: .env
+  profiles:
+    - triton
+    - ingest
+  build:
+    context: ./triton
+    dockerfile: Dockerfile
+  volumes:
+    - ~/.cache/huggingface/hub/:/root/.cache/huggingface/hub
+    - ~/.cache/TensorRT/TritonConfigs/${TRITON_ENGINE_NAME}/:/all_models/inflight_batcher_llm/
+    - ~/.cache/TensorRT/Engine/${TRITON_ENGINE_NAME}-128x32768/:/all_models/inflight_batcher_llm/tensorrt_llm/1/
+  ports:
+    - 8000:8000
+    - 8001:8001
+    - 8002:8002
+
+x-base_service_ui: &base_ui
+  container_name: ui
+  profiles:
+    - server
+  ports:
+    - "${UI_HOST_PORT}:${UI_CONT_PORT}"
+
+x-base_service_wikidex: &base_wikidex
+  container_name: wikidex
+  ports:
+    - "${WIKIDEX_HOST_PORT}:${WIKIDEX_CONT_PORT}"
+  volumes:
+    - ./wikidex/prompt:/prompt
+  build:
+    dockerfile: Dockerfile
+    context: ./wikidex
+    args:
+      DATABASE_URL: postgres://postgres:postgres@192.168.1.120:5433/postgres
+
+x-base_service_ingest: &base_ingest
+  profiles:
+    - ingest
+  depends_on:
+    - triton
+    - infinity
+  volumes:
+    - ~/Documents/WIKIDUMPS/20240401/:/wikipedia/
+  container_name: ingest
+  build:
+    dockerfile: Dockerfile.ingest
+    context: ./wikidex
+    args:
+      DATABASE_URL: "sqlite:///sqlite_dummy.db"
+
+x-base_service_index: &base_index
+  ports:
+    - "${INDEX_HOST_PORT_BEGIN}-${INDEX_HOST_PORT_END}:${INDEX_CONT_PORT}"
+  volumes:
+    - ~/Documents/WIKIDUMPS/${EXTRACT_DATE}/index/thenlper/gte-small:/db
+
+x-base_rust: &base_rust
+  environment:
+    RUST_LOG: actix_server=warn,face=info,actix_web=info,wikidex=info
+
+x-base_service_redis: &base_redis
+  container_name: redis
+  image: redis:latest
+  command: >
+    --requirepass redis
+  ports:
+    - $REDIS_PORT:$REDIS_PORT
+  volumes:
+    - ~/ContainerData/Redis/wikidex/data:/root/redis
+    - ~/ContainerData/Redis/wikidex/redis.conf:/usr/local/etc/redis/redis.conf
+
+x-base_service_postgres: &base_postgres
+  container_name: postgres
+  image: postgres
+  shm_size: 1gb
+
+x-base_service_postgres_prod: &base_postgres_prod
+  <<:
+    - *base_postgres
+  volumes:
+    - ~/ContainerData/PostgreSQL/wikidex/${EXTRACT_DATE}:/var/lib/postgresql/data
+  ports:
+    - $POSTGRES_PORT:$POSTGRES_PORT
+
+x-base_service_postgres_dummy: &base_postgres_dummy
+  <<:
+    - *base_postgres
+  volumes:
+    - ~/ContainerData/PostgreSQL/wikidex/dummy/:/var/lib/postgresql/data
+  ports:
+    - $POSTGRES_DUMMY_PORT:$POSTGRES_PORT
+
+x-base_service_postgres_prod_gid: &base_postgres_prod_gid_fix
+  <<:
+    - *base_postgres_prod
+  user: 1000:1000
+
+x-base_service_postgres_dummy_gid: &base_postgres_dummy_gid_fix
+  <<:
+    - *base_postgres_dummy
+  user: 1000:1000
+
+x-base_service_infinity: &base_infinity
+  container_name: infinity
+  profiles:
+    - server
+    - ingest
+  image: michaelf34/infinity:latest
+  volumes:
+    - ~/.cache/huggingface/hub/:/app/.cache/torch
+  ports:
+    - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
+
+services:
+  infinity:
+    <<:
+      - *base_service_nvidia
+      - *base_infinity
+    entrypoint:
+      [
+        infinity_emb,
+        --url-prefix,
+        "/v1",
+        --model-name-or-path,
+        "$SBERT_MODEL_NAME",
+        --port,
+        "$EMBED_CONT_PORT",
+        --device,
+        cuda,
+        --batch-size,
+        "$BATCH_SIZE",
+      ]
+
+  ui:
+    <<:
+      - *base_service
+      - *base_ui
+    build:
+      dockerfile: Dockerfile
+      context: ./ui
+
+  vllm:
+    <<:
+      - *base_service_nvidia
+      - *base_vllm
+    entrypoint:
+      [
+        python3,
+        -m,
+        vllm.entrypoints.openai.api_server,
+        --max-log-len,
+        "0",
+        --disable-log-stats,
+        --disable-log-requests,
+        --gpu-memory-utilization,
+        $VLLM_MEM_MAX,
+        --model,
+        $LLM_MODEL_NAME,
+        --quantization,
+        $QUANTIZATION,
+        --host,
+        "0.0.0.0",
+        --port,
+        $VLLM_CONT_PORT,
+        --dtype,
+        half,
+        --max-model-len,
+        $MAX_MODEL_LEN,
+      ]
+
+  triton:
+    <<:
+      - *base_service_nvidia
+      - *base_triton
+    entrypoint:
+      [
+        python3,
+        /opt/scripts/launch_triton_server.py,
+        --model_repo,
+        /all_models/inflight_batcher_llm,
+        --tensorrt_llm_model_name,
+        mistral,
+        --world_size,
+        "1",
+      ]
+    depends_on:
+      - infinity
+
+  redis:
+    profiles:
+      - server
+    <<:
+      - *base_service
+      - *base_redis
+
+  postgres:
+    profiles:
+      - server
+    <<:
+      - *base_service
+      - *base_postgres_prod_gid_fix
+
+  postgres_dummy:
+    profiles:
+      - dummy
+    <<:
+      - *base_service
+      - *base_postgres_dummy_gid_fix
+
+  ingest:
+    <<:
+      - *base_service
+      - *base_ingest
+      - *base_rust
+    build:
+      dockerfile: Dockerfile.ingest
+      context: ./wikidex
+    entrypoint:
+      [
+        wikidex,
+        wikipedia,
+        --wiki-xml,
+        /wikipedia/$WIKIPEDIA_FILE,
+        --output-directory,
+        /wikipedia/,
+        --ingest-limit,
+        "1000",
+        --embed-name,
+        "$SBERT_MODEL_NAME",
+        --embed-url,
+        "$EMBED_URL",
+        --embed-endpoint,
+        openai,
+        --llm-name,
+        "$LLM_MODEL_NAME",
+        --llm-url,
+        "$TRITON_GRPC_URL",
+        --llm-endpoint,
+        triton,
+        --llm-kind,
+        "$MODEL_KIND",
+      ]
+
+  wikidex-vllm:
+    <<:
+      - *base_service
+      - *base_wikidex
+      - *base_rust
+    profiles:
+      - wikidex-local
+    entrypoint:
+      [
+        wikidex,
+        server,
+        --api-key,
+        "$API_SECRET_KEY",
+        --docstore-url,
+        "$DOCSTORE_URL",
+        --redis-url,
+        "$REDIS_URL",
+        --host,
+        0.0.0.0,
+        --port,
+        "$WIKIDEX_CONT_PORT",
+        --system-prompt-path,
+        "$SYSTEM_PROMPT_PATH",
+        --index-url,
+        "$INDEX_URL",
+        --embed-name,
+        "$SBERT_MODEL_NAME",
+        --embed-url,
+        "$EMBED_URL",
+        --embed-endpoint,
+        openai,
+        --llm-name,
+        "$LLM_MODEL_NAME",
+        --llm-url,
+        "$VLLM_URL",
+        --llm-endpoint,
+        openai,
+        --llm-kind,
+        "$MODEL_KIND",
+      ]
+    depends_on:
+      - postgres
+
+  wikidex-trt:
+    container_name: wikidex
+    <<:
+      - *base_service
+      - *base_wikidex
+      - *base_rust
+    profiles:
+      - wikidex
+    build:
+      dockerfile: Dockerfile
+      context: ./wikidex
+    entrypoint:
+      [
+        wikidex,
+        server,
+        --api-key,
+        "$API_SECRET_KEY",
+        --docstore-url,
+        "$DOCSTORE_URL",
+        --redis-url,
+        "$REDIS_URL",
+        --host,
+        0.0.0.0,
+        --port,
+        "$WIKIDEX_CONT_PORT",
+        --system-prompt-path,
+        "$SYSTEM_PROMPT_PATH",
+        --index-url,
+        "$INDEX_URL",
+        --embed-name,
+        "$SBERT_MODEL_NAME",
+        --embed-url,
+        "$EMBED_URL",
+        --embed-endpoint,
+        openai,
+        --llm-name,
+        "$LLM_MODEL_NAME",
+        --llm-url,
+        "$TRITON_GRPC_URL",
+        --llm-endpoint,
+        triton,
+        --llm-kind,
+        "$MODEL_KIND",
+      ]
+    depends_on:
+      - postgres
+      - triton
+
+  index:
+    <<:
+      - *base_service
+      - *base_index
+      - *base_rust
+    profiles:
+      - server
+      - index
+    build: https://github.com/MichaelMcCulloch/face.git#0.1.1
+    entrypoint: [face, --index-path, $INDEX_PATH]
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  haproxy:
+    <<:
+      - *base_service
+    profiles:
+      - index
+      - server
+    image: haproxy:latest
+    ports:
+      - "$INDEX_HAPROXY_PORT:$INDEX_HAPROXY_PORT"
+    volumes:
+      - ./haproxy:/usr/local/etc/haproxy/
+    # entrypoint: [haproxy, -c, -V, -f, /usr/local/etc/haproxy/haproxy.cfg]
+
+  metad0:
+    <<:
+      - *base_service
+    image: docker.io/vesoft/nebula-metad:v3.6.0
+    environment:
+      USER: root
+    command:
+      - --meta_server_addrs=metad0:9559
+      - --local_ip=metad0
+      - --ws_ip=metad0
+      - --port=9559
+      - --ws_http_port=19559
+      - --data_path=/data/meta
+      - --log_dir=/logs
+      - --v=0
+      - --minloglevel=0
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://metad0:19559/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    ports:
+      - 9559:9559
+      - 19559:19559
+      - 19560
+    volumes:
+      - ~/ContainerData/Nebula/testing/data/meta0:/data/meta
+      - ~/ContainerData/Nebula/testing/logs/meta0:/logs
+    networks:
+      - nebula-net
+    restart: on-failure
+    cap_add:
+      - SYS_PTRACE
+
+  storaged0:
+    <<:
+      - *base_service
+    image: docker.io/vesoft/nebula-storaged:v3.6.0
+    environment:
+      USER: root
+      TZ: "${TZ}"
+    command:
+      - --meta_server_addrs=metad0:9559
+      - --local_ip=storaged0
+      - --ws_ip=storaged0
+      - --port=9779
+      - --ws_http_port=19779
+      - --data_path=/data/storage
+      - --log_dir=/logs
+      - --v=0
+      - --minloglevel=0
+    depends_on:
+      - metad0
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://storaged0:19779/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    ports:
+      - 9779:9779
+      - 19779:19779
+      - 19780
+    volumes:
+      - ~/ContainerData/Nebula/testing/data/storage0:/data/storage
+      - ~/ContainerData/Nebula/testing/logs/storage0:/logs
+    networks:
+      - nebula-net
+    restart: on-failure
+    cap_add:
+      - SYS_PTRACE
+
+  graphd:
+    <<:
+      - *base_service
+    image: docker.io/vesoft/nebula-graphd:v3.6.0
+    environment:
+      USER: root
+      TZ: "${TZ}"
+    command:
+      - --meta_server_addrs=metad0:9559
+      - --port=9669
+      - --local_ip=graphd
+      - --ws_ip=graphd
+      - --ws_http_port=19669
+      - --log_dir=/logs
+      - --v=0
+      - --minloglevel=0
+    depends_on:
+      - storaged0
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://graphd:19669/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    ports:
+      - 9669:9669
+      - 19669:19669
+      - 19670
+    volumes:
+      - ~/ContainerData/Nebula/testing/logs/graph:/logs
+    networks:
+      - nebula-net
+    restart: on-failure
+    cap_add:
+      - SYS_PTRACE
+
+networks:
+  nebula-net:
