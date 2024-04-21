@@ -102,13 +102,13 @@ pub(crate) struct LlmClient<Backend: LlmClientBackendKind> {
     client: Backend,
 }
 
-pub(crate) enum LlmClientKind {
+pub(crate) enum LlmClientImpl {
     #[cfg(feature = "triton")]
     Triton(LlmClient<TritonClient>),
     #[cfg(feature = "openai")]
     OpenAiInstruct(LlmClient<OpenAiInstructClient>),
 }
-impl LlmClientBackend for LlmClientKind {
+impl LlmClientBackend for LlmClientImpl {
     async fn get_response<S: AsRef<str>>(
         &self,
         arguments: LanguageServiceArguments<'_>,
@@ -117,9 +117,9 @@ impl LlmClientBackend for LlmClientKind {
     ) -> Result<String, LlmClientError> {
         match self {
             #[cfg(feature = "triton")]
-            LlmClientKind::Triton(t) => t.get_response(arguments, max_tokens, stop_phrases).await,
+            LlmClientImpl::Triton(t) => t.get_response(arguments, max_tokens, stop_phrases).await,
             #[cfg(feature = "openai")]
-            LlmClientKind::OpenAiInstruct(o) => {
+            LlmClientImpl::OpenAiInstruct(o) => {
                 o.get_response(arguments, max_tokens, stop_phrases).await
             }
         }
@@ -134,12 +134,12 @@ impl LlmClientBackend for LlmClientKind {
     ) -> Result<(), LlmClientError> {
         match self {
             #[cfg(feature = "triton")]
-            LlmClientKind::Triton(t) => {
+            LlmClientImpl::Triton(t) => {
                 t.stream_response(arguments, tx, max_tokens, stop_phrases)
                     .await
             }
             #[cfg(feature = "openai")]
-            LlmClientKind::OpenAiInstruct(o) => {
+            LlmClientImpl::OpenAiInstruct(o) => {
                 o.stream_response(arguments, tx, max_tokens, stop_phrases)
                     .await
             }

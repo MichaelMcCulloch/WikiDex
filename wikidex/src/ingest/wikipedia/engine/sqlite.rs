@@ -1,11 +1,12 @@
 use crate::{
+    embedding_client::EmbeddingClient,
     ingest::wikipedia::{
         engine::{DOCSTORE_DB_NAME, MARKUP_DB_NAME, VECTOR_INDEX_NAME, VECTOR_TMP_DB_NAME},
         helper::{self as h, text::RecursiveCharacterTextSplitter},
         IngestError::{self, *},
         WikiMarkupProcessor,
     },
-    openai::OpenAiDelegate,
+    llm_client::LlmClientKind,
 };
 
 use indicatif::MultiProgress;
@@ -17,7 +18,8 @@ use super::{Engine, MINIMUM_PASSAGE_LENGTH_IN_WORDS, PCA_DIMENSIONS};
 
 impl Engine<Sqlite> {
     pub(crate) fn new(
-        openai: OpenAiDelegate,
+        llm: LlmClientKind,
+        embed: EmbeddingClient,
         multi_progress: MultiProgress,
         chunk_size: usize,
         chunk_overlap: usize,
@@ -25,7 +27,8 @@ impl Engine<Sqlite> {
         let markup_processor = WikiMarkupProcessor::new();
 
         Self {
-            openai: Arc::new(openai),
+            llm: Arc::new(llm),
+            embed: Arc::new(embed),
             markup_processor,
             multi_progress,
             text_splitter: RecursiveCharacterTextSplitter::new(
@@ -122,7 +125,7 @@ impl Engine<Sqlite> {
             h::sqlite::write_vectorstore(rx, tmp_vector_pool_clone, create_vectors_bar_clone).await
         });
 
-        h::sqlite::populate_vectorstore_db(self.openai.clone(), &docstore_pool, document_count, tx)
+        h::sqlite::populate_vectorstore_db(self.llm.clone(), &docstore_pool, document_count, tx)
             .await?;
         h::sqlite::write_completion_timestamp(tmp_vector_pool, document_count).await?;
         create_vectors_bar.set_message("Writing vectorstore to DB...DONE");

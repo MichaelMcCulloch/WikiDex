@@ -4,7 +4,7 @@ mod posgres;
 mod sqlite;
 
 use super::{helper::text::RecursiveCharacterTextSplitter, WikiMarkupProcessor};
-use crate::{embedding_client::EmbeddingClient, llm_client::LlmClientKind};
+use crate::{embedding_client::EmbeddingClient, llm_client::LlmClientImpl};
 
 use indicatif::MultiProgress;
 use sqlx::Database;
@@ -19,7 +19,7 @@ const PCA_DIMENSIONS: usize = 128;
 const MINIMUM_PASSAGE_LENGTH_IN_WORDS: usize = 15;
 
 pub(crate) struct Engine<P: Database> {
-    llm: Arc<LlmClientKind>,
+    llm: Arc<LlmClientImpl>,
     embed: Arc<EmbeddingClient>,
     markup_processor: WikiMarkupProcessor,
     text_splitter: RecursiveCharacterTextSplitter<'static>,

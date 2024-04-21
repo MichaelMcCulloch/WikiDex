@@ -7,7 +7,7 @@ mod postgres;
 #[cfg(feature = "sqlite")]
 mod sqlite;
 
-use self::document::Document;
+use document::Document;
 
 pub(super) use error::{DocstoreLoadError, DocstoreRetrieveError};
 use redis::aio::MultiplexedConnection;
@@ -23,7 +23,7 @@ pub(crate) struct Docstore<DB: Database> {
     pool: Pool<DB>,
 }
 
-pub(crate) enum DocumentStoreKind {
+pub(crate) enum DocumentStoreImpl {
     #[cfg(feature = "postgres")]
     Postgres(Docstore<Postgres>),
     #[cfg(feature = "sqlite")]

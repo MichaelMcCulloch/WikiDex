@@ -44,10 +44,10 @@ use sqlx::Sqlite;
 use crate::{
     cli_args::Cli,
     embedding_client::EmbeddingClient,
-    llm_client::{LlmClient, LlmClientKind},
+    llm_client::{LlmClient, LlmClientImpl},
 };
 #[cfg(feature = "server")]
-use crate::{docstore::DocumentStoreKind, index::FaceIndex, inference::Engine, server::run_server};
+use crate::{docstore::DocumentStoreImpl, index::FaceIndex, inference::Engine, server::run_server};
 
 #[cfg(feature = "ingest")]
 use config::ingest::Config as IngestConfig;
@@ -55,7 +55,10 @@ use config::ingest::Config as IngestConfig;
 use config::server::Config as ServerConfig;
 
 use clap::Parser;
-
+#[cfg(all(feature = "triton", feature = "openai"))]
+compile_error!("features `triton` and `openai` are mutually exclusive");
+#[cfg(all(feature = "sqlite", feature = "postgres"))]
+compile_error!("features `sqlite` and `postgres` are mutually exclusive");
 fn main() -> anyhow::Result<()> {
     match Cli::parse().command {
         #[cfg(feature = "ingest")]
@@ -80,7 +83,7 @@ fn main() -> anyhow::Result<()> {
                 let triton_client = system_runner
                     .block_on(LlmClient::<TritonClient>::new(config.triton_url.as_str()))?;
 
-                LlmClientKind::Triton(triton_client)
+                LlmClientImpl::Triton(triton_client)
             };
             #[cfg(feature = "openai")]
             let llm_client = {
@@ -90,7 +93,7 @@ fn main() -> anyhow::Result<()> {
                         config.language_model_name.to_str().unwrap(),
                     ))?;
 
-                LlmClientKind::OpenAiInstruct(triton_client)
+                LlmClientImpl::OpenAiInstruct(triton_client)
             };
             let embed_client = {
                 let openai_config = OpenAIConfig::new().with_api_base(config.embed_url.as_ref());
@@ -100,6 +103,7 @@ fn main() -> anyhow::Result<()> {
                     config.embed_model_name.to_string_lossy().to_string(),
                 )
             };
+
             let engine =
                 WikipediaIngestEngine::new(llm_client, embed_client, multi_progress, 1024, 128);
             system_runner
@@ -128,7 +132,7 @@ fn main() -> anyhow::Result<()> {
                         &config.redis_url,
                     ))?;
 
-                    DocumentStoreKind::Sqlite(docstore)
+                    DocumentStoreImpl::Sqlite(docstore)
                 }
                 #[cfg(feature = "postgres")]
                 "postgres" => {
@@ -137,7 +141,7 @@ fn main() -> anyhow::Result<()> {
                         &config.redis_url,
                     ))?;
 
-                    DocumentStoreKind::Postgres(docstore)
+                    DocumentStoreImpl::Postgres(docstore)
                 }
                 _ => todo!(),
             };
@@ -149,7 +153,7 @@ fn main() -> anyhow::Result<()> {
                 let triton_client = system_runner
                     .block_on(LlmClient::<TritonClient>::new(config.triton_url.as_str()))?;
 
-                LlmClientKind::Triton(triton_client)
+                LlmClientImpl::Triton(triton_client)
             };
             #[cfg(feature = "openai")]
             let llm_client = {
@@ -159,7 +163,7 @@ fn main() -> anyhow::Result<()> {
                         config.language_model_name.to_str().unwrap(),
                     ))?;
 
-                LlmClientKind::OpenAiInstruct(triton_client)
+                LlmClientImpl::OpenAiInstruct(triton_client)
             };
             let embed_client = {
                 let openai_config = OpenAIConfig::new().with_api_base(config.embed_url.as_ref());

@@ -1,6 +1,6 @@
 use super::{
     cache::DocumentCache, document::Document, DocstoreRetrieveError, DocumentStore,
-    DocumentStoreKind,
+    DocumentStoreImpl,
 };
 
 pub(super) trait DocumentDatabase: Send + Sync {
@@ -10,16 +10,16 @@ pub(super) trait DocumentDatabase: Send + Sync {
     ) -> Result<Vec<Document>, DocstoreRetrieveError>;
 }
 
-impl DocumentDatabase for DocumentStoreKind {
+impl DocumentDatabase for DocumentStoreImpl {
     async fn retreive_from_db(
         &self,
         indices: &[i64],
     ) -> Result<Vec<Document>, DocstoreRetrieveError> {
         match self {
             #[cfg(feature = "postgres")]
-            DocumentStoreKind::Postgres(docstore) => docstore.retreive_from_db(indices).await,
+            DocumentStoreImpl::Postgres(docstore) => docstore.retreive_from_db(indices).await,
             #[cfg(feature = "sqlite")]
-            DocumentStoreKind::Sqlite(docstore) => docstore.retreive_from_db(indices).await,
+            DocumentStoreImpl::Sqlite(docstore) => docstore.retreive_from_db(indices).await,
         }
     }
 }
