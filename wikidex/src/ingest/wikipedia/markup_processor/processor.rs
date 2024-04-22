@@ -1,7 +1,9 @@
+use crate::ingest::service::Process;
+
 use super::{
     super::configurations::WIKIPEDIA_CONFIGURATION,
     parse::{process_to_article, Regexes},
-    Process, WikiMarkupProcessingError,
+    WikiMarkupProcessingError,
 };
 
 use parse_wiki_text::Configuration;
