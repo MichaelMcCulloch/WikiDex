@@ -44,6 +44,7 @@ utoipa-swagger-ui = { version = "6.0.0", features = [
 ], optional = true }
 
 # Ingest
+async-compat = { version = "0.2.3", optional = true }
 faiss = { git = "https://github.com/MichaelMcCulloch/faiss-rs.git", tag = "master-avx", features = [
     "static",
 ], optional = true }
@@ -53,11 +54,12 @@ itertools = { version = "0.12.1", optional = true }
 parse_mediawiki_dump_reboot = { version = "1.0.1", optional = true }
 parse_wiki_text = { version = "0.1.5", optional = true }
 rayon = { version = "1.10.0", optional = true }
-nebula-client = { version = "0.7.3", optional = true }
+nebula-client = { git = "https://github.com/bk-rs/nebula-rs", branch = "main", optional = true }
 fbthrift-transport = { version = "0.9.0", features = [
     "impl_tokio",
 ], optional = true }
 nebula-fbthrift-graph-v3 = { version = "0.3.0", optional = true }
+
 [profile.release]
 lto = true
 strip = true
@@ -73,21 +75,22 @@ server = [
     "dep:face-api",
     "dep:redis",
     "dep:rkyv",
-    "dep:utoipa",
     "dep:utoipa-redoc",
     "dep:utoipa-swagger-ui",
+    "dep:utoipa",
 ]
 ingest = [
+    "dep:async-compat",
     "dep:faiss",
-    "dep:indicatif",
+    "dep:fbthrift-transport",
     "dep:indicatif-log-bridge",
+    "dep:indicatif",
     "dep:itertools",
+    "dep:nebula-client",
+    "dep:nebula-fbthrift-graph-v3",
     "dep:parse_mediawiki_dump_reboot",
     "dep:parse_wiki_text",
     "dep:rayon",
-    "dep:nebula-client",
-    "dep:fbthrift-transport",
-    "dep:nebula-fbthrift-graph-v3",
 ]
 postgres = ["sqlx/postgres"]
 sqlite = ["sqlx/sqlite"]

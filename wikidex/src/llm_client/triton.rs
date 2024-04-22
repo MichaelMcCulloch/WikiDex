@@ -9,12 +9,9 @@ use super::{
 };
 use async_stream::stream;
 
-use trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient;
-
 impl LlmClient<TritonClient> {
-    pub(crate) async fn new<S: AsRef<str>>(triton_url: S) -> Result<Self, LlmClientError> {
-        let client = GrpcInferenceServiceClient::connect(String::from(triton_url.as_ref())).await?;
-        Ok(Self { client })
+    pub(crate) fn new(client: TritonClient) -> Self {
+        Self { client }
     }
 }
 impl LlmClientBackendKind for TritonClient {}

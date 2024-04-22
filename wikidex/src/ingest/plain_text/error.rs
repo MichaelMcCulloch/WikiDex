@@ -15,6 +15,7 @@ pub(crate) enum PlainTextProcessingError {
     Io(std::io::Error),
     NebulaAuthentication(AuthenticateError),
     GraphQueryError(GraphQueryError),
+    MalformedAddress,
 }
 
 impl From<LlmClientError> for PlainTextProcessingError {
@@ -52,6 +53,7 @@ impl Display for PlainTextProcessingError {
             PlainTextProcessingError::Io(e) => write!(f, "{:?}", e),
             PlainTextProcessingError::NebulaAuthentication(e) => write!(f, "{:?}", e),
             PlainTextProcessingError::GraphQueryError(e) => write!(f, "{:?}", e),
+            PlainTextProcessingError::MalformedAddress => todo!(),
         }
     }
 }

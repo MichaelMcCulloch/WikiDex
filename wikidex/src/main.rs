@@ -19,6 +19,9 @@ mod ingest;
 #[cfg(feature = "server")]
 mod server;
 
+use std::sync::Arc;
+
+use crate::ingest::plain_text::graph_client;
 use crate::ingest::plain_text::PlainTextProcessor;
 #[cfg(feature = "ingest")]
 use crate::ingest::wikipedia::Engine as WikipediaIngestEngine;
@@ -37,6 +40,8 @@ use docstore::Docstore;
 use indicatif::MultiProgress;
 #[cfg(feature = "ingest")]
 use indicatif_log_bridge::LogWrapper;
+use tonic::transport::Channel;
+use trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient;
 
 use crate::{
     cli_args::Cli,
@@ -73,13 +78,18 @@ fn main() -> anyhow::Result<()> {
             let system_runner = rt::System::new();
 
             log::info!("\n{config}");
-
+            let graph_session = system_runner.block_on(graph_client(
+                config.nebula_url,
+                &config.nebula_user,
+                &config.nebula_pass,
+            ))?;
             let llm_client = match config.llm_endpoint {
                 ModelEndpoint::Triton => {
-                    let triton_client = system_runner
-                        .block_on(LlmClient::<TritonClient>::new(config.llm_url.as_str()))?;
+                    let client: GrpcInferenceServiceClient<Channel> = system_runner.block_on(
+                        GrpcInferenceServiceClient::connect(String::from(config.llm_url.as_ref())),
+                    )?;
 
-                    LlmClientImpl::Triton(triton_client)
+                    LlmClientImpl::Triton(LlmClient::<TritonClient>::new(client))
                 }
                 ModelEndpoint::OpenAi => {
                     let triton_client =
@@ -104,11 +114,15 @@ fn main() -> anyhow::Result<()> {
                     )
                 }
             };
-            let _plaintext = system_runner.block_on(PlainTextProcessor::new(
-                config.nebula_url,
-                &config.nebula_user,
-                &config.nebula_pass,
-            ))?;
+            let llm_client = Arc::new(llm_client);
+            let embed_client = Arc::new(embed_client);
+
+            let _plaintext = PlainTextProcessor::new(
+                llm_client.clone(),
+                embed_client.clone(),
+                graph_session,
+                multi_progress.clone(),
+            );
             let engine =
                 WikipediaIngestEngine::new(llm_client, embed_client, multi_progress, 1024, 128);
             system_runner
@@ -155,10 +169,11 @@ fn main() -> anyhow::Result<()> {
 
             let llm_client = match config.llm_endpoint {
                 ModelEndpoint::Triton => {
-                    let triton_client = system_runner
-                        .block_on(LlmClient::<TritonClient>::new(config.llm_url.as_str()))?;
+                    let client = system_runner.block_on(GrpcInferenceServiceClient::connect(
+                        String::from(config.llm_url.as_ref()),
+                    ))?;
 
-                    LlmClientImpl::Triton(triton_client)
+                    LlmClientImpl::Triton(LlmClient::<TritonClient>::new(client))
                 }
                 ModelEndpoint::OpenAi => {
                     let triton_client =
