@@ -26,10 +26,6 @@ use crate::ingest::plain_text::PlainTextProcessor;
 #[cfg(feature = "ingest")]
 use crate::ingest::wikipedia::Engine as WikipediaIngestEngine;
 
-use crate::llm_client::ModelEndpoint;
-use crate::llm_client::OpenAiInstructClient;
-use crate::llm_client::TritonClient;
-
 use actix_web::rt;
 use async_openai::{config::OpenAIConfig, Client};
 use cli_args::Commands;
@@ -46,7 +42,7 @@ use trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient;
 use crate::{
     cli_args::Cli,
     embedding_client::EmbeddingClient,
-    llm_client::{LlmClient, LlmClientImpl},
+    llm_client::{LlmClient, LlmClientImpl, ModelEndpoint, OpenAiInstructClient, TritonClient},
 };
 #[cfg(feature = "server")]
 use crate::{docstore::DocumentStoreImpl, index::FaceIndex, inference::Engine, server::run_server};
@@ -92,13 +88,16 @@ fn main() -> anyhow::Result<()> {
                     LlmClientImpl::Triton(LlmClient::<TritonClient>::new(client))
                 }
                 ModelEndpoint::OpenAi => {
-                    let triton_client =
-                        system_runner.block_on(LlmClient::<OpenAiInstructClient>::new(
-                            config.llm_url.clone(), // Clone here because temporary use below
-                            config.llm_name.to_str().unwrap(),
-                        ))?;
+                    let openai_config = OpenAIConfig::new().with_api_base(config.llm_url);
+                    let open_ai_client = Client::with_config(openai_config);
+                    let client = OpenAiInstructClient::new(
+                        open_ai_client,
+                        config.llm_name.display().to_string(),
+                    );
+                    let openai_client =
+                        system_runner.block_on(LlmClient::<OpenAiInstructClient>::new(client))?;
 
-                    LlmClientImpl::OpenAiInstruct(triton_client)
+                    LlmClientImpl::OpenAiInstruct(openai_client)
                 }
             };
 
@@ -176,13 +175,16 @@ fn main() -> anyhow::Result<()> {
                     LlmClientImpl::Triton(LlmClient::<TritonClient>::new(client))
                 }
                 ModelEndpoint::OpenAi => {
-                    let triton_client =
-                        system_runner.block_on(LlmClient::<OpenAiInstructClient>::new(
-                            config.llm_url.clone(), // Clone here because temporary use below
-                            config.llm_name.to_str().unwrap(),
-                        ))?;
+                    let openai_config = OpenAIConfig::new().with_api_base(config.llm_url);
+                    let open_ai_client = Client::with_config(openai_config);
+                    let client = OpenAiInstructClient::new(
+                        open_ai_client,
+                        config.llm_name.display().to_string(),
+                    );
+                    let openai_client =
+                        system_runner.block_on(LlmClient::<OpenAiInstructClient>::new(client))?;
 
-                    LlmClientImpl::OpenAiInstruct(triton_client)
+                    LlmClientImpl::OpenAiInstruct(openai_client)
                 }
             };
 

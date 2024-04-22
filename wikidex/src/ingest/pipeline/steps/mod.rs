@@ -1,9 +1,11 @@
 mod recursive_text_splitter;
 mod wikipedia_dump_reader;
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use tokio::sync::mpsc::{UnboundedReceiver};
 
 pub(crate) use recursive_text_splitter::Splitter;
 pub(crate) use wikipedia_dump_reader::WikipediaDumpReader;
+
+use super::error::PipelineError;
 
 pub(crate) trait PipelineStep {
     type IN: Send + Sync;
@@ -11,6 +13,5 @@ pub(crate) trait PipelineStep {
     async fn link(
         &self,
         receiver: UnboundedReceiver<Self::IN>,
-        sender: UnboundedSender<Self::OUT>,
-    ) -> Result<(), super::error::PipelineError>;
+    ) -> Result<UnboundedReceiver<Self::OUT>, PipelineError>;
 }

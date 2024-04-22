@@ -20,35 +20,31 @@ mod test {
 
     use tokio::sync::mpsc::unbounded_channel;
 
-    use crate::ingest::pipeline::{document::Document, steps::PipelineStep};
+    use crate::ingest::pipeline::{error::PipelineError, steps::PipelineStep};
 
     use super::*;
 
-    #[actix_rt::test]
-    async fn testew() {
-        println!("fads");
-    }
-    #[actix_rt::test]
-    async fn test() {
+    #[tokio::test(flavor = "multi_thread", worker_threads = 32)]
+    async fn test() -> Result<(), PipelineError> {
         log::info!("ok");
         let recursive_splitter = RecursiveCharacterTextSplitter::new(1024, 128, None, true);
         let processor = WikiMarkupProcessor;
-        let reader = WikipediaDumpReader::new(processor, 1000);
+        let reader = WikipediaDumpReader::new(processor, 0);
         let splitter = Splitter::new(recursive_splitter);
 
         let (t, r) = unbounded_channel::<PathBuf>();
-        let (tt, rr) = unbounded_channel::<Document>();
-        let (ttt, mut rrr) = unbounded_channel::<Document>();
 
-        let _x = reader.link(r, tt).await;
-        let _y = splitter.link(rr, ttt).await;
+        let r = reader.link(r).await?;
+        let mut r = splitter.link(r).await?;
 
         let _ = t.send(PathBuf::from(
             "/home/michael/Documents/WIKIDUMPS/20240401/enwiki-20240401-pages-articles.xml",
         ));
 
-        while let Some(document) = rrr.recv().await {
+        // while let Ok(Some(document)) = timeout(Duration::from_secs(10), r.recv()).await {
+        while let Some(document) = r.recv().await {
             println!("{}", document.article_title);
         }
+        Ok(())
     }
 }

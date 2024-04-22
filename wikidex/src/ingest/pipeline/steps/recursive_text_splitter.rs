@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use actix_web::rt;
 
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+
+use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
 
 use crate::ingest::pipeline::{
     document::Document, error::PipelineError,
@@ -32,10 +32,10 @@ impl PipelineStep for Splitter {
     async fn link(
         &self,
         mut receiver: UnboundedReceiver<Self::IN>,
-        sender: UnboundedSender<Self::OUT>,
-    ) -> Result<(), PipelineError> {
+    ) -> Result<UnboundedReceiver<Self::OUT>, PipelineError> {
+        let (t, r) = unbounded_channel::<Self::OUT>();
         let splitter = self.splitter.clone();
-        rt::spawn(async move {
+        tokio::spawn(async move {
             while let Some(input) = receiver.recv().await {
                 let Document {
                     document,
@@ -59,11 +59,11 @@ impl PipelineStep for Splitter {
                     .collect::<Vec<_>>();
 
                 for document in documents.into_iter() {
-                    let _ = sender.send(document);
+                    let _ = t.send(document);
                 }
             }
             Ok::<(), PipelineError>(())
         });
-        Ok(())
+        Ok(r)
     }
 }

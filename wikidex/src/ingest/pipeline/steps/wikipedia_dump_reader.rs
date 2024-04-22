@@ -1,4 +1,4 @@
-use actix_web::rt;
+
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
 use parse_mediawiki_dump_reboot::{schema::Namespace, Page};
@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 use std::{fs::File, io::BufReader};
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
 use tokio::sync::oneshot::channel;
 use tokio::time::timeout;
 
@@ -44,12 +44,12 @@ impl PipelineStep for WikipediaDumpReader {
     async fn link(
         &self,
         mut receiver: UnboundedReceiver<Self::IN>,
-        sender: UnboundedSender<Self::OUT>,
-    ) -> Result<(), PipelineError> {
+    ) -> Result<UnboundedReceiver<Self::OUT>, PipelineError> {
+        let (sender, new_receiver) = unbounded_channel::<Self::OUT>();
         let markup_processor = self.markup_processor.clone();
         let limit = self.limit;
 
-        rt::spawn(async move {
+        tokio::spawn(async move {
             while let Some(input) = receiver.recv().await {
                 log::info!("{}", input.display());
                 let date = get_date_from_xml_name(&input)?;
@@ -59,21 +59,17 @@ impl PipelineStep for WikipediaDumpReader {
                     )
                 })?;
                 let file = BufReader::with_capacity(2 * 1024 * 1024, file);
-                let pages: Vec<Page> = get_eligible_pages(file, limit);
-                log::info!("{}", pages.len());
-                for Page {
-                    format: _,
-                    model: _,
-                    namespace: _,
-                    text,
-                    title,
-                } in pages
-                {
+                let parse = parse_mediawiki_dump_reboot::parse(file);
+
+                let limit = if limit == 0 { usize::MAX } else { limit };
+
+                let pages = parse.filter_map(Result::ok).filter(page_filter).take(limit);
+                for Page { text, title, .. } in pages {
                     let markup_processor = markup_processor.clone();
                     let sender = sender.clone();
-                    rt::spawn(async move {
+                    tokio::spawn(async move {
                         let (tx, rx) = channel();
-                        rt::spawn(async move {
+                        tokio::spawn(async move {
                             let document = markup_processor.process(&text);
 
                             let _ = tx.send(document);
@@ -106,7 +102,7 @@ impl PipelineStep for WikipediaDumpReader {
             }
             Ok::<(), PipelineError>(())
         });
-        Ok(())
+        Ok(new_receiver)
     }
 }
 fn get_date_from_xml_name(file_name: &PathBuf) -> Result<NaiveDateTime, WikipediaDumpReaderError> {
