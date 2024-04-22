@@ -15,21 +15,23 @@ pub(super) fn definition_list_item_type_to_string(
 }
 
 pub(super) fn definition_list_item_to_string(
+    heading: (usize, &str),
     DefinitionListItem { type_, nodes, .. }: &DefinitionListItem<'_>,
     regexes: &Regexes,
 ) -> ParseResult {
     let type_ = definition_list_item_type_to_string(type_)?;
-    let nodes = nodes_to_string(nodes, regexes)?;
+    let nodes = nodes_to_string(heading, nodes, regexes)?;
     Ok([type_, nodes].join(""))
 }
 
 pub(super) fn definition_list_items_to_string(
+    heading: (usize, &str),
     definition_list_items: &[DefinitionListItem<'_>],
     regexes: &Regexes,
 ) -> ParseResult {
     let mut documents = vec![];
     for dli in definition_list_items.iter() {
-        documents.push(definition_list_item_to_string(dli, regexes)?)
+        documents.push(definition_list_item_to_string(heading, dli, regexes)?)
     }
     Ok(documents.join("\n"))
 }

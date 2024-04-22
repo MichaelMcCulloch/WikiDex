@@ -21,7 +21,7 @@ pub(crate) const STOP_PHRASES: [&str; 6] = [
 pub(crate) type ParseResult = Result<String, <WikiMarkupProcessor as Process>::E>;
 
 pub(crate) fn process_to_article(nodes: &[Node<'_>], regexes: &Regexes) -> ParseResult {
-    let output = nodes_to_string(nodes, regexes)?;
+    let output = nodes_to_string((0usize, ""), nodes, regexes)?;
 
     // let output = regexes
     //     .twospace
@@ -51,7 +51,11 @@ pub(crate) fn process_to_article(nodes: &[Node<'_>], regexes: &Regexes) -> Parse
     Ok(output)
 }
 
-pub(super) fn nodes_to_string(nodes: &[Node<'_>], regexes: &Regexes) -> ParseResult {
+pub(super) fn nodes_to_string(
+    heading: (usize, &str),
+    nodes: &[Node<'_>],
+    regexes: &Regexes,
+) -> ParseResult {
     let mut documents = vec![];
     for n in nodes.iter() {
         match n {
@@ -59,20 +63,24 @@ pub(super) fn nodes_to_string(nodes: &[Node<'_>], regexes: &Regexes) -> ParseRes
                 nodes: heading_nodes,
                 ..
             } => {
-                let heading_name = nodes_to_string(heading_nodes, regexes)?;
+                let heading_name = nodes_to_string(heading, heading_nodes, regexes)?;
                 if STOP_PHRASES.contains(&heading_name.as_str()) {
                     break;
                 } else {
-                    documents.push(node_to_string(n, regexes)?)
+                    documents.push(node_to_string(heading, n, regexes)?)
                 }
             }
-            _ => documents.push(node_to_string(n, regexes)?),
+            _ => documents.push(node_to_string(heading, n, regexes)?),
         }
     }
     Ok(documents.join("").trim().to_string())
 }
 
-pub(super) fn node_to_string(node: &Node<'_>, regexes: &Regexes) -> ParseResult {
+pub(super) fn node_to_string(
+    heading: (usize, &str),
+    node: &Node<'_>,
+    regexes: &Regexes,
+) -> ParseResult {
     match node {
         Node::Bold { .. } => Ok(String::new()),
         Node::BoldItalic { .. } => Ok(String::new()),
@@ -86,46 +94,58 @@ pub(super) fn node_to_string(node: &Node<'_>, regexes: &Regexes) -> ParseResult 
         Node::Tag { .. } => Ok(String::new()),
         Node::Image { .. } => Ok(String::new()),
         Node::StartTag { .. } => Ok(String::new()),
-        Node::ParagraphBreak { .. } => Ok(String::from("\n\n\t")), //fight me
+        Node::ParagraphBreak { .. } => Ok(String::from("\n\n\t")),
         // Node::Heading {
         //     nodes,
         //     level: 1 | 2,
         //     ..
         // } => nodes_to_string(nodes, regexes).map(|heading| heading.to_string()),
-        Node::Heading { nodes, level, .. } => nodes_to_string(nodes, regexes)
-            .map(|heading| format!("\n\n{}{heading}", vec!["="; *level as usize].join(""))),
+        Node::Heading { nodes, level, .. } => {
+            nodes_to_string(heading, nodes, regexes).map(|new_heading| {
+                format!(
+                    "\n\n{}{}{}",
+                    vec!["="; *level as usize].join(""),
+                    heading.1,
+                    new_heading
+                )
+            })
+        }
         Node::ExternalLink { nodes, .. } => {
-            let document = nodes_to_string(nodes, regexes)?;
+            let document = nodes_to_string(heading, nodes, regexes)?;
             let str = document.deref().split(' ').collect::<Vec<_>>()[1..].join(" ");
             Ok(str)
         }
-        Node::Preformatted { nodes, .. } => nodes_to_string(nodes, regexes),
+        Node::Preformatted { nodes, .. } => nodes_to_string(heading, nodes, regexes),
 
         Node::CharacterEntity { character, .. } => Ok(String::from(*character)),
 
-        Node::Link { text, .. } => nodes_to_string(text, regexes),
+        Node::Link { text, .. } => nodes_to_string(heading, text, regexes),
         Node::Parameter { default, name, .. } => {
-            let name = nodes_to_string(name, regexes)?;
+            let name = nodes_to_string(heading, name, regexes)?;
             let default = match default {
-                Some(default) => nodes_to_string(default, regexes)?,
+                Some(default) => nodes_to_string(heading, default, regexes)?,
                 None => String::new(),
             };
             Ok([name, default].join(": "))
         }
 
-        Node::DefinitionList { items, .. } => definition_list_items_to_string(items, regexes),
-        Node::UnorderedList { items, .. } => unordered_list_items_to_string(items, regexes),
-        Node::OrderedList { items, .. } => ordered_list_items_to_string(items, regexes),
+        Node::DefinitionList { items, .. } => {
+            definition_list_items_to_string(heading, items, regexes)
+        }
+        Node::UnorderedList { items, .. } => {
+            unordered_list_items_to_string(heading, items, regexes)
+        }
+        Node::OrderedList { items, .. } => ordered_list_items_to_string(heading, items, regexes),
         Node::Table { .. } => Ok(String::new()),
         // Node::Table { captions, rows, .. } => table_to_string(regexes, captions, rows),
         Node::Template {
             name, parameters, ..
         } => {
-            let name = nodes_to_string(name, regexes)?;
+            let name = nodes_to_string(heading, name, regexes)?;
             if regexes.refn.is_match(&name) || regexes.linktext.is_match(&name) {
-                refn_parameters_to_string(parameters, regexes)
+                refn_parameters_to_string(heading, parameters, regexes)
             } else if regexes.language.is_match(&name) && !parameters.is_empty() {
-                refn_parameters_to_string(&parameters[1..], regexes)
+                refn_parameters_to_string(heading, &parameters[1..], regexes)
             } else {
                 Ok(String::new())
             }

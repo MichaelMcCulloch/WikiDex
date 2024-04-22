@@ -8,13 +8,14 @@ use super::{
 };
 
 pub(super) fn table_to_string(
+    heading: (usize, &str),
     regexes: &Regexes,
     captions: &[TableCaption<'_>],
     rows: &[TableRow<'_>],
 ) -> Result<String, WikiMarkupProcessingError> {
-    let captions = table_captions_to_string(captions, regexes)?;
+    let captions = table_captions_to_string(heading, captions, regexes)?;
 
-    if let Some(rows) = table_rows_to_string(rows, regexes)? {
+    if let Some(rows) = table_rows_to_string(heading, rows, regexes)? {
         let table = if let Some(captions) = captions {
             format!("\ncaption='{}'\n{}\n", captions, rows)
         } else {
@@ -28,6 +29,7 @@ pub(super) fn table_to_string(
 }
 
 pub(super) fn table_captions_to_string(
+    heading: (usize, &str),
     table_captions: &[TableCaption<'_>],
     regexes: &Regexes,
 ) -> Result<Option<String>, WikiMarkupProcessingError> {
@@ -36,13 +38,14 @@ pub(super) fn table_captions_to_string(
     } else {
         let mut documents = vec![];
         for tc in table_captions.iter() {
-            documents.push(table_caption_to_string(tc, regexes)?)
+            documents.push(table_caption_to_string(heading, tc, regexes)?)
         }
         Ok(Some(documents.join("")))
     }
 }
 
 pub(super) fn table_rows_to_string(
+    heading: (usize, &str),
     table_rows: &[TableRow<'_>],
     regexes: &Regexes,
 ) -> Result<Option<String>, WikiMarkupProcessingError> {
@@ -51,7 +54,7 @@ pub(super) fn table_rows_to_string(
     } else {
         let mut documents = vec![];
         for tr in table_rows.iter() {
-            documents.push(table_row_to_string(tr, regexes)?)
+            documents.push(table_row_to_string(heading, tr, regexes)?)
         }
 
         Ok(Some(documents.join("\n")))
@@ -59,6 +62,7 @@ pub(super) fn table_rows_to_string(
 }
 
 pub(super) fn table_cells_to_string(
+    heading: (usize, &str),
     table_cells: &[TableCell<'_>],
     regexes: &Regexes,
 ) -> Result<Option<String>, WikiMarkupProcessingError> {
@@ -72,7 +76,7 @@ pub(super) fn table_cells_to_string(
 
         let mut documents: Vec<String> = vec![];
         for tc in table_cells.iter() {
-            let cell_text = table_cell_to_string(tc, regexes)?;
+            let cell_text = table_cell_to_string(heading, tc, regexes)?;
             if cell_text.is_empty() {
                 documents.push(" ".to_string())
             } else {
@@ -85,10 +89,11 @@ pub(super) fn table_cells_to_string(
 }
 
 pub(super) fn table_cell_to_string(
+    heading: (usize, &str),
     TableCell { content, .. }: &TableCell<'_>,
     regexes: &Regexes,
 ) -> ParseResult {
-    let content = nodes_to_string(content, regexes)?;
+    let content = nodes_to_string(heading, content, regexes)?;
     let content = content.trim();
     if content.is_empty() {
         Ok(String::new())
@@ -97,10 +102,11 @@ pub(super) fn table_cell_to_string(
     }
 }
 pub(super) fn table_row_to_string(
+    heading: (usize, &str),
     TableRow { cells, .. }: &TableRow<'_>,
     regexes: &Regexes,
 ) -> ParseResult {
-    let cells = table_cells_to_string(cells, regexes)?;
+    let cells = table_cells_to_string(heading, cells, regexes)?;
     if let Some(cells) = cells {
         Ok(cells)
     } else {
@@ -108,10 +114,11 @@ pub(super) fn table_row_to_string(
     }
 }
 pub(super) fn table_caption_to_string(
+    heading: (usize, &str),
     TableCaption { content, .. }: &TableCaption<'_>,
     regexes: &Regexes,
 ) -> ParseResult {
-    nodes_to_string(content, regexes)
+    nodes_to_string(heading, content, regexes)
 }
 
 #[cfg(test)]
@@ -144,7 +151,7 @@ mod tests_table_cell_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_cell_to_string(&input, &regex).unwrap();
+        let extraction = table_cell_to_string((0, ""), &input, &regex).unwrap();
         assert_eq!(format!("{cell_content_text}"), extraction)
     }
     #[test]
@@ -171,7 +178,7 @@ mod tests_table_cell_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_cell_to_string(&input, &regex).unwrap();
+        let extraction = table_cell_to_string((0, ""), &input, &regex).unwrap();
         assert_eq!(format!("{cell_content_text}"), extraction)
     }
 
@@ -216,7 +223,7 @@ mod tests_table_cell_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_cells_to_string(&[input, input2], &regex)
+        let extraction = table_cells_to_string((0, ""), &[input, input2], &regex)
             .unwrap()
             .unwrap();
         assert_eq!(
@@ -265,7 +272,7 @@ mod tests_table_cell_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_cells_to_string(&[input, input2], &regex)
+        let extraction = table_cells_to_string((0, ""), &[input, input2], &regex)
             .unwrap()
             .unwrap();
         assert_eq!(
@@ -312,7 +319,7 @@ mod tests_table_cell_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_row_to_string(&input, &regex).unwrap();
+        let extraction = table_row_to_string((0, ""), &input, &regex).unwrap();
         assert_eq!(format!("||{cell_content_text}||"), extraction)
     }
 
@@ -382,7 +389,7 @@ mod tests_table_cell_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_rows_to_string(&[input, input2], &regex)
+        let extraction = table_rows_to_string((0, ""), &[input, input2], &regex)
             .unwrap()
             .unwrap();
         assert_eq!(
@@ -452,7 +459,7 @@ mod tests_table_cell_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_to_string(&regex, &[caption], &[row]).unwrap();
+        let extraction = table_to_string((0, ""), &regex, &[caption], &[row]).unwrap();
         assert_eq!(
             format!("\ncaption='{caption_content_text}'\n|{row_content_text}|\n"),
             extraction
