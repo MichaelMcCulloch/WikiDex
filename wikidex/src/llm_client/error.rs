@@ -3,15 +3,10 @@ use std::fmt::{self, Debug, Display, Formatter};
 #[derive(Debug)]
 pub(crate) enum LlmClientError {
     Utf8Error(std::str::Utf8Error),
-
     Anyhow(anyhow::Error),
-
     TonicError(tonic::transport::Error),
-
     TonicStatus(tonic::Status),
-
     OpenAiClient(async_openai::error::OpenAIError),
-
     EmptyResponse,
 }
 

@@ -6,4 +6,4 @@ mod markup_processor;
 
 pub(crate) use engine::Engine;
 pub(crate) use error::IngestError;
-pub(crate) use markup_processor::WikiMarkupProcessor;
+pub(crate) use markup_processor::{WikiMarkupProcessingError, WikiMarkupProcessor};

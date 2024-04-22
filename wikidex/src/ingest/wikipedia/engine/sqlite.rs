@@ -18,8 +18,8 @@ use super::{Engine, MINIMUM_PASSAGE_LENGTH_IN_WORDS, PCA_DIMENSIONS};
 
 impl Engine<Sqlite> {
     pub(crate) fn new(
-        llm: LlmClientImpl,
-        embed: EmbeddingClient,
+        llm: Arc<LlmClientImpl>,
+        embed: Arc<EmbeddingClient>,
         multi_progress: MultiProgress,
         chunk_size: usize,
         chunk_overlap: usize,
@@ -27,8 +27,8 @@ impl Engine<Sqlite> {
         let markup_processor = WikiMarkupProcessor::new();
 
         Self {
-            llm: Arc::new(llm),
-            embed: Arc::new(embed),
+            llm,
+            embed,
             markup_processor,
             multi_progress,
             text_splitter: RecursiveCharacterTextSplitter::new(
