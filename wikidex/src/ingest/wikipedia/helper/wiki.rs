@@ -1,13 +1,13 @@
-use crate::ingest::wikipedia::IngestError;
-
 use super::{
     super::{
-        markup_processor::{self, Process},
+        markup_processor::{self},
         IngestError::*,
     },
     gzip_helper::{compress_text, decompress_text},
     text::RecursiveCharacterTextSplitter,
 };
+use crate::ingest::service::Process;
+use crate::ingest::wikipedia::IngestError;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use indicatif::ProgressBar;
 use markup_processor::WikiMarkupProcessor;

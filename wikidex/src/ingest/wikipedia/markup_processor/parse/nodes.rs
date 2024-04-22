@@ -8,7 +8,7 @@ use super::{
     template_params::refn_parameters_to_string,
     Regexes,
 };
-use crate::ingest::wikipedia::{markup_processor::Process, WikiMarkupProcessor};
+use crate::ingest::{service::Process, wikipedia::WikiMarkupProcessor};
 
 pub(crate) const STOP_PHRASES: [&str; 6] = [
     "References",

@@ -99,9 +99,9 @@ impl<'a> RecursiveCharacterTextSplitter<'a> {
 mod tests_text_splitter {
 
     use crate::{
-        ingest::wikipedia::{
-            helper::text::RecursiveCharacterTextSplitter, markup_processor::Process,
-            WikiMarkupProcessor,
+        ingest::{
+            service::Process,
+            wikipedia::{helper::text::RecursiveCharacterTextSplitter, WikiMarkupProcessor},
         },
         test_data::SUPREME_COURT_VOL_129,
     };
