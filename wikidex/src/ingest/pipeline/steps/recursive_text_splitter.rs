@@ -1,7 +1,5 @@
 use std::sync::Arc;
 
-
-
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
 
 use crate::ingest::pipeline::{

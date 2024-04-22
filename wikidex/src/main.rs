@@ -26,6 +26,7 @@ use crate::ingest::plain_text::PlainTextProcessor;
 #[cfg(feature = "ingest")]
 use crate::ingest::wikipedia::Engine as WikipediaIngestEngine;
 
+#[cfg(feature = "server")]
 use actix_web::rt;
 use async_openai::{config::OpenAIConfig, Client};
 use cli_args::Commands;
@@ -71,7 +72,7 @@ fn main() -> anyhow::Result<()> {
                 .unwrap();
 
             let config = IngestConfig::from(ingest_args);
-            let system_runner = rt::System::new();
+            let system_runner = tokio::runtime::Runtime::new().unwrap();
 
             log::info!("\n{config}");
             let graph_session = system_runner.block_on(graph_client(

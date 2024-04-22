@@ -1,4 +1,3 @@
-
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
 use parse_mediawiki_dump_reboot::{schema::Namespace, Page};

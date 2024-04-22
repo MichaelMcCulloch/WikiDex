@@ -29,7 +29,7 @@ mod test {
         log::info!("ok");
         let recursive_splitter = RecursiveCharacterTextSplitter::new(1024, 128, None, true);
         let processor = WikiMarkupProcessor;
-        let reader = WikipediaDumpReader::new(processor, 0);
+        let reader = WikipediaDumpReader::new(processor, 1);
         let splitter = Splitter::new(recursive_splitter);
 
         let (t, r) = unbounded_channel::<PathBuf>();
@@ -43,7 +43,8 @@ mod test {
 
         // while let Ok(Some(document)) = timeout(Duration::from_secs(10), r.recv()).await {
         while let Some(document) = r.recv().await {
-            println!("{}", document.article_title);
+            println!("{}", document.document);
+            println!("{}", ["="; 160].join(""));
         }
         Ok(())
     }
