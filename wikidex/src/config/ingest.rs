@@ -18,6 +18,9 @@ pub(crate) struct Config {
     pub(crate) embed_endpoint: ModelEndpoint,
     pub(crate) embed_url: Url,
     pub(crate) ingest_limit: usize,
+    pub(crate) nebula_url: Url,
+    pub(crate) nebula_user: String,
+    pub(crate) nebula_pass: String,
     pub(crate) api_key: Option<String>,
 }
 
@@ -35,6 +38,9 @@ impl From<WikipediaIngestArgs> for Config {
             embed_name: value.embed_name,
             embed_endpoint: value.embed_endpoint,
             embed_url: value.embed_url,
+            nebula_url: value.nebula_url,
+            nebula_user: value.nebula_user,
+            nebula_pass: value.nebula_pass,
         }
     }
 }
@@ -53,6 +59,7 @@ impl Display for Config {
             embed_endpoint,
             ingest_limit,
             api_key: _,
+            ..
         } = self;
 
         let wiki_xml = wiki_xml.display();

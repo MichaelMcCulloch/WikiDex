@@ -94,7 +94,7 @@ x-base_service_index: &base_index
 
 x-base_rust: &base_rust
   environment:
-    RUST_LOG: actix_server=warn,face=info,actix_web=info,wikidex=info
+    RUST_LOG: $RUST_LOG
 
 x-base_service_redis: &base_redis
   container_name: redis
@@ -277,6 +277,12 @@ services:
         triton,
         --llm-kind,
         "$MODEL_KIND",
+        --nebula-url,
+        "$NEBULA_URL",
+        --nebula-user,
+        "$NEBULA_USER",
+        --nebula-pass,
+        "$NEBULA_PASS",
       ]
 
   wikidex-vllm:
@@ -426,8 +432,7 @@ services:
     volumes:
       - ~/ContainerData/Nebula/testing/data/meta0:/data/meta
       - ~/ContainerData/Nebula/testing/logs/meta0:/logs
-    networks:
-      - nebula-net
+
     restart: on-failure
     cap_add:
       - SYS_PTRACE
@@ -464,8 +469,7 @@ services:
     volumes:
       - ~/ContainerData/Nebula/testing/data/storage0:/data/storage
       - ~/ContainerData/Nebula/testing/logs/storage0:/logs
-    networks:
-      - nebula-net
+
     restart: on-failure
     cap_add:
       - SYS_PTRACE
@@ -500,11 +504,7 @@ services:
       - 19670
     volumes:
       - ~/ContainerData/Nebula/testing/logs/graph:/logs
-    networks:
-      - nebula-net
+
     restart: on-failure
     cap_add:
       - SYS_PTRACE
-
-networks:
-  nebula-net:

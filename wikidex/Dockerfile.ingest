@@ -1,4 +1,4 @@
-FROM rust:1.75.0-bookworm as builder
+FROM rust:1.77.2-bookworm as builder
 
 RUN \
     --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update  && \
