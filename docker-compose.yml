@@ -24,7 +24,6 @@ x-base_service_nvidia: &base_service_nvidia
 #     - "/dev/kfd"
 
 x-base_service_vllm: &base_vllm
-  container_name: vllm
   env_file: .env
   image: vllm/vllm-openai:latest
   profiles:
@@ -35,7 +34,6 @@ x-base_service_vllm: &base_vllm
     - "${VLLM_HOST_PORT}:${VLLM_CONT_PORT}"
 
 x-base_service_triton: &base_triton
-  container_name: triton
   env_file: .env
   profiles:
     - triton
@@ -53,14 +51,12 @@ x-base_service_triton: &base_triton
     - 8002:8002
 
 x-base_service_ui: &base_ui
-  container_name: ui
   profiles:
     - server
   ports:
     - "${UI_HOST_PORT}:${UI_CONT_PORT}"
 
 x-base_service_wikidex: &base_wikidex
-  container_name: wikidex
   ports:
     - "${WIKIDEX_HOST_PORT}:${WIKIDEX_CONT_PORT}"
   volumes:
@@ -79,7 +75,6 @@ x-base_service_ingest: &base_ingest
     - infinity
   volumes:
     - ~/Documents/WIKIDUMPS/20240401/:/wikipedia/
-  container_name: ingest
   build:
     dockerfile: Dockerfile.ingest
     context: ./wikidex
@@ -97,7 +92,6 @@ x-base_rust: &base_rust
     RUST_LOG: $RUST_LOG
 
 x-base_service_redis: &base_redis
-  container_name: redis
   image: redis:latest
   command: >
     --requirepass redis
@@ -108,7 +102,6 @@ x-base_service_redis: &base_redis
     - ~/ContainerData/Redis/wikidex/redis.conf:/usr/local/etc/redis/redis.conf
 
 x-base_service_postgres: &base_postgres
-  container_name: postgres
   image: postgres
   shm_size: 1gb
 
@@ -139,13 +132,13 @@ x-base_service_postgres_dummy_gid: &base_postgres_dummy_gid_fix
   user: 1000:1000
 
 x-base_service_infinity: &base_infinity
-  container_name: infinity
   profiles:
     - server
     - ingest
   image: michaelf34/infinity:latest
   volumes:
     - ~/.cache/huggingface/hub/:/app/.cache/torch
+    - ~/.cache/huggingface/hub/:/root/.cache/huggingface/hub/
   ports:
     - "${EMBED_HOST_PORT}:${EMBED_CONT_PORT}"
 
@@ -329,7 +322,6 @@ services:
       - postgres
 
   wikidex-trt:
-    container_name: wikidex
     <<:
       - *base_service
       - *base_wikidex
@@ -508,3 +500,21 @@ services:
     restart: on-failure
     cap_add:
       - SYS_PTRACE
+  console:
+    image: docker.io/vesoft/nebula-console:v3.5
+    entrypoint: ""
+    command:
+      - sh
+      - -c
+      - |
+        for i in `seq 1 60`;do
+          var=`nebula-console -addr graphd -port 9669 -u root -p nebula -e 'ADD HOSTS "storaged0":9779,"storaged1":9779,"storaged2":9779'`;
+          if [[ $$? == 0 ]];then
+            break;
+          fi;
+          sleep 1;
+          echo "retry to add hosts.";
+        done && tail -f /dev/null;
+
+    depends_on:
+      - graphd
