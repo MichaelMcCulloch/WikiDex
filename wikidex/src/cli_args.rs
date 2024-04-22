@@ -79,4 +79,10 @@ pub(crate) struct WikipediaIngestArgs {
     pub(crate) embed_url: Url,
     #[arg(long, default_value_t = 0)]
     pub(crate) ingest_limit: usize,
+    #[arg(long)]
+    pub(crate) nebula_url: Url,
+    #[arg(long)]
+    pub(crate) nebula_user: String,
+    #[arg(long)]
+    pub(crate) nebula_pass: String,
 }

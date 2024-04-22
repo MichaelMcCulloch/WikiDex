@@ -18,6 +18,8 @@ mod inference;
 mod ingest;
 #[cfg(feature = "server")]
 mod server;
+
+use crate::ingest::plain_text::PlainTextProcessor;
 #[cfg(feature = "ingest")]
 use crate::ingest::wikipedia::Engine as WikipediaIngestEngine;
 
@@ -102,7 +104,11 @@ fn main() -> anyhow::Result<()> {
                     )
                 }
             };
-
+            let _plaintext = system_runner.block_on(PlainTextProcessor::new(
+                config.nebula_url,
+                &config.nebula_user,
+                &config.nebula_pass,
+            ))?;
             let engine =
                 WikipediaIngestEngine::new(llm_client, embed_client, multi_progress, 1024, 128);
             system_runner
