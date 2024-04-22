@@ -3,7 +3,7 @@ use std::{
     fmt::{Debug, Display, Formatter, Result},
 };
 
-use crate::ingest::wikipedia::WikiMarkupProcessingError;
+use super::wikipedia::WikiMarkupProcessingError;
 
 #[derive(Debug)]
 pub enum WikipediaDumpReaderError {

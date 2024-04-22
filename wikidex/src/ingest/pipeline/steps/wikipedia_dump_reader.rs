@@ -1,7 +1,6 @@
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
 use parse_mediawiki_dump_reboot::{schema::Namespace, Page};
-use rayon::iter::ParallelIterator;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
@@ -10,7 +9,7 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
 use tokio::sync::oneshot::channel;
 use tokio::time::timeout;
 
-use crate::ingest::wikipedia::WikiMarkupProcessor;
+use crate::ingest::pipeline::wikipedia::WikiMarkupProcessor;
 use crate::ingest::{
     pipeline::{
         document::Document,

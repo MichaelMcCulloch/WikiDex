@@ -4,7 +4,6 @@ use std::ops::Deref;
 use super::{
     deflist::definition_list_items_to_string,
     listitems::{ordered_list_items_to_string, unordered_list_items_to_string},
-    tables::table_to_string,
     template_params::refn_parameters_to_string,
     Regexes,
 };
@@ -24,31 +23,31 @@ pub(crate) type ParseResult = Result<String, <WikiMarkupProcessor as Process>::E
 pub(crate) fn process_to_article(nodes: &[Node<'_>], regexes: &Regexes) -> ParseResult {
     let output = nodes_to_string(nodes, regexes)?;
 
-    let output = regexes
-        .twospace
-        .split(&output)
-        .collect::<Vec<_>>()
-        .join(" ");
-    let output = regexes
-        .space_coma
-        .split(&output)
-        .collect::<Vec<_>>()
-        .join(",");
-    let output = regexes
-        .space_period
-        .split(&output)
-        .collect::<Vec<_>>()
-        .join(".");
-    let output = regexes
-        .pilcrow
-        .split(&output)
-        .collect::<Vec<_>>()
-        .join("\n");
-    let output = regexes
-        .threelines
-        .split(&output)
-        .collect::<Vec<_>>()
-        .join("\n\n");
+    // let output = regexes
+    //     .twospace
+    //     .split(&output)
+    //     .collect::<Vec<_>>()
+    //     .join(" ");
+    // let output = regexes
+    //     .space_coma
+    //     .split(&output)
+    //     .collect::<Vec<_>>()
+    //     .join(",");
+    // let output = regexes
+    //     .space_period
+    //     .split(&output)
+    //     .collect::<Vec<_>>()
+    //     .join(".");
+    // let output = regexes
+    //     .pilcrow
+    //     .split(&output)
+    //     .collect::<Vec<_>>()
+    //     .join("\n");
+    // let output = regexes
+    //     .threelines
+    //     .split(&output)
+    //     .collect::<Vec<_>>()
+    //     .join("\n\n");
     Ok(output)
 }
 
@@ -70,33 +69,31 @@ pub(super) fn nodes_to_string(nodes: &[Node<'_>], regexes: &Regexes) -> ParseRes
             _ => documents.push(node_to_string(n, regexes)?),
         }
     }
-    Ok(documents.join(" ").trim().to_string())
+    Ok(documents.join("").trim().to_string())
 }
 
 pub(super) fn node_to_string(node: &Node<'_>, regexes: &Regexes) -> ParseResult {
     match node {
-        Node::Bold { .. }
-        | Node::BoldItalic { .. }
-        | Node::Comment { .. }
-        | Node::HorizontalDivider { .. }
-        | Node::Italic { .. }
-        | Node::MagicWord { .. }
-        | Node::Category { .. }
-        | Node::Redirect { .. }
-        | Node::EndTag { .. }
-        | Node::Tag { .. }
-        | Node::Image { .. }
-        | Node::StartTag { .. } => Ok(String::new()),
-        Node::ParagraphBreak { .. } => Ok(String::from("¶")), //fight me
-        Node::Heading {
-            nodes,
-            level: 1 | 2,
-            ..
-        } => nodes_to_string(nodes, regexes).map(|heading| format!("\n\n{heading}")),
-        Node::Heading { nodes, .. } => {
-            nodes_to_string(nodes, regexes).map(|heading| format!("\n{heading}\n"))
-        }
-
+        Node::Bold { .. } => Ok(String::new()),
+        Node::BoldItalic { .. } => Ok(String::new()),
+        Node::Comment { .. } => Ok(String::new()),
+        Node::HorizontalDivider { .. } => Ok(String::new()),
+        Node::Italic { .. } => Ok(String::new()),
+        Node::MagicWord { .. } => Ok(String::new()),
+        Node::Category { .. } => Ok(String::new()),
+        Node::Redirect { .. } => Ok(String::new()),
+        Node::EndTag { .. } => Ok(String::new()),
+        Node::Tag { .. } => Ok(String::new()),
+        Node::Image { .. } => Ok(String::new()),
+        Node::StartTag { .. } => Ok(String::new()),
+        Node::ParagraphBreak { .. } => Ok(String::from("\n\n\t")), //fight me
+        // Node::Heading {
+        //     nodes,
+        //     level: 1 | 2,
+        //     ..
+        // } => nodes_to_string(nodes, regexes).map(|heading| heading.to_string()),
+        Node::Heading { nodes, level, .. } => nodes_to_string(nodes, regexes)
+            .map(|heading| format!("\n\n{}{heading}", vec!["="; *level as usize].join(""))),
         Node::ExternalLink { nodes, .. } => {
             let document = nodes_to_string(nodes, regexes)?;
             let str = document.deref().split(' ').collect::<Vec<_>>()[1..].join(" ");
@@ -119,7 +116,8 @@ pub(super) fn node_to_string(node: &Node<'_>, regexes: &Regexes) -> ParseResult 
         Node::DefinitionList { items, .. } => definition_list_items_to_string(items, regexes),
         Node::UnorderedList { items, .. } => unordered_list_items_to_string(items, regexes),
         Node::OrderedList { items, .. } => ordered_list_items_to_string(items, regexes),
-        Node::Table { captions, rows, .. } => table_to_string(regexes, captions, rows),
+        Node::Table { .. } => Ok(String::new()),
+        // Node::Table { captions, rows, .. } => table_to_string(regexes, captions, rows),
         Node::Template {
             name, parameters, ..
         } => {

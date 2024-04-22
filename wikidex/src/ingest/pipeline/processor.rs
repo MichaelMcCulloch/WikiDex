@@ -1,10 +1,9 @@
-use crate::ingest::{
-    pipeline::{
-        recursive_character_text_splitter::RecursiveCharacterTextSplitter,
-        steps::{Splitter, WikipediaDumpReader},
-    },
-    wikipedia::WikiMarkupProcessor,
+use crate::ingest::pipeline::{
+    recursive_character_text_splitter::RecursiveCharacterTextSplitter,
+    steps::{Splitter, WikipediaDumpReader},
 };
+
+use super::wikipedia::WikiMarkupProcessor;
 
 async fn whatever() {
     let recursive_splitter = RecursiveCharacterTextSplitter::new(1024, 128, None, true);
@@ -27,15 +26,15 @@ mod test {
     #[tokio::test(flavor = "multi_thread", worker_threads = 32)]
     async fn test() -> Result<(), PipelineError> {
         log::info!("ok");
-        let recursive_splitter = RecursiveCharacterTextSplitter::new(1024, 128, None, true);
+        let _recursive_splitter = RecursiveCharacterTextSplitter::new(1024, 128, None, true);
         let processor = WikiMarkupProcessor;
         let reader = WikipediaDumpReader::new(processor, 1);
-        let splitter = Splitter::new(recursive_splitter);
+        // let splitter = Splitter::new(recursive_splitter);
 
         let (t, r) = unbounded_channel::<PathBuf>();
 
-        let r = reader.link(r).await?;
-        let mut r = splitter.link(r).await?;
+        let mut r = reader.link(r).await?;
+        // let mut r = splitter.link(r).await?;
 
         let _ = t.send(PathBuf::from(
             "/home/michael/Documents/WIKIDUMPS/20240401/enwiki-20240401-pages-articles.xml",
