@@ -3,7 +3,7 @@ mod pattern_text_splitter;
 mod recursive_text_splitter;
 mod sqlite_writter;
 mod wikipedia_dump_reader;
-use std::sync::Arc;
+use std::sync::{atomic::AtomicUsize, Arc};
 
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
 
@@ -19,19 +19,30 @@ pub(crate) trait PipelineStep {
     type IN: Send + Sync + 'static;
     type ARG: Send + Sync + 'static;
     type OUT: Send + Sync + 'static;
+
+    fn name() -> String;
+
     async fn link(
         &self,
         mut receiver: UnboundedReceiver<Self::IN>,
     ) -> Result<UnboundedReceiver<Self::OUT>, PipelineError> {
         let (sender, new_receiver) = unbounded_channel::<Self::OUT>();
         let args = Arc::new(self.args());
+
+        let o = Arc::new(AtomicUsize::new(0));
         tokio::spawn(async move {
             while let Some(input) = receiver.recv().await {
                 let args = args.clone();
                 let sender = sender.clone();
+                let o = o.clone();
                 tokio::spawn(async move {
                     let transform = Self::transform(input, &args).await;
                     for t in transform {
+                        println!(
+                            "{},{}",
+                            Self::name(),
+                            o.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+                        );
                         let _ = sender.send(t);
                     }
                 });

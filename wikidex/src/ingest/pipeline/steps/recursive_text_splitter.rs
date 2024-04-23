@@ -53,4 +53,7 @@ impl PipelineStep for Splitter {
     fn args(&self) -> Self::ARG {
         self.splitter.clone()
     }
+    fn name() -> String {
+        String::from("Splitter")
+    }
 }

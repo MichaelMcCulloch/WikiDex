@@ -81,6 +81,9 @@ impl PipelineStep for WikipediaHeadingSplitter {
     }
 
     fn args(&self) -> Self::ARG {}
+    fn name() -> String {
+        String::from("WikipediaHeadingSplitter")
+    }
 }
 
 impl PipelineStep for WikipediaDumpReader {
@@ -159,6 +162,9 @@ impl PipelineStep for WikipediaDumpReader {
     }
 
     fn args(&self) -> Self::ARG {}
+    fn name() -> String {
+        String::from("WikipediaDumpReader")
+    }
 }
 
 fn get_date_from_xml_name(file_name: &Path) -> Result<NaiveDateTime, WikipediaDumpReaderError> {

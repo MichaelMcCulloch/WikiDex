@@ -52,12 +52,13 @@ mod test {
 
         let compressor = Compressor;
 
-        let path = "sqlite:///home/michael/Desktop/wikisql/wikipedia_docstore.sqlite";
+        let path = "sqlite:///tmp/wikipedia_docstore.sqlite";
         if !sqlx::Sqlite::database_exists(path).await.unwrap() {
             sqlx::Sqlite::create_database(path).await.unwrap();
         }
-        let x = SqlitePool::connect(path).await.unwrap();
-        let writter = SqliteWriter::new(x).await;
+
+        let pool = SqlitePool::connect(path).await.unwrap();
+        let writter = SqliteWriter::new(pool).await;
 
         let (t, r) = unbounded_channel::<PathBuf>();
 
@@ -71,10 +72,10 @@ mod test {
             "/home/michael/Desktop/enwiki-20240401-pages-articles.xml",
         ));
 
-        let o = AtomicUsize::new(0);
+        let _o = AtomicUsize::new(0);
         // while let Ok(Some(document)) = timeout(Duration::from_secs(10), r.recv()).await {
         while let Some(_document) = r.recv().await {
-            println!("{}", o.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
+            // println!("{}", o.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
         }
         Ok(())
     }

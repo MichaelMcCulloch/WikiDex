@@ -1,8 +1,6 @@
 use flate2::{read::GzDecoder, write::GzEncoder};
 
-use std::{
-    io::{self, Read, Write},
-};
+use std::io::{self, Read, Write};
 
 use crate::ingest::pipeline::document::{CompressedDocument, DocumentWithHeading};
 
@@ -54,4 +52,8 @@ impl PipelineStep for Compressor {
     }
 
     fn args(&self) -> Self::ARG {}
+
+    fn name() -> String {
+        String::from("Compressor")
+    }
 }

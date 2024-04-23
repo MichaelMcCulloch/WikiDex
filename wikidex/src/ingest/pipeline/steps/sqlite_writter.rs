@@ -1,9 +1,11 @@
-use std::sync::{
-    atomic::{AtomicI64, Ordering},
-    Arc,
+use std::{
+    sync::{
+        atomic::{AtomicI64, Ordering},
+        Arc,
+    },
 };
 
-use sqlx::SqlitePool;
+use sqlx::{SqlitePool};
 
 use crate::ingest::pipeline::document::CompressedDocument;
 
@@ -18,26 +20,26 @@ pub(crate) struct SqliteWriter {
 impl SqliteWriter {
     pub(crate) async fn new(pool: SqlitePool) -> Self {
         let mut connection = pool.acquire().await.unwrap();
-
-        let _rows = sqlx::query!("DROP TABLE IF EXISTS completed_on;",)
+        let _ = sqlx::query!("BEGIN;",).execute(&mut *connection).await;
+        let _ = sqlx::query!("DROP TABLE IF EXISTS completed_on;",)
             .execute(&mut *connection)
             .await;
-        let _rows = sqlx::query!("DROP TABLE IF EXISTS document;",)
+        let _ = sqlx::query!("DROP TABLE IF EXISTS document;",)
             .execute(&mut *connection)
             .await;
-        let _rows = sqlx::query!("DROP TABLE IF EXISTS article;",)
+        let _ = sqlx::query!("DROP TABLE IF EXISTS article;",)
             .execute(&mut *connection)
             .await;
-        let _rows = sqlx::query!("CREATE TABLE IF NOT EXISTS article ( id INTEGER PRIMARY KEY NOT NULL, title TEXT NOT NULL, access_date INTEGER NOT NULL, modification_date INTEGER NOT NULL );",)
-        .execute(&mut *connection)
-        .await;
-        let _rows = sqlx::query!("CREATE TABLE IF NOT EXISTS document ( id INTEGER PRIMARY KEY NOT NULL,  text BLOB NOT NULL,  article INTEGER NOT NULL,  FOREIGN KEY(article) REFERENCES article(id) );",)
-        .execute(&mut *connection)
-        .await;
-        let _rows = sqlx::query!("CREATE TABLE IF NOT EXISTS completed_on ( db_date INTEGER NOT NULL, article_count INTEGER NOT NULL );",)
-        .execute(&mut *connection)
-        .await;
-
+        let _ = sqlx::query!("CREATE TABLE IF NOT EXISTS article ( id INTEGER PRIMARY KEY NOT NULL, title TEXT NOT NULL, access_date INTEGER NOT NULL, modification_date INTEGER NOT NULL );",)
+            .execute(&mut *connection)
+            .await;
+        let _ = sqlx::query!("CREATE TABLE IF NOT EXISTS document ( id INTEGER PRIMARY KEY NOT NULL,  text BLOB NOT NULL,  article INTEGER NOT NULL,  FOREIGN KEY(article) REFERENCES article(id) );",)
+            .execute(&mut *connection)
+            .await;
+        let _ = sqlx::query!("CREATE TABLE IF NOT EXISTS completed_on ( db_date INTEGER NOT NULL, article_count INTEGER NOT NULL );",)
+            .execute(&mut *connection)
+            .await;
+        let _ = sqlx::query!("COMMIT;",).execute(&mut *connection).await;
         Self {
             pool: Arc::new(pool),
             article_count: Arc::new(AtomicI64::new(0)),
@@ -95,5 +97,8 @@ impl PipelineStep for SqliteWriter {
             self.article_count.clone(),
             self.document_count.clone(),
         )
+    }
+    fn name() -> String {
+        String::from("SqliteWriter")
     }
 }

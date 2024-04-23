@@ -52,4 +52,7 @@ impl PipelineStep for PatternSplitter {
     fn args(&self) -> Self::ARG {
         self.pattern.clone()
     }
+    fn name() -> String {
+        String::from("PatternSplitter")
+    }
 }
