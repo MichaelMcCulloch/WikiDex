@@ -3,6 +3,8 @@ mod pattern_text_splitter;
 mod recursive_text_splitter;
 mod sqlite_writter;
 mod wikipedia_dump_reader;
+mod wikipedia_heading_splitter;
+mod wikipedia_page_parser;
 use std::sync::{atomic::AtomicUsize, Arc};
 
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
@@ -11,7 +13,9 @@ pub(crate) use gzip_compressor::Compressor;
 pub(crate) use pattern_text_splitter::PatternSplitter;
 pub(crate) use recursive_text_splitter::Splitter;
 pub(crate) use sqlite_writter::SqliteWriter;
-pub(crate) use wikipedia_dump_reader::{WikipediaDumpReader, WikipediaHeadingSplitter};
+pub(crate) use wikipedia_dump_reader::WikipediaDumpReader;
+pub(crate) use wikipedia_heading_splitter::WikipediaHeadingSplitter;
+pub(crate) use wikipedia_page_parser::WikipediaPageParser;
 
 use super::error::PipelineError;
 
