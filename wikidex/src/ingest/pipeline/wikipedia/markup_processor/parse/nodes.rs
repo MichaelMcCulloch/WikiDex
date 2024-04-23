@@ -4,6 +4,7 @@ use std::ops::Deref;
 use super::{
     deflist::definition_list_items_to_string,
     listitems::{ordered_list_items_to_string, unordered_list_items_to_string},
+    tables::table_to_string,
     template_params::refn_parameters_to_string,
     Regexes,
 };
@@ -106,31 +107,7 @@ pub(super) fn node_to_string(
             let new_heading = nodes_to_string(heading, nodes, regexes)?;
             // Calculate the level difference between the new level and the current length of headings
             // this always produces an empty first member in heading, not sure why.
-            let incr = *level as i8 - heading.len() as i8;
-
-            // If level difference is positive, add placeholders for missing heading levels
-            if incr > 0 {
-                // Extend the heading vector with placeholders to reach the new level
-                heading.extend(vec!["".to_string(); incr as usize]);
-            }
-
-            // If level difference is negative, remove excess heading levels
-            if incr < 0 {
-                // Pop the extra headings
-                for _ in 0..(-incr) {
-                    heading.pop();
-                }
-            }
-
-            // Replace the last heading with the new heading
-            if let Some(last) = heading.last_mut() {
-                *last = new_heading.to_string();
-            } else {
-                heading.push(new_heading.to_string());
-            }
-
-            // Construct the formatted heading string from the adjusted vector
-            let heading_str = format!("{HEADING_START}{}{HEADING_END}", heading.join(":"));
+            let heading_str = adjust_headings(level, heading, new_heading);
             Ok(heading_str)
         }
         Node::ExternalLink { nodes, .. } => {
@@ -159,8 +136,7 @@ pub(super) fn node_to_string(
             unordered_list_items_to_string(heading, items, regexes)
         }
         Node::OrderedList { items, .. } => ordered_list_items_to_string(heading, items, regexes),
-        Node::Table { .. } => Ok(String::new()),
-        // Node::Table { captions, rows, .. } => table_to_string(regexes, captions, rows),
+        Node::Table { captions, rows, .. } => table_to_string(heading, regexes, captions, rows),
         Node::Template {
             name, parameters, ..
         } => {
@@ -176,6 +152,35 @@ pub(super) fn node_to_string(
         Node::Text { value: "\n", .. } => Ok(String::new()),
         Node::Text { value, .. } => Ok(String::from(*value)),
     }
+}
+
+fn adjust_headings(level: &u8, heading: &mut Vec<String>, new_heading: String) -> String {
+    let incr = *level as i8 - heading.len() as i8;
+
+    // If level difference is positive, add placeholders for missing heading levels
+    if incr > 0 {
+        // Extend the heading vector with placeholders to reach the new level
+        heading.extend(vec!["".to_string(); incr as usize]);
+    }
+
+    // If level difference is negative, remove excess heading levels
+    if incr < 0 {
+        // Pop the extra headings
+        for _ in 0..(-incr) {
+            heading.pop();
+        }
+    }
+
+    // Replace the last heading with the new heading
+    if let Some(last) = heading.last_mut() {
+        *last = new_heading.to_string();
+    } else {
+        heading.push(new_heading.to_string());
+    }
+
+    // Construct the formatted heading string from the adjusted vector
+    let heading_str = format!("{HEADING_START}{}{HEADING_END}", heading.join(":"));
+    heading_str
 }
 
 #[cfg(test)]

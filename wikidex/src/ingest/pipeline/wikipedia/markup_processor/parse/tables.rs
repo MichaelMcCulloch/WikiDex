@@ -17,7 +17,11 @@ pub(super) fn table_to_string(
 
     if let Some(rows) = table_rows_to_string(heading, rows, regexes)? {
         let table = if let Some(captions) = captions {
-            format!("\ncaption='{}'\n{}\n", captions, rows)
+            if !captions.is_empty() {
+                format!("\ncaption='{}'\n{}\n", captions, rows)
+            } else {
+                format!("\n{}\n", rows)
+            }
         } else {
             format!("\n{}\n", rows)
         };
