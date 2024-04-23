@@ -1,10 +1,12 @@
+use sqlx::{migrate::MigrateDatabase, SqlitePool};
+
 use crate::ingest::pipeline::{
     recursive_character_text_splitter::RecursiveCharacterTextSplitter,
     steps::{Splitter, WikipediaDumpReader},
 };
 
 use super::{
-    steps::{PatternSplitter, WikipediaHeadingSplitter},
+    steps::{Compressor, PatternSplitter, SqliteWriter, WikipediaHeadingSplitter},
     wikipedia::WikiMarkupProcessor,
 };
 
@@ -15,12 +17,21 @@ async fn whatever() {
     let processor = WikiMarkupProcessor;
     let _reader = WikipediaDumpReader::new(processor, 1000);
     let _splitter = Splitter::new(recursive_splitter);
+    let _compressor = Compressor;
+
+    let path = "string";
+
+    if !sqlx::Sqlite::database_exists(path).await.unwrap() {
+        sqlx::Sqlite::create_database(path).await.unwrap();
+    }
+    let x = SqlitePool::connect(path).await.unwrap();
+    let _writter = SqliteWriter::new(x);
 }
 
 #[cfg(test)]
 mod test {
 
-    use std::path::PathBuf;
+    use std::{path::PathBuf, sync::atomic::AtomicUsize};
 
     use tokio::sync::mpsc::unbounded_channel;
 
@@ -31,31 +42,39 @@ mod test {
     #[tokio::test(flavor = "multi_thread", worker_threads = 32)]
     async fn test() -> Result<(), PipelineError> {
         log::info!("ok");
-        let _recursive_splitter = RecursiveCharacterTextSplitter::new(1024, 128, None, true);
+
         let processor = WikiMarkupProcessor;
-        let reader = WikipediaDumpReader::new(processor, 10);
+        let reader = WikipediaDumpReader::new(processor, 0);
         let wikisplitter = WikipediaHeadingSplitter;
-        let recursive_splitter = RecursiveCharacterTextSplitter::new(1024, 128, None, true);
+
+        let recursive_splitter = RecursiveCharacterTextSplitter::new(2048, 0, None, true);
         let splitter = Splitter::new(recursive_splitter);
+
+        let compressor = Compressor;
+
+        let path = "sqlite:///home/michael/Desktop/wikisql/wikipedia_docstore.sqlite";
+        if !sqlx::Sqlite::database_exists(path).await.unwrap() {
+            sqlx::Sqlite::create_database(path).await.unwrap();
+        }
+        let x = SqlitePool::connect(path).await.unwrap();
+        let writter = SqliteWriter::new(x).await;
 
         let (t, r) = unbounded_channel::<PathBuf>();
 
         let r = reader.link(r).await?;
         let r = wikisplitter.link(r).await?;
-        let mut r = splitter.link(r).await?;
+        let r = splitter.link(r).await?;
+        let r = compressor.link(r).await?;
+        let mut r = writter.link(r).await?;
 
         let _ = t.send(PathBuf::from(
-            "/home/michael/Documents/WIKIDUMPS/20240401/enwiki-20240401-pages-articles.xml",
+            "/home/michael/Desktop/enwiki-20240401-pages-articles.xml",
         ));
 
+        let o = AtomicUsize::new(0);
         // while let Ok(Some(document)) = timeout(Duration::from_secs(10), r.recv()).await {
-        while let Some(document) = r.recv().await {
-            println!(
-                "{}\n\n{}\n{}\n",
-                document.heading,
-                document.document,
-                ["="; 160].join("")
-            );
+        while let Some(_document) = r.recv().await {
+            println!("{}", o.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
         }
         Ok(())
     }

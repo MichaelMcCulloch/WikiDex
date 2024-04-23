@@ -43,53 +43,44 @@ impl PipelineStep for WikipediaHeadingSplitter {
 
     type OUT = DocumentWithHeading;
 
-    async fn link(
-        &self,
-        mut receiver: UnboundedReceiver<Self::IN>,
-    ) -> Result<UnboundedReceiver<Self::OUT>, PipelineError> {
-        let (sender, new_receiver) = unbounded_channel::<Self::OUT>();
-        let _spawn = tokio::spawn(async move {
-            while let Some(Document {
-                document,
-                article_title,
+    type ARG = ();
+
+    async fn transform(input: Self::IN, _arg: &Self::ARG) -> Vec<Self::OUT> {
+        let Document {
+            document,
+            article_title,
+            access_date,
+            modification_date,
+        } = input;
+        document
+            .split(HEADING_START)
+            .map(|s| {
+                let split = s.split(HEADING_END).collect::<Vec<_>>();
+
+                match split.len() {
+                    2 => {
+                        let heading = format!("{}{}", article_title, split.first().unwrap());
+                        let text = split.get(1).unwrap().to_string();
+                        (heading, text)
+                    }
+                    1 => {
+                        let text = format!("{}{}", article_title, split.first().unwrap());
+                        (String::new(), text)
+                    }
+                    _ => (String::new(), split.join("")),
+                }
+            })
+            .map(|(heading, document)| DocumentWithHeading {
+                document: document.trim().to_string(),
+                heading,
+                article_title: article_title.clone(),
                 access_date,
                 modification_date,
-            }) = receiver.recv().await
-            {
-                let documents = document
-                    .split(HEADING_START)
-                    .map(|s| {
-                        let split = s.split(HEADING_END).collect::<Vec<_>>();
-
-                        match split.len() {
-                            2 => {
-                                let heading =
-                                    format!("{}{}", article_title, split.first().unwrap());
-                                let text = split.get(1).unwrap().to_string();
-                                (heading, text)
-                            }
-                            1 => {
-                                let text = format!("{}{}", article_title, split.first().unwrap());
-                                (String::new(), text)
-                            }
-                            _ => (String::new(), split.join("")),
-                        }
-                    })
-                    .map(|(heading, document)| DocumentWithHeading {
-                        document: document.trim().to_string(),
-                        heading,
-                        article_title: article_title.clone(),
-                        access_date,
-                        modification_date,
-                    })
-                    .collect::<Vec<_>>();
-                for document in documents.into_iter() {
-                    let _ = sender.send(document);
-                }
-            }
-        });
-        Ok(new_receiver)
+            })
+            .collect::<Vec<_>>()
     }
+
+    fn args(&self) -> Self::ARG {}
 }
 
 impl PipelineStep for WikipediaDumpReader {
@@ -123,8 +114,8 @@ impl PipelineStep for WikipediaDumpReader {
                 for Page { text, title, .. } in pages {
                     let markup_processor = markup_processor.clone();
                     let sender = sender.clone();
+                    let (tx, rx) = channel();
                     tokio::spawn(async move {
-                        let (tx, rx) = channel();
                         tokio::spawn(async move {
                             let document = markup_processor.process(&text);
 
@@ -160,6 +151,14 @@ impl PipelineStep for WikipediaDumpReader {
         });
         Ok(new_receiver)
     }
+
+    type ARG = ();
+
+    async fn transform(_input: Self::IN, _arg: &Self::ARG) -> Vec<Self::OUT> {
+        todo!()
+    }
+
+    fn args(&self) -> Self::ARG {}
 }
 
 fn get_date_from_xml_name(file_name: &Path) -> Result<NaiveDateTime, WikipediaDumpReaderError> {

@@ -1,9 +1,7 @@
 use std::sync::Arc;
 
-use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
-
 use crate::ingest::pipeline::{
-    document::DocumentWithHeading, error::PipelineError,
+    document::DocumentWithHeading,
     recursive_character_text_splitter::RecursiveCharacterTextSplitter,
 };
 
@@ -27,43 +25,32 @@ impl PipelineStep for Splitter {
 
     type OUT = DocumentWithHeading;
 
-    async fn link(
-        &self,
-        mut receiver: UnboundedReceiver<Self::IN>,
-    ) -> Result<UnboundedReceiver<Self::OUT>, PipelineError> {
-        let (t, r) = unbounded_channel::<Self::OUT>();
-        let splitter = self.splitter.clone();
-        tokio::spawn(async move {
-            while let Some(input) = receiver.recv().await {
-                let DocumentWithHeading {
-                    document,
-                    heading,
-                    article_title,
-                    access_date,
-                    modification_date,
-                } = input;
-                let documents: Vec<DocumentWithHeading> = splitter
-                    .split_text(&document)
-                    .into_iter()
-                    .filter(|passage| {
-                        passage.split(' ').collect::<Vec<_>>().len()
-                            > MINIMUM_PASSAGE_LENGTH_IN_WORDS
-                    })
-                    .map(|document| DocumentWithHeading {
-                        document,
-                        heading: heading.clone(),
-                        article_title: article_title.clone(),
-                        access_date,
-                        modification_date,
-                    })
-                    .collect::<Vec<_>>();
+    type ARG = Arc<RecursiveCharacterTextSplitter>;
 
-                for document in documents.into_iter() {
-                    let _ = t.send(document);
-                }
-            }
-            Ok::<(), PipelineError>(())
-        });
-        Ok(r)
+    async fn transform(input: Self::IN, arg: &Self::ARG) -> Vec<Self::OUT> {
+        let DocumentWithHeading {
+            document,
+            heading,
+            article_title,
+            access_date,
+            modification_date,
+        } = input;
+        arg.split_text(&document)
+            .into_iter()
+            .filter(|passage| {
+                passage.split(' ').collect::<Vec<_>>().len() > MINIMUM_PASSAGE_LENGTH_IN_WORDS
+            })
+            .map(|document| DocumentWithHeading {
+                document,
+                heading: heading.clone(),
+                article_title: article_title.clone(),
+                access_date,
+                modification_date,
+            })
+            .collect::<Vec<_>>()
+    }
+
+    fn args(&self) -> Self::ARG {
+        self.splitter.clone()
     }
 }
