@@ -8,7 +8,7 @@ use super::{
 };
 
 pub(super) fn table_to_string(
-    heading: (usize, &str),
+    heading: &mut Vec<String>,
     regexes: &Regexes,
     captions: &[TableCaption<'_>],
     rows: &[TableRow<'_>],
@@ -29,7 +29,7 @@ pub(super) fn table_to_string(
 }
 
 pub(super) fn table_captions_to_string(
-    heading: (usize, &str),
+    heading: &mut Vec<String>,
     table_captions: &[TableCaption<'_>],
     regexes: &Regexes,
 ) -> Result<Option<String>, WikiMarkupProcessingError> {
@@ -45,7 +45,7 @@ pub(super) fn table_captions_to_string(
 }
 
 pub(super) fn table_rows_to_string(
-    heading: (usize, &str),
+    heading: &mut Vec<String>,
     table_rows: &[TableRow<'_>],
     regexes: &Regexes,
 ) -> Result<Option<String>, WikiMarkupProcessingError> {
@@ -62,7 +62,7 @@ pub(super) fn table_rows_to_string(
 }
 
 pub(super) fn table_cells_to_string(
-    heading: (usize, &str),
+    heading: &mut Vec<String>,
     table_cells: &[TableCell<'_>],
     regexes: &Regexes,
 ) -> Result<Option<String>, WikiMarkupProcessingError> {
@@ -89,7 +89,7 @@ pub(super) fn table_cells_to_string(
 }
 
 pub(super) fn table_cell_to_string(
-    heading: (usize, &str),
+    heading: &mut Vec<String>,
     TableCell { content, .. }: &TableCell<'_>,
     regexes: &Regexes,
 ) -> ParseResult {
@@ -102,7 +102,7 @@ pub(super) fn table_cell_to_string(
     }
 }
 pub(super) fn table_row_to_string(
-    heading: (usize, &str),
+    heading: &mut Vec<String>,
     TableRow { cells, .. }: &TableRow<'_>,
     regexes: &Regexes,
 ) -> ParseResult {
@@ -114,7 +114,7 @@ pub(super) fn table_row_to_string(
     }
 }
 pub(super) fn table_caption_to_string(
-    heading: (usize, &str),
+    heading: &mut Vec<String>,
     TableCaption { content, .. }: &TableCaption<'_>,
     regexes: &Regexes,
 ) -> ParseResult {
@@ -151,7 +151,7 @@ mod tests_table_cell_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_cell_to_string((0, ""), &input, &regex).unwrap();
+        let extraction = table_cell_to_string(&mut vec![String::new()], &input, &regex).unwrap();
         assert_eq!(format!("{cell_content_text}"), extraction)
     }
     #[test]
@@ -178,7 +178,7 @@ mod tests_table_cell_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_cell_to_string((0, ""), &input, &regex).unwrap();
+        let extraction = table_cell_to_string(&mut vec![String::new()], &input, &regex).unwrap();
         assert_eq!(format!("{cell_content_text}"), extraction)
     }
 
@@ -223,7 +223,7 @@ mod tests_table_cell_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_cells_to_string((0, ""), &[input, input2], &regex)
+        let extraction = table_cells_to_string(&mut vec![String::new()], &[input, input2], &regex)
             .unwrap()
             .unwrap();
         assert_eq!(
@@ -272,7 +272,7 @@ mod tests_table_cell_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_cells_to_string((0, ""), &[input, input2], &regex)
+        let extraction = table_cells_to_string(&mut vec![String::new()], &[input, input2], &regex)
             .unwrap()
             .unwrap();
         assert_eq!(
@@ -319,7 +319,7 @@ mod tests_table_cell_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_row_to_string((0, ""), &input, &regex).unwrap();
+        let extraction = table_row_to_string(&mut vec![String::new()], &input, &regex).unwrap();
         assert_eq!(format!("||{cell_content_text}||"), extraction)
     }
 
@@ -389,7 +389,7 @@ mod tests_table_cell_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_rows_to_string((0, ""), &[input, input2], &regex)
+        let extraction = table_rows_to_string(&mut vec![String::new()], &[input, input2], &regex)
             .unwrap()
             .unwrap();
         assert_eq!(
@@ -459,7 +459,8 @@ mod tests_table_cell_to_string {
 
         let regex = Regexes::new();
 
-        let extraction = table_to_string((0, ""), &regex, &[caption], &[row]).unwrap();
+        let extraction =
+            table_to_string(&mut vec![String::new()], &regex, &[caption], &[row]).unwrap();
         assert_eq!(
             format!("\ncaption='{caption_content_text}'\n|{row_content_text}|\n"),
             extraction

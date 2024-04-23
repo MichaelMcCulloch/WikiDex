@@ -15,7 +15,7 @@ pub(super) fn definition_list_item_type_to_string(
 }
 
 pub(super) fn definition_list_item_to_string(
-    heading: (usize, &str),
+    heading: &mut Vec<String>,
     DefinitionListItem { type_, nodes, .. }: &DefinitionListItem<'_>,
     regexes: &Regexes,
 ) -> ParseResult {
@@ -25,7 +25,7 @@ pub(super) fn definition_list_item_to_string(
 }
 
 pub(super) fn definition_list_items_to_string(
-    heading: (usize, &str),
+    heading: &mut Vec<String>,
     definition_list_items: &[DefinitionListItem<'_>],
     regexes: &Regexes,
 ) -> ParseResult {

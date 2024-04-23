@@ -6,7 +6,7 @@ use super::{
 };
 
 pub(super) fn _template_parameters_to_string(
-    heading: (usize, &str),
+    heading: &mut Vec<String>,
     parameters: &[Parameter<'_>],
     regexes: &Regexes,
 ) -> ParseResult {
@@ -18,7 +18,7 @@ pub(super) fn _template_parameters_to_string(
 }
 
 pub(super) fn refn_parameters_to_string(
-    heading: (usize, &str),
+    heading: &mut Vec<String>,
     parameters: &[Parameter<'_>],
     regexes: &Regexes,
 ) -> ParseResult {
@@ -29,14 +29,14 @@ pub(super) fn refn_parameters_to_string(
     Ok(documents.join(""))
 }
 pub(super) fn refn_parameter_to_string(
-    heading: (usize, &str),
+    heading: &mut Vec<String>,
     Parameter { value, .. }: &Parameter<'_>,
     regexes: &Regexes,
 ) -> ParseResult {
     nodes_to_string(heading, value, regexes)
 }
 pub(super) fn _template_parameter_to_string(
-    heading: (usize, &str),
+    heading: &mut Vec<String>,
     Parameter { name, value, .. }: &Parameter<'_>,
     regexes: &Regexes,
 ) -> ParseResult {

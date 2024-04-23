@@ -1,7 +1,7 @@
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
 use parse_mediawiki_dump_reboot::{schema::Namespace, Page};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 use std::{fs::File, io::BufReader};
@@ -9,6 +9,7 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
 use tokio::sync::oneshot::channel;
 use tokio::time::timeout;
 
+use crate::ingest::pipeline::document::DocumentWithHeading;
 use crate::ingest::pipeline::wikipedia::WikiMarkupProcessor;
 use crate::ingest::{
     pipeline::{
@@ -25,12 +26,68 @@ pub(crate) struct WikipediaDumpReader {
     limit: usize,
 }
 
+pub(crate) struct WikipediaHeadingSplitter;
+
 impl WikipediaDumpReader {
     pub(crate) fn new(markup_processor: WikiMarkupProcessor, limit: usize) -> Self {
         Self {
             markup_processor: Arc::new(markup_processor),
             limit,
         }
+    }
+}
+
+impl PipelineStep for WikipediaHeadingSplitter {
+    type IN = Document;
+
+    type OUT = DocumentWithHeading;
+
+    async fn link(
+        &self,
+        mut receiver: UnboundedReceiver<Self::IN>,
+    ) -> Result<UnboundedReceiver<Self::OUT>, PipelineError> {
+        let (sender, new_receiver) = unbounded_channel::<Self::OUT>();
+        tokio::spawn(async move {
+            while let Some(Document {
+                document,
+                article_title,
+                access_date,
+                modification_date,
+            }) = receiver.recv().await
+            {
+                let documents = document
+                    .split("###HEADING_START###")
+                    .map(|s| {
+                        let split = s.split("###HEADING_END###").collect::<Vec<_>>();
+
+                        match split.len() {
+                            2 => {
+                                let heading =
+                                    format!("{}{}", article_title, split.first().unwrap());
+                                let text = split.get(1).unwrap().to_string();
+                                (heading, text)
+                            }
+                            1 => {
+                                let text = format!("{}{}", article_title, split.first().unwrap());
+                                (String::new(), text)
+                            }
+                            _ => (String::new(), split.join("")),
+                        }
+                    })
+                    .map(|(heading, document)| DocumentWithHeading {
+                        document,
+                        heading,
+                        article_title: article_title.clone(),
+                        access_date,
+                        modification_date,
+                    })
+                    .collect::<Vec<_>>();
+                for document in documents.into_iter() {
+                    let _ = sender.send(document);
+                }
+            }
+        });
+        Ok(new_receiver)
     }
 }
 
@@ -103,7 +160,8 @@ impl PipelineStep for WikipediaDumpReader {
         Ok(new_receiver)
     }
 }
-fn get_date_from_xml_name(file_name: &PathBuf) -> Result<NaiveDateTime, WikipediaDumpReaderError> {
+
+fn get_date_from_xml_name(file_name: &Path) -> Result<NaiveDateTime, WikipediaDumpReaderError> {
     let date_index_from_split = 1;
     let year_range = 0..4;
     let month_range = 4..6;

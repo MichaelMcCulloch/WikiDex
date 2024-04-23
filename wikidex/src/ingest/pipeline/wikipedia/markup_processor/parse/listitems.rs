@@ -6,7 +6,7 @@ use super::{
 };
 
 pub(super) fn unordered_list_items_to_string(
-    heading: (usize, &str),
+    heading: &mut Vec<String>,
     list_items: &[ListItem<'_>],
     regexes: &Regexes,
 ) -> ParseResult {
@@ -20,7 +20,7 @@ pub(super) fn unordered_list_items_to_string(
 }
 
 pub(super) fn ordered_list_items_to_string(
-    heading: (usize, &str),
+    heading: &mut Vec<String>,
     list_items: &[ListItem<'_>],
     regexes: &Regexes,
 ) -> ParseResult {
@@ -36,7 +36,7 @@ pub(super) fn ordered_list_items_to_string(
 }
 
 pub(super) fn list_item_to_string(
-    heading: (usize, &str),
+    heading: &mut Vec<String>,
     ListItem { nodes, .. }: &ListItem<'_>,
     regexes: &Regexes,
 ) -> ParseResult {

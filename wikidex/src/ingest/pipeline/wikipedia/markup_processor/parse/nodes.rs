@@ -21,7 +21,7 @@ pub(crate) const STOP_PHRASES: [&str; 6] = [
 pub(crate) type ParseResult = Result<String, <WikiMarkupProcessor as Process>::E>;
 
 pub(crate) fn process_to_article(nodes: &[Node<'_>], regexes: &Regexes) -> ParseResult {
-    let output = nodes_to_string((0usize, ""), nodes, regexes)?;
+    let output = nodes_to_string(&mut vec![], nodes, regexes)?;
 
     // let output = regexes
     //     .twospace
@@ -52,32 +52,32 @@ pub(crate) fn process_to_article(nodes: &[Node<'_>], regexes: &Regexes) -> Parse
 }
 
 pub(super) fn nodes_to_string(
-    heading: (usize, &str),
+    heading: &mut Vec<String>,
     nodes: &[Node<'_>],
     regexes: &Regexes,
 ) -> ParseResult {
     let mut documents = vec![];
     for n in nodes.iter() {
-        match n {
-            Node::Heading {
-                nodes: heading_nodes,
-                ..
-            } => {
-                let heading_name = nodes_to_string(heading, heading_nodes, regexes)?;
-                if STOP_PHRASES.contains(&heading_name.as_str()) {
-                    break;
-                } else {
-                    documents.push(node_to_string(heading, n, regexes)?)
-                }
+        if let Node::Heading {
+            nodes: heading_nodes,
+            ..
+        } = n
+        {
+            let heading_name = nodes_to_string(heading, heading_nodes, regexes)?;
+
+            if STOP_PHRASES.contains(&heading_name.as_str()) {
+                break;
             }
-            _ => documents.push(node_to_string(heading, n, regexes)?),
         }
+
+        documents.push(node_to_string(heading, n, regexes)?);
     }
+
     Ok(documents.join("").trim().to_string())
 }
 
 pub(super) fn node_to_string(
-    heading: (usize, &str),
+    heading: &mut Vec<String>,
     node: &Node<'_>,
     regexes: &Regexes,
 ) -> ParseResult {
@@ -101,14 +101,35 @@ pub(super) fn node_to_string(
         //     ..
         // } => nodes_to_string(nodes, regexes).map(|heading| heading.to_string()),
         Node::Heading { nodes, level, .. } => {
-            nodes_to_string(heading, nodes, regexes).map(|new_heading| {
-                format!(
-                    "\n\n{}{}{}",
-                    vec!["="; *level as usize].join(""),
-                    heading.1,
-                    new_heading
-                )
-            })
+            let new_heading = nodes_to_string(heading, nodes, regexes)?;
+            // Calculate the level difference between the new level and the current length of headings
+            // this always produces an empty first member in heading, not sure why.
+            let incr = *level as i8 - heading.len() as i8;
+
+            // If level difference is positive, add placeholders for missing heading levels
+            if incr > 0 {
+                // Extend the heading vector with placeholders to reach the new level
+                heading.extend(vec!["".to_string(); incr as usize]);
+            }
+
+            // If level difference is negative, remove excess heading levels
+            if incr < 0 {
+                // Pop the extra headings
+                for _ in 0..(-incr) {
+                    heading.pop();
+                }
+            }
+
+            // Replace the last heading with the new heading
+            if let Some(last) = heading.last_mut() {
+                *last = new_heading.to_string();
+            } else {
+                heading.push(new_heading.to_string());
+            }
+
+            // Construct the formatted heading string from the adjusted vector
+            let heading_str = format!("###HEADING_START###{}###HEADING_END###", heading.join(":"));
+            Ok(heading_str)
         }
         Node::ExternalLink { nodes, .. } => {
             let document = nodes_to_string(heading, nodes, regexes)?;

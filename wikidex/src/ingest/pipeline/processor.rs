@@ -3,10 +3,15 @@ use crate::ingest::pipeline::{
     steps::{Splitter, WikipediaDumpReader},
 };
 
-use super::wikipedia::WikiMarkupProcessor;
+use super::{
+    steps::{PatternSplitter, WikipediaHeadingSplitter},
+    wikipedia::WikiMarkupProcessor,
+};
 
 async fn whatever() {
     let recursive_splitter = RecursiveCharacterTextSplitter::new(1024, 128, None, true);
+    let _splitter = PatternSplitter::new("###HEADING###".to_string());
+    let _wikisplit = WikipediaHeadingSplitter;
     let processor = WikiMarkupProcessor;
     let _reader = WikipediaDumpReader::new(processor, 1000);
     let _splitter = Splitter::new(recursive_splitter);
@@ -29,12 +34,12 @@ mod test {
         let _recursive_splitter = RecursiveCharacterTextSplitter::new(1024, 128, None, true);
         let processor = WikiMarkupProcessor;
         let reader = WikipediaDumpReader::new(processor, 1);
-        // let splitter = Splitter::new(recursive_splitter);
+        let splitter = WikipediaHeadingSplitter;
 
         let (t, r) = unbounded_channel::<PathBuf>();
 
-        let mut r = reader.link(r).await?;
-        // let mut r = splitter.link(r).await?;
+        let r = reader.link(r).await?;
+        let mut r = splitter.link(r).await?;
 
         let _ = t.send(PathBuf::from(
             "/home/michael/Documents/WIKIDUMPS/20240401/enwiki-20240401-pages-articles.xml",
@@ -42,6 +47,7 @@ mod test {
 
         // while let Ok(Some(document)) = timeout(Duration::from_secs(10), r.recv()).await {
         while let Some(document) = r.recv().await {
+            println!("{}", document.heading);
             println!("{}", document.document);
             println!("{}", ["="; 160].join(""));
         }
