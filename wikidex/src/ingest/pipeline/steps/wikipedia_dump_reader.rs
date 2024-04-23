@@ -11,6 +11,7 @@ use tokio::time::timeout;
 
 use crate::ingest::pipeline::document::DocumentWithHeading;
 use crate::ingest::pipeline::wikipedia::WikiMarkupProcessor;
+use crate::ingest::pipeline::{HEADING_END, HEADING_START};
 use crate::ingest::{
     pipeline::{
         document::Document,
@@ -47,7 +48,7 @@ impl PipelineStep for WikipediaHeadingSplitter {
         mut receiver: UnboundedReceiver<Self::IN>,
     ) -> Result<UnboundedReceiver<Self::OUT>, PipelineError> {
         let (sender, new_receiver) = unbounded_channel::<Self::OUT>();
-        tokio::spawn(async move {
+        let _spawn = tokio::spawn(async move {
             while let Some(Document {
                 document,
                 article_title,
@@ -56,9 +57,9 @@ impl PipelineStep for WikipediaHeadingSplitter {
             }) = receiver.recv().await
             {
                 let documents = document
-                    .split("###HEADING_START###")
+                    .split(HEADING_START)
                     .map(|s| {
-                        let split = s.split("###HEADING_END###").collect::<Vec<_>>();
+                        let split = s.split(HEADING_END).collect::<Vec<_>>();
 
                         match split.len() {
                             2 => {
@@ -75,7 +76,7 @@ impl PipelineStep for WikipediaHeadingSplitter {
                         }
                     })
                     .map(|(heading, document)| DocumentWithHeading {
-                        document,
+                        document: document.trim().to_string(),
                         heading,
                         article_title: article_title.clone(),
                         access_date,

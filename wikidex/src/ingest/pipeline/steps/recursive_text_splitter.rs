@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
 
 use crate::ingest::pipeline::{
-    document::Document, error::PipelineError,
+    document::DocumentWithHeading, error::PipelineError,
     recursive_character_text_splitter::RecursiveCharacterTextSplitter,
 };
 
@@ -23,9 +23,9 @@ impl Splitter {
     }
 }
 impl PipelineStep for Splitter {
-    type IN = Document;
+    type IN = DocumentWithHeading;
 
-    type OUT = Document;
+    type OUT = DocumentWithHeading;
 
     async fn link(
         &self,
@@ -35,21 +35,23 @@ impl PipelineStep for Splitter {
         let splitter = self.splitter.clone();
         tokio::spawn(async move {
             while let Some(input) = receiver.recv().await {
-                let Document {
+                let DocumentWithHeading {
                     document,
+                    heading,
                     article_title,
                     access_date,
                     modification_date,
                 } = input;
-                let documents: Vec<Document> = splitter
+                let documents: Vec<DocumentWithHeading> = splitter
                     .split_text(&document)
                     .into_iter()
                     .filter(|passage| {
                         passage.split(' ').collect::<Vec<_>>().len()
                             > MINIMUM_PASSAGE_LENGTH_IN_WORDS
                     })
-                    .map(|document| Document {
+                    .map(|document| DocumentWithHeading {
                         document,
+                        heading: heading.clone(),
                         article_title: article_title.clone(),
                         access_date,
                         modification_date,

@@ -33,12 +33,15 @@ mod test {
         log::info!("ok");
         let _recursive_splitter = RecursiveCharacterTextSplitter::new(1024, 128, None, true);
         let processor = WikiMarkupProcessor;
-        let reader = WikipediaDumpReader::new(processor, 1);
-        let splitter = WikipediaHeadingSplitter;
+        let reader = WikipediaDumpReader::new(processor, 10);
+        let wikisplitter = WikipediaHeadingSplitter;
+        let recursive_splitter = RecursiveCharacterTextSplitter::new(1024, 128, None, true);
+        let splitter = Splitter::new(recursive_splitter);
 
         let (t, r) = unbounded_channel::<PathBuf>();
 
         let r = reader.link(r).await?;
+        let r = wikisplitter.link(r).await?;
         let mut r = splitter.link(r).await?;
 
         let _ = t.send(PathBuf::from(
@@ -47,9 +50,12 @@ mod test {
 
         // while let Ok(Some(document)) = timeout(Duration::from_secs(10), r.recv()).await {
         while let Some(document) = r.recv().await {
-            println!("{}", document.heading);
-            println!("{}", document.document);
-            println!("{}", ["="; 160].join(""));
+            println!(
+                "{}\n\n{}\n{}\n",
+                document.heading,
+                document.document,
+                ["="; 160].join("")
+            );
         }
         Ok(())
     }

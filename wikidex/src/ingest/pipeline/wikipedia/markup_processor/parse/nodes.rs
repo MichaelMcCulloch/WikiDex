@@ -17,6 +17,8 @@ pub(crate) const STOP_PHRASES: [&str; 6] = [
     "External links",
     "Notes and references",
 ];
+pub(crate) const HEADING_START: &str = "###HEADING_START###";
+pub(crate) const HEADING_END: &str = "###HEADING_END###";
 
 pub(crate) type ParseResult = Result<String, <WikiMarkupProcessor as Process>::E>;
 
@@ -94,7 +96,7 @@ pub(super) fn node_to_string(
         Node::Tag { .. } => Ok(String::new()),
         Node::Image { .. } => Ok(String::new()),
         Node::StartTag { .. } => Ok(String::new()),
-        Node::ParagraphBreak { .. } => Ok(String::from("\n\n\t")),
+        Node::ParagraphBreak { .. } => Ok(String::from("\n\n")),
         // Node::Heading {
         //     nodes,
         //     level: 1 | 2,
@@ -128,7 +130,7 @@ pub(super) fn node_to_string(
             }
 
             // Construct the formatted heading string from the adjusted vector
-            let heading_str = format!("###HEADING_START###{}###HEADING_END###", heading.join(":"));
+            let heading_str = format!("{HEADING_START}{}{HEADING_END}", heading.join(":"));
             Ok(heading_str)
         }
         Node::ExternalLink { nodes, .. } => {
