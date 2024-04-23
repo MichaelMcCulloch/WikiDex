@@ -1,11 +1,9 @@
-use std::{
-    sync::{
-        atomic::{AtomicI64, Ordering},
-        Arc,
-    },
+use std::sync::{
+    atomic::{AtomicI64, Ordering},
+    Arc,
 };
 
-use sqlx::{SqlitePool};
+use sqlx::SqlitePool;
 
 use crate::ingest::pipeline::document::CompressedDocument;
 
@@ -40,6 +38,7 @@ impl SqliteWriter {
             .execute(&mut *connection)
             .await;
         let _ = sqlx::query!("COMMIT;",).execute(&mut *connection).await;
+
         Self {
             pool: Arc::new(pool),
             article_count: Arc::new(AtomicI64::new(0)),
@@ -63,18 +62,33 @@ impl PipelineStep for SqliteWriter {
         } = input;
 
         let mut connection = arg.0.acquire().await.unwrap();
-        let article_id = arg.1.fetch_add(1, Ordering::Relaxed);
         let access_millis = access_date.and_utc().timestamp_millis();
         let modification_millis = modification_date.and_utc().timestamp_millis();
-        let _rows = sqlx::query!(
-                        "INSERT INTO article (id, title, access_date, modification_date) VALUES (?1, ?2, ?3, ?4)",
-                        article_id,
-                        article_title,
-                        access_millis,
-                        modification_millis
-                    )
-                    .execute(&mut *connection)
-                    .await.unwrap();
+
+        // Check if the article already exists
+        let existing_article =
+            sqlx::query!("SELECT id FROM article WHERE title = ?1", article_title)
+                .fetch_optional(&mut *connection)
+                .await
+                .unwrap();
+
+        let article_id = if let Some(article) = existing_article {
+            article.id
+        } else {
+            // If the article does not exist, insert it
+            let article_id = arg.1.fetch_add(1, Ordering::Relaxed);
+
+            let _rows = sqlx::query!(
+                "INSERT INTO article (id, title, access_date, modification_date) VALUES (?1, ?2, ?3, ?4)",
+                article_id,
+                article_title,
+                access_millis,
+                modification_millis
+            )
+            .execute(&mut *connection)
+            .await.unwrap();
+            article_id
+        };
 
         let document_id = arg.2.fetch_add(1, Ordering::Relaxed);
 

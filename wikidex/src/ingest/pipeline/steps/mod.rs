@@ -7,6 +7,7 @@ mod wikipedia_heading_splitter;
 mod wikipedia_page_parser;
 use std::sync::{atomic::AtomicUsize, Arc};
 
+use indicatif::ProgressBar;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
 
 pub(crate) use gzip_compressor::Compressor;
@@ -29,24 +30,27 @@ pub(crate) trait PipelineStep {
     async fn link(
         &self,
         mut receiver: UnboundedReceiver<Self::IN>,
+        progress: Arc<ProgressBar>,
+        next_progress: Arc<ProgressBar>,
     ) -> Result<UnboundedReceiver<Self::OUT>, PipelineError> {
         let (sender, new_receiver) = unbounded_channel::<Self::OUT>();
         let args = Arc::new(self.args());
 
         let o = Arc::new(AtomicUsize::new(0));
+        progress.set_message(Self::name().to_string());
         tokio::spawn(async move {
             while let Some(input) = receiver.recv().await {
                 let args = args.clone();
                 let sender = sender.clone();
-                let o = o.clone();
+                let _o = o.clone();
+                let next_progress = next_progress.clone();
+                let progress = progress.clone();
                 tokio::spawn(async move {
                     let transform = Self::transform(input, &args).await;
+                    progress.inc(1);
+                    next_progress.inc_length(transform.len() as u64);
+
                     for t in transform {
-                        println!(
-                            "{},{}",
-                            Self::name(),
-                            o.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
-                        );
                         let _ = sender.send(t);
                     }
                 });

@@ -1,8 +1,10 @@
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
+use indicatif::ProgressBar;
 use parse_mediawiki_dump_reboot::{schema::Namespace, Page};
 use std::path::{Path, PathBuf};
 
+use std::sync::Arc;
 use std::{fs::File, io::BufReader};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
 
@@ -27,6 +29,8 @@ impl PipelineStep for WikipediaDumpReader {
     async fn link(
         &self,
         mut receiver: UnboundedReceiver<Self::IN>,
+        progress: Arc<ProgressBar>,
+        next_progress: Arc<ProgressBar>,
     ) -> Result<UnboundedReceiver<Self::OUT>, PipelineError> {
         let (sender, new_receiver) = unbounded_channel::<Self::OUT>();
         let limit = self.limit;
@@ -46,12 +50,15 @@ impl PipelineStep for WikipediaDumpReader {
                 let limit = if limit == 0 { usize::MAX } else { limit };
 
                 let pages = parse.filter_map(Result::ok).filter(page_filter).take(limit);
+
                 for page in pages {
+                    next_progress.inc_length(1);
                     let sender = sender.clone();
                     tokio::spawn(async move {
                         let _ = sender.send((page, date));
                     });
                 }
+                progress.inc(1);
             }
             Ok::<(), PipelineError>(())
         });

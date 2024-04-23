@@ -34,10 +34,15 @@ async fn whatever() {
 #[cfg(test)]
 mod test {
 
-    use std::{path::PathBuf, sync::atomic::AtomicUsize};
+    use std::{
+        path::PathBuf,
+        sync::{atomic::AtomicUsize, Arc},
+        time::Duration,
+    };
 
     use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
     use indicatif_log_bridge::LogWrapper;
+    use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
     use tokio::sync::mpsc::unbounded_channel;
 
     use crate::ingest::pipeline::{error::PipelineError, steps::PipelineStep};
@@ -61,7 +66,17 @@ mod test {
         if !sqlx::Sqlite::database_exists(path).await.unwrap() {
             sqlx::Sqlite::create_database(path).await.unwrap();
         }
-        let pool = SqlitePool::connect(path).await.unwrap();
+
+        let options = SqliteConnectOptions::new()
+            .create_if_missing(true)
+            .filename("/tmp/wikipedia_docstore.sqlite");
+
+        let pool = SqlitePoolOptions::new()
+            .acquire_timeout(Duration::from_secs(10000))
+            .max_connections(32)
+            .connect_with(options)
+            .await
+            .unwrap();
 
         let reader = WikipediaDumpReader::new(0);
         let parser = WikipediaPageParser::new(WikiMarkupProcessor);
@@ -72,12 +87,34 @@ mod test {
 
         let (t, r) = unbounded_channel::<PathBuf>();
 
-        let r = reader.link(r).await?;
-        let r = parser.link(r).await?;
-        let r = wikisplitter.link(r).await?;
-        let r = splitter.link(r).await?;
-        let r = compressor.link(r).await?;
-        let mut r = writter.link(r).await?;
+        let reader_progress = Arc::new(new_progress_bar(&multi_progress, 0));
+        let parser_progress = Arc::new(new_progress_bar(&multi_progress, 0));
+        let wikisplitter_progress = Arc::new(new_progress_bar(&multi_progress, 0));
+        let splitter_progress = Arc::new(new_progress_bar(&multi_progress, 0));
+        let compressor_progress = Arc::new(new_progress_bar(&multi_progress, 0));
+        let writter_progress = Arc::new(new_progress_bar(&multi_progress, 0));
+        let completed_progress = Arc::new(new_progress_bar(&multi_progress, 0));
+        completed_progress.set_message("DONE");
+        let r = reader
+            .link(r, reader_progress.clone(), parser_progress.clone())
+            .await?;
+        let r = parser
+            .link(r, parser_progress.clone(), wikisplitter_progress.clone())
+            .await?;
+        let r = wikisplitter
+            .link(r, wikisplitter_progress.clone(), splitter_progress.clone())
+            .await?;
+        let r: tokio::sync::mpsc::UnboundedReceiver<
+            crate::ingest::pipeline::document::DocumentWithHeading,
+        > = splitter
+            .link(r, splitter_progress.clone(), compressor_progress.clone())
+            .await?;
+        let r = compressor
+            .link(r, compressor_progress.clone(), writter_progress.clone())
+            .await?;
+        let mut r = writter
+            .link(r, writter_progress.clone(), completed_progress.clone())
+            .await?;
 
         let _ = t.send(PathBuf::from(
             "/home/michael/Desktop/enwiki-20240401-pages-articles.xml",
