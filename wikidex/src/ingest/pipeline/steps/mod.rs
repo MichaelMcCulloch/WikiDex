@@ -2,6 +2,7 @@ mod batcher;
 mod embeddings;
 mod gzip_compressor;
 mod pattern_text_splitter;
+mod pipeline_splitter;
 mod recursive_text_splitter;
 #[cfg(feature = "sqlite")]
 mod sqlite_writter;
@@ -17,6 +18,8 @@ pub(crate) use gzip_compressor::Compressor;
 pub(crate) use recursive_text_splitter::Splitter;
 
 pub(crate) use batcher::Batcher;
+pub(crate) use embeddings::Embedding;
+pub(crate) use pipeline_splitter::PipelineSplitter;
 #[cfg(feature = "sqlite")]
 pub(crate) use sqlite_writter::SqliteWriter;
 pub(crate) use wikipedia_dump_reader::WikipediaDumpReader;
@@ -36,18 +39,19 @@ pub(crate) trait PipelineStep {
         &self,
         mut receiver: UnboundedReceiver<Self::IN>,
         progress: Arc<ProgressBar>,
-        next_progress: Arc<ProgressBar>,
-    ) -> Result<UnboundedReceiver<Self::OUT>, PipelineError> {
+        next_progress: Vec<Arc<ProgressBar>>,
+    ) -> Result<Vec<UnboundedReceiver<Self::OUT>>, PipelineError> {
         let (sender, new_receiver) = unbounded_channel::<Self::OUT>();
         let args = Arc::new(self.args());
+        let next_progress = next_progress.first().unwrap().clone();
 
         progress.set_message(Self::name().to_string());
         tokio::spawn(async move {
             while let Some(input) = receiver.recv().await {
                 let args = args.clone();
                 let sender = sender.clone();
-                let next_progress = next_progress.clone();
                 let progress = progress.clone();
+                let next_progress = next_progress.clone();
                 tokio::spawn(async move {
                     let transform = Self::transform(input, &args).await;
                     progress.inc(1);
@@ -60,7 +64,7 @@ pub(crate) trait PipelineStep {
                 });
             }
         });
-        Ok(new_receiver)
+        Ok(vec![new_receiver])
     }
 
     fn transform(

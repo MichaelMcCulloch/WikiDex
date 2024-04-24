@@ -30,9 +30,10 @@ impl PipelineStep for WikipediaDumpReader {
         &self,
         mut receiver: UnboundedReceiver<Self::IN>,
         progress: Arc<ProgressBar>,
-        next_progress: Arc<ProgressBar>,
-    ) -> Result<UnboundedReceiver<Self::OUT>, PipelineError> {
+        next_progress: Vec<Arc<ProgressBar>>,
+    ) -> Result<Vec<UnboundedReceiver<Self::OUT>>, PipelineError> {
         let (sender, new_receiver) = unbounded_channel::<Self::OUT>();
+        let next_progress = next_progress.first().unwrap().clone();
 
         let limit = self.limit;
         progress.set_message(Self::name().to_string());
@@ -64,7 +65,7 @@ impl PipelineStep for WikipediaDumpReader {
             }
             Ok::<(), PipelineError>(())
         });
-        Ok(new_receiver)
+        Ok(vec![new_receiver])
     }
 
     async fn transform(_input: Self::IN, _arg: &Self::ARG) -> Vec<Self::OUT> {

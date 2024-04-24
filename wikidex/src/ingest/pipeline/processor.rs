@@ -1,6 +1,7 @@
+use std::sync::Arc;
 use std::{path::PathBuf, time::Duration};
 
-use std::sync::{atomic::AtomicUsize, Arc};
+use std::sync::atomic::AtomicUsize;
 
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 
@@ -9,15 +10,15 @@ use sqlx::sqlite::{Sqlite, SqliteConnectOptions, SqlitePoolOptions};
 use tokio::sync::mpsc::unbounded_channel;
 use url::Url;
 
-
+use crate::embedding_client::EmbeddingClient;
 use crate::ingest::pipeline::{error::PipelineError, steps::PipelineStep};
 use crate::ingest::pipeline::{
     recursive_character_text_splitter::RecursiveCharacterTextSplitter,
     steps::{Splitter, WikipediaDumpReader},
 };
 
-use super::document::DocumentCompressed;
-use super::steps::{Batcher, SqliteWriter};
+use super::document::{DocumentCompressed, DocumentHeading};
+use super::steps::{Batcher, Embedding, PipelineSplitter, SqliteWriter};
 use super::{
     steps::{Compressor, WikipediaHeadingSplitter, WikipediaPageParser},
     wikipedia::WikiMarkupProcessor,
@@ -28,10 +29,10 @@ pub(crate) struct PipelineProcessor;
 impl PipelineProcessor {
     pub(crate) async fn process(
         &self,
-        multibar: &MultiProgress,
+        multi_progress: &MultiProgress,
         wiki_xml: PathBuf,
         database_connection: Url,
-        // _embedding_client: EmbeddingClient,
+        embedding_client: EmbeddingClient,
     ) -> Result<(), PipelineError> {
         if !Sqlite::database_exists(database_connection.path())
             .await
@@ -61,59 +62,120 @@ impl PipelineProcessor {
         let parser = WikipediaPageParser::new(WikiMarkupProcessor);
         let wikisplitter = WikipediaHeadingSplitter;
         let _splitter = Splitter::new(RecursiveCharacterTextSplitter::new(2048, 0, None, true));
+        let splitter = PipelineSplitter::default();
         let compressor = Compressor;
-        let batcher = Batcher::<100000, DocumentCompressed>::default();
+        let docstore_batcher = Batcher::<100000, DocumentCompressed>::default();
+        let embedding_batcher = Batcher::<512, DocumentHeading>::default();
+        let embedding = Embedding::<512>::new(embedding_client);
 
         let writter = SqliteWriter::new(pool).await;
 
-        let (t, r) = unbounded_channel::<PathBuf>();
+        let (t, rx_pathbuf) = unbounded_channel::<PathBuf>();
 
-        let reader_progress = Arc::new(new_progress_bar(multibar, 0));
-        let parser_progress = Arc::new(new_progress_bar(multibar, 0));
-        let wikisplitter_progress = Arc::new(new_progress_bar(multibar, 0));
-        let _splitter_progress = Arc::new(new_progress_bar(multibar, 0));
-        let compressor_progress = Arc::new(new_progress_bar(multibar, 0));
-        let batcher_progress = Arc::new(new_progress_bar(multibar, 0));
-        let writter_progress = Arc::new(new_progress_bar(multibar, 0));
-        let completed_progress = Arc::new(new_progress_bar(multibar, 0));
-        completed_progress.set_message("DONE");
-        let r = reader
-            .link(r, reader_progress.clone(), parser_progress.clone())
-            .await?;
-        let r = parser
-            .link(r, parser_progress.clone(), wikisplitter_progress.clone())
-            .await?;
-        let r = wikisplitter
+        let reader_progress = new_progress_bar(multi_progress, 0);
+        let parser_progress = new_progress_bar(multi_progress, 0);
+        let wikisplitter_progress = new_progress_bar(multi_progress, 0);
+        // let _splitter_progress = new_progress_bar(multi_progress, 0);
+
+        let compressor_progress = new_progress_bar(multi_progress, 0);
+        let docstore_batcher_progress = new_progress_bar(multi_progress, 0);
+        let writter_progress = new_progress_bar(multi_progress, 0);
+        let docstore_completed_progress = new_progress_bar(multi_progress, 0);
+
+        let splitter_progress = new_progress_bar(multi_progress, 0);
+
+        let embedding_batcher_progress = new_progress_bar(multi_progress, 0);
+        let embedding_progress = new_progress_bar(multi_progress, 0);
+        let embedding_completed_progress = new_progress_bar(multi_progress, 0);
+
+        docstore_completed_progress.set_message("Docstore");
+        embedding_completed_progress.set_message("Embedding");
+
+        // READ_PIPELINE
+        let mut rx_reader = reader
             .link(
-                r,
-                wikisplitter_progress.clone(),
-                compressor_progress.clone(),
+                rx_pathbuf,
+                reader_progress.clone(),
+                vec![parser_progress.clone()],
             )
             .await?;
-        // let r = splitter
-        //     .link(r, splitter_progress.clone(), compressor_progress.clone())
-        //     .await?;
-        let r = compressor
-            .link(r, compressor_progress.clone(), batcher_progress.clone())
+        let mut rx_parser = parser
+            .link(
+                rx_reader.pop().unwrap(),
+                parser_progress.clone(),
+                vec![wikisplitter_progress.clone()],
+            )
             .await?;
-        let r = batcher
-            .link(r, batcher_progress.clone(), writter_progress.clone())
-            .await?;
-        let mut r = writter
-            .link(r, writter_progress.clone(), completed_progress.clone())
+        let mut rx_heading_split = wikisplitter
+            .link(
+                rx_parser.pop().unwrap(),
+                wikisplitter_progress.clone(),
+                vec![splitter_progress.clone()],
+            )
             .await?;
 
+        // SPLITTER
+        let mut rx_pair = splitter
+            .link(
+                rx_heading_split.pop().unwrap(),
+                splitter_progress,
+                vec![
+                    compressor_progress.clone(),
+                    embedding_batcher_progress.clone(),
+                ],
+            )
+            .await?;
+
+        // DOCSTORE_PIPELINE
+        let mut rx_compressor = compressor
+            .link(
+                rx_pair.pop().unwrap(),
+                compressor_progress.clone(),
+                vec![docstore_batcher_progress.clone()],
+            )
+            .await?;
+        let mut rx_document_batcher = docstore_batcher
+            .link(
+                rx_compressor.pop().unwrap(),
+                docstore_batcher_progress.clone(),
+                vec![writter_progress.clone()],
+            )
+            .await?;
+        let mut rx_writter = writter
+            .link(
+                rx_document_batcher.pop().unwrap(),
+                writter_progress.clone(),
+                vec![docstore_completed_progress.clone()],
+            )
+            .await?;
+
+        // EMBEDDING_PIPELINE
+        let mut rx_embedding_batcher = embedding_batcher
+            .link(
+                rx_pair.pop().unwrap(),
+                embedding_batcher_progress.clone(),
+                vec![embedding_progress.clone()],
+            )
+            .await?;
+        let _rx_embedder = embedding
+            .link(
+                rx_embedding_batcher.pop().unwrap(),
+                embedding_progress,
+                vec![embedding_completed_progress.clone()],
+            )
+            .await
+            .unwrap();
         let _ = t.send(wiki_xml);
 
         let _o = AtomicUsize::new(0);
         // while let Ok(Some(document)) = timeout(Duration::from_secs(10), r.recv()).await {
-        while let Some(_document) = r.recv().await {
+        while let Some(_document) = rx_writter.pop().unwrap().recv().await {
             // println!("{}", o.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
         }
         Ok(())
     }
 }
-fn new_progress_bar(multibar: &MultiProgress, limit: u64) -> ProgressBar {
+fn new_progress_bar(multibar: &MultiProgress, limit: u64) -> Arc<ProgressBar> {
     let sty = ProgressStyle::with_template(
         "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
     )
@@ -121,11 +183,12 @@ fn new_progress_bar(multibar: &MultiProgress, limit: u64) -> ProgressBar {
 
     let pb = multibar.add(ProgressBar::new(limit));
     pb.set_style(sty);
-    pb
+    Arc::new(pb)
 }
 #[cfg(test)]
 mod test {
 
+    use async_openai::{config::OpenAIConfig, Client};
     use indicatif_log_bridge::LogWrapper;
 
     use super::*;
@@ -145,6 +208,10 @@ mod test {
             .unwrap();
 
         let pipeline = PipelineProcessor;
+        let openai_config = OpenAIConfig::new().with_api_base("http://localhost:9000/v1");
+        let open_ai_client: Client<OpenAIConfig> = Client::with_config(openai_config);
+        let embedding_client =
+            EmbeddingClient::new(open_ai_client, "thenlper/gte-small".to_string());
 
         let _ = pipeline
             .process(
@@ -154,6 +221,7 @@ mod test {
                     "sqlite:///home/michael/Desktop/wikisql/wikipedia_docstore_20240420.sqlite",
                 )
                 .unwrap(),
+                embedding_client,
             )
             .await;
 

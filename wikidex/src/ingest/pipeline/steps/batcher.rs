@@ -35,9 +35,10 @@ impl<const N: usize, X: Sync + Send + 'static> PipelineStep for Batcher<N, X> {
         &self,
         mut receiver: UnboundedReceiver<Self::IN>,
         progress: Arc<ProgressBar>,
-        next_progress: Arc<ProgressBar>,
-    ) -> Result<UnboundedReceiver<Self::OUT>, PipelineError> {
+        next_progress: Vec<Arc<ProgressBar>>,
+    ) -> Result<Vec<UnboundedReceiver<Self::OUT>>, PipelineError> {
         let (sender, new_receiver) = unbounded_channel();
+        let next_progress = next_progress.first().unwrap().clone();
 
         progress.set_message(Self::name().to_string());
 
@@ -60,6 +61,6 @@ impl<const N: usize, X: Sync + Send + 'static> PipelineStep for Batcher<N, X> {
                 }
             }
         });
-        Ok(new_receiver)
+        Ok(vec![new_receiver])
     }
 }

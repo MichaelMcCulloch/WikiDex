@@ -147,12 +147,12 @@ fn main() -> anyhow::Result<()> {
             // let _llm_client = Arc::new(llm_client);
             // let _embed_client = Arc::new(embed_client);
 
-            // let openai_config = OpenAIConfig::new().with_api_base(config.embed_url.as_ref());
-            // let open_ai_client: Client<OpenAIConfig> = Client::with_config(openai_config);
-            // let embedding_client = EmbeddingClient::new(
-            //     open_ai_client,
-            //     config.embed_name.to_string_lossy().to_string(),
-            // );
+            let openai_config = OpenAIConfig::new().with_api_base(config.embed_url.as_ref());
+            let open_ai_client: Client<OpenAIConfig> = Client::with_config(openai_config);
+            let embedding_client = EmbeddingClient::new(
+                open_ai_client,
+                config.embed_name.to_string_lossy().to_string(),
+            );
 
             let pipeline = PipelineProcessor;
 
@@ -161,6 +161,7 @@ fn main() -> anyhow::Result<()> {
                     &multi_progress,
                     config.wiki_xml,
                     config.output_directory,
+                    embedding_client,
                 ))
                 .map_err(anyhow::Error::from)?;
             Ok(())
