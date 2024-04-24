@@ -2,7 +2,7 @@ use flate2::{read::GzDecoder, write::GzEncoder};
 
 use std::io::{self, Read, Write};
 
-use crate::ingest::pipeline::document::{CompressedDocument, DocumentWithHeading};
+use crate::ingest::pipeline::document::{DocumentCompressed, DocumentHeading};
 
 use super::PipelineStep;
 
@@ -28,12 +28,12 @@ fn decompress_text(text_compressed: Vec<u8>) -> Result<String, io::Error> {
 }
 
 impl PipelineStep for Compressor {
-    type IN = DocumentWithHeading;
-    type OUT = CompressedDocument;
+    type IN = DocumentHeading;
+    type OUT = DocumentCompressed;
     type ARG = ();
 
     async fn transform(input: Self::IN, _: &Self::ARG) -> Vec<Self::OUT> {
-        let DocumentWithHeading {
+        let DocumentHeading {
             document,
             heading,
             article_title,

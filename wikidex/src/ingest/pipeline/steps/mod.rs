@@ -1,4 +1,5 @@
 mod batcher;
+mod embeddings;
 mod gzip_compressor;
 mod pattern_text_splitter;
 mod recursive_text_splitter;
@@ -9,7 +10,7 @@ mod wikipedia_heading_splitter;
 mod wikipedia_page_parser;
 
 use indicatif::ProgressBar;
-use std::sync::{atomic::AtomicUsize, Arc};
+use std::sync::Arc;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
 
 pub(crate) use gzip_compressor::Compressor;
@@ -40,13 +41,11 @@ pub(crate) trait PipelineStep {
         let (sender, new_receiver) = unbounded_channel::<Self::OUT>();
         let args = Arc::new(self.args());
 
-        let o = Arc::new(AtomicUsize::new(0));
         progress.set_message(Self::name().to_string());
         tokio::spawn(async move {
             while let Some(input) = receiver.recv().await {
                 let args = args.clone();
                 let sender = sender.clone();
-                let _o = o.clone();
                 let next_progress = next_progress.clone();
                 let progress = progress.clone();
                 tokio::spawn(async move {

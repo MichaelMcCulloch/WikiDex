@@ -33,8 +33,10 @@ impl PipelineStep for WikipediaDumpReader {
         next_progress: Arc<ProgressBar>,
     ) -> Result<UnboundedReceiver<Self::OUT>, PipelineError> {
         let (sender, new_receiver) = unbounded_channel::<Self::OUT>();
-        let limit = self.limit;
 
+        let limit = self.limit;
+        progress.set_message(Self::name().to_string());
+        progress.set_length(6968500);
         tokio::spawn(async move {
             while let Some(input) = receiver.recv().await {
                 log::info!("{}", input.display());
@@ -57,8 +59,8 @@ impl PipelineStep for WikipediaDumpReader {
                     tokio::spawn(async move {
                         let _ = sender.send((page, date));
                     });
+                    progress.inc(1);
                 }
-                progress.inc(1);
             }
             Ok::<(), PipelineError>(())
         });

@@ -22,6 +22,7 @@ mod server;
 #[cfg(feature = "ingest")]
 use crate::ingest::pipeline::PipelineProcessor;
 
+use async_openai::{config::OpenAIConfig, Client};
 #[cfg(feature = "ingest")]
 use config::ingest::Config as IngestConfig;
 
@@ -33,13 +34,23 @@ use cli_args::Commands;
 use docstore::Docstore;
 
 #[cfg(feature = "ingest")]
+use crate::embedding_client::EmbeddingClient;
+#[cfg(feature = "server")]
+use crate::{
+    cli_args::Cli,
+    docstore::DocumentStoreImpl,
+    index::FaceIndex,
+    inference::Engine,
+    llm_client::{
+        GrpcInferenceServiceClient, LlmClient, LlmClientImpl, ModelEndpoint, OpenAiInstructClient,
+        TritonClient,
+    },
+    server::run_server,
+};
+#[cfg(feature = "ingest")]
 use indicatif::MultiProgress;
 #[cfg(feature = "ingest")]
 use indicatif_log_bridge::LogWrapper;
-
-use crate::cli_args::Cli;
-#[cfg(feature = "server")]
-use crate::{docstore::DocumentStoreImpl, index::FaceIndex, inference::Engine, server::run_server};
 
 #[cfg(feature = "server")]
 use config::server::Config as ServerConfig;
@@ -135,6 +146,13 @@ fn main() -> anyhow::Result<()> {
             // };
             // let _llm_client = Arc::new(llm_client);
             // let _embed_client = Arc::new(embed_client);
+
+            // let openai_config = OpenAIConfig::new().with_api_base(config.embed_url.as_ref());
+            // let open_ai_client: Client<OpenAIConfig> = Client::with_config(openai_config);
+            // let embedding_client = EmbeddingClient::new(
+            //     open_ai_client,
+            //     config.embed_name.to_string_lossy().to_string(),
+            // );
 
             let pipeline = PipelineProcessor;
 

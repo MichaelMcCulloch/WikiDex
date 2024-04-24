@@ -9,7 +9,7 @@ use std::{
 use sqlx::SqlitePool;
 use tokio::sync::RwLock;
 
-use crate::ingest::pipeline::document::CompressedDocument;
+use crate::ingest::pipeline::document::DocumentCompressed;
 
 use super::PipelineStep;
 
@@ -53,7 +53,7 @@ impl SqliteWriter {
     }
 }
 impl PipelineStep for SqliteWriter {
-    type IN = Vec<CompressedDocument>;
+    type IN = Vec<DocumentCompressed>;
 
     type OUT = ();
 
