@@ -9,7 +9,10 @@ use std::{
 use sqlx::SqlitePool;
 use tokio::sync::RwLock;
 
-use crate::ingest::pipeline::document::DocumentCompressed;
+use crate::ingest::pipeline::{
+    document::DocumentCompressed,
+    error::{PipelineError, Sql},
+};
 
 use super::PipelineStep;
 
@@ -21,35 +24,44 @@ pub(crate) struct SqliteWriter {
 }
 
 impl SqliteWriter {
-    pub(crate) async fn new(pool: SqlitePool) -> Self {
-        let mut connection = pool.acquire().await.unwrap();
-        let _ = sqlx::query!("BEGIN;",).execute(&mut *connection).await;
+    pub(crate) async fn new(pool: SqlitePool) -> Result<Self, Sql> {
+        let mut connection = pool.acquire().await.map_err(Sql::Sql)?;
+        let _ = sqlx::query!("BEGIN;",)
+            .execute(&mut *connection)
+            .await
+            .map_err(Sql::Sql);
         let _ = sqlx::query!("DROP TABLE IF EXISTS completed_on;",)
             .execute(&mut *connection)
-            .await;
+            .await
+            .map_err(Sql::Sql);
         let _ = sqlx::query!("DROP TABLE IF EXISTS document;",)
             .execute(&mut *connection)
-            .await;
+            .await
+            .map_err(Sql::Sql);
         let _ = sqlx::query!("DROP TABLE IF EXISTS article;",)
             .execute(&mut *connection)
-            .await;
+            .await
+            .map_err(Sql::Sql);
         let _ = sqlx::query!("CREATE TABLE IF NOT EXISTS article ( id INTEGER PRIMARY KEY NOT NULL, title TEXT NOT NULL, access_date INTEGER NOT NULL, modification_date INTEGER NOT NULL );",)
             .execute(&mut *connection)
-            .await;
+            .await.map_err(Sql::Sql);
         let _ = sqlx::query!("CREATE TABLE IF NOT EXISTS document ( id INTEGER PRIMARY KEY NOT NULL,  text BLOB NOT NULL,  article INTEGER NOT NULL,  FOREIGN KEY(article) REFERENCES article(id) );",)
             .execute(&mut *connection)
-            .await;
+            .await.map_err(Sql::Sql);
         let _ = sqlx::query!("CREATE TABLE IF NOT EXISTS completed_on ( db_date INTEGER NOT NULL, article_count INTEGER NOT NULL );",)
             .execute(&mut *connection)
-            .await;
-        let _ = sqlx::query!("COMMIT;",).execute(&mut *connection).await;
+            .await.map_err(Sql::Sql);
+        let _ = sqlx::query!("COMMIT;",)
+            .execute(&mut *connection)
+            .await
+            .map_err(Sql::Sql);
 
-        Self {
+        Ok(Self {
             pool: Arc::new(pool),
             article_count: Arc::new(AtomicI64::new(0)),
             document_count: Arc::new(AtomicI64::new(0)),
             map: Arc::new(RwLock::new(HashMap::new())),
-        }
+        })
     }
 }
 impl PipelineStep for SqliteWriter {
@@ -64,8 +76,11 @@ impl PipelineStep for SqliteWriter {
         Arc<RwLock<HashMap<String, i64>>>,
     );
 
-    async fn transform(documents: Self::IN, arg: &Self::ARG) -> Vec<Self::OUT> {
-        let mut connection = arg.0.acquire().await.unwrap();
+    async fn transform(
+        documents: Self::IN,
+        arg: &Self::ARG,
+    ) -> Result<Vec<Self::OUT>, PipelineError> {
+        let mut connection = arg.0.acquire().await.map_err(Sql::Sql)?;
 
         let _ = sqlx::query!("BEGIN;",).execute(&mut *connection).await;
         for document in documents {
@@ -98,8 +113,8 @@ impl PipelineStep for SqliteWriter {
                         modification_millis
                     )
                     .execute(&mut *connection)
-                    .await
-                    .unwrap();
+                    .await.map_err(Sql::Sql)
+                    ?;
 
                     article_id
                 }
@@ -115,11 +130,11 @@ impl PipelineStep for SqliteWriter {
             )
             .execute(&mut *connection)
             .await
-            .unwrap();
+            .map_err(Sql::Sql)?;
         }
 
         let _ = sqlx::query!("COMMIT;",).execute(&mut *connection).await;
-        vec![()]
+        Ok(vec![()])
     }
 
     fn args(&self) -> Self::ARG {

@@ -8,7 +8,7 @@ use std::sync::Arc;
 use std::{fs::File, io::BufReader};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
 
-use crate::ingest::pipeline::error::{PipelineError, WikipediaDumpReaderError};
+use crate::ingest::pipeline::error::{LinkError, PipelineError, WikipediaDumpReaderError};
 
 use super::PipelineStep;
 
@@ -33,7 +33,10 @@ impl PipelineStep for WikipediaDumpReader {
         next_progress: Vec<Arc<ProgressBar>>,
     ) -> Result<Vec<UnboundedReceiver<Self::OUT>>, PipelineError> {
         let (sender, new_receiver) = unbounded_channel::<Self::OUT>();
-        let next_progress = next_progress.first().unwrap().clone();
+        let next_progress = next_progress
+            .first()
+            .ok_or(LinkError::NoCurrentProgressBar)?
+            .clone();
 
         let limit = self.limit;
         progress.set_message(Self::name().to_string());
@@ -68,7 +71,10 @@ impl PipelineStep for WikipediaDumpReader {
         Ok(vec![new_receiver])
     }
 
-    async fn transform(_input: Self::IN, _arg: &Self::ARG) -> Vec<Self::OUT> {
+    async fn transform(
+        _input: Self::IN,
+        _arg: &Self::ARG,
+    ) -> Result<Vec<Self::OUT>, PipelineError> {
         unimplemented!()
     }
 

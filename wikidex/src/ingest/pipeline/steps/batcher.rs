@@ -3,7 +3,7 @@ use std::{marker::PhantomData, sync::Arc};
 use indicatif::ProgressBar;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
 
-use crate::ingest::pipeline::error::PipelineError;
+use crate::ingest::pipeline::error::{LinkError, PipelineError};
 
 use super::PipelineStep;
 
@@ -14,17 +14,11 @@ pub(crate) struct Batcher<const N: usize, X: Sync + Send + 'static> {
 
 impl<const N: usize, X: Sync + Send + 'static> PipelineStep for Batcher<N, X> {
     type IN = X;
-
     type ARG = ();
-
     type OUT = Vec<X>;
 
     fn name() -> String {
         format!("Batch {}", N)
-    }
-
-    async fn transform(_: Self::IN, _: &Self::ARG) -> Vec<Self::OUT> {
-        unimplemented!()
     }
 
     fn args(&self) -> Self::ARG {
@@ -38,7 +32,10 @@ impl<const N: usize, X: Sync + Send + 'static> PipelineStep for Batcher<N, X> {
         next_progress: Vec<Arc<ProgressBar>>,
     ) -> Result<Vec<UnboundedReceiver<Self::OUT>>, PipelineError> {
         let (sender, new_receiver) = unbounded_channel();
-        let next_progress = next_progress.first().unwrap().clone();
+        let next_progress = next_progress
+            .first()
+            .ok_or(LinkError::NoCurrentProgressBar)?
+            .clone();
 
         progress.set_message(Self::name().to_string());
 
@@ -56,11 +53,16 @@ impl<const N: usize, X: Sync + Send + 'static> PipelineStep for Batcher<N, X> {
                     if vec.len() > N {
                         progress.inc(1);
                         next_progress.inc_length(1);
-                        let _ = sender.send(batch.replace(vec![]).unwrap());
+                        let _ =
+                            sender.send(batch.replace(vec![]).expect("Could not replace batch"));
                     }
                 }
             }
         });
         Ok(vec![new_receiver])
+    }
+
+    async fn transform(_input: Self::IN, _arg: &Self::ARG) -> Result<Vec<Self::OUT>, PipelineError> {
+        todo!()
     }
 }

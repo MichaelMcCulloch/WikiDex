@@ -18,6 +18,7 @@ use crate::ingest::pipeline::{
 };
 
 use super::document::{DocumentCompressed, DocumentHeading};
+use super::error::Sql;
 use super::steps::{Batcher, Embedding, PipelineSplitter, SqliteWriter};
 use super::{
     steps::{Compressor, WikipediaHeadingSplitter, WikipediaPageParser},
@@ -36,14 +37,15 @@ impl PipelineProcessor {
     ) -> Result<(), PipelineError> {
         if !Sqlite::database_exists(database_connection.path())
             .await
-            .map_err(PipelineError::Sql)?
+            .map_err(Sql::Sql)?
         {
             Sqlite::create_database(database_connection.path())
                 .await
-                .map_err(PipelineError::Sql)?;
+                .map_err(Sql::Sql)?;
         }
 
-        let options: SqliteConnectOptions = database_connection.to_string().parse().unwrap();
+        let options: SqliteConnectOptions =
+            database_connection.to_string().parse().map_err(Sql::Sql)?;
 
         let options: SqliteConnectOptions = options.pragma("locking_mode", "EXCLUSIVE");
         let options: SqliteConnectOptions = options.pragma("journal_mode", "WAL");
@@ -56,7 +58,7 @@ impl PipelineProcessor {
             .max_connections(1)
             .connect_with(options)
             .await
-            .unwrap();
+            .map_err(Sql::Sql)?;
 
         let reader = WikipediaDumpReader::new(0);
         let parser = WikipediaPageParser::new(WikiMarkupProcessor);
@@ -68,7 +70,7 @@ impl PipelineProcessor {
         let embedding_batcher = Batcher::<1024, DocumentHeading>::default();
         let embedding = Embedding::new(embedding_client);
 
-        let writter = SqliteWriter::new(pool).await;
+        let writter = SqliteWriter::new(pool).await?;
 
         let (t, rx_pathbuf) = unbounded_channel::<PathBuf>();
 
@@ -163,8 +165,7 @@ impl PipelineProcessor {
                 embedding_progress,
                 vec![embedding_completed_progress.clone()],
             )
-            .await
-            .unwrap();
+            .await?;
         let _ = t.send(wiki_xml);
 
         let _o = AtomicUsize::new(0);

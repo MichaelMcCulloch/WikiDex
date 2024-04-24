@@ -3,7 +3,7 @@ use std::{marker::PhantomData, sync::Arc};
 use indicatif::ProgressBar;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
 
-use crate::ingest::pipeline::error::PipelineError;
+use crate::ingest::pipeline::error::{LinkError, PipelineError};
 
 use super::PipelineStep;
 #[derive(Default)]
@@ -22,7 +22,10 @@ impl<X: Clone + Sync + Send + 'static> PipelineStep for PipelineSplitter<X> {
         "Junction".to_string()
     }
 
-    async fn transform(_input: Self::IN, _arg: &Self::ARG) -> Vec<Self::OUT> {
+    async fn transform(
+        _input: Self::IN,
+        _arg: &Self::ARG,
+    ) -> Result<Vec<Self::OUT>, PipelineError> {
         todo!()
     }
 
@@ -38,8 +41,14 @@ impl<X: Clone + Sync + Send + 'static> PipelineStep for PipelineSplitter<X> {
     ) -> Result<Vec<UnboundedReceiver<Self::OUT>>, PipelineError> {
         let (sender1, new_receiver1) = unbounded_channel::<Self::OUT>();
         let (sender2, new_receiver2) = unbounded_channel::<Self::OUT>();
-        let next_progress1 = next_progress.pop().unwrap();
-        let next_progress2 = next_progress.pop().unwrap();
+        let next_progress1 = next_progress
+            .pop()
+            .ok_or(LinkError::NoCurrentProgressBar)?
+            .clone();
+        let next_progress2 = next_progress
+            .pop()
+            .ok_or(LinkError::NoCurrentProgressBar)?
+            .clone();
 
         progress.set_message(Self::name().to_string());
         tokio::spawn(async move {

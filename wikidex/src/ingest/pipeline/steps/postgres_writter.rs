@@ -17,7 +17,7 @@ pub(crate) struct PgWritter {
 
 impl PgWritter {
     pub(crate) async fn new(pool: PgPool) -> Result<Self, sqlx::error::Error> {
-        let mut connection = pool.acquire().await.unwrap();
+        let mut connection = pool.acquire().await?;
         let _ = sqlx::query!("BEGIN;",).execute(&mut *connection).await?;
         let _ = sqlx::query!("DROP TABLE IF EXISTS completed_on;",)
             .execute(&mut *connection)
@@ -54,7 +54,7 @@ impl PipelineStep for PgWritter {
     type ARG = (Arc<PgPool>, Arc<AtomicI64>, Arc<AtomicI64>);
 
     async fn transform(input: Self::IN, arg: &Self::ARG) -> Vec<Self::OUT> {
-        let mut connection = arg.0.acquire().await.unwrap();
+        let mut connection = arg.0.acquire().await?;
         let access_millis = input.access_date.and_utc().timestamp_millis();
         let modification_millis = input.modification_date.and_utc().timestamp_millis();
 
@@ -64,8 +64,7 @@ impl PipelineStep for PgWritter {
             input.article_title
         )
         .fetch_optional(&mut *connection)
-        .await
-        .unwrap();
+        .await?;
 
         let article_id = if let Some(article) = existing_article {
             article.id
@@ -81,7 +80,7 @@ impl PipelineStep for PgWritter {
                 modification_millis
             )
             .execute(&mut *connection)
-            .await.unwrap();
+            .await?;
             article_id
         };
 
@@ -94,8 +93,7 @@ impl PipelineStep for PgWritter {
             article_id
         )
         .execute(&mut *connection)
-        .await
-        .unwrap();
+        .await?;
 
         vec![()]
     }

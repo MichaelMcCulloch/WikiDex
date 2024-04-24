@@ -2,7 +2,10 @@ use flate2::{read::GzDecoder, write::GzEncoder};
 
 use std::io::{self, Read, Write};
 
-use crate::ingest::pipeline::document::{DocumentCompressed, DocumentHeading};
+use crate::ingest::pipeline::{
+    document::{DocumentCompressed, DocumentHeading},
+    error::{CompressionError, PipelineError},
+};
 
 use super::PipelineStep;
 
@@ -32,16 +35,16 @@ impl PipelineStep for Compressor {
     type OUT = DocumentCompressed;
     type ARG = ();
 
-    async fn transform(input: Self::IN, _: &Self::ARG) -> Vec<Self::OUT> {
+    async fn transform(input: Self::IN, _: &Self::ARG) -> Result<Vec<Self::OUT>, PipelineError> {
         let document = format!("{input}");
-        let document = compress_text(&document).unwrap();
+        let document = compress_text(&document).map_err(CompressionError::Io)?;
         let compressed = Self::OUT {
             document,
             article_title: input.article_title,
             access_date: input.access_date,
             modification_date: input.access_date,
         };
-        vec![compressed]
+        Ok(vec![compressed])
     }
 
     fn args(&self) -> Self::ARG {}

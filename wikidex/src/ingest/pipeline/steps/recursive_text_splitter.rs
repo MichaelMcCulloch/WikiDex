@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
 use crate::ingest::pipeline::{
-    document::DocumentHeading, recursive_character_text_splitter::RecursiveCharacterTextSplitter,
+    document::DocumentHeading, error::PipelineError,
+    recursive_character_text_splitter::RecursiveCharacterTextSplitter,
 };
 
 use super::PipelineStep;
@@ -27,8 +28,9 @@ impl PipelineStep for Splitter {
 
     type ARG = Arc<RecursiveCharacterTextSplitter>;
 
-    async fn transform(input: Self::IN, arg: &Self::ARG) -> Vec<Self::OUT> {
-        arg.split_text(&input.document)
+    async fn transform(input: Self::IN, arg: &Self::ARG) -> Result<Vec<Self::OUT>, PipelineError> {
+        Ok(arg
+            .split_text(&input.document)
             .into_iter()
             .filter(|passage| {
                 passage.split(' ').collect::<Vec<_>>().len() > MINIMUM_PASSAGE_LENGTH_IN_WORDS
@@ -40,7 +42,7 @@ impl PipelineStep for Splitter {
                 access_date: input.access_date,
                 modification_date: input.modification_date,
             })
-            .collect::<Vec<_>>()
+            .collect::<Vec<_>>())
     }
 
     fn args(&self) -> Self::ARG {

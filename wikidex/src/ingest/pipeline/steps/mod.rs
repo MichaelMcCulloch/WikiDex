@@ -26,13 +26,12 @@ pub(crate) use wikipedia_dump_reader::WikipediaDumpReader;
 pub(crate) use wikipedia_heading_splitter::WikipediaHeadingSplitter;
 pub(crate) use wikipedia_page_parser::WikipediaPageParser;
 
-use super::error::PipelineError;
+use super::error::{LinkError, PipelineError};
 
 pub(crate) trait PipelineStep {
     type IN: Send + Sync + 'static;
     type ARG: Send + Sync + 'static;
     type OUT: Send + Sync + 'static;
-
     fn name() -> String;
 
     async fn link(
@@ -43,7 +42,10 @@ pub(crate) trait PipelineStep {
     ) -> Result<Vec<UnboundedReceiver<Self::OUT>>, PipelineError> {
         let (sender, new_receiver) = unbounded_channel::<Self::OUT>();
         let args = Arc::new(self.args());
-        let next_progress = next_progress.first().unwrap().clone();
+        let next_progress = next_progress
+            .first()
+            .ok_or(LinkError::NoCurrentProgressBar)?
+            .clone();
 
         progress.set_message(Self::name().to_string());
         tokio::spawn(async move {
@@ -53,16 +55,30 @@ pub(crate) trait PipelineStep {
                 let progress = progress.clone();
                 let next_progress = next_progress.clone();
                 tokio::spawn(async move {
-                    let transform = Self::transform(input, &args).await;
-                    progress.inc(1);
+                    let transform = Self::transform(input, &args)
+                        .await
+                        .map_err(PipelineError::from);
 
-                    for t in transform {
-                        next_progress.inc_length(1);
+                    match transform {
+                        Ok(transform) => {
+                            progress.inc(1);
 
-                        let _ = sender.send(t);
+                            for t in transform {
+                                next_progress.inc_length(1);
+
+                                let _ = sender.send(t);
+                            }
+                        }
+                        Err(e) => {
+                            log::error!("{e}")
+                        }
                     }
+
+                    Ok::<(), PipelineError>(())
                 });
             }
+
+            Ok::<(), PipelineError>(())
         });
         Ok(vec![new_receiver])
     }
@@ -70,6 +86,6 @@ pub(crate) trait PipelineStep {
     fn transform(
         input: Self::IN,
         arg: &Self::ARG,
-    ) -> impl std::future::Future<Output = Vec<Self::OUT>> + std::marker::Send;
+    ) -> impl std::future::Future<Output = Result<Vec<Self::OUT>, PipelineError>> + std::marker::Send;
     fn args(&self) -> Self::ARG;
 }

@@ -1,9 +1,14 @@
 use std::sync::Arc;
 
+use futures::TryFutureExt;
+
 use super::PipelineStep;
 use crate::{
     embedding_client::{EmbeddingClient, EmbeddingClientService},
-    ingest::pipeline::document::DocumentHeading,
+    ingest::pipeline::{
+        document::DocumentHeading,
+        error::{EmbeddingError, LinkError, PipelineError},
+    },
 };
 
 pub(crate) struct Embedding {
@@ -28,12 +33,19 @@ impl PipelineStep for Embedding {
         String::from("Embed")
     }
 
-    async fn transform(_input: Self::IN, _arg: &Self::ARG) -> Vec<Self::OUT> {
-        let queries = _input
+    async fn transform(
+        documents: Self::IN,
+        embedder: &Self::ARG,
+    ) -> Result<Vec<Self::OUT>, PipelineError> {
+        let queries = documents
             .into_iter()
             .map(|d| format!("{d}"))
             .collect::<Vec<_>>();
-        vec![_arg.embed_batch(queries).await.unwrap()]
+        let embeddings = embedder
+            .embed_batch(queries)
+            .await
+            .map_err(EmbeddingError::EmbeddingServiceError)?;
+        Ok(vec![embeddings])
     }
 
     fn args(&self) -> Self::ARG {
@@ -51,7 +63,10 @@ impl PipelineStep for Embedding {
     > {
         let (sender, new_receiver) = tokio::sync::mpsc::unbounded_channel::<Self::OUT>();
         let args = Arc::new(self.args());
-        let next_progress = next_progress.first().unwrap().clone();
+        let next_progress = next_progress
+            .first()
+            .ok_or(LinkError::NoCurrentProgressBar)?
+            .clone();
 
         progress.set_message(Self::name().to_string());
         tokio::spawn(async move {
@@ -61,7 +76,7 @@ impl PipelineStep for Embedding {
                 let progress = progress.clone();
                 let next_progress = next_progress.clone();
 
-                let transform = Self::transform(input, &args).await;
+                let transform = Self::transform(input, &args).await?;
                 progress.inc(1);
 
                 for t in transform {
@@ -70,6 +85,8 @@ impl PipelineStep for Embedding {
                     let _ = sender.send(t);
                 }
             }
+
+            Ok::<(), PipelineError>(())
         });
         Ok(vec![new_receiver])
     }

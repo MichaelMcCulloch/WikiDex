@@ -1,21 +1,18 @@
-use chrono::{NaiveDateTime};
+use chrono::NaiveDateTime;
 
-use parse_mediawiki_dump_reboot::{Page};
+use parse_mediawiki_dump_reboot::Page;
 
 use std::sync::Arc;
 use std::time::Duration;
 
-
 use tokio::sync::oneshot::channel;
 use tokio::time::timeout;
 
+use crate::ingest::pipeline::error::{ParseError, PipelineError};
 use crate::ingest::pipeline::wikipedia::WikiMarkupProcessor;
 
 use crate::ingest::{
-    pipeline::{
-        document::Document,
-        error::{WikipediaDumpReaderError},
-    },
+    pipeline::{document::Document},
     service::Process,
 };
 
@@ -38,7 +35,7 @@ impl PipelineStep for WikipediaPageParser {
 
     type OUT = Document;
 
-    async fn transform(input: Self::IN, arg: &Self::ARG) -> Vec<Self::OUT> {
+    async fn transform(input: Self::IN, arg: &Self::ARG) -> Result<Vec<Self::OUT>, PipelineError> {
         let (Page { text, title, .. }, date) = input;
 
         let markup_processor = arg.clone();
@@ -49,32 +46,20 @@ impl PipelineStep for WikipediaPageParser {
             let _ = tx.send(document);
         });
 
-        let received = timeout(Duration::from_secs(60), rx)
+        let parse = timeout(Duration::from_secs(60), rx)
             .await
-            .map_err(|e| {
-                log::error!("{} took {}", title.clone(), e);
-                WikipediaDumpReaderError::Timeout(title.clone())
-            })
-            .unwrap();
+            .map_err(|_| ParseError::Timeout)?
+            .map_err(ParseError::Tokio)?
+            .map_err(|_| ParseError::ParseError(title.clone()))?;
 
-        if let Ok(received) = received {
-            let document = match received {
-                Ok(document) => Ok(document),
-                Err(e) => Err(WikipediaDumpReaderError::MarkupError(e)),
-            }
-            .unwrap();
+        let output = Document {
+            document: parse,
+            article_title: title,
+            access_date: date,
+            modification_date: date,
+        };
 
-            let output = Document {
-                document,
-                article_title: title,
-                access_date: date,
-                modification_date: date,
-            };
-
-            vec![output]
-        } else {
-            vec![]
-        }
+        Ok(vec![output])
     }
 
     fn args(&self) -> Self::ARG {
