@@ -65,8 +65,8 @@ impl PipelineProcessor {
         let splitter = PipelineSplitter::default();
         let compressor = Compressor;
         let docstore_batcher = Batcher::<100000, DocumentCompressed>::default();
-        let embedding_batcher = Batcher::<512, DocumentHeading>::default();
-        let embedding = Embedding::<512>::new(embedding_client);
+        let embedding_batcher = Batcher::<1024, DocumentHeading>::default();
+        let embedding = Embedding::new(embedding_client);
 
         let writter = SqliteWriter::new(pool).await;
 
@@ -157,7 +157,7 @@ impl PipelineProcessor {
                 vec![embedding_progress.clone()],
             )
             .await?;
-        let _rx_embedder = embedding
+        let mut rx_embedder = embedding
             .link(
                 rx_embedding_batcher.pop().unwrap(),
                 embedding_progress,
@@ -168,8 +168,12 @@ impl PipelineProcessor {
         let _ = t.send(wiki_xml);
 
         let _o = AtomicUsize::new(0);
+
         // while let Ok(Some(document)) = timeout(Duration::from_secs(10), r.recv()).await {
         while let Some(_document) = rx_writter.pop().unwrap().recv().await {
+            // println!("{}", o.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
+        }
+        while let Some(_document) = rx_embedder.pop().unwrap().recv().await {
             // println!("{}", o.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
         }
         Ok(())

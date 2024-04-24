@@ -111,7 +111,7 @@ x-base_service_postgres_prod_gid: &base_postgres_gid_fix
 x-base_service_infinity: &base_infinity
   profiles:
     - server
-    - iingest
+    - ingest
   image: michaelf34/infinity:latest
   volumes:
     - ~/.cache/huggingface/hub/:/app/.cache/torch
@@ -227,7 +227,7 @@ services:
 
   postgres_ingest:
     profiles:
-      - ingest
+      - iingest
     <<:
       - *base_service
       - *base_postgres

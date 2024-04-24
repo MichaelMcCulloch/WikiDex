@@ -20,7 +20,7 @@ impl<const N: usize, X: Sync + Send + 'static> PipelineStep for Batcher<N, X> {
     type OUT = Vec<X>;
 
     fn name() -> String {
-        String::from("Batcher")
+        format!("Batch {}", N)
     }
 
     async fn transform(_: Self::IN, _: &Self::ARG) -> Vec<Self::OUT> {
@@ -52,9 +52,9 @@ impl<const N: usize, X: Sync + Send + 'static> PipelineStep for Batcher<N, X> {
                 if let Some(v) = batch.as_mut() {
                     v.push(input);
                 }
-                progress.inc(1);
                 if let Some(ref vec) = batch {
                     if vec.len() > N {
+                        progress.inc(1);
                         next_progress.inc_length(1);
                         let _ = sender.send(batch.replace(vec![]).unwrap());
                     }

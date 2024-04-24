@@ -33,20 +33,13 @@ impl PipelineStep for Compressor {
     type ARG = ();
 
     async fn transform(input: Self::IN, _: &Self::ARG) -> Vec<Self::OUT> {
-        let DocumentHeading {
-            document,
-            heading,
-            article_title,
-            access_date,
-            modification_date,
-        } = input;
-        let document = format!("{heading}\n\n{document}");
+        let document = format!("{input}");
         let document = compress_text(&document).unwrap();
         let compressed = Self::OUT {
             document,
-            article_title,
-            access_date,
-            modification_date,
+            article_title: input.article_title,
+            access_date: input.access_date,
+            modification_date: input.access_date,
         };
         vec![compressed]
     }
