@@ -11,6 +11,7 @@ use crate::{
     },
 };
 
+const EMBED_MAX_STR_LEN: usize = 122880usize;
 pub(crate) struct Embedding {
     client: Arc<EmbeddingClient>,
 }
@@ -39,7 +40,7 @@ impl PipelineStep for Embedding {
     ) -> Result<Vec<Self::OUT>, PipelineError> {
         let queries = documents
             .into_iter()
-            .map(|d| format!("{d}"))
+            .map(|d| format!("{d}").chars().take(EMBED_MAX_STR_LEN).collect())
             .collect::<Vec<_>>();
         let embeddings = embedder
             .embed_batch(queries)
@@ -70,19 +71,29 @@ impl PipelineStep for Embedding {
 
         progress.set_message(Self::name().to_string());
         tokio::spawn(async move {
+            let progress = progress.clone();
+            let next_progress = next_progress.clone();
             while let Some(input) = receiver.recv().await {
                 let args = args.clone();
                 let sender = sender.clone();
                 let progress = progress.clone();
                 let next_progress = next_progress.clone();
 
-                let transform = Self::transform(input, &args).await?;
-                progress.inc(1);
+                let transform = Self::transform(input, &args).await;
+                match transform {
+                    Ok(transform) => {
+                        progress.inc(1);
 
-                for t in transform {
-                    next_progress.inc_length(1);
+                        for t in transform {
+                            next_progress.inc_length(1);
 
-                    let _ = sender.send(t);
+                            let _ = sender.send(t);
+                        }
+                    }
+                    Err(e) => {
+                        log::error!("{e}");
+                        continue;
+                    }
                 }
             }
 

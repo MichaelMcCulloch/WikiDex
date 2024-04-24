@@ -52,6 +52,9 @@ impl<X: Clone + Sync + Send + 'static> PipelineStep for PipelineSplitter<X> {
 
         progress.set_message(Self::name().to_string());
         tokio::spawn(async move {
+            let progress = progress.clone();
+            let next_progress1 = next_progress1.clone();
+            let next_progress2 = next_progress2.clone();
             while let Some(input) = receiver.recv().await {
                 progress.inc(1);
                 next_progress1.inc_length(1);

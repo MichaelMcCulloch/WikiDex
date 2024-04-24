@@ -11,10 +11,7 @@ use tokio::time::timeout;
 use crate::ingest::pipeline::error::{ParseError, PipelineError};
 use crate::ingest::pipeline::wikipedia::WikiMarkupProcessor;
 
-use crate::ingest::{
-    pipeline::{document::Document},
-    service::Process,
-};
+use crate::ingest::{pipeline::document::Document, service::Process};
 
 use super::PipelineStep;
 
@@ -46,20 +43,18 @@ impl PipelineStep for WikipediaPageParser {
             let _ = tx.send(document);
         });
 
-        let parse = timeout(Duration::from_secs(60), rx)
+        let parse = timeout(Duration::from_secs(2), rx)
             .await
-            .map_err(|_| ParseError::Timeout)?
+            .map_err(|_| ParseError::Timeout(title.clone()))?
             .map_err(ParseError::Tokio)?
             .map_err(|_| ParseError::ParseError(title.clone()))?;
 
-        let output = Document {
+        Ok(vec![Document {
             document: parse,
             article_title: title,
             access_date: date,
             modification_date: date,
-        };
-
-        Ok(vec![output])
+        }])
     }
 
     fn args(&self) -> Self::ARG {

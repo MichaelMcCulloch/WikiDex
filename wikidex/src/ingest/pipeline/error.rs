@@ -12,7 +12,6 @@ use super::wikipedia::WikiMarkupProcessingError;
 
 #[derive(Debug)]
 pub enum PipelineError {
-    QueryError,
     LinkError(LinkError),
     EmbeddingError(EmbeddingError),
     CompressionError(CompressionError),
@@ -24,13 +23,14 @@ impl StdError for PipelineError {}
 impl Display for PipelineError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
-            PipelineError::QueryError => write!(f, "PipelineError"),
-            PipelineError::WikipediaDumpReaderError(e) => write!(f, "{e}"),
-            PipelineError::Sql(e) => write!(f, "{e}"),
-            PipelineError::LinkError(e) => write!(f, "{e}"),
-            PipelineError::EmbeddingError(e) => write!(f, "{e}"),
-            PipelineError::CompressionError(e) => write!(f, "{e}"),
-            PipelineError::ParseError(e) => write!(f, "{e}"),
+            PipelineError::WikipediaDumpReaderError(e) => {
+                write!(f, "PipelineError::WikipediaDumpReaderError {e}")
+            }
+            PipelineError::Sql(e) => write!(f, "PipelineError::Sql {e}"),
+            PipelineError::LinkError(e) => write!(f, "PipelineError::LinkError {e}"),
+            PipelineError::EmbeddingError(e) => write!(f, "PipelineError::EmbeddingError {e}"),
+            PipelineError::CompressionError(e) => write!(f, "PipelineError::CompressionError {e}"),
+            PipelineError::ParseError(e) => write!(f, "PipelineError::ParseError {e}"),
         }
     }
 }
@@ -76,7 +76,7 @@ impl Display for EmbeddingError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
             EmbeddingError::EmbeddingServiceError(e) => {
-                write!(f, "{e}")
+                write!(f, "EmbeddingError::EmbeddingServiceError {e}")
             }
         }
     }
@@ -96,7 +96,7 @@ impl Display for LinkError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
             LinkError::NoCurrentProgressBar => {
-                write!(f, "NoCurrentProgressBar")
+                write!(f, "LinkError::NoCurrentProgressBar")
             }
         }
     }
@@ -114,8 +114,8 @@ impl StdError for CompressionError {}
 impl Display for CompressionError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
-            CompressionError::Io(_e) => {
-                write!(f, "NoCurrentProgressBar")
+            CompressionError::Io(e) => {
+                write!(f, "CompressionError::Io {e}")
             }
         }
     }
@@ -150,18 +150,18 @@ impl From<Sql> for PipelineError {
 pub enum ParseError {
     ParseError(String),
     Tokio(oneshot::error::RecvError),
-    Timeout,
+    Timeout(String),
 }
 impl StdError for ParseError {}
 impl Display for ParseError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
             ParseError::ParseError(e) => {
-                write!(f, "Could Not Parse {e}")
+                write!(f, "ParseError::ParseError {e}")
             }
-            ParseError::Timeout => write!(f, "Timeout"),
+            ParseError::Timeout(e) => write!(f, "ParseError::Timeout {e}"),
             ParseError::Tokio(e) => {
-                write!(f, "{e}")
+                write!(f, "ParseError::Tokio {e}")
             }
         }
     }

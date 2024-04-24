@@ -41,6 +41,8 @@ impl<const N: usize, X: Sync + Send + 'static> PipelineStep for Batcher<N, X> {
 
         tokio::spawn(async move {
             let mut batch = Some(vec![]);
+            let progress = progress.clone();
+            let next_progress = next_progress.clone();
             while let Some(input) = receiver.recv().await {
                 let sender = sender.clone();
                 let next_progress = next_progress.clone();
@@ -53,8 +55,15 @@ impl<const N: usize, X: Sync + Send + 'static> PipelineStep for Batcher<N, X> {
                     if vec.len() > N {
                         progress.inc(1);
                         next_progress.inc_length(1);
-                        let _ =
-                            sender.send(batch.replace(vec![]).expect("Could not replace batch"));
+                        match batch.replace(vec![]) {
+                            Some(replace) => {
+                                let _ = sender.send(replace);
+                            }
+                            None => {
+                                log::error!("Could Not Obtain Batch");
+                                continue;
+                            }
+                        };
                     }
                 }
             }
@@ -62,7 +71,10 @@ impl<const N: usize, X: Sync + Send + 'static> PipelineStep for Batcher<N, X> {
         Ok(vec![new_receiver])
     }
 
-    async fn transform(_input: Self::IN, _arg: &Self::ARG) -> Result<Vec<Self::OUT>, PipelineError> {
+    async fn transform(
+        _input: Self::IN,
+        _arg: &Self::ARG,
+    ) -> Result<Vec<Self::OUT>, PipelineError> {
         todo!()
     }
 }
