@@ -1,9 +1,13 @@
-use std::sync::{
-    atomic::{AtomicI64, Ordering},
-    Arc,
+use std::{
+    collections::HashMap,
+    sync::{
+        atomic::{AtomicI64, Ordering},
+        Arc,
+    },
 };
 
 use sqlx::SqlitePool;
+use tokio::sync::RwLock;
 
 use crate::ingest::pipeline::document::CompressedDocument;
 
@@ -13,6 +17,7 @@ pub(crate) struct SqliteWriter {
     pool: Arc<SqlitePool>,
     article_count: Arc<AtomicI64>,
     document_count: Arc<AtomicI64>,
+    map: Arc<RwLock<HashMap<String, i64>>>,
 }
 
 impl SqliteWriter {
@@ -43,65 +48,77 @@ impl SqliteWriter {
             pool: Arc::new(pool),
             article_count: Arc::new(AtomicI64::new(0)),
             document_count: Arc::new(AtomicI64::new(0)),
+            map: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 }
 impl PipelineStep for SqliteWriter {
-    type IN = CompressedDocument;
+    type IN = Vec<CompressedDocument>;
 
     type OUT = ();
 
-    type ARG = (Arc<SqlitePool>, Arc<AtomicI64>, Arc<AtomicI64>);
+    type ARG = (
+        Arc<SqlitePool>,
+        Arc<AtomicI64>,
+        Arc<AtomicI64>,
+        Arc<RwLock<HashMap<String, i64>>>,
+    );
 
-    async fn transform(input: Self::IN, arg: &Self::ARG) -> Vec<Self::OUT> {
-        let CompressedDocument {
-            document,
-            article_title,
-            access_date,
-            modification_date,
-        } = input;
-
+    async fn transform(documents: Self::IN, arg: &Self::ARG) -> Vec<Self::OUT> {
         let mut connection = arg.0.acquire().await.unwrap();
-        let access_millis = access_date.and_utc().timestamp_millis();
-        let modification_millis = modification_date.and_utc().timestamp_millis();
 
-        // Check if the article already exists
-        let existing_article =
-            sqlx::query!("SELECT id FROM article WHERE title = ?1", article_title)
-                .fetch_optional(&mut *connection)
-                .await
-                .unwrap();
+        let _ = sqlx::query!("BEGIN;",).execute(&mut *connection).await;
+        for document in documents {
+            let access_millis = document.access_date.and_utc().timestamp_millis();
+            let modification_millis = document.modification_date.and_utc().timestamp_millis();
 
-        let article_id = if let Some(article) = existing_article {
-            article.id
-        } else {
-            // If the article does not exist, insert it
-            let article_id = arg.1.fetch_add(1, Ordering::Relaxed);
+            let read_lock = arg.3.read().await;
+            let article_id = if let Some(&article_id) = read_lock.get(&document.article_title) {
+                // If the article ID is found, return it without requiring a write lock
+                article_id
+            } else {
+                // Acquire a write lock because the key was not found
+                drop(read_lock); // Release the read lock before acquiring the write lock
+                let mut write_lock = arg.3.write().await;
+
+                // Check again in case another writer added the key while acquiring the lock
+                if let Some(&article_id) = write_lock.get(&document.article_title) {
+                    article_id
+                } else {
+                    // Generate a new article ID and update the store
+                    let article_id = arg.1.fetch_add(1, Ordering::Relaxed);
+                    write_lock.insert(document.article_title.clone(), article_id);
+
+                    // Insert into the database while holding the write lock
+                    sqlx::query!(
+                        "INSERT INTO article (id, title, access_date, modification_date) VALUES (?1, ?2, ?3, ?4)",
+                        article_id,
+                        document.article_title,
+                        access_millis,
+                        modification_millis
+                    )
+                    .execute(&mut *connection)
+                    .await
+                    .unwrap();
+
+                    article_id
+                }
+            };
+
+            let document_id = arg.2.fetch_add(1, Ordering::Relaxed);
 
             let _rows = sqlx::query!(
-                "INSERT INTO article (id, title, access_date, modification_date) VALUES (?1, ?2, ?3, ?4)",
-                article_id,
-                article_title,
-                access_millis,
-                modification_millis
+                "INSERT INTO document (id, text, article) VALUES (?1, ?2, ?3)",
+                document_id,
+                document.document,
+                article_id
             )
             .execute(&mut *connection)
-            .await.unwrap();
-            article_id
-        };
+            .await
+            .unwrap();
+        }
 
-        let document_id = arg.2.fetch_add(1, Ordering::Relaxed);
-
-        let _rows = sqlx::query!(
-            "INSERT INTO document (id, text, article) VALUES (?1, ?2, ?3)",
-            document_id,
-            document,
-            article_id
-        )
-        .execute(&mut *connection)
-        .await
-        .unwrap();
-
+        let _ = sqlx::query!("COMMIT;",).execute(&mut *connection).await;
         vec![()]
     }
 
@@ -110,6 +127,7 @@ impl PipelineStep for SqliteWriter {
             self.pool.clone(),
             self.article_count.clone(),
             self.document_count.clone(),
+            self.map.clone(),
         )
     }
     fn name() -> String {

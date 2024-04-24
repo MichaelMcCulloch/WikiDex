@@ -69,7 +69,7 @@ opt-level = 3
 debug = 0
 
 [features]
-default = ["sqlite", "server", "ingest"]
+default = ["sqlite", "ingest"]
 server = [
     "dep:actix-cors",
     "dep:face-api",

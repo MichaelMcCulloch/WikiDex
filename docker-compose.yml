@@ -37,7 +37,7 @@ x-base_service_triton: &base_triton
   env_file: .env
   profiles:
     - triton
-    - ingest
+    - iingest
   build:
     context: ./triton
     dockerfile: Dockerfile
@@ -69,7 +69,7 @@ x-base_service_wikidex: &base_wikidex
 
 x-base_service_ingest: &base_ingest
   profiles:
-    - ingest
+    - iingest
   depends_on:
     - triton
     - infinity
@@ -105,36 +105,13 @@ x-base_service_postgres: &base_postgres
   image: postgres
   shm_size: 1gb
 
-x-base_service_postgres_prod: &base_postgres_prod
-  <<:
-    - *base_postgres
-  volumes:
-    - ~/ContainerData/PostgreSQL/wikidex/${EXTRACT_DATE}:/var/lib/postgresql/data
-  ports:
-    - $POSTGRES_PORT:$POSTGRES_PORT
-
-x-base_service_postgres_dummy: &base_postgres_dummy
-  <<:
-    - *base_postgres
-  volumes:
-    - ~/ContainerData/PostgreSQL/wikidex/dummy/:/var/lib/postgresql/data
-  ports:
-    - $POSTGRES_DUMMY_PORT:$POSTGRES_PORT
-
-x-base_service_postgres_prod_gid: &base_postgres_prod_gid_fix
-  <<:
-    - *base_postgres_prod
-  user: 1000:1000
-
-x-base_service_postgres_dummy_gid: &base_postgres_dummy_gid_fix
-  <<:
-    - *base_postgres_dummy
+x-base_service_postgres_prod_gid: &base_postgres_gid_fix
   user: 1000:1000
 
 x-base_service_infinity: &base_infinity
   profiles:
     - server
-    - ingest
+    - iingest
   image: michaelf34/infinity:latest
   volumes:
     - ~/.cache/huggingface/hub/:/app/.cache/torch
@@ -229,14 +206,36 @@ services:
       - server
     <<:
       - *base_service
-      - *base_postgres_prod_gid_fix
+      - *base_postgres
+      - *base_postgres_gid_fix
+    volumes:
+      - ~/ContainerData/PostgreSQL/wikidex/${EXTRACT_DATE}:/var/lib/postgresql/data
+    ports:
+      - $POSTGRES_PORT:$POSTGRES_PORT
 
   postgres_dummy:
     profiles:
       - dummy
     <<:
       - *base_service
-      - *base_postgres_dummy_gid_fix
+      - *base_postgres
+      - *base_postgres_gid_fix
+    volumes:
+      - ~/ContainerData/PostgreSQL/wikidex/dummy/:/var/lib/postgresql/data
+    ports:
+      - $POSTGRES_DUMMY_PORT:$POSTGRES_PORT
+
+  postgres_ingest:
+    profiles:
+      - ingest
+    <<:
+      - *base_service
+      - *base_postgres
+      # - *base_postgres_gid_fix
+    volumes:
+      - ~/ContainerData/PostgreSQL/wikidex/20240401/:/var/lib/postgresql/data
+    ports:
+      - $POSTGRES_INGEST_PORT:$POSTGRES_PORT
 
   ingest:
     <<:
@@ -395,126 +394,126 @@ services:
       - ./haproxy:/usr/local/etc/haproxy/
     # entrypoint: [haproxy, -c, -V, -f, /usr/local/etc/haproxy/haproxy.cfg]
 
-  metad0:
-    <<:
-      - *base_service
-    image: docker.io/vesoft/nebula-metad:v3.6.0
-    environment:
-      USER: root
-    command:
-      - --meta_server_addrs=metad0:9559
-      - --local_ip=metad0
-      - --ws_ip=metad0
-      - --port=9559
-      - --ws_http_port=19559
-      - --data_path=/data/meta
-      - --log_dir=/logs
-      - --v=0
-      - --minloglevel=0
-    healthcheck:
-      test: ["CMD", "curl", "-sf", "http://metad0:19559/status"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
-    ports:
-      - 9559:9559
-      - 19559:19559
-      - 19560
-    volumes:
-      - ~/ContainerData/Nebula/testing/data/meta0:/data/meta
-      - ~/ContainerData/Nebula/testing/logs/meta0:/logs
+  # metad0:
+  #   <<:
+  #     - *base_service
+  #   image: docker.io/vesoft/nebula-metad:v3.6.0
+  #   environment:
+  #     USER: root
+  #   command:
+  #     - --meta_server_addrs=metad0:9559
+  #     - --local_ip=metad0
+  #     - --ws_ip=metad0
+  #     - --port=9559
+  #     - --ws_http_port=19559
+  #     - --data_path=/data/meta
+  #     - --log_dir=/logs
+  #     - --v=0
+  #     - --minloglevel=0
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-sf", "http://metad0:19559/status"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 20s
+  #   ports:
+  #     - 9559:9559
+  #     - 19559:19559
+  #     - 19560
+  #   volumes:
+  #     - ~/ContainerData/Nebula/testing/data/meta0:/data/meta
+  #     - ~/ContainerData/Nebula/testing/logs/meta0:/logs
 
-    restart: on-failure
-    cap_add:
-      - SYS_PTRACE
+  #   restart: on-failure
+  #   cap_add:
+  #     - SYS_PTRACE
 
-  storaged0:
-    <<:
-      - *base_service
-    image: docker.io/vesoft/nebula-storaged:v3.6.0
-    environment:
-      USER: root
-      TZ: "${TZ}"
-    command:
-      - --meta_server_addrs=metad0:9559
-      - --local_ip=storaged0
-      - --ws_ip=storaged0
-      - --port=9779
-      - --ws_http_port=19779
-      - --data_path=/data/storage
-      - --log_dir=/logs
-      - --v=0
-      - --minloglevel=0
-    depends_on:
-      - metad0
-    healthcheck:
-      test: ["CMD", "curl", "-sf", "http://storaged0:19779/status"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
-    ports:
-      - 9779:9779
-      - 19779:19779
-      - 19780
-    volumes:
-      - ~/ContainerData/Nebula/testing/data/storage0:/data/storage
-      - ~/ContainerData/Nebula/testing/logs/storage0:/logs
+  # storaged0:
+  #   <<:
+  #     - *base_service
+  #   image: docker.io/vesoft/nebula-storaged:v3.6.0
+  #   environment:
+  #     USER: root
+  #     TZ: "${TZ}"
+  #   command:
+  #     - --meta_server_addrs=metad0:9559
+  #     - --local_ip=storaged0
+  #     - --ws_ip=storaged0
+  #     - --port=9779
+  #     - --ws_http_port=19779
+  #     - --data_path=/data/storage
+  #     - --log_dir=/logs
+  #     - --v=0
+  #     - --minloglevel=0
+  #   depends_on:
+  #     - metad0
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-sf", "http://storaged0:19779/status"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 20s
+  #   ports:
+  #     - 9779:9779
+  #     - 19779:19779
+  #     - 19780
+  #   volumes:
+  #     - ~/ContainerData/Nebula/testing/data/storage0:/data/storage
+  #     - ~/ContainerData/Nebula/testing/logs/storage0:/logs
 
-    restart: on-failure
-    cap_add:
-      - SYS_PTRACE
+  #   restart: on-failure
+  #   cap_add:
+  #     - SYS_PTRACE
 
-  graphd:
-    <<:
-      - *base_service
-    image: docker.io/vesoft/nebula-graphd:v3.6.0
-    environment:
-      USER: root
-      TZ: "${TZ}"
-    command:
-      - --meta_server_addrs=metad0:9559
-      - --port=9669
-      - --local_ip=graphd
-      - --ws_ip=graphd
-      - --ws_http_port=19669
-      - --log_dir=/logs
-      - --v=0
-      - --minloglevel=0
-    depends_on:
-      - storaged0
-    healthcheck:
-      test: ["CMD", "curl", "-sf", "http://graphd:19669/status"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
-    ports:
-      - 9669:9669
-      - 19669:19669
-      - 19670
-    volumes:
-      - ~/ContainerData/Nebula/testing/logs/graph:/logs
+  # graphd:
+  #   <<:
+  #     - *base_service
+  #   image: docker.io/vesoft/nebula-graphd:v3.6.0
+  #   environment:
+  #     USER: root
+  #     TZ: "${TZ}"
+  #   command:
+  #     - --meta_server_addrs=metad0:9559
+  #     - --port=9669
+  #     - --local_ip=graphd
+  #     - --ws_ip=graphd
+  #     - --ws_http_port=19669
+  #     - --log_dir=/logs
+  #     - --v=0
+  #     - --minloglevel=0
+  #   depends_on:
+  #     - storaged0
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-sf", "http://graphd:19669/status"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 20s
+  #   ports:
+  #     - 9669:9669
+  #     - 19669:19669
+  #     - 19670
+  #   volumes:
+  #     - ~/ContainerData/Nebula/testing/logs/graph:/logs
 
-    restart: on-failure
-    cap_add:
-      - SYS_PTRACE
-  console:
-    image: docker.io/vesoft/nebula-console:v3.5
-    entrypoint: ""
-    command:
-      - sh
-      - -c
-      - |
-        for i in `seq 1 60`;do
-          var=`nebula-console -addr graphd -port 9669 -u root -p nebula -e 'ADD HOSTS "storaged0":9779,"storaged1":9779,"storaged2":9779'`;
-          if [[ $$? == 0 ]];then
-            break;
-          fi;
-          sleep 1;
-          echo "retry to add hosts.";
-        done && tail -f /dev/null;
+  #   restart: on-failure
+  #   cap_add:
+  #     - SYS_PTRACE
+  # console:
+  #   image: docker.io/vesoft/nebula-console:v3.5
+  #   entrypoint: ""
+  #   command:
+  #     - sh
+  #     - -c
+  #     - |
+  #       for i in `seq 1 60`;do
+  #         var=`nebula-console -addr graphd -port 9669 -u root -p nebula -e 'ADD HOSTS "storaged0":9779,"storaged1":9779,"storaged2":9779'`;
+  #         if [[ $$? == 0 ]];then
+  #           break;
+  #         fi;
+  #         sleep 1;
+  #         echo "retry to add hosts.";
+  #       done && tail -f /dev/null;
 
-    depends_on:
-      - graphd
+  #   depends_on:
+  #     - graphd

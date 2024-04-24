@@ -9,7 +9,7 @@ use url::Url;
 #[derive(Debug)]
 pub(crate) struct Config {
     pub(crate) wiki_xml: PathBuf,
-    pub(crate) output_directory: PathBuf,
+    pub(crate) output_directory: Url,
     pub(crate) llm_kind: ModelKind,
     pub(crate) llm_name: PathBuf,
     pub(crate) llm_endpoint: ModelEndpoint,
@@ -63,7 +63,7 @@ impl Display for Config {
         } = self;
 
         let wiki_xml = wiki_xml.display();
-        let output_directory = output_directory.display();
+        let output_directory = output_directory.to_string();
         let embed_url = embed_url.as_str().blue();
         let embed_endpoint = format!("{embed_endpoint}").as_str().blue();
         let embed_name = embed_name.display().to_string().bright_blue();

@@ -105,8 +105,11 @@ mod tests_text_splitter {
 
     use crate::{
         ingest::{
-            pipeline::recursive_character_text_splitter::RecursiveCharacterTextSplitter,
-            service::Process, wikipedia::WikiMarkupProcessor,
+            pipeline::{
+                recursive_character_text_splitter::RecursiveCharacterTextSplitter,
+                wikipedia::WikiMarkupProcessor,
+            },
+            service::Process,
         },
         test_data::SUPREME_COURT_VOL_129,
     };

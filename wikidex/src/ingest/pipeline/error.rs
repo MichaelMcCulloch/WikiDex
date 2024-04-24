@@ -38,6 +38,7 @@ impl Display for WikipediaDumpReaderError {
 pub enum PipelineError {
     QueryError,
     WikipediaDumpReaderError(WikipediaDumpReaderError),
+    Sql(sqlx::Error),
 }
 
 impl StdError for PipelineError {}
@@ -49,6 +50,9 @@ impl Display for PipelineError {
                 write!(f, "PipelineError")
             }
             PipelineError::WikipediaDumpReaderError(e) => {
+                write!(f, "{e}")
+            }
+            PipelineError::Sql(e) => {
                 write!(f, "{e}")
             }
         }

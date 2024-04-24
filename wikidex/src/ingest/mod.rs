@@ -1,4 +1,3 @@
-pub(crate) mod pipeline;
-pub(crate) mod plain_text;
-pub(crate) mod service;
-pub(crate) mod wikipedia;
+pub(super) mod pipeline;
+pub(super) mod plain_text;
+pub(super) mod service;
