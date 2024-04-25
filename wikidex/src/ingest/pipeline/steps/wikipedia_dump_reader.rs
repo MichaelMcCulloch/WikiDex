@@ -11,7 +11,7 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
 use crate::ingest::pipeline::error::{LinkError, PipelineError, WikipediaDumpReaderError};
 
 use super::PipelineStep;
-
+const ARTICLE_COUNT_ESTIMATE: u64 = 6968500u64;
 pub(crate) struct WikipediaDumpReader {
     limit: usize,
 }
@@ -40,7 +40,7 @@ impl PipelineStep for WikipediaDumpReader {
 
         let limit = self.limit;
         progress.set_message(Self::name().to_string());
-        progress.set_length(6968500);
+        progress.set_length(ARTICLE_COUNT_ESTIMATE);
         tokio::spawn(async move {
             while let Some(input) = receiver.recv().await {
                 log::info!("{}", input.display());
@@ -108,14 +108,12 @@ fn get_date_from_xml_name(file_name: &Path) -> Result<NaiveDateTime, WikipediaDu
         .ok_or(WikipediaDumpReaderError::XmlDateReadError)
 }
 fn page_filter(page: &Page) -> bool {
-    !page.text.is_empty()
-        && page.namespace == Namespace::Main
+    page.namespace == Namespace::Main
         && page
             .format
             .as_ref()
             .is_some_and(|format| format == "text/x-wiki")
         && page.model.as_ref().is_some_and(|model| model == "wikitext")
-        && !(page.text.starts_with("#REDIRECT")
-            || page.text.starts_with("#redirect")
-            || page.text.is_empty())
+        && !page.text.trim().is_empty()
+        && !page.text.trim().to_lowercase().starts_with("#redirect")
 }

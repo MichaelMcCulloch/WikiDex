@@ -63,7 +63,7 @@ impl PipelineProcessor {
         let _splitter = Splitter::new(RecursiveCharacterTextSplitter::new(1024, 0, None, true));
         let compressor = Compressor;
         let docstore_batcher = Batcher::<10000, DocumentCompressed>::default();
-        let embedding_batcher = Batcher::<1024, DocumentHeading>::default();
+        let embedding_batcher = Batcher::<512, DocumentHeading>::default();
         let embedding = Embedding::new(embedding_client);
 
         let writter = SqliteWriter::new(pool).await?;

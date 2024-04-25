@@ -14,7 +14,7 @@ pub enum PipelineError {
     EmbeddingError(EmbeddingError),
     CompressionError(CompressionError),
     WikipediaDumpReaderError(WikipediaDumpReaderError),
-    ParseError(ParseError),
+    ParseError(ParseMarkupError),
     Sql(Sql),
 }
 impl StdError for PipelineError {}
@@ -145,29 +145,31 @@ impl From<Sql> for PipelineError {
 }
 
 #[derive(Debug)]
-pub enum ParseError {
+pub enum ParseMarkupError {
     ParseError(String),
-    None,
     Empty(String),
+    Redirect(String),
+    None,
     Timeout(String),
 }
-impl StdError for ParseError {}
-impl Display for ParseError {
+impl StdError for ParseMarkupError {}
+impl Display for ParseMarkupError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
-            ParseError::ParseError(e) => {
-                write!(f, "ParseError::ParseError {e}")
+            ParseMarkupError::ParseError(e) => {
+                write!(f, "ParseMarkupError::ParseError {e}")
             }
-            ParseError::Empty(e) => write!(f, "ParseError::Empty {e}"),
-            ParseError::Timeout(e) => write!(f, "ParseError::Timeout {e}"),
-            ParseError::None => {
-                write!(f, "ParseError::None")
+            ParseMarkupError::Timeout(e) => write!(f, "ParseMarkupError::Timeout {e}"),
+            ParseMarkupError::Redirect(e) => write!(f, "ParseMarkupError::Redirect {e}"),
+            ParseMarkupError::Empty(e) => write!(f, "ParseMarkupError::Empty {e}"),
+            ParseMarkupError::None => {
+                write!(f, "ParseMarkupError::None")
             }
         }
     }
 }
-impl From<ParseError> for PipelineError {
-    fn from(value: ParseError) -> Self {
+impl From<ParseMarkupError> for PipelineError {
+    fn from(value: ParseMarkupError) -> Self {
         Self::ParseError(value)
     }
 }

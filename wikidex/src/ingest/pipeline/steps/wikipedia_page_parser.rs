@@ -5,10 +5,10 @@ use parse_mediawiki_dump_reboot::Page;
 use std::sync::Arc;
 use std::time::Duration;
 
-use tokio::sync::mpsc::channel;
+use tokio::sync::oneshot::channel;
 use tokio::time::timeout;
 
-use crate::ingest::pipeline::error::{ParseError, PipelineError};
+use crate::ingest::pipeline::error::{ParseMarkupError, PipelineError};
 
 use crate::ingest::pipeline::wikipedia::WikiMarkupProcessor;
 use crate::ingest::{pipeline::document::Document, service::Process};
@@ -36,20 +36,21 @@ impl PipelineStep for WikipediaMarkdownParser {
         let (Page { text, title, .. }, date) = input;
 
         let markup_processor = arg.clone();
-        let (tx, mut rx) = channel(1);
+        let ttext = text.clone();
+        let (tx, rx) = channel();
         tokio::spawn(async move {
-            let document = markup_processor.process(&text);
+            let document = markup_processor.process(&ttext);
 
-            let _ = tx.clone().send(document).await;
+            let _ = tx.send(document);
         });
 
-        let timeout = timeout(Duration::from_secs(2), rx.recv()).await;
+        let timeout = timeout(Duration::from_secs(2), rx).await;
         let parse = timeout
-            .map_err(|_| ParseError::Timeout(title.clone()))?
-            .ok_or(ParseError::None)?
-            .map_err(|_| ParseError::ParseError(title.clone()))?;
+            .map_err(|_| ParseMarkupError::Timeout(title.clone()))?
+            .map_err(|_| ParseMarkupError::None)?
+            .map_err(|_| ParseMarkupError::ParseError(title.clone()))?;
         if parse.is_empty() {
-            Err(ParseError::Empty(title.clone()))?
+            Err(ParseMarkupError::Empty(title.to_string()))?
         } else {
             Ok(vec![Document {
                 document: parse,

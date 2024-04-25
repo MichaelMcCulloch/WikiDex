@@ -121,7 +121,7 @@ mod tests_text_splitter {
 
         let document_text = SUPREME_COURT_VOL_129;
 
-        let processor = WikiMarkupProcessor::new();
+        let processor = WikiMarkupProcessor;
         let process = processor.process(document_text).unwrap();
         let split = RecursiveCharacterTextSplitter::new(1024, 128, None, true);
         let splits = split.split_text(&process);
