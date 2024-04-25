@@ -146,11 +146,11 @@ impl PipelineProcessor {
         let _ = t.send(wiki_xml);
 
         // while let Ok(Some(document)) = timeout(Duration::from_secs(10), r.recv()).await {
-        while let _x = rx_writter.pop().unwrap().recv().await.is_some() {
+        let mut rx_writter = rx_writter.pop().unwrap();
+        loop {
+            let _x = rx_writter.recv().await;
             // println!("{}", o.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
         }
-
-        Ok(())
     }
 }
 fn new_progress_bar(multibar: &MultiProgress, limit: u64) -> Arc<ProgressBar> {
