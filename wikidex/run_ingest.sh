@@ -6,8 +6,9 @@ export CXX="$CUDA/bin/g++";
 export RUST_LOG=info
 export RUSTFLAGS="-C target-cpu=native"
 
+rm /tmp/wikipedia_docstore.sqlite
 # cargo test --package wikidex --bin wikidex -- ingest::pipeline::processor::test::test --exact --show-output  --nocapture
-cargo run --release -- \
+cargo run  -- \
 wikipedia \
 --wiki-xml \
 /home/michael/Documents/WIKIDUMPS/20240401/enwiki-20240401-pages-articles.xml \

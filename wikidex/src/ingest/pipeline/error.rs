@@ -147,7 +147,7 @@ impl From<Sql> for PipelineError {
 #[derive(Debug)]
 pub enum ParseMarkupError {
     ParseError(String),
-    Empty(String),
+    NoContent(String, String),
     Redirect(String),
     None,
     Timeout(String),
@@ -157,13 +157,13 @@ impl Display for ParseMarkupError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
             ParseMarkupError::ParseError(e) => {
-                write!(f, "ParseMarkupError::ParseError {e}")
+                write!(f, "ParseError {e}")
             }
-            ParseMarkupError::Timeout(e) => write!(f, "ParseMarkupError::Timeout {e}"),
-            ParseMarkupError::Redirect(e) => write!(f, "ParseMarkupError::Redirect {e}"),
-            ParseMarkupError::Empty(e) => write!(f, "ParseMarkupError::Empty {e}"),
+            ParseMarkupError::Timeout(e) => write!(f, "Timeout: {e}"),
+            ParseMarkupError::Redirect(e) => write!(f, "Redirect: {e}"),
+            ParseMarkupError::NoContent(e, t) => write!(f, "No Content: {e}\n\n{t}."),
             ParseMarkupError::None => {
-                write!(f, "ParseMarkupError::None")
+                write!(f, "Parser: Channel Closed")
             }
         }
     }
