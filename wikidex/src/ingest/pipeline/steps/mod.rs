@@ -19,7 +19,7 @@ pub(crate) use recursive_text_splitter::Splitter;
 
 pub(crate) use batcher::Batcher;
 pub(crate) use embeddings::Embedding;
-pub(crate) use pipeline_splitter::PipelineSplitter;
+
 #[cfg(feature = "sqlite")]
 pub(crate) use sqlite_writter::SqliteWriter;
 pub(crate) use wikipedia_dump_reader::WikipediaDumpReader;
@@ -70,7 +70,7 @@ pub(crate) trait PipelineStep {
                             }
                         }
                         Err(e) => {
-                            log::error!("{e}")
+                            log::error!("{} {e}", Self::name())
                         }
                     }
 

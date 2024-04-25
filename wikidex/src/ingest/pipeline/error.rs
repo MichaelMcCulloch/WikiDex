@@ -4,7 +4,7 @@ use std::{
     io,
 };
 
-use tokio::sync::oneshot;
+
 
 use crate::embedding_client::EmbeddingServiceError;
 
@@ -149,7 +149,7 @@ impl From<Sql> for PipelineError {
 #[derive(Debug)]
 pub enum ParseError {
     ParseError(String),
-    Tokio(oneshot::error::RecvError),
+    None,
     Timeout(String),
 }
 impl StdError for ParseError {}
@@ -160,8 +160,8 @@ impl Display for ParseError {
                 write!(f, "ParseError::ParseError {e}")
             }
             ParseError::Timeout(e) => write!(f, "ParseError::Timeout {e}"),
-            ParseError::Tokio(e) => {
-                write!(f, "ParseError::Tokio {e}")
+            ParseError::None => {
+                write!(f, "ParseError::None")
             }
         }
     }

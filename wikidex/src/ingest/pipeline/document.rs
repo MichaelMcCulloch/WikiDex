@@ -1,14 +1,15 @@
 use std::fmt::Display;
 
 use chrono::NaiveDateTime;
-#[derive(Clone)]
+#[derive(Default, Clone)]
 pub(crate) struct Document {
     pub(crate) document: String,
     pub(crate) article_title: String,
     pub(crate) access_date: NaiveDateTime,
     pub(crate) modification_date: NaiveDateTime,
 }
-#[derive(Clone, Default)]
+
+#[derive(Default, Clone)]
 pub(crate) struct DocumentHeading {
     pub(crate) document: String,
     pub(crate) heading: String,
@@ -17,18 +18,21 @@ pub(crate) struct DocumentHeading {
     pub(crate) modification_date: NaiveDateTime,
 }
 
-#[derive(Clone)]
-pub(crate) struct DocumentHeadingEmbedding {
-    pub(crate) document: String,
+#[derive(Default, Clone)]
+pub(crate) struct DocumentTextHeadingEmbedding {
+    pub(crate) text: String,
     pub(crate) heading: String,
     pub(crate) article_title: String,
     pub(crate) access_date: NaiveDateTime,
     pub(crate) modification_date: NaiveDateTime,
+    pub(crate) embedding: Vec<f32>,
 }
 
 #[derive(Clone, Default)]
 pub(crate) struct DocumentCompressed {
     pub(crate) document: Vec<u8>,
+    pub(crate) heading: String,
+    pub(crate) embedding: Vec<f32>,
     pub(crate) article_title: String,
     pub(crate) access_date: NaiveDateTime,
     pub(crate) modification_date: NaiveDateTime,

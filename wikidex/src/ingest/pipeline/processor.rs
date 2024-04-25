@@ -1,14 +1,12 @@
 use std::sync::Arc;
 use std::{path::PathBuf, time::Duration};
 
-use std::sync::atomic::AtomicUsize;
-
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 
 use sqlx::migrate::MigrateDatabase;
 use sqlx::sqlite::{Sqlite, SqliteConnectOptions, SqlitePoolOptions};
 use tokio::sync::mpsc::unbounded_channel;
-use url::Url;
+
 
 use crate::embedding_client::EmbeddingClient;
 use crate::ingest::pipeline::{error::PipelineError, steps::PipelineStep};
@@ -19,7 +17,7 @@ use crate::ingest::pipeline::{
 
 use super::document::{DocumentCompressed, DocumentHeading};
 use super::error::Sql;
-use super::steps::{Batcher, Embedding, PipelineSplitter, SqliteWriter};
+use super::steps::{Batcher, Embedding, SqliteWriter};
 use super::{
     steps::{Compressor, WikipediaHeadingSplitter, WikipediaPageParser},
     wikipedia::WikiMarkupProcessor,
@@ -32,20 +30,20 @@ impl PipelineProcessor {
         &self,
         multi_progress: &MultiProgress,
         wiki_xml: PathBuf,
-        database_connection: Url,
+        database_connection: PathBuf,
         embedding_client: EmbeddingClient,
     ) -> Result<(), PipelineError> {
-        if !Sqlite::database_exists(database_connection.path())
+        if !Sqlite::database_exists(&database_connection.display().to_string())
             .await
             .map_err(Sql::Sql)?
         {
-            Sqlite::create_database(database_connection.path())
+            Sqlite::create_database(&database_connection.display().to_string())
                 .await
                 .map_err(Sql::Sql)?;
         }
 
         let options: SqliteConnectOptions =
-            database_connection.to_string().parse().map_err(Sql::Sql)?;
+            SqliteConnectOptions::new().filename(database_connection.display().to_string());
 
         let options: SqliteConnectOptions = options.pragma("locking_mode", "EXCLUSIVE");
         let options: SqliteConnectOptions = options.pragma("journal_mode", "WAL");
@@ -64,9 +62,8 @@ impl PipelineProcessor {
         let parser = WikipediaPageParser::new(WikiMarkupProcessor);
         let wikisplitter = WikipediaHeadingSplitter;
         let _splitter = Splitter::new(RecursiveCharacterTextSplitter::new(2048, 0, None, true));
-        let splitter = PipelineSplitter::default();
         let compressor = Compressor;
-        let docstore_batcher = Batcher::<100000, DocumentCompressed>::default();
+        let docstore_batcher = Batcher::<10000, DocumentCompressed>::default();
         let embedding_batcher = Batcher::<1024, DocumentHeading>::default();
         let embedding = Embedding::new(embedding_client);
 
@@ -79,19 +76,14 @@ impl PipelineProcessor {
         let wikisplitter_progress = new_progress_bar(multi_progress, 0);
         // let _splitter_progress = new_progress_bar(multi_progress, 0);
 
+        let embedding_batcher_progress = new_progress_bar(multi_progress, 0);
+        let embedding_progress = new_progress_bar(multi_progress, 0);
         let compressor_progress = new_progress_bar(multi_progress, 0);
         let docstore_batcher_progress = new_progress_bar(multi_progress, 0);
         let writter_progress = new_progress_bar(multi_progress, 0);
         let docstore_completed_progress = new_progress_bar(multi_progress, 0);
 
-        let splitter_progress = new_progress_bar(multi_progress, 0);
-
-        let embedding_batcher_progress = new_progress_bar(multi_progress, 0);
-        let embedding_progress = new_progress_bar(multi_progress, 0);
-        let embedding_completed_progress = new_progress_bar(multi_progress, 0);
-
         docstore_completed_progress.set_message("Docstore");
-        embedding_completed_progress.set_message("Embedding");
 
         // READ_PIPELINE
         let mut rx_reader = reader
@@ -112,26 +104,28 @@ impl PipelineProcessor {
             .link(
                 rx_parser.pop().unwrap(),
                 wikisplitter_progress.clone(),
-                vec![splitter_progress.clone()],
+                vec![embedding_batcher_progress.clone()],
             )
             .await?;
 
-        // SPLITTER
-        let mut rx_pair = splitter
+        let mut rx_embedding_batcher = embedding_batcher
             .link(
                 rx_heading_split.pop().unwrap(),
-                splitter_progress,
-                vec![
-                    compressor_progress.clone(),
-                    embedding_batcher_progress.clone(),
-                ],
+                embedding_batcher_progress.clone(),
+                vec![embedding_progress.clone()],
+            )
+            .await?;
+        let mut rx_embedder = embedding
+            .link(
+                rx_embedding_batcher.pop().unwrap(),
+                embedding_progress,
+                vec![compressor_progress.clone()],
             )
             .await?;
 
-        // DOCSTORE_PIPELINE
         let mut rx_compressor = compressor
             .link(
-                rx_pair.pop().unwrap(),
+                rx_embedder.pop().unwrap(),
                 compressor_progress.clone(),
                 vec![docstore_batcher_progress.clone()],
             )
@@ -151,30 +145,13 @@ impl PipelineProcessor {
             )
             .await?;
 
-        // EMBEDDING_PIPELINE
-        let mut rx_embedding_batcher = embedding_batcher
-            .link(
-                rx_pair.pop().unwrap(),
-                embedding_batcher_progress.clone(),
-                vec![embedding_progress.clone()],
-            )
-            .await?;
-        let mut rx_embedder = embedding
-            .link(
-                rx_embedding_batcher.pop().unwrap(),
-                embedding_progress,
-                vec![embedding_completed_progress.clone()],
-            )
-            .await?;
         let _ = t.send(wiki_xml);
 
-        let _o = AtomicUsize::new(0);
-
         // while let Ok(Some(document)) = timeout(Duration::from_secs(10), r.recv()).await {
-        while let Some(_document) = rx_writter.pop().unwrap().recv().await {
+        while let _ = rx_writter.pop().unwrap().recv().await {
             // println!("{}", o.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
         }
-        while let Some(_document) = rx_embedder.pop().unwrap().recv().await {
+        while let _ = rx_embedder.pop().unwrap().recv().await {
             // println!("{}", o.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
         }
         Ok(())
@@ -222,10 +199,7 @@ mod test {
             .process(
                 &multi_progress,
                 PathBuf::from("/home/michael/Desktop/wikisql/enwiki-20240420-pages-articles.xml"),
-                Url::parse(
-                    "sqlite:///home/michael/Desktop/wikisql/wikipedia_docstore_20240420.sqlite",
-                )
-                .unwrap(),
+                PathBuf::from("/home/michael/Desktop/wikisql/wikipedia_docstore_20240420.sqlite"),
                 embedding_client,
             )
             .await;

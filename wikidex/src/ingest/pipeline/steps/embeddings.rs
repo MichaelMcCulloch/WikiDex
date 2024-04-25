@@ -6,7 +6,7 @@ use super::PipelineStep;
 use crate::{
     embedding_client::{EmbeddingClient, EmbeddingClientService},
     ingest::pipeline::{
-        document::DocumentHeading,
+        document::{DocumentHeading, DocumentTextHeadingEmbedding},
         error::{EmbeddingError, LinkError, PipelineError},
     },
 };
@@ -28,7 +28,7 @@ impl PipelineStep for Embedding {
 
     type ARG = Arc<EmbeddingClient>;
 
-    type OUT = Vec<Vec<f32>>;
+    type OUT = DocumentTextHeadingEmbedding;
 
     fn name() -> String {
         String::from("Embed")
@@ -39,14 +39,30 @@ impl PipelineStep for Embedding {
         embedder: &Self::ARG,
     ) -> Result<Vec<Self::OUT>, PipelineError> {
         let queries = documents
+            .clone()
             .into_iter()
             .map(|d| format!("{d}").chars().take(EMBED_MAX_STR_LEN).collect())
             .collect::<Vec<_>>();
         let embeddings = embedder
-            .embed_batch(queries)
+            .embed_batch(queries.clone())
             .await
             .map_err(EmbeddingError::EmbeddingServiceError)?;
-        Ok(vec![embeddings])
+        let documents = documents
+            .into_iter()
+            .zip(queries)
+            .zip(embeddings)
+            .map(
+                |((document, text), embedding)| DocumentTextHeadingEmbedding {
+                    text,
+                    article_title: document.article_title,
+                    access_date: document.access_date,
+                    modification_date: document.modification_date,
+                    embedding,
+                    heading: document.heading,
+                },
+            )
+            .collect::<Vec<_>>();
+        Ok(documents)
     }
 
     fn args(&self) -> Self::ARG {

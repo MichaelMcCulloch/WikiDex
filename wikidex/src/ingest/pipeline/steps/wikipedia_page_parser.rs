@@ -5,7 +5,7 @@ use parse_mediawiki_dump_reboot::Page;
 use std::sync::Arc;
 use std::time::Duration;
 
-use tokio::sync::oneshot::channel;
+use tokio::sync::mpsc::channel;
 use tokio::time::timeout;
 
 use crate::ingest::pipeline::error::{ParseError, PipelineError};
@@ -36,17 +36,17 @@ impl PipelineStep for WikipediaPageParser {
         let (Page { text, title, .. }, date) = input;
 
         let markup_processor = arg.clone();
-        let (tx, rx) = channel();
+        let (tx, mut rx) = channel(1);
         tokio::spawn(async move {
             let document = markup_processor.process(&text);
 
-            let _ = tx.send(document);
+            let _ = tx.clone().send(document).await;
         });
 
-        let parse = timeout(Duration::from_secs(2), rx)
-            .await
+        let timeout = timeout(Duration::from_secs(2), rx.recv()).await;
+        let parse = timeout
             .map_err(|_| ParseError::Timeout(title.clone()))?
-            .map_err(ParseError::Tokio)?
+            .ok_or(ParseError::None)?
             .map_err(|_| ParseError::ParseError(title.clone()))?;
 
         Ok(vec![Document {

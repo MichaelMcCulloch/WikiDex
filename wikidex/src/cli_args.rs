@@ -60,7 +60,7 @@ pub(crate) struct WikipediaIngestArgs {
     #[arg(long)]
     pub(crate) wiki_xml: PathBuf,
     #[arg(long)]
-    pub(crate) output_directory: Url,
+    pub(crate) output_directory: PathBuf,
     #[arg(long)]
     pub(crate) api_key: Option<String>,
     #[arg(long)]

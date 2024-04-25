@@ -113,8 +113,8 @@ impl PipelineStep for SqliteWriter {
                         modification_millis
                     )
                     .execute(&mut *connection)
-                    .await.map_err(Sql::Sql)
-                    ?;
+                    .await
+                    .map_err(Sql::Sql)?;
 
                     article_id
                 }
@@ -133,7 +133,10 @@ impl PipelineStep for SqliteWriter {
             .map_err(Sql::Sql)?;
         }
 
-        let _ = sqlx::query!("COMMIT;",).execute(&mut *connection).await;
+        let _ = sqlx::query!("COMMIT;",)
+            .execute(&mut *connection)
+            .await
+            .map_err(Sql::Sql)?;
         Ok(vec![()])
     }
 
