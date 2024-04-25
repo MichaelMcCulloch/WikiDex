@@ -18,8 +18,8 @@ use crate::ingest::pipeline::{
 use super::PipelineStep;
 
 pub(crate) struct SqliteWriter {
-    index_pool: Arc<SqlitePool>,
     docstore_pool: Arc<SqlitePool>,
+    index_pool: Arc<SqlitePool>,
     article_count: Arc<AtomicI64>,
     document_count: Arc<AtomicI64>,
     map: Arc<RwLock<HashMap<String, i64>>>,
