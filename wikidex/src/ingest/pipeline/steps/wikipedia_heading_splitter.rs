@@ -1,20 +1,28 @@
+use std::sync::atomic::{AtomicI64, Ordering};
+use std::sync::Arc;
+
 use crate::ingest::pipeline::document::DocumentHeading;
 
 use super::PipelineStep;
 use crate::ingest::pipeline::document::Document;
-use crate::ingest::pipeline::error::PipelineError;
+use crate::ingest::pipeline::error::{PipelineError, WikipediaHeadingSplitterError};
 use crate::ingest::pipeline::{HEADING_END, HEADING_START};
-
-pub(crate) struct WikipediaHeadingSplitter;
+#[derive(Default)]
+pub(crate) struct WikipediaHeadingSplitter {
+    document_id: Arc<AtomicI64>,
+}
 
 impl PipelineStep for WikipediaHeadingSplitter {
     type IN = Document;
 
     type OUT = DocumentHeading;
 
-    type ARG = ();
+    type ARG = Arc<AtomicI64>;
 
-    async fn transform(input: Self::IN, _arg: &Self::ARG) -> Result<Vec<Self::OUT>, PipelineError> {
+    async fn transform(
+        input: Self::IN,
+        counter: &Self::ARG,
+    ) -> Result<Vec<Self::OUT>, PipelineError> {
         let starts = input
             .document
             .match_indices(HEADING_START)
@@ -31,10 +39,14 @@ impl PipelineStep for WikipediaHeadingSplitter {
                 article_title: input.article_title.clone(),
                 access_date: input.access_date,
                 modification_date: input.modification_date,
+                article_id: input.article_id,
+                document_id: counter.fetch_add(1, Ordering::Relaxed),
             }]);
         }
         if starts.len() != ends.len() {
-            return Ok(vec![]);
+            return Err(WikipediaHeadingSplitterError::HeadingMismatch(
+                input.article_title,
+            ))?;
         }
 
         Ok(input
@@ -61,11 +73,15 @@ impl PipelineStep for WikipediaHeadingSplitter {
                 article_title: input.article_title.clone(),
                 access_date: input.access_date,
                 modification_date: input.modification_date,
+                document_id: counter.fetch_add(1, Ordering::Relaxed),
+                article_id: input.article_id,
             })
             .collect::<Vec<_>>())
     }
 
-    fn args(&self) -> Self::ARG {}
+    fn args(&self) -> Self::ARG {
+        self.document_id.clone()
+    }
     fn name() -> String {
         String::from("Wikipedia Heading Splitter")
     }

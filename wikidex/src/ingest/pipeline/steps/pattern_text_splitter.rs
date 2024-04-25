@@ -37,6 +37,7 @@ impl PipelineStep for PatternSplitter {
                 article_title: input.article_title.clone(),
                 access_date: input.access_date,
                 modification_date: input.modification_date,
+                article_id: input.article_id,
             })
             .collect::<Vec<_>>())
     }

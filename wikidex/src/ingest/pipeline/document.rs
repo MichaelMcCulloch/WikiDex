@@ -5,6 +5,7 @@ use chrono::NaiveDateTime;
 pub(crate) struct Document {
     pub(crate) document: String,
     pub(crate) article_title: String,
+    pub(crate) article_id: i64,
     pub(crate) access_date: NaiveDateTime,
     pub(crate) modification_date: NaiveDateTime,
 }
@@ -13,6 +14,8 @@ pub(crate) struct Document {
 pub(crate) struct DocumentHeading {
     pub(crate) document: String,
     pub(crate) heading: String,
+    pub(crate) document_id: i64,
+    pub(crate) article_id: i64,
     pub(crate) article_title: String,
     pub(crate) access_date: NaiveDateTime,
     pub(crate) modification_date: NaiveDateTime,
@@ -22,6 +25,8 @@ pub(crate) struct DocumentHeading {
 pub(crate) struct DocumentTextHeadingEmbedding {
     pub(crate) text: String,
     pub(crate) heading: String,
+    pub(crate) document_id: i64,
+    pub(crate) article_id: i64,
     pub(crate) article_title: String,
     pub(crate) access_date: NaiveDateTime,
     pub(crate) modification_date: NaiveDateTime,
@@ -32,6 +37,8 @@ pub(crate) struct DocumentTextHeadingEmbedding {
 pub(crate) struct DocumentCompressed {
     pub(crate) document: Vec<u8>,
     pub(crate) heading: String,
+    pub(crate) document_id: i64,
+    pub(crate) article_id: i64,
     pub(crate) embedding: Vec<f32>,
     pub(crate) article_title: String,
     pub(crate) access_date: NaiveDateTime,
