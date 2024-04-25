@@ -15,7 +15,6 @@ use std::sync::Arc;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
 
 pub(crate) use gzip_compressor::Compressor;
-pub(crate) use recursive_text_splitter::Splitter;
 
 pub(crate) use batcher::Batcher;
 pub(crate) use embeddings::Embedding;
@@ -44,7 +43,7 @@ pub(crate) trait PipelineStep {
         let args = Arc::new(self.args());
         let next_progress = next_progress
             .first()
-            .ok_or(LinkError::NoCurrentProgressBar)?
+            .ok_or(LinkError::NoCurrentProgressBar(Self::name()))?
             .clone();
 
         progress.set_message(Self::name().to_string());
@@ -70,7 +69,7 @@ pub(crate) trait PipelineStep {
                             }
                         }
                         Err(e) => {
-                            log::warn!("{e}")
+                            log::warn!("{} {e}", Self::name())
                         }
                     }
 

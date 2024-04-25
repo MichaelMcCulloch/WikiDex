@@ -1,12 +1,6 @@
-use std::{
-    sync::{
-        Arc,
-    },
-};
+use std::sync::Arc;
 
 use sqlx::SqlitePool;
-
-
 
 use crate::ingest::pipeline::{
     document::DocumentCompressed,
@@ -42,10 +36,10 @@ impl SqliteWriter {
             .execute(&mut *connection)
             .await
             .map_err(Sql::Sql)?;
-        let _ = sqlx::query!("CREATE TABLE IF NOT EXISTS article ( id INTEGER PRIMARY KEY NOT NULL, title TEXT NOT NULL, access_date INTEGER NOT NULL, modification_date INTEGER NOT NULL );",)
+        let _ = sqlx::query!("CREATE TABLE IF NOT EXISTS article ( id INTEGER PRIMARY KEY NOT NULL, title TEXT NOT NULL, access_date INTEGER NOT NULL, modification_date INTEGER NOT NULL, unique(id) );",)
             .execute(&mut *connection)
             .await.map_err(Sql::Sql)?;
-        let _ = sqlx::query!("CREATE TABLE IF NOT EXISTS document ( id INTEGER PRIMARY KEY NOT NULL,  text BLOB NOT NULL,  article INTEGER NOT NULL,  FOREIGN KEY(article) REFERENCES article(id) );",)
+        let _ = sqlx::query!("CREATE TABLE IF NOT EXISTS document ( id INTEGER PRIMARY KEY NOT NULL,  text BLOB NOT NULL,  article INTEGER NOT NULL,  FOREIGN KEY(article) REFERENCES article(id), unique(id) );",)
             .execute(&mut *connection)
             .await.map_err(Sql::Sql)?;
         let _ = sqlx::query!("CREATE TABLE IF NOT EXISTS completed_on ( db_date INTEGER NOT NULL, article_count INTEGER NOT NULL );",)
@@ -81,8 +75,8 @@ impl PipelineStep for SqliteWriter {
             let access_millis = document.access_date.and_utc().timestamp_millis();
             let modification_millis = document.modification_date.and_utc().timestamp_millis();
 
-            sqlx::query!(
-                "INSERT INTO article (id, title, access_date, modification_date) VALUES (?1, ?2, ?3, ?4)",
+            let _article = sqlx::query!(
+                "INSERT OR IGNORE INTO article (id, title, access_date, modification_date) VALUES (?1, ?2, ?3, ?4)",
                 document.article_id,
                 document.article_title,
                 access_millis,

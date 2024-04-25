@@ -43,11 +43,11 @@ impl<X: Clone + Sync + Send + 'static> PipelineStep for Junction<X> {
         let (sender2, new_receiver2) = unbounded_channel::<Self::OUT>();
         let next_progress1 = next_progress
             .pop()
-            .ok_or(LinkError::NoCurrentProgressBar)?
+            .ok_or(LinkError::NoCurrentProgressBar(Self::name()))?
             .clone();
         let next_progress2 = next_progress
             .pop()
-            .ok_or(LinkError::NoCurrentProgressBar)?
+            .ok_or(LinkError::NoCurrentProgressBar(Self::name()))?
             .clone();
 
         progress.set_message(Self::name().to_string());

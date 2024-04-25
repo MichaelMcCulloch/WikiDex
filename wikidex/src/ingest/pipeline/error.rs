@@ -89,14 +89,14 @@ impl From<EmbeddingError> for PipelineError {
 
 #[derive(Debug)]
 pub enum LinkError {
-    NoCurrentProgressBar,
+    NoCurrentProgressBar(String),
 }
 impl StdError for LinkError {}
 impl Display for LinkError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
-            LinkError::NoCurrentProgressBar => {
-                write!(f, "LinkError::NoCurrentProgressBar")
+            LinkError::NoCurrentProgressBar(e) => {
+                write!(f, "LinkError::NoCurrentProgressBar {e}")
             }
         }
     }
@@ -134,8 +134,8 @@ impl StdError for Sql {}
 impl Display for Sql {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
-            Sql::Sql(_e) => {
-                write!(f, "NoCurrentProgressBar")
+            Sql::Sql(e) => {
+                write!(f, "Sql {e}")
             }
         }
     }

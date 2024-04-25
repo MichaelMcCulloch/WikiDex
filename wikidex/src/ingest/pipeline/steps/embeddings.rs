@@ -88,7 +88,7 @@ impl PipelineStep for Embedding {
         let args = Arc::new(self.args());
         let next_progress = next_progress
             .first()
-            .ok_or(LinkError::NoCurrentProgressBar)?
+            .ok_or(LinkError::NoCurrentProgressBar(Self::name()))?
             .clone();
 
         progress.set_message(Self::name().to_string());

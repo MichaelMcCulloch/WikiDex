@@ -35,7 +35,7 @@ impl PipelineStep for WikipediaDumpReader {
         let (sender, new_receiver) = unbounded_channel::<Self::OUT>();
         let next_progress = next_progress
             .first()
-            .ok_or(LinkError::NoCurrentProgressBar)?
+            .ok_or(LinkError::NoCurrentProgressBar(Self::name()))?
             .clone();
 
         let limit = self.limit;
@@ -51,7 +51,8 @@ impl PipelineStep for WikipediaDumpReader {
                     )
                 })?;
                 let file = BufReader::with_capacity(2 * 1024 * 1024, file);
-                let parse = parse_mediawiki_dump_reboot::parse(file);
+                let parse: parse_mediawiki_dump_reboot::Parser<BufReader<File>> =
+                    parse_mediawiki_dump_reboot::parse(file);
 
                 let limit = if limit == 0 { usize::MAX } else { limit };
 

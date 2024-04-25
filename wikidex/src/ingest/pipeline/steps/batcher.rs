@@ -34,7 +34,7 @@ impl<const N: usize, X: Sync + Send + 'static> PipelineStep for Batcher<N, X> {
         let (sender, new_receiver) = unbounded_channel();
         let next_progress = next_progress
             .first()
-            .ok_or(LinkError::NoCurrentProgressBar)?
+            .ok_or(LinkError::NoCurrentProgressBar(Self::name()))?
             .clone();
 
         progress.set_message(Self::name().to_string());
