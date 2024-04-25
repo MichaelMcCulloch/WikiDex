@@ -93,7 +93,7 @@ impl PipelineProcessor {
 
         let reader = WikipediaDumpReader::new(0);
         let parser = WikipediaMarkdownParser::new(WikiMarkupProcessor);
-        let wikisplitter = WikipediaHeadingSplitter;
+        let wikisplitter = WikipediaHeadingSplitter::default();
         let _splitter = Splitter::new(RecursiveCharacterTextSplitter::new(1024, 0, None, true));
         let compressor = Compressor;
         let docstore_batcher = Batcher::<10000, DocumentCompressed>::default();

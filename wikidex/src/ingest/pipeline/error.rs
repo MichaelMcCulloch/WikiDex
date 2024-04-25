@@ -14,7 +14,8 @@ pub enum PipelineError {
     EmbeddingError(EmbeddingError),
     CompressionError(CompressionError),
     WikipediaDumpReaderError(WikipediaDumpReaderError),
-    ParseError(ParseMarkupError),
+    WikipediaMarkupParseError(WikipediaMarkupParseError),
+    WikipediaHeadingSplitterError(WikipediaHeadingSplitterError),
     Sql(Sql),
 }
 impl StdError for PipelineError {}
@@ -28,7 +29,8 @@ impl Display for PipelineError {
             PipelineError::LinkError(e) => write!(f, "{e}"),
             PipelineError::EmbeddingError(e) => write!(f, "{e}"),
             PipelineError::CompressionError(e) => write!(f, "{e}"),
-            PipelineError::ParseError(e) => write!(f, "{e}"),
+            PipelineError::WikipediaMarkupParseError(e) => write!(f, "{e}"),
+            PipelineError::WikipediaHeadingSplitterError(e) => write!(f, "{e}"),
         }
     }
 }
@@ -145,31 +147,49 @@ impl From<Sql> for PipelineError {
 }
 
 #[derive(Debug)]
-pub enum ParseMarkupError {
+pub enum WikipediaMarkupParseError {
     ParseError(String),
     NoContent(String, String),
     Redirect(String),
     None,
     Timeout(String),
 }
-impl StdError for ParseMarkupError {}
-impl Display for ParseMarkupError {
+impl StdError for WikipediaMarkupParseError {}
+impl Display for WikipediaMarkupParseError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
-            ParseMarkupError::ParseError(e) => {
+            WikipediaMarkupParseError::ParseError(e) => {
                 write!(f, "ParseError {e}")
             }
-            ParseMarkupError::Timeout(e) => write!(f, "Timeout: {e}"),
-            ParseMarkupError::Redirect(e) => write!(f, "Redirect: {e}"),
-            ParseMarkupError::NoContent(e, t) => write!(f, "No Content: {e}\n\n{t}."),
-            ParseMarkupError::None => {
+            WikipediaMarkupParseError::Timeout(e) => write!(f, "Timeout: {e}"),
+            WikipediaMarkupParseError::Redirect(e) => write!(f, "Redirect: {e}"),
+            WikipediaMarkupParseError::NoContent(e, t) => write!(f, "No Content: {e}\n\n{t}."),
+            WikipediaMarkupParseError::None => {
                 write!(f, "Parser: Channel Closed")
             }
         }
     }
 }
-impl From<ParseMarkupError> for PipelineError {
-    fn from(value: ParseMarkupError) -> Self {
-        Self::ParseError(value)
+impl From<WikipediaMarkupParseError> for PipelineError {
+    fn from(value: WikipediaMarkupParseError) -> Self {
+        Self::WikipediaMarkupParseError(value)
+    }
+}
+
+#[derive(Debug)]
+pub enum WikipediaHeadingSplitterError {
+    HeadingMismatch(String),
+}
+impl StdError for WikipediaHeadingSplitterError {}
+impl Display for WikipediaHeadingSplitterError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        match self {
+            WikipediaHeadingSplitterError::HeadingMismatch(e) => write!(f, "Heading Mismatch: {e}"),
+        }
+    }
+}
+impl From<WikipediaHeadingSplitterError> for PipelineError {
+    fn from(value: WikipediaHeadingSplitterError) -> Self {
+        Self::WikipediaHeadingSplitterError(value)
     }
 }

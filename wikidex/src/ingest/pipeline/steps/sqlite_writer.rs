@@ -1,14 +1,12 @@
 use std::{
-    collections::HashMap,
     sync::{
-        atomic::{AtomicI64, Ordering},
         Arc,
     },
 };
 
 use sqlx::SqlitePool;
 
-use tokio::sync::RwLock;
+
 
 use crate::ingest::pipeline::{
     document::DocumentCompressed,
@@ -20,9 +18,6 @@ use super::PipelineStep;
 pub(crate) struct SqliteWriter {
     docstore_pool: Arc<SqlitePool>,
     index_pool: Arc<SqlitePool>,
-    article_count: Arc<AtomicI64>,
-    document_count: Arc<AtomicI64>,
-    map: Arc<RwLock<HashMap<String, i64>>>,
 }
 
 impl SqliteWriter {
@@ -64,9 +59,6 @@ impl SqliteWriter {
         Ok(Self {
             docstore_pool: Arc::new(docstore_pool),
             index_pool: Arc::new(index_pool),
-            article_count: Arc::new(AtomicI64::new(0)),
-            document_count: Arc::new(AtomicI64::new(0)),
-            map: Arc::new(RwLock::new(HashMap::new())),
         })
     }
 }
@@ -75,18 +67,13 @@ impl PipelineStep for SqliteWriter {
 
     type OUT = ();
 
-    type ARG = (
-        Arc<SqlitePool>,
-        Arc<AtomicI64>,
-        Arc<AtomicI64>,
-        Arc<RwLock<HashMap<String, i64>>>,
-    );
+    type ARG = Arc<SqlitePool>;
 
     async fn transform(
         documents: Self::IN,
         arg: &Self::ARG,
     ) -> Result<Vec<Self::OUT>, PipelineError> {
-        let mut connection = arg.0.acquire().await.map_err(Sql::Sql)?;
+        let mut connection = arg.acquire().await.map_err(Sql::Sql)?;
         let _ = sqlx::query!("BEGIN TRANSACTION;",)
             .execute(&mut *connection)
             .await;
@@ -94,46 +81,22 @@ impl PipelineStep for SqliteWriter {
             let access_millis = document.access_date.and_utc().timestamp_millis();
             let modification_millis = document.modification_date.and_utc().timestamp_millis();
 
-            let read_lock = arg.3.read().await;
-            let article_id = if let Some(&article_id) = read_lock.get(&document.article_title) {
-                // If the article ID is found, return it without requiring a write lock
-                article_id
-            } else {
-                // Acquire a write lock because the key was not found
-                drop(read_lock); // Release the read lock before acquiring the write lock
-                let mut write_lock = arg.3.write().await;
-
-                // Check again in case another writer added the key while acquiring the lock
-                if let Some(&article_id) = write_lock.get(&document.article_title) {
-                    article_id
-                } else {
-                    // Generate a new article ID and update the store
-                    let article_id = arg.1.fetch_add(1, Ordering::Relaxed);
-                    write_lock.insert(document.article_title.clone(), article_id);
-
-                    // Insert into the database while holding the write lock
-                    sqlx::query!(
-                        "INSERT INTO article (id, title, access_date, modification_date) VALUES (?1, ?2, ?3, ?4)",
-                        article_id,
-                        document.article_title,
-                        access_millis,
-                        modification_millis
-                    )
-                    .execute(&mut *connection)
-                    .await
-                    .map_err(Sql::Sql)?;
-
-                    article_id
-                }
-            };
-
-            let document_id = arg.2.fetch_add(1, Ordering::Relaxed);
+            sqlx::query!(
+                "INSERT INTO article (id, title, access_date, modification_date) VALUES (?1, ?2, ?3, ?4)",
+                document.article_id,
+                document.article_title,
+                access_millis,
+                modification_millis
+            )
+            .execute(&mut *connection)
+            .await
+            .map_err(Sql::Sql)?;
 
             let _rows = sqlx::query!(
                 "INSERT INTO document (id, text, article) VALUES (?1, ?2, ?3)",
-                document_id,
+                document.document_id,
                 document.document,
-                article_id
+                document.article_id
             )
             .execute(&mut *connection)
             .await
@@ -147,12 +110,7 @@ impl PipelineStep for SqliteWriter {
     }
 
     fn args(&self) -> Self::ARG {
-        (
-            self.docstore_pool.clone(),
-            self.article_count.clone(),
-            self.document_count.clone(),
-            self.map.clone(),
-        )
+        self.docstore_pool.clone()
     }
     fn name() -> String {
         String::from("Sqlite Writer")

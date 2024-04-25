@@ -63,6 +63,8 @@ impl PipelineStep for Embedding {
                     modification_date: document.modification_date,
                     embedding,
                     heading: document.heading,
+                    document_id: document.document_id,
+                    article_id: document.article_id,
                 },
             )
             .collect::<Vec<_>>();

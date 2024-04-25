@@ -45,6 +45,8 @@ impl PipelineStep for Compressor {
             modification_date: document.access_date,
             heading: document.heading,
             embedding: document.embedding,
+            document_id: document.document_id,
+            article_id: document.article_id,
         };
         Ok(vec![compressed])
     }
