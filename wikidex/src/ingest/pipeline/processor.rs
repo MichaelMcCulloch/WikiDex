@@ -10,11 +10,8 @@ use sqlx::sqlite::{Sqlite, SqliteConnectOptions, SqlitePoolOptions};
 use tokio::sync::mpsc::unbounded_channel;
 
 use crate::embedding_client::EmbeddingClient;
+use crate::ingest::pipeline::steps::WikipediaDumpReader;
 use crate::ingest::pipeline::{error::PipelineError, steps::PipelineStep};
-use crate::ingest::pipeline::{
-    recursive_character_text_splitter::RecursiveCharacterTextSplitter,
-    steps::{Splitter, WikipediaDumpReader},
-};
 
 use super::document::{DocumentCompressed, DocumentHeading};
 use super::error::Sql;
@@ -94,21 +91,15 @@ impl PipelineProcessor {
         let reader = WikipediaDumpReader::new(0);
         let parser = WikipediaMarkdownParser::new(WikiMarkupProcessor);
         let wikisplitter = WikipediaHeadingSplitter::default();
-        let _splitter = Splitter::new(RecursiveCharacterTextSplitter::new(1024, 0, None, true));
         let compressor = Compressor;
         let docstore_batcher = Batcher::<10000, DocumentCompressed>::default();
         let embedding_batcher = Batcher::<512, DocumentHeading>::default();
         let embedding = Embedding::new(embedding_client);
-
         let writter = SqliteWriter::new(docstore_pool, index_pool).await?;
-
-        let (t, rx_pathbuf) = unbounded_channel::<PathBuf>();
 
         let reader_progress = new_progress_bar(multi_progress, 0);
         let parser_progress = new_progress_bar(multi_progress, 0);
         let wikisplitter_progress = new_progress_bar(multi_progress, 0);
-        // let _splitter_progress = new_progress_bar(multi_progress, 0);
-
         let embedding_batcher_progress = new_progress_bar(multi_progress, 0);
         let embedding_progress = new_progress_bar(multi_progress, 0);
         let compressor_progress = new_progress_bar(multi_progress, 0);
@@ -118,7 +109,7 @@ impl PipelineProcessor {
 
         docstore_completed_progress.set_message("Docstore");
 
-        // READ_PIPELINE
+        let (t, rx_pathbuf) = unbounded_channel::<PathBuf>();
         let mut rx_reader = reader
             .link(
                 rx_pathbuf,
@@ -179,11 +170,9 @@ impl PipelineProcessor {
 
         let _ = t.send(wiki_xml);
 
-        // while let Ok(Some(document)) = timeout(Duration::from_secs(10), r.recv()).await {
         let mut rx_writter = rx_writter.pop().unwrap();
         loop {
             let _x = rx_writter.recv().await;
-            // println!("{}", o.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
         }
     }
 }

@@ -13,9 +13,9 @@ wikipedia \
 --wiki-xml \
 /home/michael/Documents/WIKIDUMPS/20240401/enwiki-20240401-pages-articles.xml \
 --output-directory \
-"/tmp/wikipedia_docstore.sqlite" \
+"/tmp" \
 --ingest-limit \
-"1000" \
+"0" \
 --embed-name \
 "thenlper/gte-small" \
 --embed-url \
