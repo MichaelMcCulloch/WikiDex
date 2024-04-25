@@ -16,7 +16,7 @@ bytes = "1.6.0"
 chrono = { version = "0.4.37", features = ["rkyv"] }
 clap = { version = "4.5.4", features = ["derive"] }
 colored = "2.1.0"
-env_logger = "0.11.3"
+env_logger = { version = "0.11.3", features = ["color"] }
 flate2 = "1.0.28"
 futures = "0.3.30"
 log = "0.4.21"

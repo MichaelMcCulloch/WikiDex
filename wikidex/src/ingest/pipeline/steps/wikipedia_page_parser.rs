@@ -50,7 +50,7 @@ impl PipelineStep for WikipediaMarkdownParser {
             .map_err(|_| ParseMarkupError::None)?
             .map_err(|_| ParseMarkupError::ParseError(title.clone()))?;
         if parse.is_empty() {
-            Err(ParseMarkupError::Empty(title.to_string()))?
+            Err(ParseMarkupError::NoContent(title, text))?
         } else {
             Ok(vec![Document {
                 document: parse,

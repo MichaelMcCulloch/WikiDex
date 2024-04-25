@@ -18,12 +18,9 @@ mod inference;
 mod ingest;
 #[cfg(feature = "server")]
 mod server;
-
-
-
 #[cfg(feature = "ingest")]
 use crate::ingest::pipeline::PipelineProcessor;
-use crate::ingest::plain_text::graph_client;
+
 
 
 use async_openai::{config::OpenAIConfig, Client};
@@ -68,6 +65,15 @@ fn main() -> anyhow::Result<()> {
         Commands::Wikipedia(ingest_args) => {
             let logger =
                 env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+                    // .format(|buf, record| {
+                    //     writeln!(
+                    //         buf,
+                    //         "[{} {}] {}",
+                    //         buf.timestamp(),
+                    //         record.level(),
+                    //         record.args()
+                    //     )
+                    // }).write_style(env_logger::WriteStyle::Always)
                     .build();
 
             let multi_progress = MultiProgress::new();
@@ -80,11 +86,11 @@ fn main() -> anyhow::Result<()> {
             let system_runner = tokio::runtime::Runtime::new().unwrap();
 
             log::info!("\n{config}");
-            let _graph_session = system_runner.block_on(graph_client(
-                config.nebula_url,
-                &config.nebula_user,
-                &config.nebula_pass,
-            ))?;
+            // let _graph_session = system_runner.block_on(graph_client(
+            //     config.nebula_url,
+            //     &config.nebula_user,
+            //     &config.nebula_pass,
+            // ))?;
 
             let openai_config = OpenAIConfig::new().with_api_base(config.embed_url.as_ref());
             let open_ai_client: Client<OpenAIConfig> = Client::with_config(openai_config);

@@ -70,7 +70,7 @@ pub(crate) trait PipelineStep {
                             }
                         }
                         Err(e) => {
-                            log::warn!("{} {e}", Self::name())
+                            log::warn!("{e}")
                         }
                     }
 
