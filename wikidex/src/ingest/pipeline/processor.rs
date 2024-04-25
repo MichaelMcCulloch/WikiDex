@@ -1,10 +1,12 @@
+use std::path::PathBuf;
 use std::sync::Arc;
-use std::{path::PathBuf, time::Duration};
+use std::time::Duration;
 
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 
 use sqlx::migrate::MigrateDatabase;
 use sqlx::sqlite::{Sqlite, SqliteConnectOptions, SqlitePoolOptions};
+
 use tokio::sync::mpsc::unbounded_channel;
 
 use crate::embedding_client::EmbeddingClient;
@@ -18,7 +20,7 @@ use super::document::{DocumentCompressed, DocumentHeading};
 use super::error::Sql;
 use super::steps::{Batcher, Embedding, SqliteWriter};
 use super::{
-    steps::{Compressor, WikipediaHeadingSplitter, WikipediaPageParser},
+    steps::{Compressor, WikipediaHeadingSplitter, WikipediaMarkdownParser},
     wikipedia::WikiMarkupProcessor,
 };
 
@@ -32,24 +34,22 @@ impl PipelineProcessor {
         database_connection: PathBuf,
         embedding_client: EmbeddingClient,
     ) -> Result<(), PipelineError> {
-        if !Sqlite::database_exists(&database_connection.display().to_string())
-            .await
-            .map_err(Sql::Sql)?
-        {
-            Sqlite::create_database(&database_connection.display().to_string())
-                .await
-                .map_err(Sql::Sql)?;
+        let db_path = database_connection.display().to_string();
+        if !Sqlite::database_exists(&db_path).await.map_err(Sql::Sql)? {
+            Sqlite::create_database(&db_path).await.map_err(Sql::Sql)?;
         }
 
-        let options: SqliteConnectOptions =
-            SqliteConnectOptions::new().filename(database_connection.display().to_string());
+        // let pool = SqlitePool::connect(&db_path).await.unwrap();
 
-        let options: SqliteConnectOptions = options.pragma("locking_mode", "EXCLUSIVE");
-        let options: SqliteConnectOptions = options.pragma("journal_mode", "WAL");
-        let options: SqliteConnectOptions = options.pragma("synchronous", "normal");
-        let options: SqliteConnectOptions = options.pragma("temp_store", "memory");
-        let options: SqliteConnectOptions = options.pragma("mmap_size", "30000000000");
+        let options = SqliteConnectOptions::new();
 
+        let options = options.pragma("locking_mode", "EXCLUSIVE");
+        let options = options.pragma("journal_mode", "WAL");
+        let options = options.pragma("synchronous", "normal");
+        let options = options.pragma("temp_store", "memory");
+        let options = options.pragma("mmap_size", "30000000");
+        let options = options.create_if_missing(true);
+        let options = options.filename(db_path);
         let pool = SqlitePoolOptions::new()
             .acquire_timeout(Duration::from_secs(10000))
             .max_connections(1)
@@ -58,9 +58,9 @@ impl PipelineProcessor {
             .map_err(Sql::Sql)?;
 
         let reader = WikipediaDumpReader::new(0);
-        let parser = WikipediaPageParser::new(WikiMarkupProcessor);
+        let parser = WikipediaMarkdownParser::new(WikiMarkupProcessor);
         let wikisplitter = WikipediaHeadingSplitter;
-        let _splitter = Splitter::new(RecursiveCharacterTextSplitter::new(2048, 0, None, true));
+        let _splitter = Splitter::new(RecursiveCharacterTextSplitter::new(1024, 0, None, true));
         let compressor = Compressor;
         let docstore_batcher = Batcher::<10000, DocumentCompressed>::default();
         let embedding_batcher = Batcher::<1024, DocumentHeading>::default();

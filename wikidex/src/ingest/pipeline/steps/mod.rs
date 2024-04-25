@@ -1,8 +1,8 @@
 mod batcher;
 mod embeddings;
 mod gzip_compressor;
+mod junction;
 mod pattern_text_splitter;
-mod pipeline_splitter;
 mod recursive_text_splitter;
 #[cfg(feature = "sqlite")]
 mod sqlite_writer;
@@ -24,7 +24,7 @@ pub(crate) use embeddings::Embedding;
 pub(crate) use sqlite_writer::SqliteWriter;
 pub(crate) use wikipedia_dump_reader::WikipediaDumpReader;
 pub(crate) use wikipedia_heading_splitter::WikipediaHeadingSplitter;
-pub(crate) use wikipedia_page_parser::WikipediaPageParser;
+pub(crate) use wikipedia_page_parser::WikipediaMarkdownParser;
 
 use super::error::{LinkError, PipelineError};
 

@@ -7,11 +7,11 @@ use crate::ingest::pipeline::error::{LinkError, PipelineError};
 
 use super::PipelineStep;
 #[derive(Default)]
-pub(crate) struct PipelineSplitter<X: Clone + Sync + Send + 'static> {
+pub(crate) struct Junction<X: Clone + Sync + Send + 'static> {
     _x: PhantomData<X>,
 }
 
-impl<X: Clone + Sync + Send + 'static> PipelineStep for PipelineSplitter<X> {
+impl<X: Clone + Sync + Send + 'static> PipelineStep for Junction<X> {
     type IN = X;
 
     type ARG = ();

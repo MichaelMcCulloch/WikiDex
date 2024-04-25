@@ -15,18 +15,18 @@ use crate::ingest::{pipeline::document::Document, service::Process};
 
 use super::PipelineStep;
 
-pub(crate) struct WikipediaPageParser {
+pub(crate) struct WikipediaMarkdownParser {
     markup_processor: Arc<WikiMarkupProcessor>,
 }
 
-impl WikipediaPageParser {
+impl WikipediaMarkdownParser {
     pub(crate) fn new(markup_processor: WikiMarkupProcessor) -> Self {
         Self {
             markup_processor: Arc::new(markup_processor),
         }
     }
 }
-impl PipelineStep for WikipediaPageParser {
+impl PipelineStep for WikipediaMarkdownParser {
     type IN = (Page, NaiveDateTime);
     type ARG = Arc<WikiMarkupProcessor>;
 
@@ -61,6 +61,6 @@ impl PipelineStep for WikipediaPageParser {
         self.markup_processor.clone()
     }
     fn name() -> String {
-        String::from("WikipediaPageParser")
+        String::from("Wikipedia Markdown Parser")
     }
 }

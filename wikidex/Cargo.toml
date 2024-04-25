@@ -81,7 +81,7 @@ server = [
 ]
 ingest = [
     "dep:async-compat",
-    "dep:faiss",
+    # "dep:faiss",
     "dep:fbthrift-transport",
     "dep:indicatif-log-bridge",
     "dep:indicatif",

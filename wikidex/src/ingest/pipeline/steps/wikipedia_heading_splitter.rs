@@ -53,6 +53,6 @@ impl PipelineStep for WikipediaHeadingSplitter {
 
     fn args(&self) -> Self::ARG {}
     fn name() -> String {
-        String::from("WikipediaHeadingSplitter")
+        String::from("Wikipedia Heading Splitter")
     }
 }

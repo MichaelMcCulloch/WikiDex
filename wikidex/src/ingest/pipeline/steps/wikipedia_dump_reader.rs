@@ -80,7 +80,7 @@ impl PipelineStep for WikipediaDumpReader {
 
     fn args(&self) -> Self::ARG {}
     fn name() -> String {
-        String::from("WikipediaDumpReader")
+        String::from("Wikipedia Dump Reader")
     }
 }
 

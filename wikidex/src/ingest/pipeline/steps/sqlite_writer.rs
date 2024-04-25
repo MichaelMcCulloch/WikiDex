@@ -81,8 +81,9 @@ impl PipelineStep for SqliteWriter {
         arg: &Self::ARG,
     ) -> Result<Vec<Self::OUT>, PipelineError> {
         let mut connection = arg.0.acquire().await.map_err(Sql::Sql)?;
-
-        let _ = sqlx::query!("BEGIN;",).execute(&mut *connection).await;
+        let _ = sqlx::query!("BEGIN TRANSACTION;",)
+            .execute(&mut *connection)
+            .await;
         for document in documents {
             let access_millis = document.access_date.and_utc().timestamp_millis();
             let modification_millis = document.modification_date.and_utc().timestamp_millis();
@@ -132,8 +133,7 @@ impl PipelineStep for SqliteWriter {
             .await
             .map_err(Sql::Sql)?;
         }
-
-        let _ = sqlx::query!("COMMIT;",)
+        let _ = sqlx::query!("COMMIT TRANSACTION;",)
             .execute(&mut *connection)
             .await
             .map_err(Sql::Sql)?;
@@ -149,6 +149,53 @@ impl PipelineStep for SqliteWriter {
         )
     }
     fn name() -> String {
-        String::from("SqliteWriter")
+        String::from("Sqlite Writer")
+    }
+
+    async fn link(
+        &self,
+        mut receiver: tokio::sync::mpsc::UnboundedReceiver<Self::IN>,
+        progress: Arc<indicatif::ProgressBar>,
+        next_progress: Vec<Arc<indicatif::ProgressBar>>,
+    ) -> Result<Vec<tokio::sync::mpsc::UnboundedReceiver<Self::OUT>>, PipelineError> {
+        let (sender, new_receiver) = tokio::sync::mpsc::unbounded_channel::<Self::OUT>();
+        let args = Arc::new(self.args());
+        let next_progress = next_progress
+            .first()
+            .ok_or(crate::ingest::pipeline::error::LinkError::NoCurrentProgressBar)?
+            .clone();
+
+        progress.set_message(Self::name().to_string());
+        tokio::spawn(async move {
+            while let Some(input) = receiver.recv().await {
+                let args = args.clone();
+                let sender = sender.clone();
+                let progress = progress.clone();
+                let next_progress = next_progress.clone();
+                tokio::spawn(async move {
+                    let transform = Self::transform(input, &args)
+                        .await
+                        .map_err(PipelineError::from);
+
+                    match transform {
+                        Ok(transform) => {
+                            progress.inc(1);
+
+                            for _ in transform {
+                                next_progress.inc_length(1);
+
+                                sender.send(()).expect("G");
+                            }
+
+                            Ok::<(), PipelineError>(())
+                        }
+                        Err(e) => Err(e),
+                    }
+                });
+            }
+
+            Ok::<(), PipelineError>(())
+        });
+        Ok(vec![new_receiver])
     }
 }
