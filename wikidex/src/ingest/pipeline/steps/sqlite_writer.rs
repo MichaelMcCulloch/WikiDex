@@ -7,6 +7,7 @@ use std::{
 };
 
 use sqlx::SqlitePool;
+
 use tokio::sync::RwLock;
 
 use crate::ingest::pipeline::{
