@@ -10,16 +10,16 @@ use crate::{
 };
 
 use indicatif::MultiProgress;
-use sqlx::{Sqlite, SqlitePool};
+use sqlx::{PgPool, Postgres};
 use std::{fs::File, io::BufReader, marker::PhantomData, path::Path, sync::Arc};
 use tokio::sync::mpsc::unbounded_channel;
 
 use super::{Engine, MINIMUM_PASSAGE_LENGTH_IN_WORDS, PCA_DIMENSIONS};
 
-impl Engine<Sqlite> {
+impl Engine<Postgres> {
     pub(crate) fn new(
-        llm: LlmClientImpl,
-        embed: EmbeddingClient,
+        llm: Arc<LlmClientImpl>,
+        embed: Arc<EmbeddingClient>,
         multi_progress: MultiProgress,
         chunk_size: usize,
         chunk_overlap: usize,
@@ -27,8 +27,8 @@ impl Engine<Sqlite> {
         let markup_processor = WikiMarkupProcessor::new();
 
         Self {
-            llm: Arc::new(llm),
-            embed: Arc::new(embed),
+            llm,
+            embed,
             markup_processor,
             multi_progress,
             text_splitter: RecursiveCharacterTextSplitter::new(
@@ -44,7 +44,7 @@ impl Engine<Sqlite> {
     async fn create_markup_database<P: AsRef<Path>>(
         &self,
         input_xml: &P,
-        pool: &SqlitePool,
+        pool: &PgPool,
         ingest_limit: usize,
     ) -> Result<i64, IngestError> {
         let access_date = h::wiki::get_date_from_xml_name(input_xml)?;
@@ -63,26 +63,30 @@ impl Engine<Sqlite> {
         let article_count = pages_compressed.len();
         let markup_written_bar =
             h::progress::new_progress_bar(&self.multi_progress, article_count as u64);
-        let articles_written =
-            h::sqlite::populate_markup_db(pool, pages_compressed, access_date, &markup_written_bar)
-                .await?;
+        let articles_written = h::postgres::populate_markup_db(
+            pool,
+            pages_compressed,
+            access_date,
+            &markup_written_bar,
+        )
+        .await?;
 
-        h::sqlite::write_completion_timestamp(pool, articles_written).await?;
+        h::postgres::write_completion_timestamp(pool, articles_written).await?;
         Ok(articles_written)
     }
 
     async fn create_docstore_database(
         &self,
-        markup_pool: SqlitePool,
-        docstore_pool: &SqlitePool,
+        markup_pool: PgPool,
+        docstore_pool: &PgPool,
     ) -> Result<i64, IngestError> {
-        let document_count = h::sqlite::count_elements(&markup_pool)
+        let document_count = h::postgres::count_elements(&markup_pool)
             .await?
             .ok_or(NoRows)?;
         //Obtain markup
         let obtain_markup_bar =
             h::progress::new_progress_bar(&self.multi_progress, document_count as u64);
-        let pages = h::sqlite::obtain_markup(&markup_pool, &obtain_markup_bar).await?;
+        let pages = h::postgres::obtain_markup(&markup_pool, &obtain_markup_bar).await?;
 
         let pages_decompressed_bar =
             h::progress::new_progress_bar(&self.multi_progress, pages.len() as u64);
@@ -97,19 +101,19 @@ impl Engine<Sqlite> {
         let docstore_written_bar =
             h::progress::new_progress_bar(&self.multi_progress, documents.len() as u64);
         let documents_written =
-            h::sqlite::populate_docstore_db(docstore_pool, documents, &docstore_written_bar)
+            h::postgres::populate_docstore_db(docstore_pool, documents, &docstore_written_bar)
                 .await?;
         //process it in parrallel
-        h::sqlite::write_completion_timestamp(docstore_pool, documents_written).await?;
+        h::postgres::write_completion_timestamp(docstore_pool, documents_written).await?;
         //write it to the database
         Ok(documents_written)
     }
     async fn create_temp_vector_database(
         &self,
-        docstore_pool: SqlitePool,
-        tmp_vector_pool: &SqlitePool,
+        docstore_pool: PgPool,
+        tmp_vector_pool: &PgPool,
     ) -> Result<i64, IngestError> {
-        let document_count = h::sqlite::count_elements(&docstore_pool)
+        let document_count = h::postgres::count_elements(&docstore_pool)
             .await?
             .ok_or(NoRows)?;
         let create_vectors_bar =
@@ -122,10 +126,11 @@ impl Engine<Sqlite> {
         create_vectors_bar.set_message("Writing vectorstore to DB...");
 
         let db_writter_thread = actix_web::rt::spawn(async move {
-            h::sqlite::write_vectorstore(rx, tmp_vector_pool_clone, create_vectors_bar_clone).await
+            h::postgres::write_vectorstore(rx, tmp_vector_pool_clone, create_vectors_bar_clone)
+                .await
         });
 
-        h::sqlite::populate_vectorstore_db(
+        h::postgres::populate_vectorstore_db(
             self.llm.clone(),
             self.embed.clone(),
             &docstore_pool,
@@ -133,7 +138,7 @@ impl Engine<Sqlite> {
             tx,
         )
         .await?;
-        h::sqlite::write_completion_timestamp(tmp_vector_pool, document_count).await?;
+        h::postgres::write_completion_timestamp(tmp_vector_pool, document_count).await?;
         create_vectors_bar.set_message("Writing vectorstore to DB...DONE");
 
         let _ = db_writter_thread.await;
@@ -143,10 +148,10 @@ impl Engine<Sqlite> {
 
     async fn create_vector_index<P: AsRef<Path>>(
         &self,
-        tmp_vector_pool: &SqlitePool,
+        tmp_vector_pool: &PgPool,
         index_path: &P,
     ) -> Result<usize, IngestError> {
-        let vector_count = h::sqlite::count_elements(tmp_vector_pool)
+        let vector_count = h::postgres::count_elements(tmp_vector_pool)
             .await?
             .ok_or(NoRows)?;
         //Obtain markup
@@ -154,7 +159,7 @@ impl Engine<Sqlite> {
             h::progress::new_progress_bar(&self.multi_progress, vector_count as u64);
         let index_path = index_path.as_ref();
         let vector_embeddings =
-            h::sqlite::obtain_vectors(tmp_vector_pool, &obtain_vectors_bar).await?;
+            h::postgres::obtain_vectors(tmp_vector_pool, &obtain_vectors_bar).await?;
         drop(obtain_vectors_bar);
         let count = vector_embeddings.len();
         h::faiss::populate_vectorestore_index(&index_path, vector_embeddings, PCA_DIMENSIONS)?;
@@ -172,9 +177,9 @@ impl Engine<Sqlite> {
             (false, _) => Err(XmlNotFound(input_xml.to_path_buf())),
             (true, true) => {
                 let markup_db_path = output_directory.join(MARKUP_DB_NAME);
-                let markup_pool = h::sqlite::get_sqlite_pool(&markup_db_path).await?;
+                let markup_pool = h::postgres::get_sqlite_pool(&markup_db_path).await?;
 
-                if !h::sqlite::database_is_complete(&markup_pool).await? {
+                if !h::postgres::database_is_complete(&markup_pool).await? {
                     log::info!("Preparing markup DB...");
                     self.create_markup_database(&input_xml, &markup_pool, ingest_limit)
                         .await?;
@@ -182,9 +187,9 @@ impl Engine<Sqlite> {
                 log::info!("Markup DB is ready at {}", markup_db_path.display());
 
                 let docstore_db_path = output_directory.join(DOCSTORE_DB_NAME);
-                let docstore_pool = h::sqlite::get_sqlite_pool(&docstore_db_path).await?;
+                let docstore_pool = h::postgres::get_sqlite_pool(&docstore_db_path).await?;
 
-                if !h::sqlite::database_is_complete(&docstore_pool).await? {
+                if !h::postgres::database_is_complete(&docstore_pool).await? {
                     log::info!("Preparing docstore DB...");
 
                     self.create_docstore_database(markup_pool, &docstore_pool)
@@ -193,8 +198,8 @@ impl Engine<Sqlite> {
                 log::info!("Docstore DB is ready at {}", docstore_db_path.display());
 
                 let tmp_vector_db_path = output_directory.join(VECTOR_TMP_DB_NAME);
-                let tmp_vector_pool = h::sqlite::get_sqlite_pool(&tmp_vector_db_path).await?;
-                if !h::sqlite::database_is_complete(&tmp_vector_pool).await? {
+                let tmp_vector_pool = h::postgres::get_sqlite_pool(&tmp_vector_db_path).await?;
+                if !h::postgres::database_is_complete(&tmp_vector_pool).await? {
                     log::info!("Preparing Vector DB...");
 
                     self.create_temp_vector_database(docstore_pool, &tmp_vector_pool)
@@ -203,7 +208,7 @@ impl Engine<Sqlite> {
                 log::info!("Vector DB is ready at {}", tmp_vector_db_path.display());
 
                 let index_path = output_directory.join(VECTOR_INDEX_NAME);
-                if !h::faiss::index_is_complete(&index_path).map_err(IndexError)? {
+                if !h::faiss::index_is_complete(&index_path).map_err(IngestError::IndexError)? {
                     log::info!("Preparing Vector Index...");
 
                     self.create_vector_index(&tmp_vector_pool, &index_path)

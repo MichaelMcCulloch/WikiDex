@@ -18,25 +18,8 @@ impl OpenAiInstructClient {
     }
 }
 
-pub(crate) struct OpenAiChatClient {
-    client: Client<OpenAIConfig>,
-    model_name: String,
-}
-
-impl OpenAiChatClient {
-    pub(crate) fn new(client: Client<OpenAIConfig>, model_name: String) -> Self {
-        Self { client, model_name }
-    }
-}
-
 impl LlmClient<OpenAiInstructClient> {
-    pub(crate) async fn new<O: AsRef<str>, M: AsRef<str>>(
-        openai_url: O,
-        model_name: M,
-    ) -> Result<Self, LlmClientError> {
-        let openai_config = OpenAIConfig::new().with_api_base(openai_url.as_ref());
-        let open_ai_client = Client::with_config(openai_config);
-        let client = OpenAiInstructClient::new(open_ai_client, model_name.as_ref().to_string());
+    pub(crate) async fn new(client: OpenAiInstructClient) -> Result<Self, LlmClientError> {
         Ok(Self { client })
     }
 }
