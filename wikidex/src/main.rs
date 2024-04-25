@@ -19,12 +19,12 @@ mod ingest;
 #[cfg(feature = "server")]
 mod server;
 
-use std::sync::Arc;
 
-use crate::ingest::plain_text::graph_client;
-use crate::ingest::plain_text::PlainTextProcessor;
+
 #[cfg(feature = "ingest")]
 use crate::ingest::pipeline::PipelineProcessor;
+use crate::ingest::plain_text::graph_client;
+
 
 use async_openai::{config::OpenAIConfig, Client};
 #[cfg(feature = "ingest")]
@@ -45,17 +45,14 @@ use crate::{
     docstore::DocumentStoreImpl,
     index::FaceIndex,
     inference::Engine,
-    llm_client::{
-        GrpcInferenceServiceClient, LlmClient, LlmClientImpl, ModelEndpoint, OpenAiInstructClient,
-        TritonClient,
-    },
+    llm_client::{LlmClient, LlmClientImpl, ModelEndpoint, OpenAiInstructClient, TritonClient},
     server::run_server,
 };
 #[cfg(feature = "ingest")]
 use indicatif::MultiProgress;
 #[cfg(feature = "ingest")]
 use indicatif_log_bridge::LogWrapper;
-use tonic::transport::Channel;
+
 use trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient;
 
 #[cfg(feature = "server")]
@@ -69,34 +66,6 @@ fn main() -> anyhow::Result<()> {
     match Cli::parse().command {
         #[cfg(feature = "ingest")]
         Commands::Wikipedia(ingest_args) => {
-            // ./wikidex \
-            //     wikipedia \
-            //     --wiki-xml \
-            //     /tmp/nil \
-            //     --output-directory \
-            //     /tmp/ \
-            //     --ingest-limit \
-            //     "1000" \
-            //     --embed-name \
-            //     "thenlper/gte-small" \
-            //     --embed-url \
-            //     "http://infinity:9000/v1" \
-            //     --embed-endpoint \
-            //     openai \
-            //     --llm-name \
-            //     "TheBloke/Mistral-7B-Instruct-v0.2-AWQ" \
-            //     --llm-url \
-            //     "http://triton:8001" \
-            //     --llm-endpoint \
-            //     triton \
-            //     --llm-kind \
-            //     instruct \
-            //     --nebula-url \
-            //     "http://graphd:9669" \
-            //     --nebula-user \
-            //     "root" \
-            //     --nebula-pass \
-            //     "nebula"
             let logger =
                 env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
                     .build();
@@ -111,40 +80,11 @@ fn main() -> anyhow::Result<()> {
             let system_runner = tokio::runtime::Runtime::new().unwrap();
 
             log::info!("\n{config}");
-            let graph_session = system_runner.block_on(graph_client(
+            let _graph_session = system_runner.block_on(graph_client(
                 config.nebula_url,
                 &config.nebula_user,
                 &config.nebula_pass,
             ))?;
-            let llm_client = match config.llm_endpoint {
-                ModelEndpoint::Triton => {
-                    let client: GrpcInferenceServiceClient<Channel> = system_runner.block_on(
-                        GrpcInferenceServiceClient::connect(String::from(config.llm_url.as_ref())),
-                    )?;
-
-                    LlmClientImpl::Triton(LlmClient::<TritonClient>::new(client))
-                }
-                ModelEndpoint::OpenAi => {
-                    let triton_client =
-                        system_runner.block_on(LlmClient::<OpenAiInstructClient>::new(
-                            config.llm_url.clone(), // Clone here because temporary use below
-                            config.llm_name.to_str().unwrap(),
-                        ))?;
-
-            // let embed_client = match config.embed_endpoint {
-            //     ModelEndpoint::Triton => todo!(),
-            //     ModelEndpoint::OpenAi => {
-            //         let openai_config =
-            //             OpenAIConfig::new().with_api_base(config.embed_url.as_ref());
-            //         let open_ai_client: Client<OpenAIConfig> = Client::with_config(openai_config);
-            //         EmbeddingClient::new(
-            //             open_ai_client,
-            //             config.embed_name.to_string_lossy().to_string(),
-            //         )
-            //     }
-            // };
-            // let _llm_client = Arc::new(llm_client);
-            // let _embed_client = Arc::new(embed_client);
 
             let openai_config = OpenAIConfig::new().with_api_base(config.embed_url.as_ref());
             let open_ai_client: Client<OpenAIConfig> = Client::with_config(openai_config);
@@ -155,29 +95,6 @@ fn main() -> anyhow::Result<()> {
 
             let pipeline = PipelineProcessor;
 
-            let embed_client = match config.embed_endpoint {
-                ModelEndpoint::Triton => todo!(),
-                ModelEndpoint::OpenAi => {
-                    let openai_config =
-                        OpenAIConfig::new().with_api_base(config.embed_url.as_ref());
-                    let open_ai_client: Client<OpenAIConfig> = Client::with_config(openai_config);
-                    EmbeddingClient::new(
-                        open_ai_client,
-                        config.embed_name.to_string_lossy().to_string(),
-                    )
-                }
-            };
-            let llm_client = Arc::new(llm_client);
-            let embed_client = Arc::new(embed_client);
-
-            let _plaintext = PlainTextProcessor::new(
-                llm_client.clone(),
-                embed_client.clone(),
-                graph_session,
-                multi_progress.clone(),
-            );
-            let engine =
-                WikipediaIngestEngine::new(llm_client, embed_client, multi_progress, 1024, 128);
             system_runner
                 .block_on(pipeline.process(
                     &multi_progress,
