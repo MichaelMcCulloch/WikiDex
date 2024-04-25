@@ -63,7 +63,7 @@ impl Display for Config {
         } = self;
 
         let wiki_xml = wiki_xml.display();
-        let output_directory = output_directory.display();
+        let output_directory = output_directory.display().to_string();
         let embed_url = embed_url.as_str().blue();
         let embed_endpoint = format!("{embed_endpoint}").as_str().blue();
         let embed_name = embed_name.display().to_string().bright_blue();

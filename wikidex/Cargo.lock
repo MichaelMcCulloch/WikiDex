@@ -1472,6 +1472,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
+name = "hermit-abi"
+version = "0.3.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d231dfb89cfffdbc30e7fc41579ed6066ad03abda9e567ccafae602b97ec5024"
+
+[[package]]
 name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1983,39 +1989,15 @@ dependencies = [
 [[package]]
 name = "nebula-client"
 version = "0.7.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e871de2d4afd687cf641c307d25af7279da1464f17509d263339f8e96eea3a1e"
+source = "git+https://github.com/bk-rs/nebula-rs?branch=main#9c4038061fbd56cd8b97e53f8d8d2ba989fb4910"
 dependencies = [
  "async-trait",
  "bytes",
  "fbthrift-git",
  "fbthrift-transport-response-handler",
- "nebula-fbthrift-graph-v1",
- "nebula-fbthrift-graph-v2",
- "nebula-fbthrift-graph-v3",
+ "nebula-fbthrift-graph-v3 0.3.0 (git+https://github.com/bk-rs/nebula-rs?branch=main)",
  "serde",
  "serde-nebula-fbthrift-graph",
-]
-
-[[package]]
-name = "nebula-fbthrift-common-v1"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82fdd589b399b6af78e0149b4c3190723b49a97095a5b9f993062221b9235619"
-dependencies = [
- "anyhow",
- "fbthrift-git",
- "once_cell",
-]
-
-[[package]]
-name = "nebula-fbthrift-common-v2"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3af04ce0f967fba6476fde9ed0972cfcc0b4635fd3c978d497d67c965098462"
-dependencies = [
- "anyhow",
- "fbthrift-git",
 ]
 
 [[package]]
@@ -2026,7 +2008,17 @@ checksum = "33209e11130d0e445be030b35d07919cfff76c83214757552ef7912b40ccb447"
 dependencies = [
  "anyhow",
  "fbthrift-git",
- "nebula-fbthrift-double",
+ "nebula-fbthrift-double 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "nebula-fbthrift-common-v3"
+version = "0.3.0"
+source = "git+https://github.com/bk-rs/nebula-rs?branch=main#9c4038061fbd56cd8b97e53f8d8d2ba989fb4910"
+dependencies = [
+ "anyhow",
+ "fbthrift-git",
+ "nebula-fbthrift-double 0.3.0 (git+https://github.com/bk-rs/nebula-rs?branch=main)",
 ]
 
 [[package]]
@@ -2040,33 +2032,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "nebula-fbthrift-graph-v1"
+name = "nebula-fbthrift-double"
 version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a637b0641f7aaa58f75ca226151f5890d15037c53e56440c9ab7f16d1bd1de49"
+source = "git+https://github.com/bk-rs/nebula-rs?branch=main#9c4038061fbd56cd8b97e53f8d8d2ba989fb4910"
 dependencies = [
  "anyhow",
- "async-trait",
- "const-cstr",
  "fbthrift-git",
- "futures 0.3.30",
- "nebula-fbthrift-common-v1",
- "tracing",
-]
-
-[[package]]
-name = "nebula-fbthrift-graph-v2"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c8f44718726430982c954d01226f04c0cf927f87da6070bd61a9fb133ae9676"
-dependencies = [
- "anyhow",
- "async-trait",
- "const-cstr",
- "fbthrift-git",
- "futures 0.3.30",
- "nebula-fbthrift-common-v2",
- "tracing",
 ]
 
 [[package]]
@@ -2080,7 +2051,21 @@ dependencies = [
  "const-cstr",
  "fbthrift-git",
  "futures 0.3.30",
- "nebula-fbthrift-common-v3",
+ "nebula-fbthrift-common-v3 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tracing",
+]
+
+[[package]]
+name = "nebula-fbthrift-graph-v3"
+version = "0.3.0"
+source = "git+https://github.com/bk-rs/nebula-rs?branch=main#9c4038061fbd56cd8b97e53f8d8d2ba989fb4910"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "const-cstr",
+ "fbthrift-git",
+ "futures 0.3.30",
+ "nebula-fbthrift-common-v3 0.3.0 (git+https://github.com/bk-rs/nebula-rs?branch=main)",
  "tracing",
 ]
 
@@ -2156,6 +2141,16 @@ checksum = "da0df0e5185db44f69b44f26786fe401b6c293d1907744beaa7fa62b2e5a517a"
 dependencies = [
  "autocfg",
  "libm",
+]
+
+[[package]]
+name = "num_cpus"
+version = "1.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4161fcb6d602d4d2081af7c3a45852d875a03dd337a6bfdd6e06407b61342a43"
+dependencies = [
+ "hermit-abi",
+ "libc",
 ]
 
 [[package]]
@@ -3027,13 +3022,10 @@ dependencies = [
 [[package]]
 name = "serde-nebula-fbthrift-graph"
 version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6628963738fed16d025187449fe1e1c74c99bfc47ce660c40b9701f51d5c1700"
+source = "git+https://github.com/bk-rs/nebula-rs?branch=main#9c4038061fbd56cd8b97e53f8d8d2ba989fb4910"
 dependencies = [
  "chrono",
- "nebula-fbthrift-graph-v1",
- "nebula-fbthrift-graph-v2",
- "nebula-fbthrift-graph-v3",
+ "nebula-fbthrift-graph-v3 0.3.0 (git+https://github.com/bk-rs/nebula-rs?branch=main)",
  "serde",
 ]
 
@@ -3551,6 +3543,7 @@ dependencies = [
  "bytes",
  "libc",
  "mio",
+ "num_cpus",
  "parking_lot",
  "pin-project-lite",
  "signal-hook-registry",
@@ -4045,6 +4038,7 @@ dependencies = [
  "actix-rt",
  "actix-web",
  "anyhow",
+ "async-compat",
  "async-openai",
  "async-stream",
  "backoff",
@@ -4063,7 +4057,7 @@ dependencies = [
  "itertools",
  "log",
  "nebula-client",
- "nebula-fbthrift-graph-v3",
+ "nebula-fbthrift-graph-v3 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "parse_mediawiki_dump_reboot",
  "parse_wiki_text",
  "rayon",
