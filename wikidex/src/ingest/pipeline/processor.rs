@@ -19,6 +19,7 @@ use crate::ingest::pipeline::{
 use super::document::{DocumentCompressed, DocumentHeading};
 use super::error::Sql;
 use super::steps::{Batcher, Embedding, SqliteWriter};
+
 use super::{
     steps::{Compressor, WikipediaHeadingSplitter, WikipediaMarkdownParser},
     wikipedia::WikiMarkupProcessor,
@@ -34,9 +35,32 @@ impl PipelineProcessor {
         database_connection: PathBuf,
         embedding_client: EmbeddingClient,
     ) -> Result<(), PipelineError> {
-        let db_path = database_connection.display().to_string();
-        if !Sqlite::database_exists(&db_path).await.map_err(Sql::Sql)? {
-            Sqlite::create_database(&db_path).await.map_err(Sql::Sql)?;
+        let document_store_path = {
+            let mut p = database_connection.clone();
+            p.push("wikipedia_docstore.sqlite");
+            p.display().to_string()
+        };
+        if !Sqlite::database_exists(&document_store_path)
+            .await
+            .map_err(Sql::Sql)?
+        {
+            Sqlite::create_database(&document_store_path)
+                .await
+                .map_err(Sql::Sql)?;
+        }
+
+        let index_path = {
+            let mut p = database_connection.clone();
+            p.push("wikipedia_index.sqlite");
+            p.display().to_string()
+        };
+        if !Sqlite::database_exists(&index_path)
+            .await
+            .map_err(Sql::Sql)?
+        {
+            Sqlite::create_database(&index_path)
+                .await
+                .map_err(Sql::Sql)?;
         }
 
         // let pool = SqlitePool::connect(&db_path).await.unwrap();
@@ -49,11 +73,21 @@ impl PipelineProcessor {
         let options = options.pragma("temp_store", "memory");
         let options = options.pragma("mmap_size", "30000000");
         let options = options.create_if_missing(true);
-        let options = options.filename(db_path);
-        let pool = SqlitePoolOptions::new()
+
+        let docstore_option = options.clone().filename(document_store_path);
+        let index_options = options.clone().filename(index_path);
+
+        let docstore_pool = SqlitePoolOptions::new()
             .acquire_timeout(Duration::from_secs(10000))
             .max_connections(1)
-            .connect_with(options)
+            .connect_with(docstore_option)
+            .await
+            .map_err(Sql::Sql)?;
+
+        let index_pool = SqlitePoolOptions::new()
+            .acquire_timeout(Duration::from_secs(10000))
+            .max_connections(1)
+            .connect_with(index_options)
             .await
             .map_err(Sql::Sql)?;
 
@@ -66,7 +100,7 @@ impl PipelineProcessor {
         let embedding_batcher = Batcher::<512, DocumentHeading>::default();
         let embedding = Embedding::new(embedding_client);
 
-        let writter = SqliteWriter::new(pool).await?;
+        let writter = SqliteWriter::new(docstore_pool, index_pool).await?;
 
         let (t, rx_pathbuf) = unbounded_channel::<PathBuf>();
 
