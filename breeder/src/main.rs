@@ -27,9 +27,10 @@ use std::fs;
 fn main() -> anyhow::Result<()> {
     match Cli::parse().command {
         Commands::Breed(breeder_args) => {
-            let logger =
-                env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
-                    .build();
+            let logger = env_logger::Builder::from_env(
+                env_logger::Env::default().default_filter_or("error"),
+            )
+            .build();
 
             let multi_progress = MultiProgress::new();
 
