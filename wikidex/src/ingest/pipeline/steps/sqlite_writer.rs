@@ -17,15 +17,19 @@ use crate::ingest::pipeline::{
 use super::PipelineStep;
 
 pub(crate) struct SqliteWriter {
-    pool: Arc<SqlitePool>,
+    docstore_pool: Arc<SqlitePool>,
+    index_pool: Arc<SqlitePool>,
     article_count: Arc<AtomicI64>,
     document_count: Arc<AtomicI64>,
     map: Arc<RwLock<HashMap<String, i64>>>,
 }
 
 impl SqliteWriter {
-    pub(crate) async fn new(pool: SqlitePool) -> Result<Self, Sql> {
-        let mut connection = pool.acquire().await.map_err(Sql::Sql)?;
+    pub(crate) async fn new(
+        docstore_pool: SqlitePool,
+        index_pool: SqlitePool,
+    ) -> Result<Self, Sql> {
+        let mut connection = docstore_pool.acquire().await.map_err(Sql::Sql)?;
         let _ = sqlx::query!("BEGIN;",)
             .execute(&mut *connection)
             .await
@@ -57,7 +61,8 @@ impl SqliteWriter {
             .map_err(Sql::Sql)?;
 
         Ok(Self {
-            pool: Arc::new(pool),
+            docstore_pool: Arc::new(docstore_pool),
+            index_pool: Arc::new(index_pool),
             article_count: Arc::new(AtomicI64::new(0)),
             document_count: Arc::new(AtomicI64::new(0)),
             map: Arc::new(RwLock::new(HashMap::new())),
@@ -142,7 +147,7 @@ impl PipelineStep for SqliteWriter {
 
     fn args(&self) -> Self::ARG {
         (
-            self.pool.clone(),
+            self.docstore_pool.clone(),
             self.article_count.clone(),
             self.document_count.clone(),
             self.map.clone(),
