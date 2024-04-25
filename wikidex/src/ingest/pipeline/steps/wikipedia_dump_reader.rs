@@ -115,5 +115,7 @@ fn page_filter(page: &Page) -> bool {
             .as_ref()
             .is_some_and(|format| format == "text/x-wiki")
         && page.model.as_ref().is_some_and(|model| model == "wikitext")
-        && !(page.text.starts_with("#REDIRECT") || page.text.starts_with("#redirect"))
+        && !(page.text.starts_with("#REDIRECT")
+            || page.text.starts_with("#redirect")
+            || page.text.is_empty())
 }

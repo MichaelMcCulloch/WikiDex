@@ -9,8 +9,8 @@ use tokio::sync::mpsc::channel;
 use tokio::time::timeout;
 
 use crate::ingest::pipeline::error::{ParseError, PipelineError};
-use crate::ingest::pipeline::wikipedia::WikiMarkupProcessor;
 
+use crate::ingest::pipeline::wikipedia::WikiMarkupProcessor;
 use crate::ingest::{pipeline::document::Document, service::Process};
 
 use super::PipelineStep;
@@ -48,19 +48,22 @@ impl PipelineStep for WikipediaMarkdownParser {
             .map_err(|_| ParseError::Timeout(title.clone()))?
             .ok_or(ParseError::None)?
             .map_err(|_| ParseError::ParseError(title.clone()))?;
-
-        Ok(vec![Document {
-            document: parse,
-            article_title: title,
-            access_date: date,
-            modification_date: date,
-        }])
+        if parse.is_empty() {
+            Err(ParseError::Empty(title.clone()))?
+        } else {
+            Ok(vec![Document {
+                document: parse,
+                article_title: title,
+                access_date: date,
+                modification_date: date,
+            }])
+        }
     }
 
     fn args(&self) -> Self::ARG {
         self.markup_processor.clone()
     }
     fn name() -> String {
-        String::from("Wikipedia Markdown Parser")
+        String::from("Parser")
     }
 }

@@ -10,7 +10,7 @@ export RUSTFLAGS="-C target-cpu=native"
 cargo run  -- \
 wikipedia \
 --wiki-xml \
-/home/michael/Documents/WIKIDUMPS/20240420/enwiki-20240420-pages-articles.xml \
+/home/michael/Documents/WIKIDUMPS/20240401/enwiki-20240401-pages-articles.xml \
 --output-directory \
 /home/michael/Desktop/wikisql/wikipedia_docstore.sqlite \
 --ingest-limit \

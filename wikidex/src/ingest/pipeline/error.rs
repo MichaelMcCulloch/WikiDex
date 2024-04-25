@@ -4,8 +4,6 @@ use std::{
     io,
 };
 
-
-
 use crate::embedding_client::EmbeddingServiceError;
 
 use super::wikipedia::WikiMarkupProcessingError;
@@ -24,13 +22,13 @@ impl Display for PipelineError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
             PipelineError::WikipediaDumpReaderError(e) => {
-                write!(f, "PipelineError::WikipediaDumpReaderError {e}")
+                write!(f, "{e}")
             }
-            PipelineError::Sql(e) => write!(f, "PipelineError::Sql {e}"),
-            PipelineError::LinkError(e) => write!(f, "PipelineError::LinkError {e}"),
-            PipelineError::EmbeddingError(e) => write!(f, "PipelineError::EmbeddingError {e}"),
-            PipelineError::CompressionError(e) => write!(f, "PipelineError::CompressionError {e}"),
-            PipelineError::ParseError(e) => write!(f, "PipelineError::ParseError {e}"),
+            PipelineError::Sql(e) => write!(f, "{e}"),
+            PipelineError::LinkError(e) => write!(f, "{e}"),
+            PipelineError::EmbeddingError(e) => write!(f, "{e}"),
+            PipelineError::CompressionError(e) => write!(f, "{e}"),
+            PipelineError::ParseError(e) => write!(f, "{e}"),
         }
     }
 }
@@ -150,6 +148,7 @@ impl From<Sql> for PipelineError {
 pub enum ParseError {
     ParseError(String),
     None,
+    Empty(String),
     Timeout(String),
 }
 impl StdError for ParseError {}
@@ -159,6 +158,7 @@ impl Display for ParseError {
             ParseError::ParseError(e) => {
                 write!(f, "ParseError::ParseError {e}")
             }
+            ParseError::Empty(e) => write!(f, "ParseError::Empty {e}"),
             ParseError::Timeout(e) => write!(f, "ParseError::Timeout {e}"),
             ParseError::None => {
                 write!(f, "ParseError::None")

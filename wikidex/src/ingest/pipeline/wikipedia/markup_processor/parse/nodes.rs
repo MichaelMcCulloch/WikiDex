@@ -24,34 +24,7 @@ pub(crate) const HEADING_END: &str = "###HEADING_END###";
 pub(crate) type ParseResult = Result<String, <WikiMarkupProcessor as Process>::E>;
 
 pub(crate) fn process_to_article(nodes: &[Node<'_>], regexes: &Regexes) -> ParseResult {
-    let output = nodes_to_string(&mut vec![], nodes, regexes)?;
-
-    // let output = regexes
-    //     .twospace
-    //     .split(&output)
-    //     .collect::<Vec<_>>()
-    //     .join(" ");
-    // let output = regexes
-    //     .space_coma
-    //     .split(&output)
-    //     .collect::<Vec<_>>()
-    //     .join(",");
-    // let output = regexes
-    //     .space_period
-    //     .split(&output)
-    //     .collect::<Vec<_>>()
-    //     .join(".");
-    // let output = regexes
-    //     .pilcrow
-    //     .split(&output)
-    //     .collect::<Vec<_>>()
-    //     .join("\n");
-    // let output = regexes
-    //     .threelines
-    //     .split(&output)
-    //     .collect::<Vec<_>>()
-    //     .join("\n\n");
-    Ok(output)
+    nodes_to_string(&mut vec![], nodes, regexes)
 }
 
 pub(super) fn nodes_to_string(
