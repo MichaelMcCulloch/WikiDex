@@ -29,32 +29,32 @@ impl SqliteWriter {
         let _ = sqlx::query!("BEGIN;",)
             .execute(&mut *connection)
             .await
-            .map_err(Sql::Sql);
+            .map_err(Sql::Sql)?;
         let _ = sqlx::query!("DROP TABLE IF EXISTS completed_on;",)
             .execute(&mut *connection)
             .await
-            .map_err(Sql::Sql);
+            .map_err(Sql::Sql)?;
         let _ = sqlx::query!("DROP TABLE IF EXISTS document;",)
             .execute(&mut *connection)
             .await
-            .map_err(Sql::Sql);
+            .map_err(Sql::Sql)?;
         let _ = sqlx::query!("DROP TABLE IF EXISTS article;",)
             .execute(&mut *connection)
             .await
-            .map_err(Sql::Sql);
+            .map_err(Sql::Sql)?;
         let _ = sqlx::query!("CREATE TABLE IF NOT EXISTS article ( id INTEGER PRIMARY KEY NOT NULL, title TEXT NOT NULL, access_date INTEGER NOT NULL, modification_date INTEGER NOT NULL );",)
             .execute(&mut *connection)
-            .await.map_err(Sql::Sql);
+            .await.map_err(Sql::Sql)?;
         let _ = sqlx::query!("CREATE TABLE IF NOT EXISTS document ( id INTEGER PRIMARY KEY NOT NULL,  text BLOB NOT NULL,  article INTEGER NOT NULL,  FOREIGN KEY(article) REFERENCES article(id) );",)
             .execute(&mut *connection)
-            .await.map_err(Sql::Sql);
+            .await.map_err(Sql::Sql)?;
         let _ = sqlx::query!("CREATE TABLE IF NOT EXISTS completed_on ( db_date INTEGER NOT NULL, article_count INTEGER NOT NULL );",)
             .execute(&mut *connection)
-            .await.map_err(Sql::Sql);
+            .await.map_err(Sql::Sql)?;
         let _ = sqlx::query!("COMMIT;",)
             .execute(&mut *connection)
             .await
-            .map_err(Sql::Sql);
+            .map_err(Sql::Sql)?;
 
         Ok(Self {
             pool: Arc::new(pool),

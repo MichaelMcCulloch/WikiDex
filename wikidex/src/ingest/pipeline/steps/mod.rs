@@ -5,7 +5,7 @@ mod pattern_text_splitter;
 mod pipeline_splitter;
 mod recursive_text_splitter;
 #[cfg(feature = "sqlite")]
-mod sqlite_writter;
+mod sqlite_writer;
 mod wikipedia_dump_reader;
 mod wikipedia_heading_splitter;
 mod wikipedia_page_parser;
@@ -21,7 +21,7 @@ pub(crate) use batcher::Batcher;
 pub(crate) use embeddings::Embedding;
 
 #[cfg(feature = "sqlite")]
-pub(crate) use sqlite_writter::SqliteWriter;
+pub(crate) use sqlite_writer::SqliteWriter;
 pub(crate) use wikipedia_dump_reader::WikipediaDumpReader;
 pub(crate) use wikipedia_heading_splitter::WikipediaHeadingSplitter;
 pub(crate) use wikipedia_page_parser::WikipediaPageParser;

@@ -7,12 +7,12 @@ export RUST_LOG=info
 export RUSTFLAGS="-C target-cpu=native"
 
 # cargo test --package wikidex --bin wikidex -- ingest::pipeline::processor::test::test --exact --show-output  --nocapture
-cargo run -- \
+cargo run --release -- \
 wikipedia \
 --wiki-xml \
 /home/michael/Documents/WIKIDUMPS/20240420/enwiki-20240420-pages-articles.xml \
 --output-directory \
-/tmp/wikipedia_docstore.sqlite \
+/home/michael/Desktop/wikisql/wikipedia_docstore.sqlite \
 --ingest-limit \
 "1000" \
 --embed-name \

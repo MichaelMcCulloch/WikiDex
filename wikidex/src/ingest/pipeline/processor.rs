@@ -7,7 +7,6 @@ use sqlx::migrate::MigrateDatabase;
 use sqlx::sqlite::{Sqlite, SqliteConnectOptions, SqlitePoolOptions};
 use tokio::sync::mpsc::unbounded_channel;
 
-
 use crate::embedding_client::EmbeddingClient;
 use crate::ingest::pipeline::{error::PipelineError, steps::PipelineStep};
 use crate::ingest::pipeline::{
@@ -122,7 +121,6 @@ impl PipelineProcessor {
                 vec![compressor_progress.clone()],
             )
             .await?;
-
         let mut rx_compressor = compressor
             .link(
                 rx_embedder.pop().unwrap(),
@@ -148,12 +146,10 @@ impl PipelineProcessor {
         let _ = t.send(wiki_xml);
 
         // while let Ok(Some(document)) = timeout(Duration::from_secs(10), r.recv()).await {
-        while let _ = rx_writter.pop().unwrap().recv().await {
+        while let _x = rx_writter.pop().unwrap().recv().await.is_some() {
             // println!("{}", o.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
         }
-        while let _ = rx_embedder.pop().unwrap().recv().await {
-            // println!("{}", o.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
-        }
+
         Ok(())
     }
 }

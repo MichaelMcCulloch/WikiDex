@@ -4,8 +4,6 @@ use crate::ingest::pipeline::{document::Document, error::PipelineError};
 
 use super::PipelineStep;
 const MINIMUM_PASSAGE_LENGTH_IN_WORDS: usize = 15;
-const CHUNK_SIZE: usize = 1024;
-const CHUNK_OVERLAP: usize = 128;
 
 //###HEADING###
 
@@ -14,7 +12,7 @@ pub(crate) struct PatternSplitter {
 }
 
 impl PatternSplitter {
-    pub(crate) fn new(pattern: String) -> Self {
+    pub(crate) fn _new(pattern: String) -> Self {
         Self {
             pattern: Arc::new(pattern),
         }

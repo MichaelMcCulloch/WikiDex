@@ -1,7 +1,5 @@
 use std::sync::Arc;
 
-use futures::TryFutureExt;
-
 use super::PipelineStep;
 use crate::{
     embedding_client::{EmbeddingClient, EmbeddingClientService},
@@ -47,6 +45,7 @@ impl PipelineStep for Embedding {
             .embed_batch(queries.clone())
             .await
             .map_err(EmbeddingError::EmbeddingServiceError)?;
+
         let documents = documents
             .into_iter()
             .zip(queries)
@@ -86,6 +85,14 @@ impl PipelineStep for Embedding {
             .clone();
 
         progress.set_message(Self::name().to_string());
+
+        // let _job_limit = Arc::new(
+        //     vec![(); 4]
+        //         .into_iter()
+        //         .map(|()| Mutex::const_new(()))
+        //         .collect::<Vec<_>>(),
+        // );
+
         tokio::spawn(async move {
             let progress = progress.clone();
             let next_progress = next_progress.clone();
@@ -95,6 +102,13 @@ impl PipelineStep for Embedding {
                 let progress = progress.clone();
                 let next_progress = next_progress.clone();
 
+                // while job_limit
+                //     .iter()
+                //     .filter_map(|mutex| mutex.try_lock().ok())
+                //     .next()
+                //     .is_none()
+                // {}
+                // tokio::spawn(async move {
                 let transform = Self::transform(input, &args).await;
                 match transform {
                     Ok(transform) => {
@@ -108,9 +122,9 @@ impl PipelineStep for Embedding {
                     }
                     Err(e) => {
                         log::error!("{e}");
-                        continue;
                     }
                 }
+                // });
             }
 
             Ok::<(), PipelineError>(())

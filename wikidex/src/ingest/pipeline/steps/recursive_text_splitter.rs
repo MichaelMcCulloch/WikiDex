@@ -7,8 +7,8 @@ use crate::ingest::pipeline::{
 
 use super::PipelineStep;
 const MINIMUM_PASSAGE_LENGTH_IN_WORDS: usize = 15;
-const CHUNK_SIZE: usize = 1024;
-const CHUNK_OVERLAP: usize = 128;
+const _CHUNK_SIZE: usize = 1024;
+const _CHUNK_OVERLAP: usize = 128;
 pub(crate) struct Splitter {
     splitter: Arc<RecursiveCharacterTextSplitter>,
 }
