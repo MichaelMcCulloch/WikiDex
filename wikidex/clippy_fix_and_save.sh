@@ -10,8 +10,10 @@ x=`(cargo clippy --fix --workspace --message-format=json --all-targets --allow-d
 success=$(echo "$x" | jq -r '.success' | grep -v "null" | tail -n 1)
 # Check if the "success" field is true
 if [ "$success" = "true" ]; then
-    git add .
-    git commit -m "Clippy fix"
+    (
+        git add .
+        git commit -m "Clippy fix"
+    )&
 fi
 
 echo $x
