@@ -14,4 +14,4 @@ if [ "$success" = "true" ]; then
     git commit -m "Clippy fix"
 fi
 
-echo $x
+$x
