@@ -86,29 +86,10 @@ impl PipelineStep for Embedding {
 
         progress.set_message(Self::name().to_string());
 
-        // let _job_limit = Arc::new(
-        //     vec![(); 4]
-        //         .into_iter()
-        //         .map(|()| Mutex::const_new(()))
-        //         .collect::<Vec<_>>(),
-        // );
-
         tokio::spawn(async move {
             let progress = progress.clone();
             let next_progress = next_progress.clone();
             while let Some(input) = receiver.recv().await {
-                let args = args.clone();
-                let sender = sender.clone();
-                let progress = progress.clone();
-                let next_progress = next_progress.clone();
-
-                // while job_limit
-                //     .iter()
-                //     .filter_map(|mutex| mutex.try_lock().ok())
-                //     .next()
-                //     .is_none()
-                // {}
-                // tokio::spawn(async move {
                 let transform = Self::transform(input, &args).await;
                 match transform {
                     Ok(transform) => {
@@ -124,7 +105,6 @@ impl PipelineStep for Embedding {
                         log::error!("{e}");
                     }
                 }
-                // });
             }
 
             Ok::<(), PipelineError>(())
