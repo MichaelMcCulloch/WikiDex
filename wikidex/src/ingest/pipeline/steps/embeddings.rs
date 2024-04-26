@@ -1,6 +1,6 @@
 use super::PipelineStep;
 use crate::{
-    embedding_client::{EmbeddingClient, EmbeddingClientService, EmbeddingServiceError},
+    embedding_client::{EmbeddingClient, EmbeddingClientService},
     ingest::pipeline::{
         document::{DocumentHeading, DocumentTextHeadingEmbedding},
         error::{
@@ -9,9 +9,9 @@ use crate::{
         },
     },
 };
-use async_openai::error::OpenAIError;
+
 use backoff::{future::retry, Error as Backoff, ExponentialBackoff};
-use http::StatusCode;
+
 use std::sync::Arc;
 
 const EMBED_MAX_STR_LEN_ACCORDING_TO_INFINITY: usize = 122880usize;
@@ -33,18 +33,7 @@ impl Embedding {
             embedder
                 .embed_batch(queries.to_vec())
                 .await
-                .map_err(|e| match &e {
-                    EmbeddingServiceError::AsyncOpenAiError(OpenAIError::Reqwest(r)) => {
-                        match r.status() {
-                            Some(StatusCode::TOO_MANY_REQUESTS) => {
-                                log::error!("Retrying");
-                                Backoff::transient(EmbedError(e))
-                            }
-                            _ => Backoff::permanent(EmbedError(e)),
-                        }
-                    }
-                    _ => Backoff::permanent(EmbedError(e)),
-                })
+                .map_err(|e| Backoff::transient(EmbedError(e)))
         })
         .await
     }
