@@ -42,7 +42,7 @@ impl PipelineStep<true> for Compressor {
             document: bytes,
             article_title: document.article_title,
             access_date: document.access_date,
-            modification_date: document.access_date,
+            modification_date: document.modification_date,
             heading: document.heading,
             embedding: document.embedding,
             document_id: document.document_id,

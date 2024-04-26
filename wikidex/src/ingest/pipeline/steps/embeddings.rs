@@ -3,10 +3,7 @@ use crate::{
     embedding_client::{EmbeddingClient, EmbeddingClientService},
     ingest::pipeline::{
         document::{DocumentHeading, DocumentTextHeadingEmbedding},
-        error::{
-            EmbeddingError::{self, EmbeddingServiceError as EmbedError},
-            PipelineError,
-        },
+        error::{EmbeddingError::EmbeddingServiceError as EmbedError, PipelineError},
     },
 };
 
@@ -24,22 +21,9 @@ impl Embedding {
             client: Arc::new(embedding_client),
         }
     }
-
-    pub async fn get_embeddings(
-        embedder: &EmbeddingClient,
-        queries: &[String],
-    ) -> Result<Vec<Vec<f32>>, EmbeddingError> {
-        retry(ExponentialBackoff::default(), || async {
-            embedder
-                .embed_batch(queries.to_vec())
-                .await
-                .map_err(|e| Backoff::transient(EmbedError(e)))
-        })
-        .await
-    }
 }
 
-impl PipelineStep<true> for Embedding {
+impl PipelineStep<false> for Embedding {
     type IN = Vec<DocumentHeading>;
 
     type ARG = Arc<EmbeddingClient>;
@@ -65,12 +49,13 @@ impl PipelineStep<true> for Embedding {
             })
             .collect::<Vec<_>>();
 
-        let _ = retry(ExponentialBackoff::default(), || async {
-            Ok(embedder.up().await?)
+        let embeddings = retry(ExponentialBackoff::default(), || async {
+            embedder
+                .embed_batch(queries.to_vec())
+                .await
+                .map_err(|e| Backoff::transient(EmbedError(e)))
         })
-        .await;
-
-        let embeddings = Self::get_embeddings(embedder, &queries).await?;
+        .await?;
 
         let documents = documents
             .into_iter()
