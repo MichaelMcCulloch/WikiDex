@@ -95,7 +95,6 @@ impl<const N: usize, X: Sync + Send + 'static> PipelineStep<false> for Batcher<N
                             match batch.replace(vec![]) {
                                 Some(replace) => {
                                     if !replace.is_empty() {
-                                        log::warn!("Flushing");
                                         progress.inc(1);
                                         next_progress.inc_length(1);
 
