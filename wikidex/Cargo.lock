@@ -4052,6 +4052,7 @@ dependencies = [
  "fbthrift-transport",
  "flate2",
  "futures 0.3.30",
+ "http 1.1.0",
  "indicatif",
  "indicatif-log-bridge",
  "itertools",

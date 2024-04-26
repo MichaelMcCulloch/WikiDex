@@ -88,7 +88,7 @@ impl PipelineProcessor {
         let step_read_input = WikipediaDumpReader::new(0);
         let step_parse_markup = WikipediaMarkdownParser::new(WikiMarkupProcessor);
         let step_split_on_heading = WikipediaHeadingSplitter::default();
-        let step_batch_512 = Batcher::<512, DocumentHeading>::new();
+        let step_batch_512 = Batcher::<2048, DocumentHeading>::new();
         let step_embed = Embedding::new(embedding_client);
         let step_compress = Compressor;
         let step_batch_10240 = Batcher::<10240, DocumentCompressed>::new();

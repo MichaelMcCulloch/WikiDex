@@ -3,18 +3,18 @@ export DATABASE_URL="sqlite:///home/michael/Development/Omnipedia Inc./wikidex/w
 export CUDA="/opt/cuda";
 export CC="$CUDA/bin/gcc";
 export CXX="$CUDA/bin/g++";
-export RUST_LOG=info
+export RUST_LOG="info,async_openai=error"
 export RUSTFLAGS="-C target-cpu=native"
 
 rm /tmp/wikipedia_docstore.sqlite*
 rm /tmp/wikipedia_index.sqlite*
 # cargo test --package wikidex --bin wikidex -- ingest::pipeline::processor::test::test --exact --show-output  --nocapture
-cargo run -- \
+cargo run --release -- \
 wikipedia \
 --wiki-xml \
-/home/michael/Documents/WIKIDUMPS/20240420/enwiki-20240420-pages-articles.xml \
+"/home/michael/Development/Scratch Space/wikisql/enwiki-20240420-pages-articles.xml" \
 --output-directory \
-/home/michael/Documents/WIKIDUMPS/20240420/ \
+"/home/michael/Development/Scratch Space/wikisql/" \
 --ingest-limit \
 "0" \
 --embed-name \
