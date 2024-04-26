@@ -11,6 +11,7 @@ use super::wikipedia::WikiMarkupProcessingError;
 #[derive(Debug)]
 pub enum PipelineError {
     LinkError(LinkError),
+    BatchingError(BatchingError),
     EmbeddingError(EmbeddingError),
     CompressionError(CompressionError),
     WikipediaDumpReaderError(WikipediaDumpReaderError),
@@ -29,6 +30,7 @@ impl Display for PipelineError {
             PipelineError::LinkError(e) => write!(f, "{e}"),
             PipelineError::EmbeddingError(e) => write!(f, "{e}"),
             PipelineError::CompressionError(e) => write!(f, "{e}"),
+            PipelineError::BatchingError(e) => write!(f, "{e}"),
             PipelineError::WikipediaMarkupParseError(e) => write!(f, "{e}"),
             PipelineError::WikipediaHeadingSplitterError(e) => write!(f, "{e}"),
         }
@@ -191,5 +193,23 @@ impl Display for WikipediaHeadingSplitterError {
 impl From<WikipediaHeadingSplitterError> for PipelineError {
     fn from(value: WikipediaHeadingSplitterError) -> Self {
         Self::WikipediaHeadingSplitterError(value)
+    }
+}
+
+#[derive(Debug)]
+pub enum BatchingError {
+    CouldNotObtainBatch,
+}
+impl StdError for BatchingError {}
+impl Display for BatchingError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        match self {
+            BatchingError::CouldNotObtainBatch => write!(f, "Could Not Obtain Batch"),
+        }
+    }
+}
+impl From<BatchingError> for PipelineError {
+    fn from(value: BatchingError) -> Self {
+        Self::BatchingError(value)
     }
 }

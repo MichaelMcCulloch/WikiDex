@@ -21,7 +21,7 @@ impl Splitter {
         }
     }
 }
-impl PipelineStep for Splitter {
+impl PipelineStep<true> for Splitter {
     type IN = DocumentHeading;
 
     type OUT = DocumentHeading;

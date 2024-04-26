@@ -1,20 +1,26 @@
-use std::{marker::PhantomData, sync::Arc};
+use std::sync::Arc;
 
-use indicatif::ProgressBar;
-use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
+use tokio::sync::RwLock;
 
-use crate::ingest::pipeline::error::{LinkError, PipelineError};
+use crate::ingest::pipeline::error::{BatchingError, PipelineError};
 
 use super::PipelineStep;
 
-#[derive(Default)]
 pub(crate) struct Batcher<const N: usize, X: Sync + Send + 'static> {
-    _phantom: PhantomData<X>,
+    batch: Arc<RwLock<Option<Vec<X>>>>,
 }
 
-impl<const N: usize, X: Sync + Send + 'static> PipelineStep for Batcher<N, X> {
+impl<const N: usize, X: Sync + Send + 'static> Batcher<N, X> {
+    pub(crate) fn new() -> Self {
+        Self {
+            batch: Arc::new(RwLock::new(Some(vec![]))),
+        }
+    }
+}
+
+impl<const N: usize, X: Sync + Send + 'static> PipelineStep<false> for Batcher<N, X> {
     type IN = X;
-    type ARG = ();
+    type ARG = Arc<RwLock<Option<Vec<X>>>>;
     type OUT = Vec<X>;
 
     fn name() -> String {
@@ -22,59 +28,26 @@ impl<const N: usize, X: Sync + Send + 'static> PipelineStep for Batcher<N, X> {
     }
 
     fn args(&self) -> Self::ARG {
-        unimplemented!()
+        self.batch.clone()
     }
-
-    async fn link(
-        &self,
-        mut receiver: UnboundedReceiver<Self::IN>,
-        progress: Arc<ProgressBar>,
-        next_progress: Vec<Arc<ProgressBar>>,
-    ) -> Result<Vec<UnboundedReceiver<Self::OUT>>, PipelineError> {
-        let (sender, new_receiver) = unbounded_channel();
-        let next_progress = next_progress
-            .first()
-            .ok_or(LinkError::NoCurrentProgressBar(Self::name()))?
-            .clone();
-
-        progress.set_message(Self::name().to_string());
-
-        tokio::spawn(async move {
-            let mut batch = Some(vec![]);
-            let progress = progress.clone();
-            let next_progress = next_progress.clone();
-            while let Some(input) = receiver.recv().await {
-                let sender = sender.clone();
-                let next_progress = next_progress.clone();
-                let progress = progress.clone();
-
-                if let Some(v) = batch.as_mut() {
-                    v.push(input);
-                }
-                if let Some(ref vec) = batch {
-                    if vec.len() >= N {
-                        progress.inc(vec.len() as u64);
-                        match batch.replace(vec![]) {
-                            Some(replace) => {
-                                next_progress.inc_length(replace.len() as u64);
-                                let _ = sender.send(replace);
-                            }
-                            None => {
-                                log::error!("Could Not Obtain Batch");
-                                continue;
-                            }
-                        };
-                    }
-                }
-            }
-        });
-        Ok(vec![new_receiver])
-    }
-
     async fn transform(
-        _input: Self::IN,
-        _arg: &Self::ARG,
+        input: Self::IN,
+        batch: &Self::ARG,
     ) -> Result<Vec<Self::OUT>, PipelineError> {
-        todo!()
+        let mut batch = batch.write().await;
+
+        if let Some(bat) = batch.as_mut() {
+            bat.push(input);
+            if bat.len() >= N {
+                match batch.replace(vec![]) {
+                    Some(replace) => Ok(vec![replace]),
+                    None => Err(BatchingError::CouldNotObtainBatch)?,
+                }
+            } else {
+                Ok(vec![])
+            }
+        } else {
+            Err(BatchingError::CouldNotObtainBatch)?
+        }
     }
 }

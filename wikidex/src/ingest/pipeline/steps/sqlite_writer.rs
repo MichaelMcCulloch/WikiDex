@@ -1,12 +1,10 @@
 use std::{io::Write, sync::Arc};
 
-use indicatif::ProgressBar;
 use sqlx::{Pool, Sqlite, SqlitePool};
-use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
 
 use crate::ingest::pipeline::{
     document::DocumentCompressed,
-    error::{LinkError, PipelineError, Sql},
+    error::{PipelineError, Sql},
 };
 
 use super::PipelineStep;
@@ -91,7 +89,7 @@ async fn create_index_schemas(docstore_pool: &Pool<Sqlite>) -> Result<(), Sql> {
         .map_err(Sql::Sql)?;
     Ok(())
 }
-impl PipelineStep for SqliteWriter {
+impl PipelineStep<true> for SqliteWriter {
     type IN = Vec<DocumentCompressed>;
     type OUT = ();
     type ARG = (Arc<SqlitePool>, Arc<SqlitePool>);
@@ -164,55 +162,5 @@ impl PipelineStep for SqliteWriter {
     }
     fn name() -> String {
         String::from("Sqlite Writer")
-    }
-
-    async fn link(
-        &self,
-        mut receiver: UnboundedReceiver<Self::IN>,
-        progress: Arc<ProgressBar>,
-        next_progress: Vec<Arc<ProgressBar>>,
-    ) -> Result<Vec<UnboundedReceiver<Self::OUT>>, PipelineError> {
-        let (sender, new_receiver) = unbounded_channel::<Self::OUT>();
-        let args = Arc::new(self.args());
-        let next_progress = next_progress
-            .first()
-            .ok_or(LinkError::NoCurrentProgressBar(Self::name()))?
-            .clone();
-
-        progress.set_message(Self::name().to_string());
-        tokio::spawn(async move {
-            while let Some(input) = receiver.recv().await {
-                let len = input.len() as u64;
-                let args = args.clone();
-                let sender = sender.clone();
-                let progress = progress.clone();
-                let next_progress = next_progress.clone();
-                tokio::spawn(async move {
-                    let transform = Self::transform(input, &args)
-                        .await
-                        .map_err(PipelineError::from);
-
-                    match transform {
-                        Ok(transform) => {
-                            progress.inc(len);
-
-                            for t in transform {
-                                next_progress.inc_length(1);
-
-                                let _ = sender.send(t);
-                            }
-                        }
-                        Err(e) => {
-                            log::warn!("{} {e}", Self::name())
-                        }
-                    }
-
-                    Ok::<(), PipelineError>(())
-                });
-            }
-
-            Ok::<(), PipelineError>(())
-        });
-        Ok(vec![new_receiver])
     }
 }

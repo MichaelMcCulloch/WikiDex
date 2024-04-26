@@ -28,7 +28,7 @@ impl PipelineProcessor {
     pub(crate) async fn process(
         &self,
         multi_progress: &MultiProgress,
-        wiki_xml: PathBuf,
+        wiki_xml_path: PathBuf,
         database_output_directory: PathBuf,
         embedding_client: EmbeddingClient,
     ) -> Result<(), PipelineError> {
@@ -85,89 +85,88 @@ impl PipelineProcessor {
             .await
             .map_err(Sql::Sql)?;
 
-        let reader = WikipediaDumpReader::new(0);
-        let parser = WikipediaMarkdownParser::new(WikiMarkupProcessor);
-        let wikisplitter = WikipediaHeadingSplitter::default();
-        let step_batch_10240 = Batcher::<10240, DocumentCompressed>::default();
-        let step_batch_512 = Batcher::<512, DocumentHeading>::default();
+        let step_read_input = WikipediaDumpReader::new(0);
+        let step_parse_markup = WikipediaMarkdownParser::new(WikiMarkupProcessor);
+        let step_split_on_heading = WikipediaHeadingSplitter::default();
+        let step_batch_512 = Batcher::<512, DocumentHeading>::new();
         let step_embed = Embedding::new(embedding_client);
         let step_compress = Compressor;
+        let step_batch_10240 = Batcher::<10240, DocumentCompressed>::new();
         let step_save = SqliteWriter::new(docstore_pool, index_pool).await?;
 
-        let reader_progress = new_progress_bar(multi_progress, 0);
-        let parser_progress = new_progress_bar(multi_progress, 0);
-        let wikisplitter_progress = new_progress_bar(multi_progress, 0);
-        let embedding_batcher_progress = new_progress_bar(multi_progress, 0);
-        let embedding_progress = new_progress_bar(multi_progress, 0);
-        let compressor_progress = new_progress_bar(multi_progress, 0);
-        let docstore_batcher_progress = new_progress_bar(multi_progress, 0);
-        let writter_progress = new_progress_bar(multi_progress, 0);
-        let docstore_completed_progress = new_progress_bar(multi_progress, 0);
+        let progres_read_input = new_progress_bar(multi_progress, 0);
+        let progres_parse_markup = new_progress_bar(multi_progress, 0);
+        let progres_split_on_heading = new_progress_bar(multi_progress, 0);
+        let progres_batch_512 = new_progress_bar(multi_progress, 0);
+        let progres_embed = new_progress_bar(multi_progress, 0);
+        let progres_compress = new_progress_bar(multi_progress, 0);
+        let progres_batch_10240 = new_progress_bar(multi_progress, 0);
+        let progres_save = new_progress_bar(multi_progress, 0);
+        let progres_docstore = new_progress_bar(multi_progress, 0);
 
-        docstore_completed_progress.set_message("Docstore");
+        progres_docstore.set_message("Docstore");
 
         let (t, rx_pathbuf) = unbounded_channel::<PathBuf>();
-        let mut rx_reader = reader
+        let mut rx_page = step_read_input
             .link(
                 rx_pathbuf,
-                reader_progress.clone(),
-                vec![parser_progress.clone()],
+                progres_read_input.clone(),
+                vec![progres_parse_markup.clone()],
             )
             .await?;
-        let mut rx_parser = parser
+        let mut rx_document = step_parse_markup
             .link(
-                rx_reader.pop().unwrap(),
-                parser_progress.clone(),
-                vec![wikisplitter_progress.clone()],
+                rx_page.pop().unwrap(),
+                progres_parse_markup.clone(),
+                vec![progres_split_on_heading.clone()],
             )
             .await?;
-        let mut rx_heading_split = wikisplitter
+        let mut rx_doc_heading = step_split_on_heading
             .link(
-                rx_parser.pop().unwrap(),
-                wikisplitter_progress.clone(),
-                vec![embedding_batcher_progress.clone()],
+                rx_document.pop().unwrap(),
+                progres_split_on_heading.clone(),
+                vec![progres_batch_512.clone()],
+            )
+            .await?;
+        let mut rx_batch_512 = step_batch_512
+            .link(
+                rx_doc_heading.pop().unwrap(),
+                progres_batch_512.clone(),
+                vec![progres_embed.clone()],
+            )
+            .await?;
+        let mut rx_doc_head_embed = step_embed
+            .link(
+                rx_batch_512.pop().unwrap(),
+                progres_embed,
+                vec![progres_compress.clone()],
+            )
+            .await?;
+        let mut rx_doc_compress = step_compress
+            .link(
+                rx_doc_head_embed.pop().unwrap(),
+                progres_compress.clone(),
+                vec![progres_batch_10240.clone()],
+            )
+            .await?;
+        let mut rx_batch_10240 = step_batch_10240
+            .link(
+                rx_doc_compress.pop().unwrap(),
+                progres_batch_10240.clone(),
+                vec![progres_save.clone()],
+            )
+            .await?;
+        let mut rx_written = step_save
+            .link(
+                rx_batch_10240.pop().unwrap(),
+                progres_save.clone(),
+                vec![progres_docstore.clone()],
             )
             .await?;
 
-        let mut rx_embedding_batcher = step_batch_512
-            .link(
-                rx_heading_split.pop().unwrap(),
-                embedding_batcher_progress.clone(),
-                vec![embedding_progress.clone()],
-            )
-            .await?;
-        let mut rx_embedder = step_embed
-            .link(
-                rx_embedding_batcher.pop().unwrap(),
-                embedding_progress,
-                vec![compressor_progress.clone()],
-            )
-            .await?;
-        let mut rx_compressor = step_compress
-            .link(
-                rx_embedder.pop().unwrap(),
-                compressor_progress.clone(),
-                vec![docstore_batcher_progress.clone()],
-            )
-            .await?;
-        let mut rx_document_batcher = step_batch_10240
-            .link(
-                rx_compressor.pop().unwrap(),
-                docstore_batcher_progress.clone(),
-                vec![writter_progress.clone()],
-            )
-            .await?;
-        let mut rx_writter = step_save
-            .link(
-                rx_document_batcher.pop().unwrap(),
-                writter_progress.clone(),
-                vec![docstore_completed_progress.clone()],
-            )
-            .await?;
+        let _ = t.send(wiki_xml_path);
 
-        let _ = t.send(wiki_xml);
-
-        let mut rx_writter = rx_writter.pop().unwrap();
+        let mut rx_writter = rx_written.pop().unwrap();
         loop {
             let _x = rx_writter.recv().await;
         }
