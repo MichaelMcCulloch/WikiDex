@@ -18,7 +18,7 @@ impl PatternSplitter {
         }
     }
 }
-impl PipelineStep for PatternSplitter {
+impl PipelineStep<true> for PatternSplitter {
     type IN = Document;
 
     type OUT = Document;

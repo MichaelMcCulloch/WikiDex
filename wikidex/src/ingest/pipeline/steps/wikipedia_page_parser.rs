@@ -29,7 +29,7 @@ impl WikipediaMarkdownParser {
         }
     }
 }
-impl PipelineStep for WikipediaMarkdownParser {
+impl PipelineStep<true> for WikipediaMarkdownParser {
     type IN = (Page, NaiveDateTime);
     type ARG = (Arc<WikiMarkupProcessor>, Arc<AtomicI64>);
 

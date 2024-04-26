@@ -12,7 +12,7 @@ pub(crate) struct WikipediaHeadingSplitter {
     document_id: Arc<AtomicI64>,
 }
 
-impl PipelineStep for WikipediaHeadingSplitter {
+impl PipelineStep<true> for WikipediaHeadingSplitter {
     type IN = Document;
 
     type OUT = DocumentHeading;

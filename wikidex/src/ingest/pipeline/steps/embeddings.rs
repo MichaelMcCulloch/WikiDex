@@ -5,7 +5,7 @@ use crate::{
     embedding_client::{EmbeddingClient, EmbeddingClientService},
     ingest::pipeline::{
         document::{DocumentHeading, DocumentTextHeadingEmbedding},
-        error::{EmbeddingError, LinkError, PipelineError},
+        error::{EmbeddingError, PipelineError},
     },
 };
 
@@ -21,7 +21,7 @@ impl Embedding {
     }
 }
 
-impl PipelineStep for Embedding {
+impl PipelineStep<false> for Embedding {
     type IN = Vec<DocumentHeading>;
 
     type ARG = Arc<EmbeddingClient>;
@@ -73,47 +73,5 @@ impl PipelineStep for Embedding {
 
     fn args(&self) -> Self::ARG {
         self.client.clone()
-    }
-
-    async fn link(
-        &self,
-        mut receiver: tokio::sync::mpsc::UnboundedReceiver<Self::IN>,
-        progress: Arc<indicatif::ProgressBar>,
-        next_progress: Vec<Arc<indicatif::ProgressBar>>,
-    ) -> Result<
-        Vec<tokio::sync::mpsc::UnboundedReceiver<Self::OUT>>,
-        crate::ingest::pipeline::error::PipelineError,
-    > {
-        let (sender, new_receiver) = tokio::sync::mpsc::unbounded_channel::<Self::OUT>();
-        let args = Arc::new(self.args());
-        let next_progress = next_progress
-            .first()
-            .ok_or(LinkError::NoCurrentProgressBar(Self::name()))?
-            .clone();
-
-        progress.set_message(Self::name().to_string());
-
-        tokio::spawn(async move {
-            while let Some(input) = receiver.recv().await {
-                let transform = Self::transform(input, &args).await;
-                match transform {
-                    Ok(transform) => {
-                        progress.inc(transform.len() as u64);
-
-                        for t in transform {
-                            next_progress.inc_length(1);
-
-                            let _ = sender.send(t);
-                        }
-                    }
-                    Err(e) => {
-                        log::error!("{e}");
-                    }
-                }
-            }
-
-            Ok::<(), PipelineError>(())
-        });
-        Ok(vec![new_receiver])
     }
 }

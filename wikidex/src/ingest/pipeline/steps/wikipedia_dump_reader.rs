@@ -21,7 +21,7 @@ impl WikipediaDumpReader {
         Self { limit }
     }
 }
-impl PipelineStep for WikipediaDumpReader {
+impl PipelineStep<false> for WikipediaDumpReader {
     type IN = PathBuf;
     type ARG = ();
     type OUT = (Page, NaiveDateTime);

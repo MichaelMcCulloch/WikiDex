@@ -11,7 +11,7 @@ pub(crate) struct Junction<X: Clone + Sync + Send + 'static> {
     _x: PhantomData<X>,
 }
 
-impl<X: Clone + Sync + Send + 'static> PipelineStep for Junction<X> {
+impl<X: Clone + Sync + Send + 'static> PipelineStep<false> for Junction<X> {
     type IN = X;
 
     type ARG = ();

@@ -27,7 +27,7 @@ pub(crate) use wikipedia_page_parser::WikipediaMarkdownParser;
 
 use super::error::{LinkError, PipelineError};
 
-pub(crate) trait PipelineStep {
+pub(crate) trait PipelineStep<const ASYNC: bool> {
     type IN: Send + Sync + 'static;
     type ARG: Send + Sync + 'static;
     type OUT: Send + Sync + 'static;
@@ -53,7 +53,30 @@ pub(crate) trait PipelineStep {
                 let sender = sender.clone();
                 let progress = progress.clone();
                 let next_progress = next_progress.clone();
-                tokio::spawn(async move {
+                if ASYNC {
+                    tokio::spawn(async move {
+                        let transform = Self::transform(input, &args)
+                            .await
+                            .map_err(PipelineError::from);
+
+                        match transform {
+                            Ok(transform) => {
+                                progress.inc(1);
+
+                                for t in transform {
+                                    next_progress.inc_length(1);
+
+                                    let _ = sender.send(t);
+                                }
+                            }
+                            Err(e) => {
+                                log::warn!("{} {e}", Self::name())
+                            }
+                        }
+
+                        Ok::<(), PipelineError>(())
+                    });
+                } else {
                     let transform = Self::transform(input, &args)
                         .await
                         .map_err(PipelineError::from);
@@ -72,9 +95,7 @@ pub(crate) trait PipelineStep {
                             log::warn!("{} {e}", Self::name())
                         }
                     }
-
-                    Ok::<(), PipelineError>(())
-                });
+                }
             }
 
             Ok::<(), PipelineError>(())

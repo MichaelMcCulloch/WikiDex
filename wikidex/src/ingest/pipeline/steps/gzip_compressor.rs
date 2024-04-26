@@ -30,7 +30,7 @@ fn _decompress_text(text_compressed: Vec<u8>) -> Result<String, io::Error> {
     Ok(text)
 }
 
-impl PipelineStep for Compressor {
+impl PipelineStep<true> for Compressor {
     type IN = DocumentTextHeadingEmbedding;
     type OUT = DocumentCompressed;
     type ARG = ();

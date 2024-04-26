@@ -9,7 +9,7 @@ export RUSTFLAGS="-C target-cpu=native"
 rm /tmp/wikipedia_docstore.sqlite*
 rm /tmp/wikipedia_index.sqlite*
 # cargo test --package wikidex --bin wikidex -- ingest::pipeline::processor::test::test --exact --show-output  --nocapture
-cargo run --release -- \
+cargo run -- \
 wikipedia \
 --wiki-xml \
 /home/michael/Documents/WIKIDUMPS/20240420/enwiki-20240420-pages-articles.xml \
