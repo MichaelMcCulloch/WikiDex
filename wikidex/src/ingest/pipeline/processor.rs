@@ -88,7 +88,7 @@ impl PipelineProcessor {
         let step_read_input = WikipediaDumpReader::new(0);
         let step_parse_markup = WikipediaMarkdownParser::new(WikiMarkupProcessor);
         let step_split_on_heading = WikipediaHeadingSplitter::default();
-        let step_batch_512 = Batcher::<2048, DocumentHeading>::new();
+        let step_batch_2048 = Batcher::<2048, DocumentHeading>::new();
         let step_embed = Embedding::new(embedding_client);
         let step_compress = Compressor;
         let step_batch_10240 = Batcher::<10240, DocumentCompressed>::new();
@@ -97,7 +97,7 @@ impl PipelineProcessor {
         let progres_read_input = new_progress_bar(multi_progress, 0);
         let progres_parse_markup = new_progress_bar(multi_progress, 0);
         let progres_split_on_heading = new_progress_bar(multi_progress, 0);
-        let progres_batch_512 = new_progress_bar(multi_progress, 0);
+        let progres_batch_2048 = new_progress_bar(multi_progress, 0);
         let progres_embed = new_progress_bar(multi_progress, 0);
         let progres_compress = new_progress_bar(multi_progress, 0);
         let progres_batch_10240 = new_progress_bar(multi_progress, 0);
@@ -125,19 +125,19 @@ impl PipelineProcessor {
             .link(
                 rx_document.pop().unwrap(),
                 progres_split_on_heading.clone(),
-                vec![progres_batch_512.clone()],
+                vec![progres_batch_2048.clone()],
             )
             .await?;
-        let mut rx_batch_512 = step_batch_512
+        let mut rx_batch_2048 = step_batch_2048
             .link(
                 rx_doc_heading.pop().unwrap(),
-                progres_batch_512.clone(),
+                progres_batch_2048.clone(),
                 vec![progres_embed.clone()],
             )
             .await?;
         let mut rx_doc_head_embed = step_embed
             .link(
-                rx_batch_512.pop().unwrap(),
+                rx_batch_2048.pop().unwrap(),
                 progres_embed,
                 vec![progres_compress.clone()],
             )
