@@ -1,13 +1,18 @@
-use std::sync::Arc;
-
 use super::PipelineStep;
 use crate::{
-    embedding_client::{EmbeddingClient, EmbeddingClientService},
+    embedding_client::{EmbeddingClient, EmbeddingClientService, EmbeddingServiceError},
     ingest::pipeline::{
         document::{DocumentHeading, DocumentTextHeadingEmbedding},
-        error::{EmbeddingError, PipelineError},
+        error::{
+            EmbeddingError::{self, EmbeddingServiceError as EmbedError},
+            PipelineError,
+        },
     },
 };
+use async_openai::error::OpenAIError;
+use backoff::{future::retry, Error as Backoff, ExponentialBackoff};
+use http::StatusCode;
+use std::sync::Arc;
 
 const EMBED_MAX_STR_LEN_ACCORDING_TO_INFINITY: usize = 122880usize;
 pub(crate) struct Embedding {
@@ -19,9 +24,33 @@ impl Embedding {
             client: Arc::new(embedding_client),
         }
     }
+
+    pub async fn get_embeddings(
+        embedder: &EmbeddingClient,
+        queries: &[String],
+    ) -> Result<Vec<Vec<f32>>, EmbeddingError> {
+        retry(ExponentialBackoff::default(), || async {
+            embedder
+                .embed_batch(queries.to_vec())
+                .await
+                .map_err(|e| match &e {
+                    EmbeddingServiceError::AsyncOpenAiError(OpenAIError::Reqwest(r)) => {
+                        match r.status() {
+                            Some(StatusCode::TOO_MANY_REQUESTS) => {
+                                log::error!("Retrying");
+                                Backoff::transient(EmbedError(e))
+                            }
+                            _ => Backoff::permanent(EmbedError(e)),
+                        }
+                    }
+                    _ => Backoff::permanent(EmbedError(e)),
+                })
+        })
+        .await
+    }
 }
 
-impl PipelineStep<false> for Embedding {
+impl PipelineStep<true> for Embedding {
     type IN = Vec<DocumentHeading>;
 
     type ARG = Arc<EmbeddingClient>;
@@ -46,10 +75,13 @@ impl PipelineStep<false> for Embedding {
                     .collect()
             })
             .collect::<Vec<_>>();
-        let embeddings = embedder
-            .embed_batch(queries.clone())
-            .await
-            .map_err(EmbeddingError::EmbeddingServiceError)?;
+
+        let _ = retry(ExponentialBackoff::default(), || async {
+            Ok(embedder.up().await?)
+        })
+        .await;
+
+        let embeddings = Self::get_embeddings(embedder, &queries).await?;
 
         let documents = documents
             .into_iter()
