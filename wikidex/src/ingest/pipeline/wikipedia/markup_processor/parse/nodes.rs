@@ -10,10 +10,11 @@ use super::{
 };
 use crate::ingest::{pipeline::wikipedia::WikiMarkupProcessor, service::Process};
 
-pub(crate) const STOP_PHRASES: [&str; 6] = [
+pub(crate) const STOP_PHRASES: [&str; 7] = [
     "References",
     "Bibliography",
     "See also",
+    "Sources",
     "Further reading",
     "External links",
     "Notes and references",

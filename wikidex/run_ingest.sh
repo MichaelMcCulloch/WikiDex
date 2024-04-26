@@ -6,14 +6,15 @@ export CXX="$CUDA/bin/g++";
 export RUST_LOG=info
 export RUSTFLAGS="-C target-cpu=native"
 
-rm /tmp/wikipedia_docstore.sqlite
+rm /tmp/wikipedia_docstore.sqlite*
+rm /tmp/wikipedia_index.sqlite*
 # cargo test --package wikidex --bin wikidex -- ingest::pipeline::processor::test::test --exact --show-output  --nocapture
-cargo run  -- \
+cargo run --release -- \
 wikipedia \
 --wiki-xml \
-/home/michael/Documents/WIKIDUMPS/20240401/enwiki-20240401-pages-articles.xml \
+/home/michael/Documents/WIKIDUMPS/20240420/enwiki-20240420-pages-articles.xml \
 --output-directory \
-"/tmp" \
+/home/michael/Documents/WIKIDUMPS/20240420/ \
 --ingest-limit \
 "0" \
 --embed-name \

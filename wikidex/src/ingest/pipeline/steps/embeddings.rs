@@ -98,7 +98,7 @@ impl PipelineStep for Embedding {
                 let transform = Self::transform(input, &args).await;
                 match transform {
                     Ok(transform) => {
-                        progress.inc(1);
+                        progress.inc(transform.len() as u64);
 
                         for t in transform {
                             next_progress.inc_length(1);

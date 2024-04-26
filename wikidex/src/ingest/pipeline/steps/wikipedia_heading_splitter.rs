@@ -58,11 +58,18 @@ impl PipelineStep for WikipediaHeadingSplitter {
                     2 => {
                         let heading = format!("{}{}", input.article_title, split.first()?);
                         let text = split.get(1)?.to_string();
-                        Some((heading, text))
+                        if text.len() > 5 {
+                            Some((heading, text))
+                        } else {
+                            None
+                        }
                     }
                     1 => {
-                        let text = format!("{}{}", input.article_title, split.first()?);
-                        Some((String::new(), text))
+                        if s.len() > 5 {
+                            Some((input.article_title.to_string(), s.to_string()))
+                        } else {
+                            None
+                        }
                     }
                     _ => None,
                 }

@@ -29,28 +29,28 @@ impl PipelineProcessor {
         &self,
         multi_progress: &MultiProgress,
         wiki_xml: PathBuf,
-        database_connection: PathBuf,
+        database_output_directory: PathBuf,
         embedding_client: EmbeddingClient,
     ) -> Result<(), PipelineError> {
-        let document_store_path = {
-            let mut p = database_connection.clone();
+        let docstore_path = {
+            let mut p = database_output_directory.clone();
             p.push("wikipedia_docstore.sqlite");
             p.display().to_string()
         };
-        if !Sqlite::database_exists(&document_store_path)
-            .await
-            .map_err(Sql::Sql)?
-        {
-            Sqlite::create_database(&document_store_path)
-                .await
-                .map_err(Sql::Sql)?;
-        }
-
         let index_path = {
-            let mut p = database_connection.clone();
+            let mut p = database_output_directory.clone();
             p.push("wikipedia_index.sqlite");
             p.display().to_string()
         };
+
+        if !Sqlite::database_exists(&docstore_path)
+            .await
+            .map_err(Sql::Sql)?
+        {
+            Sqlite::create_database(&docstore_path)
+                .await
+                .map_err(Sql::Sql)?;
+        }
         if !Sqlite::database_exists(&index_path)
             .await
             .map_err(Sql::Sql)?
@@ -60,8 +60,6 @@ impl PipelineProcessor {
                 .map_err(Sql::Sql)?;
         }
 
-        // let pool = SqlitePool::connect(&db_path).await.unwrap();
-
         let options = SqliteConnectOptions::new();
 
         let options = options.pragma("locking_mode", "EXCLUSIVE");
@@ -70,8 +68,7 @@ impl PipelineProcessor {
         let options = options.pragma("temp_store", "memory");
         let options = options.pragma("mmap_size", "30000000");
         let options = options.create_if_missing(true);
-
-        let docstore_option = options.clone().filename(document_store_path);
+        let docstore_option = options.clone().filename(docstore_path);
         let index_options = options.clone().filename(index_path);
 
         let docstore_pool = SqlitePoolOptions::new()
@@ -91,11 +88,11 @@ impl PipelineProcessor {
         let reader = WikipediaDumpReader::new(0);
         let parser = WikipediaMarkdownParser::new(WikiMarkupProcessor);
         let wikisplitter = WikipediaHeadingSplitter::default();
-        let compressor = Compressor;
-        let docstore_batcher = Batcher::<10000, DocumentCompressed>::default();
-        let embedding_batcher = Batcher::<512, DocumentHeading>::default();
-        let embedding = Embedding::new(embedding_client);
-        let writter = SqliteWriter::new(docstore_pool, index_pool).await?;
+        let step_batch_10240 = Batcher::<10240, DocumentCompressed>::default();
+        let step_batch_512 = Batcher::<512, DocumentHeading>::default();
+        let step_embed = Embedding::new(embedding_client);
+        let step_compress = Compressor;
+        let step_save = SqliteWriter::new(docstore_pool, index_pool).await?;
 
         let reader_progress = new_progress_bar(multi_progress, 0);
         let parser_progress = new_progress_bar(multi_progress, 0);
@@ -132,35 +129,35 @@ impl PipelineProcessor {
             )
             .await?;
 
-        let mut rx_embedding_batcher = embedding_batcher
+        let mut rx_embedding_batcher = step_batch_512
             .link(
                 rx_heading_split.pop().unwrap(),
                 embedding_batcher_progress.clone(),
                 vec![embedding_progress.clone()],
             )
             .await?;
-        let mut rx_embedder = embedding
+        let mut rx_embedder = step_embed
             .link(
                 rx_embedding_batcher.pop().unwrap(),
                 embedding_progress,
                 vec![compressor_progress.clone()],
             )
             .await?;
-        let mut rx_compressor = compressor
+        let mut rx_compressor = step_compress
             .link(
                 rx_embedder.pop().unwrap(),
                 compressor_progress.clone(),
                 vec![docstore_batcher_progress.clone()],
             )
             .await?;
-        let mut rx_document_batcher = docstore_batcher
+        let mut rx_document_batcher = step_batch_10240
             .link(
                 rx_compressor.pop().unwrap(),
                 docstore_batcher_progress.clone(),
                 vec![writter_progress.clone()],
             )
             .await?;
-        let mut rx_writter = writter
+        let mut rx_writter = step_save
             .link(
                 rx_document_batcher.pop().unwrap(),
                 writter_progress.clone(),

@@ -127,6 +127,7 @@ services:
     entrypoint:
       [
         infinity_emb,
+        --compile,
         --url-prefix,
         "/v1",
         --model-name-or-path,
