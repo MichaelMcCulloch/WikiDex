@@ -52,11 +52,11 @@ impl<const N: usize, X: Sync + Send + 'static> PipelineStep for Batcher<N, X> {
                     v.push(input);
                 }
                 if let Some(ref vec) = batch {
-                    if vec.len() > N {
-                        progress.inc(1);
-                        next_progress.inc_length(1);
+                    if vec.len() >= N {
+                        progress.inc(vec.len() as u64);
                         match batch.replace(vec![]) {
                             Some(replace) => {
+                                next_progress.inc_length(replace.len() as u64);
                                 let _ = sender.send(replace);
                             }
                             None => {
