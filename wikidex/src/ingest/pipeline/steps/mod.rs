@@ -14,10 +14,9 @@ use indicatif::ProgressBar;
 use std::sync::Arc;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver};
 
-pub(crate) use gzip_compressor::Compressor;
-
 pub(crate) use batcher::Batcher;
 pub(crate) use embeddings::Embedding;
+pub(crate) use gzip_compressor::Compressor;
 
 #[cfg(feature = "sqlite")]
 pub(crate) use sqlite_writer::SqliteWriter;
