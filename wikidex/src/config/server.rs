@@ -26,7 +26,7 @@ pub(crate) struct Config {
     pub(crate) port: u16,
     pub(crate) protocol: String,
     pub(crate) redis_url: Url,
-    pub(crate) system_prompt: String,
+    pub(crate) system_prompt_template_path: PathBuf,
 }
 
 pub(crate) trait ConfigUrl {
@@ -56,7 +56,7 @@ impl From<ServerArgs> for Config {
             port: value.port,
             protocol: "http".to_string(),
             redis_url: value.redis_url,
-            system_prompt: std::fs::read_to_string(value.system_prompt_path).unwrap(),
+            system_prompt_template_path: value.system_prompt_path,
             llm_kind: value.llm_kind,
             llm_name: value.llm_name,
             llm_endpoint: value.llm_endpoint,
@@ -85,7 +85,7 @@ impl Display for Config {
             embed_url,
             port: _,
             protocol: _,
-            system_prompt: _,
+            system_prompt_template_path: _,
         } = self;
 
         let docstore_url = docstore_url.as_str().green();

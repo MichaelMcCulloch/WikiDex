@@ -17,14 +17,14 @@ Write a well-structured essay in markdown format that answers the question provi
 ### Citations
 
 1. Provide an in-text citation for every statement you make.
-1. Use the document ordinal number in square brackets, e.g. [{{ document_list[0].ordinal }}].
+1. Use the document index number in square brackets, e.g. [{{ document_list[0].index }}].
 1. Do not place citations in headings.
 
 ### Example Citations
 
-1. "This statement cites a source. [{{ document_list[0].ordinal }}]"
-1. "This statement cites two sources. [{{ document_list[0].ordinal }}, {{ document_list[1].ordinal }}]"
-1. "This statement cites all sources. [{{ document_list[0].ordinal }}, {{ document_list[1].ordinal }}, {{ document_list[2].ordinal }}, {{ document_list[3].ordinal }}]"
+1. "This statement cites two sources. [{{ document_list[0].index }}, {{ document_list[1].index }}]"
+1. "This statement cites a source. [{{ document_list[0].index }}]"
+1. "This statement cites all sources. [{{ document_list[0].index }}, {{ document_list[1].index }}, {{ document_list[2].index }}, {{ document_list[3].index }}]"
 
 ### Bibliography
 
@@ -34,8 +34,8 @@ Write a well-structured essay in markdown format that answers the question provi
 ### Provided Sources
 
 {% for document in document_list %}
-{{ document.ordinal }}: {{ document.content }}
-{% end for %}
+{{ document.index }}: {{ document.text }}
+{% endfor %}
 
 ### Question
 
