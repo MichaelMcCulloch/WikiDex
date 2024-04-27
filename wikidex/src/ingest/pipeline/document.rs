@@ -33,7 +33,7 @@ pub(crate) struct DocumentTextHeadingEmbedding {
     pub(crate) embedding: Vec<f32>,
 }
 
-#[derive(Clone, Default)]
+#[derive(Default, Clone)]
 pub(crate) struct DocumentCompressed {
     pub(crate) document: Vec<u8>,
     pub(crate) heading: String,
