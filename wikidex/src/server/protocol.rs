@@ -10,7 +10,7 @@ pub(crate) struct Source {
     pub(crate) index: i64,
     pub(crate) citation: String,
     pub(crate) url: String,
-    pub(crate) text: String,
+    pub(crate) origin_text: String,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug)]
@@ -116,7 +116,7 @@ fn assistant_partial_message_schema_example() -> PartialMessage {
 }
 
 fn source_schema_example() -> Source {
-    Source { ordinal: 0, index: 987087, citation: "Bogonam-Foulbé. 2023, December 1. In Wikipedia. Retrieved December 1, 2023, from https://en.wikipedia.org/wiki/Bogonam-Foulbé".to_string(), url: "https://en.wikipedia.org/wiki/Bogonam-Foulbé".to_string(), text: "Bogonam-Foulbé is a village in the Kongoussi Department of Bam Province in northern Burkina Faso. It has a population of 205.".to_string() }
+    Source { ordinal: 0, index: 987087, citation: "Bogonam-Foulbé. 2023, December 1. In Wikipedia. Retrieved December 1, 2023, from https://en.wikipedia.org/wiki/Bogonam-Foulbé".to_string(), url: "https://en.wikipedia.org/wiki/Bogonam-Foulbé".to_string(), origin_text: "Bogonam-Foulbé is a village in the Kongoussi Department of Bam Province in northern Burkina Faso. It has a population of 205.".to_string() }
 }
 
 fn user_message_schema_example() -> Message {

@@ -256,7 +256,7 @@ fn organize_sources(documents: Vec<Document>, num_sources: usize) -> Vec<Source>
             index: document.index,
             citation: document.provenance.format(&CITATION_STYLE),
             url: document.provenance.url(),
-            text: document.text,
+            origin_text: document.text,
         })
         .collect::<Vec<_>>()
 }
