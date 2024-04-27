@@ -12,7 +12,7 @@ COPY ./src ./src
 ARG DATABASE_URL="postgres://postgres:postgres@192.168.1.120:5433/postgres"
 
 RUN  \
-    --mount=type=cache,target=/usr/src/wikidex/target,sharing=locked,rw cargo install --path . --root ./build 
+    --mount=type=cache,target=/usr/src/wikidex/target,sharing=locked,rw cargo install --no-default-features --features postgres,server --path . --root ./build 
 
 FROM ubuntu:22.04
 ARG TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST}"
