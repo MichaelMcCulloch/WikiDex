@@ -7,7 +7,7 @@ mod protocol;
 mod triton;
 mod triton_helper;
 
-pub(crate) use endpoint::{ModelEndpoint};
+pub(crate) use endpoint::ModelEndpoint;
 pub(crate) use openai::OpenAiInstructClient;
 
 use tonic::transport::Channel;
@@ -77,25 +77,11 @@ pub(crate) trait LlmClientService: LlmClientBackend {
         self.stream_response(arguments, tx_s, max_tokens, stop_phrases)
             .await
     }
-
-    fn fill_rag_template(&self, arguments: LanguageServiceArguments) -> String {
-        let mut replace_query = arguments
-            .system
-            .replace("$$$USER_QUERY$$$", arguments.query);
-
-        for (index, source) in arguments.indices.iter().enumerate() {
-            replace_query = replace_query.replace(
-                format!("$$$CITE{}$$$", index + 1).as_str(),
-                format!("{}", source).as_str(),
-            );
-        }
-
-        replace_query.replace("$$$DOCUMENT_LIST$$$", arguments.documents)
-    }
 }
 
 pub(crate) struct LlmClient<Backend: LlmClientBackendKind> {
     client: Backend,
+    // prompt_template: tera::Template
 }
 
 pub(crate) enum LlmClientImpl {

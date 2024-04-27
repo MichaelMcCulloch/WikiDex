@@ -4,7 +4,7 @@ use tokio::sync::mpsc::UnboundedSender;
 use super::{
     error::LlmClientError,
     triton_helper::{create_request, deserialize_bytes_tensor},
-    LanguageServiceArguments, LlmClient, LlmClientBackend, LlmClientBackendKind, LlmClientService,
+    LanguageServiceArguments, LlmClient, LlmClientBackend, LlmClientBackendKind,
     TritonClient,
 };
 use async_stream::stream;
@@ -22,8 +22,13 @@ impl LlmClientBackend for LlmClient<TritonClient> {
         max_tokens: u16,
         stop_phrases: Vec<S>,
     ) -> Result<String, LlmClientError> {
-        let prompt = self.fill_rag_template(arguments);
-        let request = create_request(prompt, false, max_tokens, stop_phrases)?;
+        let prompt = arguments.prompt;
+        let request = create_request(
+            prompt,
+            false,
+            max_tokens,
+            stop_phrases.iter().map(AsRef::as_ref).collect::<Vec<_>>(),
+        )?;
         let request = stream! { yield request };
         let request = tonic::Request::new(request);
 
@@ -60,9 +65,14 @@ impl LlmClientBackend for LlmClient<TritonClient> {
         max_tokens: u16,
         stop_phrases: Vec<S>,
     ) -> Result<(), LlmClientError> {
-        let prompt = self.fill_rag_template(arguments);
+        let prompt = arguments.prompt;
         log::info!("{prompt}");
-        let request = create_request(prompt, true, max_tokens, stop_phrases)?;
+        let request = create_request(
+            prompt,
+            true,
+            max_tokens,
+            stop_phrases.iter().map(AsRef::as_ref).collect::<Vec<_>>(),
+        )?;
         let request = stream! { yield request };
         let request = tonic::Request::new(request);
         let mut stream = self

@@ -22,7 +22,7 @@ pub fn deserialize_bytes_tensor(encoded_tensor: Vec<u8>) -> Result<Vec<String>, 
 }
 
 pub(crate) fn create_request<S: AsRef<str>>(
-    prompt: String,
+    prompt: S,
     stream: bool,
     max_tokens: u16,
     stop_phrases: Vec<S>,
@@ -32,7 +32,7 @@ pub(crate) fn create_request<S: AsRef<str>>(
         .input(
             "text_input",
             UNIT,
-            IFT::Bytes(vec![prompt.as_bytes().to_vec()]),
+            IFT::Bytes(vec![prompt.as_ref().as_bytes().to_vec()]),
         )
         .input("max_tokens", UNIT, IFT::Int32(vec![max_tokens as i32]))
         .input("bad_words", UNIT, IFT::Bytes(vec!["".as_bytes().to_vec()]))

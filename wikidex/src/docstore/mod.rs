@@ -7,7 +7,7 @@ mod postgres;
 #[cfg(feature = "sqlite")]
 mod sqlite;
 
-use document::Document;
+pub(crate) use document::Document;
 
 pub(super) use error::{DocstoreLoadError, DocstoreRetrieveError};
 use redis::aio::MultiplexedConnection;

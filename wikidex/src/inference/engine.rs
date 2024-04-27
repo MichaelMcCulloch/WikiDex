@@ -1,9 +1,10 @@
 use bytes::Bytes;
 use std::collections::HashMap;
+use tera::{Context, Tera};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 use crate::{
-    docstore::{DocumentStore, DocumentStoreImpl},
+    docstore::{Document, DocumentStore, DocumentStoreImpl},
     embedding_client::{EmbeddingClient, EmbeddingClientService},
     formatter::{CitationStyle, Cite, TextFormatter},
     index::{FaceIndex, SearchService},
@@ -21,7 +22,7 @@ pub struct Engine {
     embed_client: EmbeddingClient,
     docstore: DocumentStoreImpl,
     llm_client: LlmClientImpl,
-    system_prompt: String,
+    system_prompt: Tera,
 }
 
 impl Engine {
@@ -37,7 +38,7 @@ impl Engine {
             embed_client,
             docstore,
             llm_client,
-            system_prompt,
+            system_prompt: Tera::new(system_prompt.as_str()).unwrap(),
         }
     }
 }
@@ -47,12 +48,6 @@ const NUM_DOCUMENTS_TO_RETRIEVE: usize = 4;
 const CITATION_STYLE: CitationStyle = CitationStyle::Mla;
 
 impl Engine {
-    pub(crate) async fn query(&self, question: &str) -> Result<String, QueryEngineError> {
-        let (_, formatted_documents) = self.get_documents(question, 0usize).await?;
-
-        Ok(formatted_documents)
-    }
-
     pub(crate) async fn conversation(
         &self,
         Conversation { messages }: Conversation,
@@ -61,12 +56,12 @@ impl Engine {
         let num_sources = messages.sources_count();
         match messages.into_iter().last() {
             Some(Message::User(user_query)) => {
-                let (sources, formatted_documents) =
-                    self.get_documents(&user_query, num_sources).await?;
+                let documents = self.get_documents(&user_query).await?;
+                let prompt = self.format_rag_template(&documents)?;
+                let sources = organize_sources(documents, num_sources);
 
                 let llm_service_arguments = LanguageServiceArguments {
-                    system: &self.system_prompt,
-                    documents: &formatted_documents,
+                    prompt: &prompt,
                     query: &user_query,
                     indices: &sources.iter().map(|d| d.index).collect(),
                 };
@@ -99,6 +94,14 @@ impl Engine {
             None => Err(QueryEngineError::EmptyConversation)?,
         }
     }
+
+    fn format_rag_template(&self, documents: &Vec<Document>) -> Result<String, QueryEngineError> {
+        let mut context = Context::new();
+        context.insert("document_list", documents);
+        let prompt = self.system_prompt.render("UUID-HERE", &context)?;
+        Ok(prompt)
+    }
+
     pub(crate) async fn streaming_conversation(
         &self,
         Conversation { messages }: Conversation,
@@ -108,8 +111,11 @@ impl Engine {
         let num_sources = messages.sources_count();
         match messages.into_iter().last() {
             Some(Message::User(user_query)) => {
-                let (sources, formatted_documents) =
-                    self.get_documents(&user_query, num_sources).await?;
+                let documents = self.get_documents(&user_query).await?;
+
+                let prompt = self.format_rag_template(&documents)?;
+
+                let sources = organize_sources(documents, num_sources);
 
                 let (partial_message_sender, mut partial_message_receiver) = unbounded_channel();
 
@@ -167,9 +173,9 @@ impl Engine {
 
                     let _ = tx.send(PartialMessage::done().message());
                 });
+
                 let llm_service_arguments = LanguageServiceArguments {
-                    system: &self.system_prompt,
-                    documents: &formatted_documents,
+                    prompt: &prompt,
                     query: &user_query,
                     indices: &sources.iter().map(|d| d.index).collect(),
                 };
@@ -192,9 +198,8 @@ impl Engine {
     pub(crate) async fn get_documents(
         &self,
         user_query: &str,
-        num_sources_already_in_chat: usize,
-    ) -> Result<(Vec<Source>, String), QueryEngineError> {
-        let embedding = self.embed_client.embed(user_query).await?;
+    ) -> Result<Vec<Document>, QueryEngineError> {
+        let embedding: Vec<f32> = self.embed_client.embed(user_query).await?;
 
         let document_indices = self
             .index
@@ -203,23 +208,32 @@ impl Engine {
 
         let documents = self.docstore.retreive(&document_indices).await?;
 
-        let formatted_documents = documents
-            .iter()
-            .map(|document| document.format_document())
-            .collect::<Vec<String>>()
-            .join("\n\n");
-
-        let sources = documents
-            .into_iter()
-            .enumerate()
-            .map(|(ordinal, document)| Source {
-                ordinal: num_sources_already_in_chat + ordinal + 1,
-                index: document.index,
-                citation: document.provenance.format(&CITATION_STYLE),
-                url: document.provenance.url(),
-                origin_text: document.text,
-            })
-            .collect::<Vec<_>>();
-        Ok((sources, formatted_documents))
+        // let sources = documents
+        //     .into_iter()
+        //     .enumerate()
+        //     .map(|(ordinal, document)| Source {
+        //         ordinal: num_sources_already_in_chat + ordinal + 1,
+        //         index: document.index,
+        //         citation: document.provenance.format(&CITATION_STYLE),
+        //         url: document.provenance.url(),
+        //         text: document.text,
+        //     })
+        //     .collect::<Vec<_>>();
+        // Ok((sources, formatted_documents))
+        Ok(documents)
     }
+}
+
+fn organize_sources(documents: Vec<Document>, num_sources: usize) -> Vec<Source> {
+    documents
+        .into_iter()
+        .enumerate()
+        .map(|(ordinal, document)| Source {
+            ordinal: num_sources + ordinal + 1,
+            index: document.index,
+            citation: document.provenance.format(&CITATION_STYLE),
+            url: document.provenance.url(),
+            text: document.text,
+        })
+        .collect::<Vec<_>>()
 }
