@@ -1,13 +1,8 @@
-#[cfg(test)]
-mod test_data;
-
 mod cli_args;
 mod config;
-mod embedding_client;
-mod llm_client;
-
 #[cfg(feature = "server")]
 mod docstore;
+mod embedding_client;
 #[cfg(feature = "server")]
 mod formatter;
 #[cfg(feature = "server")]
@@ -16,24 +11,25 @@ mod index;
 mod inference;
 #[cfg(feature = "ingest")]
 mod ingest;
+mod llm_client;
 #[cfg(feature = "server")]
 mod server;
+#[cfg(test)]
+mod test_data;
+
+use crate::embedding_client::EmbeddingClient;
 #[cfg(feature = "ingest")]
 use crate::ingest::pipeline::PipelineProcessor;
-
-use async_openai::{config::OpenAIConfig, Client};
-#[cfg(feature = "ingest")]
-use config::ingest::Config as IngestConfig;
-
 #[cfg(feature = "server")]
 use actix_web::rt;
 
+use async_openai::{config::OpenAIConfig, Client};
 use cli_args::Commands;
+#[cfg(feature = "ingest")]
+use config::ingest::Config as IngestConfig;
 #[cfg(feature = "server")]
 use docstore::Docstore;
 
-#[cfg(feature = "ingest")]
-use crate::embedding_client::EmbeddingClient;
 #[cfg(feature = "server")]
 use crate::{
     cli_args::Cli,
