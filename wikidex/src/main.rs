@@ -160,13 +160,13 @@ fn main() -> anyhow::Result<()> {
                 }
             };
 
-            let engine = Engine::new(
+            let engine = system_runner.block_on(Engine::new(
                 index,
                 embed_client,
                 llm_client,
                 docstore,
-                config.system_prompt,
-            );
+                config.system_prompt_template_path,
+            ));
 
             let run_server = run_server(engine, config.host, config.port);
             let server = run_server?;

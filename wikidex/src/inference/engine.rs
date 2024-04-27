@@ -1,12 +1,22 @@
 use bytes::Bytes;
-use std::collections::HashMap;
+
+use std::{
+    collections::HashMap,
+    ops::DerefMut,
+    path::PathBuf,
+    sync::{Arc, RwLock},
+    time::Duration,
+};
 use tera::{Context, Tera};
-use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
+use tokio::{
+    sync::mpsc::{unbounded_channel, UnboundedSender},
+    time::sleep,
+};
 
 use crate::{
     docstore::{Document, DocumentStore, DocumentStoreImpl},
     embedding_client::{EmbeddingClient, EmbeddingClientService},
-    formatter::{CitationStyle, Cite, TextFormatter},
+    formatter::{CitationStyle, Cite},
     index::{FaceIndex, SearchService},
     llm_client::{
         LanguageServiceArguments, LlmClientImpl, LlmClientService, LlmMessage, LlmRole,
@@ -22,23 +32,40 @@ pub struct Engine {
     embed_client: EmbeddingClient,
     docstore: DocumentStoreImpl,
     llm_client: LlmClientImpl,
-    system_prompt: Tera,
+    system_prompt: Arc<RwLock<Tera>>,
 }
 
 impl Engine {
-    pub(crate) fn new(
+    pub(crate) async fn new(
         index: FaceIndex,
         embed_client: EmbeddingClient,
         llm_client: LlmClientImpl,
         docstore: DocumentStoreImpl,
-        system_prompt: String,
+        system_prompt: PathBuf,
     ) -> Self {
+        let system_prompt = Arc::new(RwLock::new(
+            Tera::new(system_prompt.to_str().unwrap()).unwrap(),
+        ));
+        let tera = system_prompt.clone();
+        actix_web::rt::spawn(async move {
+            loop {
+                sleep(Duration::from_secs(2)).await;
+                tera.write()
+                    .map(|mut t| match t.deref_mut().full_reload() {
+                        Ok(_) => (),
+                        Err(e) => {
+                            log::error!("Could Not Reload Template! {e}");
+                        }
+                    })
+                    .unwrap();
+            }
+        });
         Self {
             index,
             embed_client,
             docstore,
             llm_client,
-            system_prompt: Tera::new(system_prompt.as_str()).unwrap(),
+            system_prompt,
         }
     }
 }
@@ -57,7 +84,7 @@ impl Engine {
         match messages.into_iter().last() {
             Some(Message::User(user_query)) => {
                 let documents = self.get_documents(&user_query).await?;
-                let prompt = self.format_rag_template(&documents)?;
+                let prompt = self.format_rag_template(&documents, &user_query)?;
                 let sources = organize_sources(documents, num_sources);
 
                 let llm_service_arguments = LanguageServiceArguments {
@@ -95,13 +122,6 @@ impl Engine {
         }
     }
 
-    fn format_rag_template(&self, documents: &Vec<Document>) -> Result<String, QueryEngineError> {
-        let mut context = Context::new();
-        context.insert("document_list", documents);
-        let prompt = self.system_prompt.render("UUID-HERE", &context)?;
-        Ok(prompt)
-    }
-
     pub(crate) async fn streaming_conversation(
         &self,
         Conversation { messages }: Conversation,
@@ -113,7 +133,7 @@ impl Engine {
             Some(Message::User(user_query)) => {
                 let documents = self.get_documents(&user_query).await?;
 
-                let prompt = self.format_rag_template(&documents)?;
+                let prompt = self.format_rag_template(&documents, &user_query)?;
 
                 let sources = organize_sources(documents, num_sources);
 
@@ -208,19 +228,22 @@ impl Engine {
 
         let documents = self.docstore.retreive(&document_indices).await?;
 
-        // let sources = documents
-        //     .into_iter()
-        //     .enumerate()
-        //     .map(|(ordinal, document)| Source {
-        //         ordinal: num_sources_already_in_chat + ordinal + 1,
-        //         index: document.index,
-        //         citation: document.provenance.format(&CITATION_STYLE),
-        //         url: document.provenance.url(),
-        //         text: document.text,
-        //     })
-        //     .collect::<Vec<_>>();
-        // Ok((sources, formatted_documents))
         Ok(documents)
+    }
+    fn format_rag_template(
+        &self,
+        documents: &Vec<Document>,
+        user_query: &str,
+    ) -> Result<String, QueryEngineError> {
+        let mut context = Context::new();
+        context.insert("document_list", documents);
+        context.insert("user_query", user_query);
+        let prompt = self
+            .system_prompt
+            .read()
+            .unwrap()
+            .render("instruct/markdown.md.j2", &context)?;
+        Ok(prompt)
     }
 }
 

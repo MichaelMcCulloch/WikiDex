@@ -8,7 +8,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::inference::Engine;
 
-use super::{conversation, query, streaming_conversation, ApiDoc};
+use super::{conversation, streaming_conversation, ApiDoc};
 
 pub(crate) fn run_server<S: AsRef<str>>(
     engine: Engine,
@@ -29,7 +29,6 @@ pub(crate) fn run_server<S: AsRef<str>>(
             )
             .service(streaming_conversation)
             .service(conversation)
-            .service(query)
             .service(Redoc::with_url("/api-doc", openapi.clone()))
     });
 
