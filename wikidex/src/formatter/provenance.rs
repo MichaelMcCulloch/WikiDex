@@ -2,13 +2,14 @@ use super::{CitationStyle, Cite};
 
 use chrono::NaiveDate;
 
-use rkyv::{Archive, Deserialize, Serialize};
+use rkyv::{Archive, Deserialize, Serialize as RkyvSerialize};
 
 type WikipediaArticleTitle = String;
 type AccessDate = NaiveDate;
 type LastModificationDate = NaiveDate;
+use serde::Serialize as SerdeSerialize;
 
-#[derive(Clone, Serialize, Deserialize, Archive, Debug)]
+#[derive(Clone, RkyvSerialize, SerdeSerialize, Deserialize, Archive, Debug)]
 pub(crate) enum Provenance {
     Wikipedia(WikipediaArticleTitle, AccessDate, LastModificationDate),
 }

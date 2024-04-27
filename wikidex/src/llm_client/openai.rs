@@ -4,7 +4,7 @@ use tokio::sync::mpsc::UnboundedSender;
 
 use super::{
     error::LlmClientError, LanguageServiceArguments, LlmClient, LlmClientBackend,
-    LlmClientBackendKind, LlmClientService,
+    LlmClientBackendKind,
 };
 
 pub(crate) struct OpenAiInstructClient {
@@ -33,7 +33,7 @@ impl LlmClientBackend for LlmClient<OpenAiInstructClient> {
         max_tokens: u16,
         stop_phrases: Vec<S>,
     ) -> Result<String, LlmClientError> {
-        let prompt = self.fill_rag_template(arguments);
+        let prompt = arguments.prompt;
         let request = CreateCompletionRequestArgs::default()
             .max_tokens(max_tokens)
             .model(&self.client.model_name)
@@ -59,7 +59,7 @@ impl LlmClientBackend for LlmClient<OpenAiInstructClient> {
         max_tokens: u16,
         stop_phrases: Vec<S>,
     ) -> Result<(), LlmClientError> {
-        let prompt = self.fill_rag_template(arguments);
+        let prompt = arguments.prompt;
         let request = CreateCompletionRequestArgs::default()
             .max_tokens(max_tokens)
             .model(&self.client.model_name)

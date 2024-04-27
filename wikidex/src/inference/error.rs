@@ -14,6 +14,13 @@ pub(crate) enum QueryEngineError {
     InvalidAgentResponse,
     LastMessageIsNotUser,
     LlmError(LlmClientError),
+    Tera(tera::Error),
+}
+
+impl From<tera::Error> for QueryEngineError {
+    fn from(value: tera::Error) -> Self {
+        Self::Tera(value)
+    }
 }
 
 impl From<DocstoreRetrieveError> for QueryEngineError {
@@ -51,6 +58,7 @@ impl Display for QueryEngineError {
             }
             QueryEngineError::IndexError(err) => write!(f, "{}", err),
             QueryEngineError::LlmError(err) => write!(f, "{}", err),
+            QueryEngineError::Tera(err) => write!(f, "{}", err),
             QueryEngineError::EmptyConversation => {
                 write!(f, "QueryEngine: Empty conversation error")
             }

@@ -16,7 +16,7 @@ use super::{Answer, Conversation, Message, PartialMessage, Query, Source};
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(conversation, query, streaming_conversation),
+    paths(conversation, streaming_conversation),
     components(
         schemas(Message),
         schemas(Source),
@@ -27,38 +27,6 @@ use super::{Answer, Conversation, Message, PartialMessage, Query, Source};
     )
 )]
 pub(crate) struct ApiDoc;
-
-#[utoipa::path(
-    request_body = Query,
-    responses(
-        (status = 200, description = "Query Response", body = Answer)
-    )
-)]
-#[post("/query")]
-async fn query(
-    Json(Query { message }): Json<Query>,
-    query_engine: Data<Arc<Engine>>,
-) -> impl Responder {
-    match query_engine.query(&message).await {
-        Ok(message) => HttpResponse::Ok().json(Answer { message }),
-        Err(e) => {
-            log::error!("{e}");
-            match e {
-                QueryEngineError::LastMessageIsNotUser | QueryEngineError::EmptyConversation => {
-                    HttpResponse::BadRequest().into()
-                }
-                QueryEngineError::InvalidAgentResponse
-                | QueryEngineError::LlmError(_)
-                | QueryEngineError::IndexError(_)
-                | QueryEngineError::DocstoreError(_)
-                | QueryEngineError::EmbeddingServiceError(_) => {
-                    HttpResponse::InternalServerError().into()
-                }
-            }
-        }
-    }
-}
-//request_body(content = Conversation, content_type = "application/json", example = json!([{"User":"What is the capital of France?"},{"Assistant":["The capital of france is Paris![0]",["https://en.wikipedia.org/wiki/France"]]},{"User":"And who is the current prime minister of france, and where were they born?"}])),
 
 #[utoipa::path(
     request_body(content = Conversation, content_type = "application/json"),
@@ -88,9 +56,8 @@ async fn conversation(
                 | QueryEngineError::LlmError(_)
                 | QueryEngineError::IndexError(_)
                 | QueryEngineError::DocstoreError(_)
-                | QueryEngineError::EmbeddingServiceError(_) => {
-                    HttpResponse::InternalServerError().into()
-                }
+                | QueryEngineError::EmbeddingServiceError(_)
+                | QueryEngineError::Tera(_) => HttpResponse::InternalServerError().into(),
             }
         }
     }
