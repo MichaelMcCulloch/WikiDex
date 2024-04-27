@@ -37,6 +37,6 @@ impl ToRedisArgs for Document {
 
 impl TextFormatter for Document {
     fn format_document(&self) -> String {
-        format!("#{}: {}\n", self.index, self.text)
+        format!("{}\n{}\n", self.index, self.text)
     }
 }
