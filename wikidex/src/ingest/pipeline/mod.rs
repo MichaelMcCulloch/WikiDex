@@ -1,5 +1,6 @@
 mod document;
 mod error;
+mod index_converter;
 #[cfg(feature = "sqlite")]
 mod processor;
 mod recursive_character_text_splitter;
