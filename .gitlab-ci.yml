@@ -27,6 +27,9 @@ Populate Cache:
     - key: apt-cache
       paths:
         - /var/cache/apt/*
+    - key: cargo-registry
+      paths:
+        - /root/.cargo/registry/*
   image: rust:latest
   stage: Cache
   script:
@@ -44,6 +47,9 @@ Audit Everything:
     - key: apt-cache
       paths:
         - /var/cache/apt/*
+    - key: cargo-registry
+      paths:
+        - /root/.cargo/registry/*
   image: rust:latest
   stage: Sast
   allow_failure:
@@ -64,6 +70,9 @@ Check Everything - PostgreSQL:
     - key: apt-cache
       paths:
         - /var/cache/apt/*
+    - key: cargo-registry
+      paths:
+        - /root/.cargo/registry/*
   image: rust:latest
   stage: Check
   script:
@@ -80,6 +89,9 @@ Check Server + SQLite:
     - key: apt-cache
       paths:
         - /var/cache/apt/*
+    - key: cargo-registry
+      paths:
+        - /root/.cargo/registry/*
   image: rust:latest
   stage: Check Isolation
   script:
@@ -96,6 +108,9 @@ Check Ingest + SQLite:
     - key: apt-cache
       paths:
         - /var/cache/apt/*
+    - key: cargo-registry
+      paths:
+        - /root/.cargo/registry/*
   image: rust:latest
   stage: Check Isolation
   script:
@@ -112,6 +127,9 @@ Build Server + SQLite:
     - key: apt-cache
       paths:
         - /var/cache/apt/*
+    - key: cargo-registry
+      paths:
+        - /root/.cargo/registry/*
   image: rust:latest
   stage: Build Isolation
   script:
@@ -128,6 +146,9 @@ Build Ingest + SQLite:
     - key: apt-cache
       paths:
         - /var/cache/apt/*
+    - key: cargo-registry
+      paths:
+        - /root/.cargo/registry/*
   image: rust:latest
   stage: Build Isolation
   script:
@@ -144,6 +165,9 @@ Test Everything:
     - key: apt-cache
       paths:
         - /var/cache/apt/*
+    - key: cargo-registry
+      paths:
+        - /root/.cargo/registry/*
   image: rust:latest
   stage: Test
   script:
