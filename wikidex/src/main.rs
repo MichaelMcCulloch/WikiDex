@@ -22,7 +22,7 @@ use crate::embedding_client::EmbeddingClient;
 use crate::ingest::pipeline::PipelineProcessor;
 #[cfg(feature = "server")]
 use actix_web::rt;
-use trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient;
+
 
 use crate::cli_args::Cli;
 use async_openai::{config::OpenAIConfig, Client};
