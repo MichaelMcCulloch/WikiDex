@@ -6,8 +6,8 @@ const SFN_REGEX: &str = "(S|s)fn";
 
 const BOOK_REGEX: &str = "(B|b)ook";
 const ENCYCLOPEDIA_REGEX: &str = "(E|e)ncyclopedia";
-const JOURNAL_REGEX: &str = "(J|j)ournal";
 const MAGAZINE_REGEX: &str = "(M|m)agazine";
+const JOURNAL_REGEX: &str = "(J|j)ournal";
 const NEWS_REGEX: &str = "(N|n)ews";
 const WEB_REGEX: &str = "(W|w)eb";
 const REFN_REGEX: &str = "(R|r)efn";
