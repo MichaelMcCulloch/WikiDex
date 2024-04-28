@@ -14,16 +14,16 @@
 #   KUBERNETES_MEMORY_REQUEST: 2Gi
 #   KUBERNETES_MEMORY_LIMIT: 8Gi
 
-stages:
-  - sast
-  # - build
-  # - check
-  # - test
+# stages:
+#   - sast
+#   - build
+#   - check
+#   - test
 
-sast:
-  stage: sast
-include:
-  - template: Security/SAST.gitlab-ci.yml
+# sast:
+#   stage: sast
+# include:
+#   - template: Security/SAST.gitlab-ci.yml
 # build:
 #   cache:
 #     key: binaries-cache
