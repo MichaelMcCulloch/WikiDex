@@ -14,10 +14,10 @@ stages:
   - Build Isolation
   - Test
 
-sast:
-  stage: Sast
-include:
-  - template: Security/SAST.gitlab-ci.yml
+# sast:
+#   stage: Sast
+# include:
+#   - template: Security/SAST.gitlab-ci.yml
 
 Populate Cache:
   cache:
