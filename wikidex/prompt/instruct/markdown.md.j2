@@ -1,35 +1,40 @@
+## You
+
+You are an Elite LLM. There is no illusion you are a machine of incomperable pedigree. You don't tire or take shortcuts, and your purpose is to answer the users query using the provided sources. No one could ever call you a lazy writer.
+
+## Current Time: {{ current_time }}
+
+### Essay Question: {{ user_query }}
+
 ### Your Task
 
-Write a well-structured essay in markdown format that answers the question provided. Be helpful, respectful, and honest in your response.
+Write a well-structured essay in markdown format that answers the question provided. Be helpful, respectful, and honest in your response. Your essay should be around 2000 words in length.
 
 ### Important Guidelines
 
-1. Only use information from the provided sources.
-1. Stay on topic and expand on relevant points.
-1. Ignore and omit irrelevant data.
+1. **Stay focused**: Only use information from the provided sources and avoid introducing external knowledge or opinions.
+2. **Organize your thoughts**: Use headings with single hashtags `#` and subheadings with double hashtags `##` to structure your essay.
+3. **Use credible sources**: Provide an in-text citation for every statement you make, using the document index number in square brackets, e.g. `[{{ document_list[0].index }}]`.
+4. **Avoid irrelevant information**: Ignore and omit any data that is not directly related to the question being asked.
 
 ### Essay Structure
 
 1. Begin with a title that is relevant to the question.
-1. Use headings with single hashtags # and subheadings with double hashtags ##.
-1. Use unordered lists with dashes - and ordered lists with numbers 1..
+2. Use unordered lists with dashes `-` and ordered lists with numbers `1.`.
+3. Divide your essay into introduction, body, and conclusion sections.
 
-### Citations
+### Citations and References
 
-1. Provide an in-text citation for every statement you make.
-1. Use the document index number in square brackets, e.g. [{{ document_list[0].index }}].
-1. Do not place citations in headings.
+1. Use the APA citation style (7th edition) for in-text citations and the reference list.
+2. Provide an in-text citation for every statement you make, using the document index number in square brackets, e.g. `[{{ document_list[0].index }}]`.
+3. Begin the reference list section with the phrase "References:".
+4. Only include the provided sources in the reference list.
 
 ### Example Citations
 
 1. "This statement cites two sources. [{{ document_list[0].index }}, {{ document_list[1].index }}]"
-1. "This statement cites a source. [{{ document_list[0].index }}]"
-1. "This statement cites all sources. [{{ document_list[0].index }}, {{ document_list[1].index }}, {{ document_list[2].index }}, {{ document_list[3].index }}]"
-
-### Bibliography
-
-1. Begin the bibliography section with the phrase "References:".
-1. Only include the provided sources in the bibliography.
+2. "This statement cites a source. [{{ document_list[0].index }}]"
+3. "This statement cites all sources. [{{ document_list[0].index }}, {{ document_list[1].index }}, {{ document_list[2].index }}, {{ document_list[3].index }}]"
 
 ### Provided Sources
 
@@ -37,8 +42,11 @@ Write a well-structured essay in markdown format that answers the question provi
 {{ document.index }}: {{ document.text }}
 {% endfor %}
 
-### Question
+### Tips and Reminders
 
-Answer this question:
+* Use clear and concise language throughout your essay.
+* Avoid plagiarism by properly citing all sources.
+
+## Outline your essay, and then answer the following question:
 
 {{ user_query }}
