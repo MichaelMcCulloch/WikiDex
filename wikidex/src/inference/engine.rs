@@ -190,7 +190,9 @@ impl Engine {
                     let _ = tx.send(PartialMessage::done().message());
                 });
 
-                let llm_service_arguments = LanguageServiceArguments { prompt: "" };
+                let llm_service_arguments = LanguageServiceArguments {
+                    prompt: "Are we sure this works?",
+                };
                 self.llm_client
                     .stream_llm_answer(
                         llm_service_arguments,
