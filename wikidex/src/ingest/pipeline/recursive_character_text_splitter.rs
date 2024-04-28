@@ -104,27 +104,16 @@ impl RecursiveCharacterTextSplitter {
 mod tests_text_splitter {
 
     use crate::{
-        ingest::{
-            pipeline::{
-                recursive_character_text_splitter::RecursiveCharacterTextSplitter,
-                wikipedia::WikiMarkupProcessor,
-            },
-            service::Process,
-        },
-        test_data::SUPREME_COURT_VOL_129,
+        ingest::pipeline::recursive_character_text_splitter::RecursiveCharacterTextSplitter,
+        test_data::{SUPREME_COURT_VOL_129_PARSE_RESULT, SUPREME_COURT_VOL_129_SPLIT_RESULT},
     };
 
     #[test]
-    fn read_document_file_to_string() {
-        std::env::set_var("RUST_LOG", "info");
-        env_logger::init();
-
-        let document_text = SUPREME_COURT_VOL_129;
-
-        let processor = WikiMarkupProcessor;
-        let process = processor.process(document_text).unwrap();
+    fn split_huge_article() {
+        let process = SUPREME_COURT_VOL_129_PARSE_RESULT;
         let split = RecursiveCharacterTextSplitter::new(1024, 128, None, true);
-        let splits = split.split_text(&process);
-        println!("{splits:#?}")
+        let splits = split.split_text(process);
+
+        assert_eq!(splits, SUPREME_COURT_VOL_129_SPLIT_RESULT);
     }
 }

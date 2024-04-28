@@ -182,43 +182,43 @@ fn new_progress_bar(multibar: &MultiProgress, limit: u64) -> Arc<ProgressBar> {
     pb.set_style(sty);
     Arc::new(pb)
 }
-#[cfg(test)]
-mod test {
+// #[cfg(test)]
+// mod test {
 
-    use async_openai::{config::OpenAIConfig, Client};
-    use indicatif_log_bridge::LogWrapper;
+//     use async_openai::{config::OpenAIConfig, Client};
+//     use indicatif_log_bridge::LogWrapper;
 
-    use super::*;
+//     use super::*;
 
-    #[tokio::test(flavor = "multi_thread", worker_threads = 32)]
-    async fn test() -> Result<(), PipelineError> {
-        log::info!("ok");
+//     #[tokio::test(flavor = "multi_thread", worker_threads = 32)]
+//     async fn test() -> Result<(), PipelineError> {
+//         log::info!("ok");
 
-        let logger =
-            env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
-                .build();
+//         let logger =
+//             env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+//                 .build();
 
-        let multi_progress = MultiProgress::new();
+//         let multi_progress = MultiProgress::new();
 
-        LogWrapper::new(multi_progress.clone(), logger)
-            .try_init()
-            .unwrap();
+//         LogWrapper::new(multi_progress.clone(), logger)
+//             .try_init()
+//             .unwrap();
 
-        let pipeline = PipelineProcessor;
-        let openai_config = OpenAIConfig::new().with_api_base("http://localhost:9000/v1");
-        let open_ai_client: Client<OpenAIConfig> = Client::with_config(openai_config);
-        let embedding_client =
-            EmbeddingClient::new(open_ai_client, "thenlper/gte-small".to_string());
+//         let pipeline = PipelineProcessor;
+//         let openai_config = OpenAIConfig::new().with_api_base("http://localhost:9000/v1");
+//         let open_ai_client: Client<OpenAIConfig> = Client::with_config(openai_config);
+//         let embedding_client =
+//             EmbeddingClient::new(open_ai_client, "thenlper/gte-small".to_string());
 
-        let _ = pipeline
-            .process(
-                &multi_progress,
-                PathBuf::from("/home/michael/Desktop/wikisql/enwiki-20240420-pages-articles.xml"),
-                PathBuf::from("/home/michael/Desktop/wikisql/wikipedia_docstore_20240420.sqlite"),
-                embedding_client,
-            )
-            .await;
+//         let _ = pipeline
+//             .process(
+//                 &multi_progress,
+//                 PathBuf::from("/home/michael/Desktop/wikisql/enwiki-20240420-pages-articles.xml"),
+//                 PathBuf::from("/home/michael/Desktop/wikisql/wikipedia_docstore_20240420.sqlite"),
+//                 embedding_client,
+//             )
+//             .await;
 
-        Ok(())
-    }
-}
+//         Ok(())
+//     }
+// }

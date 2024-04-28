@@ -76,7 +76,7 @@ opt-level = 3
 debug = 0
 
 [features]
-default = ["sqlite", "server"]
+default = ["sqlite", "server", "ingest"]
 server = [
     "dep:actix-cors",
     "dep:face-api",
@@ -89,7 +89,7 @@ server = [
 ]
 ingest = [
     "dep:async-compat",
-    "dep:faiss",
+    # "dep:faiss",
     "dep:fbthrift-transport",
     "dep:http",
     "dep:indicatif-log-bridge",

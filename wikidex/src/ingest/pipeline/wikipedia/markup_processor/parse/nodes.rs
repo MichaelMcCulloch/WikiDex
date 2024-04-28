@@ -166,7 +166,7 @@ mod tests_node_to_string {
         ingest::pipeline::wikipedia::{
             configurations::WIKIPEDIA_CONFIGURATION, markup_processor::parse::Regexes,
         },
-        test_data::SUPREME_COURT_VOL_129,
+        test_data::{SUPREME_COURT_VOL_129_MARKUP, SUPREME_COURT_VOL_129_PARSE_RESULT},
     };
 
     use super::process_to_article;
@@ -177,12 +177,12 @@ mod tests_node_to_string {
         env_logger::init();
         let configuration = Configuration::new(WIKIPEDIA_CONFIGURATION);
 
-        let document_text = SUPREME_COURT_VOL_129;
+        let document_text = SUPREME_COURT_VOL_129_MARKUP;
 
         let parse = configuration.parse(document_text).nodes;
         let regex = Regexes::new();
 
         let process = process_to_article(&parse, &regex).unwrap();
-        println!("{process}")
+        assert_eq!(process, SUPREME_COURT_VOL_129_PARSE_RESULT);
     }
 }
