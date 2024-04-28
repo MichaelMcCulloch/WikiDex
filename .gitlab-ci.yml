@@ -9,15 +9,15 @@ variables:
 stages:
   - Cache
   - Check
-  # - Sast # A few issues found
+  - Sast
   - Check Isolation
   - Build Isolation
   - Test
 
-# sast:
-#   stage: Sast
-# include:
-#   - template: Security/SAST.gitlab-ci.yml
+sast:
+  stage: Sast
+include:
+  - template: Security/SAST.gitlab-ci.yml
 
 Populate Cache:
   cache:
@@ -36,74 +36,25 @@ Populate Cache:
     - cd wikidex
     - cargo fetch
 
-# Scanning Cargo.lock for vulnerabilities (445 crate dependencies)
-# Crate:     rsa
-# Version:   0.9.6
-# Title:     Marvin Attack: potential key recovery through timing sidechannels
-# Date:      2023-11-22
-# ID:        RUSTSEC-2023-0071
-# URL:       https://rustsec.org/advisories/RUSTSEC-2023-0071
-# Severity:  5.9 (medium)
-# Solution:  No fixed upgrade is available!
-# Dependency tree:
-# rsa 0.9.6
-# └── sqlx-mysql 0.7.4
-#     ├── sqlx-macros-core 0.7.4
-#     │   └── sqlx-macros 0.7.4
-#     │       └── sqlx 0.7.4
-#     │           └── wikidex 0.1.0
-#     └── sqlx 0.7.4
-# Crate:     rustls
-# Version:   0.22.3
-# Title:     `rustls::ConnectionCommon::complete_io` could fall into an infinite loop based on network input
-# Date:      2024-04-19
-# ID:        RUSTSEC-2024-0336
-# URL:       https://rustsec.org/advisories/RUSTSEC-2024-0336
-# Severity:  7.5 (high)
-# Solution:  Upgrade to >=0.23.5 OR >=0.22.4, <0.23.0 OR >=0.21.11, <0.22.0
-# Dependency tree:
-# rustls 0.22.3
-# ├── tokio-rustls 0.25.0
-# │   ├── reqwest 0.12.3
-# │   │   ├── reqwest-eventsource 0.6.0
-# │   │   │   └── async-openai 0.20.0
-# │   │   │       └── wikidex 0.1.0
-# │   │   └── async-openai 0.20.0
-# │   └── hyper-rustls 0.26.0
-# │       └── reqwest 0.12.3
-# ├── reqwest 0.12.3
-# └── hyper-rustls 0.26.0
-# Crate:     const-cstr
-# Version:   0.3.0
-# Warning:   unsound
-# Title:     const-cstr is Unmaintained
-# Date:      2023-03-12
-# ID:        RUSTSEC-2023-0020
-# URL:       https://rustsec.org/advisories/RUSTSEC-2023-0020
-# Dependency tree:
-# const-cstr 0.3.0
-# ├── nebula-fbthrift-graph-v3 0.3.0
-# └── nebula-fbthrift-graph-v3 0.3.0
-#     └── wikidex 0.1.0
-# error: 2 vulnerabilities found!
-# warning: 1 allowed warning found
-
-# Audit Everything:
-#   cache:
-#     - key: binaries-cache
-#       paths:
-#         - wikidex/target/*
-#     - key: apt-cache
-#       paths:
-#         - /var/cache/apt/*
-#   image: rust:latest
-#   stage: Sast
-#   script:
-#     - apt-get update
-#     - apt-get install -y $APT_COMMON cargo
-#     - cargo install cargo-audit
-#     - cd wikidex
-#     - cargo audit
+Audit Everything:
+  cache:
+    - key: binaries-cache
+      paths:
+        - wikidex/target/*
+    - key: apt-cache
+      paths:
+        - /var/cache/apt/*
+  image: rust:latest
+  stage: Sast
+  allow_failure:
+    exit_codes:
+      - 1
+  script:
+    - apt-get update
+    - apt-get install -y $APT_COMMON cargo
+    - cargo install cargo-audit
+    - cd wikidex
+    - cargo audit
 
 Check Everything - PostgreSQL:
   cache:
