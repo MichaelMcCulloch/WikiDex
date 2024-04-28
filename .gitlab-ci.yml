@@ -7,8 +7,8 @@
 # See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
 
 variables:
-  DATABASE_URL: "sqlite://sqlite_dummy.db"
-
+  DATABASE_URL: sqlite://sqlite_dummy.db
+  APT_COMMON: cmake pkg-config libssl-dev liblapack-dev libblas-dev protobuf-compiler
 #   KUBERNETES_CPU_REQUEST: 400m
 #   KUBERNETES_CPU_LIMIT: 12000m
 #   KUBERNETES_MEMORY_REQUEST: 2Gi
@@ -35,7 +35,7 @@ Check Everything - PostgreSQL:
   stage: check
   script:
     - apt-get update
-    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - apt-get install -y $APT_COMMON
     - cd wikidex
     - cargo check --no-default-features --features ingest,server,sqlite
 
@@ -48,7 +48,7 @@ Check Server + SQLite:
   stage: check-isolation
   script:
     - apt-get update
-    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - apt-get install -y $APT_COMMON
     - cd wikidex
     - cargo check --no-default-features --features server,sqlite
 
@@ -61,7 +61,7 @@ Check Ingest + SQLite:
   stage: check-isolation
   script:
     - apt-get update
-    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - apt-get install -y $APT_COMMON
     - cd wikidex
     - cargo check --no-default-features --features ingest,sqlite
 
@@ -74,7 +74,7 @@ Build Server + SQLite:
   stage: build-isolation
   script:
     - apt-get update
-    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - apt-get install -y $APT_COMMON
     - cd wikidex
     - cargo build --no-default-features --features server,sqlite
 
@@ -87,7 +87,7 @@ Build Ingest + SQLite:
   stage: build-isolation
   script:
     - apt-get update
-    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - apt-get install -y $APT_COMMON
     - cd wikidex
     - cargo build --no-default-features --features ingest,sqlite
 
@@ -100,6 +100,6 @@ Test Everything:
   stage: test
   script:
     - apt-get update
-    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - apt-get install -y $APT_COMMON
     - cd wikidex
     - cargo test --package wikidex --bin wikidex --no-default-features --features sqlite,server,ingest -- --exact --show-output  --nocapture
