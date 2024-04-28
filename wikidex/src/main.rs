@@ -22,6 +22,8 @@ use crate::embedding_client::EmbeddingClient;
 use crate::ingest::pipeline::PipelineProcessor;
 #[cfg(feature = "server")]
 use actix_web::rt;
+
+#[cfg(feature = "server")]
 use trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient;
 
 use crate::cli_args::Cli;
