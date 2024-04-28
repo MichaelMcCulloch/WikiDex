@@ -8,10 +8,8 @@ variables:
 
 stages:
   - Cache
-  - Check
   - Sast
-  - Check Isolation
-  - Build Isolation
+  - Build
   - Test
 
 sast:
@@ -62,63 +60,6 @@ Audit Everything:
     - cd wikidex
     - cargo audit
 
-Check Everything - PostgreSQL:
-  cache:
-    - key: binaries-cache
-      paths:
-        - wikidex/target/*
-    - key: apt-cache
-      paths:
-        - /var/cache/apt/*
-    - key: cargo-registry
-      paths:
-        - /root/.cargo/registry/*
-  image: rust:latest
-  stage: Check
-  script:
-    - apt-get update
-    - apt-get install -y $APT_COMMON
-    - cd wikidex
-    - cargo check --no-default-features --features ingest,server,sqlite
-
-Check Server + SQLite:
-  cache:
-    - key: binaries-cache
-      paths:
-        - wikidex/target/*
-    - key: apt-cache
-      paths:
-        - /var/cache/apt/*
-    - key: cargo-registry
-      paths:
-        - /root/.cargo/registry/*
-  image: rust:latest
-  stage: Check Isolation
-  script:
-    - apt-get update
-    - apt-get install -y $APT_COMMON
-    - cd wikidex
-    - cargo check --no-default-features --features server,sqlite
-
-Check Ingest + SQLite:
-  cache:
-    - key: binaries-cache
-      paths:
-        - wikidex/target/*
-    - key: apt-cache
-      paths:
-        - /var/cache/apt/*
-    - key: cargo-registry
-      paths:
-        - /root/.cargo/registry/*
-  image: rust:latest
-  stage: Check Isolation
-  script:
-    - apt-get update
-    - apt-get install -y $APT_COMMON
-    - cd wikidex
-    - cargo check --no-default-features --features ingest,sqlite
-
 Build Server + SQLite:
   cache:
     - key: binaries-cache
@@ -131,7 +72,7 @@ Build Server + SQLite:
       paths:
         - /root/.cargo/registry/*
   image: rust:latest
-  stage: Build Isolation
+  stage: Build
   script:
     - apt-get update
     - apt-get install -y $APT_COMMON
@@ -150,7 +91,7 @@ Build Ingest + SQLite:
       paths:
         - /root/.cargo/registry/*
   image: rust:latest
-  stage: Build Isolation
+  stage: Build
   script:
     - apt-get update
     - apt-get install -y $APT_COMMON
