@@ -102,7 +102,6 @@ impl RecursiveCharacterTextSplitter {
 
 #[cfg(test)]
 mod tests_text_splitter {
-
     use crate::{
         ingest::pipeline::recursive_character_text_splitter::RecursiveCharacterTextSplitter,
         test_data::{SUPREME_COURT_VOL_129_PARSE_RESULT, SUPREME_COURT_VOL_129_SPLIT_RESULT},
