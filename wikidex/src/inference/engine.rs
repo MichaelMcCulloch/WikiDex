@@ -1,11 +1,12 @@
 use bytes::Bytes;
+use chrono::{DateTime, Utc};
 
 use std::{
     collections::HashMap,
     ops::DerefMut,
     path::PathBuf,
     sync::{Arc, RwLock},
-    time::Duration,
+    time::{Duration, SystemTime},
 };
 use tera::{Context, Tera};
 use tokio::{
@@ -132,7 +133,6 @@ impl Engine {
         match messages.into_iter().last() {
             Some(Message::User(user_query)) => {
                 let documents = self.get_documents(&user_query).await?;
-
                 let prompt = self.format_rag_template(&documents, &user_query)?;
 
                 let sources = organize_sources(documents, num_sources);
@@ -238,6 +238,10 @@ impl Engine {
         let mut context = Context::new();
         context.insert("document_list", documents);
         context.insert("user_query", user_query);
+        context.insert(
+            "current_time",
+            &DateTime::<Utc>::from(SystemTime::now()).to_rfc3339(),
+        );
         let prompt = self
             .system_prompt
             .read()

@@ -175,6 +175,7 @@ services:
       ]
 
   triton:
+    container_name: wikidex-triton-mistral-7b-instruct
     <<:
       - *base_service_nvidia
       - *base_triton
@@ -315,6 +316,7 @@ services:
       ]
 
   wikidex-trt:
+    container_name: wikidex-wikidex-1
     <<:
       - *base_service
       - *base_wikidex
