@@ -14,13 +14,7 @@ pub(crate) struct Splitter {
 }
 
 // WARN: You need a lot of memory to use this in conjunction with the wikipedia dump reader; 128GB is not enough for a full dump of wikipedia.
-impl Splitter {
-    pub(crate) fn new(splitter: RecursiveCharacterTextSplitter) -> Self {
-        Self {
-            splitter: Arc::new(splitter),
-        }
-    }
-}
+impl Splitter {}
 impl PipelineStep<true> for Splitter {
     type IN = DocumentHeading;
 
