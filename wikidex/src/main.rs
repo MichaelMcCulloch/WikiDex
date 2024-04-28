@@ -23,6 +23,7 @@ use crate::ingest::pipeline::PipelineProcessor;
 #[cfg(feature = "server")]
 use actix_web::rt;
 
+use crate::cli_args::Cli;
 use async_openai::{config::OpenAIConfig, Client};
 use cli_args::Commands;
 #[cfg(feature = "ingest")]
@@ -32,7 +33,6 @@ use docstore::Docstore;
 
 #[cfg(feature = "server")]
 use crate::{
-    cli_args::Cli,
     docstore::DocumentStoreImpl,
     index::FaceIndex,
     inference::Engine,
@@ -43,8 +43,6 @@ use crate::{
 use indicatif::MultiProgress;
 #[cfg(feature = "ingest")]
 use indicatif_log_bridge::LogWrapper;
-
-use trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient;
 
 #[cfg(feature = "server")]
 use config::server::Config as ServerConfig;
