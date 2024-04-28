@@ -88,11 +88,7 @@ impl Engine {
                 let prompt = self.format_rag_template(&documents, &user_query)?;
                 let sources = organize_sources(documents, num_sources);
 
-                let llm_service_arguments = LanguageServiceArguments {
-                    prompt: &prompt,
-                    query: &user_query,
-                    indices: &sources.iter().map(|d| d.index).collect(),
-                };
+                let llm_service_arguments = LanguageServiceArguments { prompt: &prompt };
 
                 let LlmMessage { role, content } = self
                     .llm_client
@@ -194,11 +190,7 @@ impl Engine {
                     let _ = tx.send(PartialMessage::done().message());
                 });
 
-                let llm_service_arguments = LanguageServiceArguments {
-                    prompt: &prompt,
-                    query: &user_query,
-                    indices: &sources.iter().map(|d| d.index).collect(),
-                };
+                let llm_service_arguments = LanguageServiceArguments { prompt: todo!() };
                 self.llm_client
                     .stream_llm_answer(
                         llm_service_arguments,
