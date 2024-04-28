@@ -15,8 +15,8 @@ variables:
 #   KUBERNETES_MEMORY_LIMIT: 8Gi
 
 stages:
-  - sast
   - check
+  - sast
   - check-isolation
   - build-isolation
   - test
@@ -25,6 +25,48 @@ sast:
   stage: sast
 include:
   - template: Security/SAST.gitlab-ci.yml
+
+Audit Everything:
+  cache:
+    key: binaries-cache
+    paths:
+      - wikidex/target/*
+  image: rust:latest
+  stage: sast
+  script:
+    - apt-get update
+    - apt-get install -y $APT_COMMON cargo
+    - cargo install cargo-audit
+    - cd wikidex
+    - cargo audit
+
+Audit Server + SQLite:
+  cache:
+    key: binaries-cache
+    paths:
+      - wikidex/target/*
+  image: rust:latest
+  stage: sast
+  script:
+    - apt-get update
+    - apt-get install -y $APT_COMMON cargo
+    - cargo install cargo-audit
+    - cd wikidex
+    - cargo audit --no-default-features --features server,sqlite
+
+Audit Ingest + SQLite:
+  cache:
+    key: binaries-cache
+    paths:
+      - wikidex/target/*
+  image: rust:latest
+  stage: sast
+  script:
+    - apt-get update
+    - apt-get install -y $APT_COMMON cargo
+    - cargo install cargo-audit
+    - cd wikidex
+    - cargo audit --no-default-features --features ingest,sqlite
 
 Check Everything - PostgreSQL:
   cache:
