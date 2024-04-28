@@ -1,8 +1,8 @@
 use regex::Regex;
 
 const CITATION_REGEX: &str = "(C|c)ite|(C|c)itation";
-const SFN_REGEX: &str = "(S|s)fn";
 const SFNM_REGEX: &str = "(S|s)fnm";
+const SFN_REGEX: &str = "(S|s)fn";
 
 const BOOK_REGEX: &str = "(B|b)ook";
 const ENCYCLOPEDIA_REGEX: &str = "(E|e)ncyclopedia";
