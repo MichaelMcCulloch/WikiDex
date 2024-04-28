@@ -129,7 +129,7 @@ impl Engine {
         match messages.into_iter().last() {
             Some(Message::User(user_query)) => {
                 let documents = self.get_documents(&user_query).await?;
-                let prompt = self.format_rag_template(&documents, &user_query)?;
+                let _prompt = self.format_rag_template(&documents, &user_query)?;
 
                 let sources = organize_sources(documents, num_sources);
 
@@ -190,7 +190,7 @@ impl Engine {
                     let _ = tx.send(PartialMessage::done().message());
                 });
 
-                let llm_service_arguments = LanguageServiceArguments { prompt: todo!() };
+                let llm_service_arguments = LanguageServiceArguments { prompt: "" };
                 self.llm_client
                     .stream_llm_answer(
                         llm_service_arguments,
