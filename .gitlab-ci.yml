@@ -15,15 +15,15 @@ variables:
   KUBERNETES_MEMORY_LIMIT: 8Gi
 
 stages:
-  - cache
-  - check
-  - sast
-  - check-isolation
-  - build-isolation
-  - test
+  - Cache
+  - Check
+  - Sast
+  - Check Isolation
+  - Build Isolation
+  - Test
 
 sast:
-  stage: sast
+  stage: Sast
 include:
   - template: Security/SAST.gitlab-ci.yml
 
@@ -36,7 +36,7 @@ Populate Cache:
       paths:
         - /var/cache/apt/*
   image: rust:latest
-  stage: cache
+  stage: Cache
   script:
     - apt-get update
     - apt-get install -y $APT_COMMON cargo
@@ -53,7 +53,7 @@ Audit Everything:
       paths:
         - /var/cache/apt/*
   image: rust:latest
-  stage: sast
+  stage: Sast
   script:
     - apt-get update
     - apt-get install -y $APT_COMMON cargo
@@ -70,7 +70,7 @@ Check Everything - PostgreSQL:
       paths:
         - /var/cache/apt/*
   image: rust:latest
-  stage: check
+  stage: Check
   script:
     - apt-get update
     - apt-get install -y $APT_COMMON
@@ -86,7 +86,7 @@ Check Server + SQLite:
       paths:
         - /var/cache/apt/*
   image: rust:latest
-  stage: check-isolation
+  stage: Check Isolation
   script:
     - apt-get update
     - apt-get install -y $APT_COMMON
@@ -102,7 +102,7 @@ Check Ingest + SQLite:
       paths:
         - /var/cache/apt/*
   image: rust:latest
-  stage: check-isolation
+  stage: Check Isolation
   script:
     - apt-get update
     - apt-get install -y $APT_COMMON
@@ -118,7 +118,7 @@ Build Server + SQLite:
       paths:
         - /var/cache/apt/*
   image: rust:latest
-  stage: build-isolation
+  stage: Build Isolation
   script:
     - apt-get update
     - apt-get install -y $APT_COMMON
@@ -134,7 +134,7 @@ Build Ingest + SQLite:
       paths:
         - /var/cache/apt/*
   image: rust:latest
-  stage: build-isolation
+  stage: Build Isolation
   script:
     - apt-get update
     - apt-get install -y $APT_COMMON
@@ -150,7 +150,7 @@ Test Everything:
       paths:
         - /var/cache/apt/*
   image: rust:latest
-  stage: test
+  stage: Test
   script:
     - apt-get update
     - apt-get install -y $APT_COMMON
