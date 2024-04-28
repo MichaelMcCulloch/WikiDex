@@ -6,8 +6,8 @@
 # Note that environment variables can be set in several places
 # See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
 
-# variables:
-#   DATABASE_URL: "sqlite://sqlite_dummy.db"
+variables:
+  DATABASE_URL: "sqlite://sqlite_dummy.db"
 
 #   KUBERNETES_CPU_REQUEST: 400m
 #   KUBERNETES_CPU_LIMIT: 12000m
@@ -16,112 +16,90 @@
 
 stages:
   - sast
-  # - build
-  # - check
-  # - test
+  - check
+  - check-isolation
+  - build-isolation
+  - test
 
 sast:
   stage: sast
 include:
   - template: Security/SAST.gitlab-ci.yml
-# build:
-#   cache:
-#     key: binaries-cache
-#     paths:
-#       - core/target/*
-#   image: rust:latest
-#   stage: build
-#   script:
-#     - apt-get update
-#     - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
-#     - cd core
-#     - cargo check
 
-# ingest:
-#   cache:
-#     key: binaries-cache
-#     paths:
-#       - core/target/*
-#   image: rust:latest
-#   stage: check
-#   script:
-#     - apt-get update
-#     - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
-#     - cd core
-#     - cargo check --no-default-features --features ingest
+Check Everything - PostgreSQL:
+  cache:
+    key: binaries-cache
+    paths:
+      - wikidex/target/*
+  image: rust:latest
+  stage: check
+  script:
+    - apt-get update
+    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - cd wikidex
+    - cargo check --no-default-features --features ingest,server,sqlite
 
-# server:
-#   cache:
-#     key: binaries-cache
-#     paths:
-#       - core/target/*
-#   image: rust:latest
-#   stage: check
-#   script:
-#     - apt-get update
-#     - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
-#     - cd core
-#     - cargo check --no-default-features --features server
+Check Server + SQLite:
+  cache:
+    key: binaries-cache
+    paths:
+      - wikidex/target/*
+  image: rust:latest
+  stage: check-isolation
+  script:
+    - apt-get update
+    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - cd wikidex
+    - cargo check --no-default-features --features server,sqlite
 
-# face:
-#   variables:
-#     CUDA_PATH: "/usr/local/cuda"
-#   cache:
-#     key: faiss-cache
-#     paths:
-#       - face/target/*
-#   cache:
-#     key: rustup
-#     paths:
-#       - /root/.cargo
-#   cache:
-#     key: apt
-#     paths:
-#       - /var/cache/apt/archives
-#   image: nvidia/cuda:12.3.2-devel-ubuntu22.04
-#   stage: check
-#   tags:
-#     - CUDA
-#   script:
-#     - apt update
-#     - apt install -y pkg-config libssl-dev liblapack-dev libblas-dev curl wget
-#     - apt remove -y --purge --auto-remove cmake
-#     - apt update
-#     - apt install -y software-properties-common lsb-release && \
-#     - apt clean all
-#     - wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
-#     - apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main"
-#     - apt update
-#     - apt install -y kitware-archive-keyring
-#     - rm /etc/apt/trusted.gpg.d/kitware.gpg
-#     - apt update
-#     - apt install -y cmake
-#     - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-#     - cd face
-#     - $HOME/.cargo/bin/cargo check
+Check Ingest + SQLite:
+  cache:
+    key: binaries-cache
+    paths:
+      - wikidex/target/*
+  image: rust:latest
+  stage: check-isolation
+  script:
+    - apt-get update
+    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - cd wikidex
+    - cargo check --no-default-features --features ingest,sqlite
 
-# breeder:
-#   cache:
-#     key: binaries-cache
-#     paths:
-#       - core/target/*
-#   image: rust:latest
-#   stage: check
-#   script:
-#     - apt-get update
-#     - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
-#     - cd core
-#     - cargo check --no-default-features --features breeder
+Build Server + SQLite:
+  cache:
+    key: binaries-cache
+    paths:
+      - wikidex/target/*
+  image: rust:latest
+  stage: build-isolation
+  script:
+    - apt-get update
+    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - cd wikidex
+    - cargo build --no-default-features --features server,sqlite
 
-# test:
-#   cache:
-#     key: binaries-cache
-#     paths:
-#       - core/target/*
-#   image: rust:latest
-#   stage: test
-#   script:
-#     - apt-get update
-#     - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
-#     - cd core
-#     - "cargo test --package wikidex --bin wikidex --no-default-features --features breeder -- breeder::operator::"
+Build Ingest + SQLite:
+  cache:
+    key: binaries-cache
+    paths:
+      - wikidex/target/*
+  image: rust:latest
+  stage: build-isolation
+  script:
+    - apt-get update
+    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - cd wikidex
+    - cargo build --no-default-features --features ingest,sqlite
+
+Test Everything:
+  cache:
+    key: binaries-cache
+    paths:
+      - wikidex/target/*
+  image: rust:latest
+  stage: test
+  script:
+    - apt-get update
+    - apt-get install -y cmake pkg-config libssl-dev liblapack-dev libblas-dev
+    - cd wikidex
+    - cargo test --package wikidex --bin wikidex --no-default-features --features sqlite,server,ingest -- --exact --show-output  --nocapture
