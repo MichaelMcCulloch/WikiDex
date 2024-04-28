@@ -9,12 +9,13 @@
 variables:
   DATABASE_URL: sqlite://sqlite_dummy.db
   APT_COMMON: cmake pkg-config libssl-dev liblapack-dev libblas-dev protobuf-compiler
-#   KUBERNETES_CPU_REQUEST: 400m
-#   KUBERNETES_CPU_LIMIT: 12000m
-#   KUBERNETES_MEMORY_REQUEST: 2Gi
-#   KUBERNETES_MEMORY_LIMIT: 8Gi
+  KUBERNETES_CPU_REQUEST: 400m
+  KUBERNETES_CPU_LIMIT: 12000m
+  KUBERNETES_MEMORY_REQUEST: 2Gi
+  KUBERNETES_MEMORY_LIMIT: 8Gi
 
 stages:
+  - cache
   - check
   - sast
   - check-isolation
@@ -26,11 +27,31 @@ sast:
 include:
   - template: Security/SAST.gitlab-ci.yml
 
+Populate Cache:
+  cache:
+    - key: binaries-cache
+      paths:
+        - wikidex/target/*
+    - key: apt-cache
+      paths:
+        - /var/cache/apt/*
+  image: rust:latest
+  stage: cache
+  script:
+    - apt-get update
+    - apt-get install -y $APT_COMMON cargo
+    - cargo install cargo-audit
+    - cd wikidex
+    - cargo fetch
+
 Audit Everything:
   cache:
-    key: binaries-cache
-    paths:
-      - wikidex/target/*
+    - key: binaries-cache
+      paths:
+        - wikidex/target/*
+    - key: apt-cache
+      paths:
+        - /var/cache/apt/*
   image: rust:latest
   stage: sast
   script:
@@ -40,39 +61,14 @@ Audit Everything:
     - cd wikidex
     - cargo audit
 
-Audit Server + SQLite:
-  cache:
-    key: binaries-cache
-    paths:
-      - wikidex/target/*
-  image: rust:latest
-  stage: sast
-  script:
-    - apt-get update
-    - apt-get install -y $APT_COMMON cargo
-    - cargo install cargo-audit
-    - cd wikidex
-    - cargo audit --no-default-features --features server,sqlite
-
-Audit Ingest + SQLite:
-  cache:
-    key: binaries-cache
-    paths:
-      - wikidex/target/*
-  image: rust:latest
-  stage: sast
-  script:
-    - apt-get update
-    - apt-get install -y $APT_COMMON cargo
-    - cargo install cargo-audit
-    - cd wikidex
-    - cargo audit --no-default-features --features ingest,sqlite
-
 Check Everything - PostgreSQL:
   cache:
-    key: binaries-cache
-    paths:
-      - wikidex/target/*
+    - key: binaries-cache
+      paths:
+        - wikidex/target/*
+    - key: apt-cache
+      paths:
+        - /var/cache/apt/*
   image: rust:latest
   stage: check
   script:
@@ -83,9 +79,12 @@ Check Everything - PostgreSQL:
 
 Check Server + SQLite:
   cache:
-    key: binaries-cache
-    paths:
-      - wikidex/target/*
+    - key: binaries-cache
+      paths:
+        - wikidex/target/*
+    - key: apt-cache
+      paths:
+        - /var/cache/apt/*
   image: rust:latest
   stage: check-isolation
   script:
@@ -96,9 +95,12 @@ Check Server + SQLite:
 
 Check Ingest + SQLite:
   cache:
-    key: binaries-cache
-    paths:
-      - wikidex/target/*
+    - key: binaries-cache
+      paths:
+        - wikidex/target/*
+    - key: apt-cache
+      paths:
+        - /var/cache/apt/*
   image: rust:latest
   stage: check-isolation
   script:
@@ -109,9 +111,12 @@ Check Ingest + SQLite:
 
 Build Server + SQLite:
   cache:
-    key: binaries-cache
-    paths:
-      - wikidex/target/*
+    - key: binaries-cache
+      paths:
+        - wikidex/target/*
+    - key: apt-cache
+      paths:
+        - /var/cache/apt/*
   image: rust:latest
   stage: build-isolation
   script:
@@ -122,9 +127,12 @@ Build Server + SQLite:
 
 Build Ingest + SQLite:
   cache:
-    key: binaries-cache
-    paths:
-      - wikidex/target/*
+    - key: binaries-cache
+      paths:
+        - wikidex/target/*
+    - key: apt-cache
+      paths:
+        - /var/cache/apt/*
   image: rust:latest
   stage: build-isolation
   script:
@@ -135,9 +143,12 @@ Build Ingest + SQLite:
 
 Test Everything:
   cache:
-    key: binaries-cache
-    paths:
-      - wikidex/target/*
+    - key: binaries-cache
+      paths:
+        - wikidex/target/*
+    - key: apt-cache
+      paths:
+        - /var/cache/apt/*
   image: rust:latest
   stage: test
   script:
