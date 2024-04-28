@@ -17,9 +17,7 @@ pub(crate) struct Splitter {
 impl Splitter {}
 impl PipelineStep<true> for Splitter {
     type IN = DocumentHeading;
-
     type OUT = DocumentHeading;
-
     type ARG = Arc<RecursiveCharacterTextSplitter>;
 
     async fn transform(input: Self::IN, arg: &Self::ARG) -> Result<Vec<Self::OUT>, PipelineError> {
@@ -40,11 +38,10 @@ impl PipelineStep<true> for Splitter {
             })
             .collect::<Vec<_>>())
     }
-
-    fn args(&self) -> Self::ARG {
-        self.splitter.clone()
-    }
     fn name() -> String {
         String::from("Splitter")
+    }
+    fn args(&self) -> Self::ARG {
+        self.splitter.clone()
     }
 }
