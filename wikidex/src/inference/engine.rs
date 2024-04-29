@@ -191,7 +191,7 @@ impl Engine {
                 });
 
                 let llm_service_arguments = LanguageServiceArguments {
-                    prompt,
+                    prompt: &prompt,
                 };
                 self.llm_client
                     .stream_llm_answer(
