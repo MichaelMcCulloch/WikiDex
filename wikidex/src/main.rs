@@ -45,8 +45,7 @@ use {
     clap::Parser,
 };
 
-use indicatif::MultiProgress;
-use indicatif_log_bridge::LogWrapper;
+use {indicatif::MultiProgress, indicatif_log_bridge::LogWrapper};
 
 #[cfg(feature = "server")]
 use {
