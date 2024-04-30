@@ -23,7 +23,10 @@ mod server;
 #[cfg(test)]
 mod test_data;
 
-use crate::{cli_args::Cli, embedding_client::EmbeddingClient};
+use crate::{
+    cli_args::{Cli, Commands},
+    embedding_client::EmbeddingClient,
+};
 
 #[cfg(feature = "ingest")]
 use crate::{config::ingest::Config as IngestConfig, ingest::pipeline::PipelineProcessor};
@@ -37,7 +40,6 @@ use crate::{
     server::run_server,
 };
 
-use crate::cli_args::Commands;
 use async_openai::{config::OpenAIConfig, Client};
 use clap::Parser;
 
