@@ -103,7 +103,7 @@ Build Ingest + SQLite:
 
 Build Server + PostgreSQL:
   variables:
-    DATABASE_URL: postgres://postgres:postgres@192.168.1.120:5433/postgres
+    DATABASE_URL: postgres://wikidex:wikidex@wikidex-dummy-wikidex-dev-postgresql.wikidex-dev:5432/wikipedia
   cache:
     - key: binaries-cache
       paths:
