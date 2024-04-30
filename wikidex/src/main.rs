@@ -2,12 +2,13 @@
 compile_error!("features `sqlite` and `postgres` are mutually exclusive");
 
 mod cli_args;
+mod config;
 mod embedding_client;
-#[cfg(feature = "ingest")]
-mod ingest;
 mod llm_client;
 
-mod config;
+#[cfg(feature = "ingest")]
+mod ingest;
+
 #[cfg(feature = "server")]
 mod docstore;
 #[cfg(feature = "server")]
