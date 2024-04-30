@@ -23,7 +23,7 @@ Populate Cache:
         - wikidex/target/*
     - key: apt-cache
       paths:
-        - /var/cache/apt/*
+        - ~/.cache/apt/*
     - key: cargo-registry
       paths:
         - ~/.cargo/registry/*
@@ -43,7 +43,7 @@ Audit Everything:
         - wikidex/target/*
     - key: apt-cache
       paths:
-        - /var/cache/apt/*
+        - ~/.cache/apt/*
     - key: cargo-registry
       paths:
         - ~/.cargo/registry/*
@@ -68,7 +68,7 @@ Build Server + SQLite:
         - wikidex/target/*
     - key: apt-cache
       paths:
-        - /var/cache/apt/*
+        - ~/.cache/apt/*
     - key: cargo-registry
       paths:
         - ~/.cargo/registry/*
@@ -89,7 +89,7 @@ Build Ingest + SQLite:
         - wikidex/target/*
     - key: apt-cache
       paths:
-        - /var/cache/apt/*
+        - ~/.cache/apt/*
     - key: cargo-registry
       paths:
         - ~/.cargo/registry/*
@@ -110,7 +110,7 @@ Build Server + PostgreSQL:
         - wikidex/target/*
     - key: apt-cache
       paths:
-        - /var/cache/apt/*
+        - ~/.cache/apt/*
     - key: cargo-registry
       paths:
         - ~/.cargo/registry/*
@@ -129,7 +129,7 @@ Test Everything:
         - wikidex/target/*
     - key: apt-cache
       paths:
-        - /var/cache/apt/*
+        - ~/.cache/apt/*
     - key: cargo-registry
       paths:
         - ~/.cargo/registry/*
