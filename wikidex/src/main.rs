@@ -23,13 +23,13 @@ mod server;
 #[cfg(test)]
 mod test_data;
 
-use crate::{
+use {
     cli_args::{Cli, Commands},
     embedding_client::EmbeddingClient,
 };
 
 #[cfg(feature = "ingest")]
-use crate::{config::ingest::Config as IngestConfig, ingest::pipeline::PipelineProcessor};
+use {config::ingest::Config as IngestConfig, ingest::pipeline::PipelineProcessor};
 
 #[cfg(feature = "server")]
 use {
