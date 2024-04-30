@@ -26,7 +26,7 @@ mod test_data;
 use crate::{cli_args::Cli, embedding_client::EmbeddingClient};
 
 #[cfg(feature = "ingest")]
-use crate::ingest::pipeline::PipelineProcessor;
+use crate::{config::ingest::Config as IngestConfig, ingest::pipeline::PipelineProcessor};
 
 #[cfg(feature = "server")]
 use crate::{
@@ -41,8 +41,6 @@ use async_openai::{config::OpenAIConfig, Client};
 use clap::Parser;
 use cli_args::Commands;
 
-#[cfg(feature = "ingest")]
-use crate::config::ingest::Config as IngestConfig;
 use indicatif::MultiProgress;
 use indicatif_log_bridge::LogWrapper;
 
