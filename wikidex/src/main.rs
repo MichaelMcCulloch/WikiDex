@@ -25,6 +25,7 @@ mod test_data;
 
 use crate::{cli_args::Cli, embedding_client::EmbeddingClient};
 use async_openai::{config::OpenAIConfig, Client};
+use cli_args::Commands;
 
 #[cfg(feature = "ingest")]
 use crate::ingest::pipeline::PipelineProcessor;
@@ -34,7 +35,6 @@ use actix_web::rt;
 #[cfg(feature = "server")]
 use trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient;
 
-use cli_args::Commands;
 #[cfg(feature = "ingest")]
 use config::ingest::Config as IngestConfig;
 #[cfg(feature = "server")]
