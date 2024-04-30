@@ -5,6 +5,12 @@ mod cli_args;
 mod config;
 mod embedding_client;
 mod llm_client;
+use {
+    async_openai::{config::OpenAIConfig, Client},
+    clap::Parser,
+    cli_args::{Cli, Commands},
+    embedding_client::EmbeddingClient,
+};
 
 #[cfg(feature = "ingest")]
 mod ingest;
@@ -39,13 +45,6 @@ use {
 
 #[cfg(test)]
 mod test_data;
-
-use {
-    async_openai::{config::OpenAIConfig, Client},
-    clap::Parser,
-    cli_args::{Cli, Commands},
-    embedding_client::EmbeddingClient,
-};
 
 fn main() -> anyhow::Result<()> {
     match Cli::parse().command {
