@@ -8,6 +8,11 @@ mod llm_client;
 
 #[cfg(feature = "ingest")]
 mod ingest;
+#[cfg(feature = "ingest")]
+use {
+    config::ingest::Config as IngestConfig, indicatif::MultiProgress,
+    indicatif_log_bridge::LogWrapper, ingest::pipeline::PipelineProcessor,
+};
 
 #[cfg(feature = "server")]
 mod docstore;
@@ -28,12 +33,6 @@ use {
     clap::Parser,
     cli_args::{Cli, Commands},
     embedding_client::EmbeddingClient,
-};
-
-#[cfg(feature = "ingest")]
-use {
-    config::ingest::Config as IngestConfig, indicatif::MultiProgress,
-    indicatif_log_bridge::LogWrapper, ingest::pipeline::PipelineProcessor,
 };
 
 #[cfg(feature = "server")]
