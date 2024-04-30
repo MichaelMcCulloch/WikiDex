@@ -42,10 +42,8 @@ use clap::Parser;
 use cli_args::Commands;
 
 #[cfg(feature = "ingest")]
-use config::ingest::Config as IngestConfig;
-#[cfg(feature = "ingest")]
+use crate::config::ingest::Config as IngestConfig;
 use indicatif::MultiProgress;
-#[cfg(feature = "ingest")]
 use indicatif_log_bridge::LogWrapper;
 
 #[cfg(feature = "server")]
