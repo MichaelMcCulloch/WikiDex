@@ -6,22 +6,16 @@ variables:
   KUBERNETES_MEMORY_LIMIT: 8Gi
 
 stages:
-  - SAST
-  - Build
   - Test
 
-sast:
-  stage: SAST
+SAST:
+  stage: Test
 include:
   - template: Security/SAST.gitlab-ci.yml
 
 Audit Everything:
-  cache:
-    - key: binaries-cache
-      paths:
-        - wikidex/target/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
-  stage: SAST
+  stage: Test
   allow_failure:
     exit_codes:
       - 1
@@ -32,12 +26,8 @@ Audit Everything:
 Build Server + SQLite:
   variables:
     DATABASE_URL: sqlite://sqlite_dummy.db
-  cache:
-    - key: binaries-cache
-      paths:
-        - wikidex/target/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
-  stage: Build
+  stage: Test
   script:
     - cd wikidex
     - cargo build --no-default-features --features server,sqlite
@@ -45,12 +35,8 @@ Build Server + SQLite:
 Build Ingest + SQLite:
   variables:
     DATABASE_URL: sqlite://sqlite_dummy.db
-  cache:
-    - key: binaries-cache
-      paths:
-        - wikidex/target/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
-  stage: Build
+  stage: Test
   script:
     - cd wikidex
     - cargo build --no-default-features --features ingest,sqlite
@@ -58,12 +44,8 @@ Build Ingest + SQLite:
 Build Server + PostgreSQL:
   variables:
     DATABASE_URL: postgres://wikidex:wikidex@wikidex-dummy-wikidex-dev-postgresql.wikidex-dev:5432/wikipedia
-  cache:
-    - key: binaries-cache
-      paths:
-        - wikidex/target/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
-  stage: Build
+  stage: Test
   script:
     - cd wikidex
     - cargo build --no-default-features --features server,postgres
@@ -71,10 +53,6 @@ Build Server + PostgreSQL:
 Test Everything:
   variables:
     DATABASE_URL: sqlite://sqlite_dummy.db
-  cache:
-    - key: binaries-cache
-      paths:
-        - wikidex/target/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: Test
   script:
