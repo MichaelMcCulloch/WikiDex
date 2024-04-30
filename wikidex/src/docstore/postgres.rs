@@ -14,7 +14,7 @@ impl DocumentDatabase for Docstore<Postgres> {
         indices: &[i64],
     ) -> Result<Vec<Document>, DocstoreRetrieveError> {
         let docs_rows = sqlx::query!(
-            r#"
+            r#" 
             SELECT document.id,
                 document.text,
                 article.title,
