@@ -1,3 +1,6 @@
+#[cfg(all(feature = "sqlite", feature = "postgres"))]
+compile_error!("features `sqlite` and `postgres` are mutually exclusive");
+
 mod cli_args;
 mod config;
 #[cfg(feature = "server")]
@@ -51,9 +54,6 @@ use indicatif_log_bridge::LogWrapper;
 use config::server::Config as ServerConfig;
 
 use clap::Parser;
-
-#[cfg(all(feature = "sqlite", feature = "postgres"))]
-compile_error!("features `sqlite` and `postgres` are mutually exclusive");
 
 fn main() -> anyhow::Result<()> {
     match Cli::parse().command {
