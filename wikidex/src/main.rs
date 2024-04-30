@@ -32,7 +32,7 @@ use crate::{
 use crate::{config::ingest::Config as IngestConfig, ingest::pipeline::PipelineProcessor};
 
 #[cfg(feature = "server")]
-use crate::{
+use {
     docstore::DocumentStoreImpl,
     index::FaceIndex,
     inference::Engine,
