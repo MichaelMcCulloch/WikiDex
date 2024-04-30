@@ -28,12 +28,13 @@ use {
     clap::Parser,
     cli_args::{Cli, Commands},
     embedding_client::EmbeddingClient,
-    indicatif::MultiProgress,
-    indicatif_log_bridge::LogWrapper,
 };
 
 #[cfg(feature = "ingest")]
-use {config::ingest::Config as IngestConfig, ingest::pipeline::PipelineProcessor};
+use {
+    config::ingest::Config as IngestConfig, indicatif::MultiProgress,
+    indicatif_log_bridge::LogWrapper, ingest::pipeline::PipelineProcessor,
+};
 
 #[cfg(feature = "server")]
 use {
