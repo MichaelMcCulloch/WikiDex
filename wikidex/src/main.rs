@@ -40,8 +40,10 @@ use crate::{
     server::run_server,
 };
 
-use async_openai::{config::OpenAIConfig, Client};
-use clap::Parser;
+use {
+    async_openai::{config::OpenAIConfig, Client},
+    clap::Parser,
+};
 
 use indicatif::MultiProgress;
 use indicatif_log_bridge::LogWrapper;
