@@ -28,6 +28,15 @@ use crate::{cli_args::Cli, embedding_client::EmbeddingClient};
 #[cfg(feature = "ingest")]
 use crate::ingest::pipeline::PipelineProcessor;
 
+#[cfg(feature = "server")]
+use crate::{
+    docstore::DocumentStoreImpl,
+    index::FaceIndex,
+    inference::Engine,
+    llm_client::{LlmClient, LlmClientImpl, ModelEndpoint, OpenAiInstructClient, TritonClient},
+    server::run_server,
+};
+
 use async_openai::{config::OpenAIConfig, Client};
 use clap::Parser;
 use cli_args::Commands;
@@ -39,14 +48,6 @@ use indicatif::MultiProgress;
 #[cfg(feature = "ingest")]
 use indicatif_log_bridge::LogWrapper;
 
-#[cfg(feature = "server")]
-use crate::{
-    docstore::DocumentStoreImpl,
-    index::FaceIndex,
-    inference::Engine,
-    llm_client::{LlmClient, LlmClientImpl, ModelEndpoint, OpenAiInstructClient, TritonClient},
-    server::run_server,
-};
 #[cfg(feature = "server")]
 use actix_web::rt;
 #[cfg(feature = "server")]
