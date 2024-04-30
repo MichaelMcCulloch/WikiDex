@@ -49,13 +49,10 @@ use indicatif::MultiProgress;
 use indicatif_log_bridge::LogWrapper;
 
 #[cfg(feature = "server")]
-use actix_web::rt;
-#[cfg(feature = "server")]
-use config::server::Config as ServerConfig;
-#[cfg(feature = "server")]
-use docstore::Docstore;
-#[cfg(feature = "server")]
-use trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient;
+use {
+    actix_web::rt, config::server::Config as ServerConfig, docstore::Docstore,
+    trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient,
+};
 
 fn main() -> anyhow::Result<()> {
     match Cli::parse().command {
