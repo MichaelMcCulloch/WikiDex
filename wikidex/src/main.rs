@@ -25,6 +25,7 @@ mod test_data;
 
 use crate::{cli_args::Cli, embedding_client::EmbeddingClient};
 use async_openai::{config::OpenAIConfig, Client};
+use clap::Parser;
 use cli_args::Commands;
 
 #[cfg(feature = "ingest")]
@@ -55,8 +56,6 @@ use indicatif_log_bridge::LogWrapper;
 
 #[cfg(feature = "server")]
 use config::server::Config as ServerConfig;
-
-use clap::Parser;
 
 fn main() -> anyhow::Result<()> {
     match Cli::parse().command {
