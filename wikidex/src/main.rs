@@ -37,8 +37,7 @@ mod server;
 use {
     actix_web::rt,
     config::server::Config as ServerConfig,
-    docstore::Docstore,
-    docstore::DocumentStoreImpl,
+    docstore::{Docstore, DocumentStoreImpl},
     index::FaceIndex,
     inference::Engine,
     llm_client::{LlmClient, LlmClientImpl, ModelEndpoint, OpenAiInstructClient, TritonClient},
