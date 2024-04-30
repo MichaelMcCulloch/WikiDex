@@ -31,17 +31,6 @@ use cli_args::Commands;
 #[cfg(feature = "ingest")]
 use crate::ingest::pipeline::PipelineProcessor;
 #[cfg(feature = "server")]
-use actix_web::rt;
-
-#[cfg(feature = "server")]
-use trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient;
-
-#[cfg(feature = "ingest")]
-use config::ingest::Config as IngestConfig;
-#[cfg(feature = "server")]
-use docstore::Docstore;
-
-#[cfg(feature = "server")]
 use crate::{
     docstore::DocumentStoreImpl,
     index::FaceIndex,
@@ -49,13 +38,20 @@ use crate::{
     llm_client::{LlmClient, LlmClientImpl, ModelEndpoint, OpenAiInstructClient, TritonClient},
     server::run_server,
 };
+#[cfg(feature = "server")]
+use actix_web::rt;
+#[cfg(feature = "ingest")]
+use config::ingest::Config as IngestConfig;
+#[cfg(feature = "server")]
+use config::server::Config as ServerConfig;
+#[cfg(feature = "server")]
+use docstore::Docstore;
 #[cfg(feature = "ingest")]
 use indicatif::MultiProgress;
 #[cfg(feature = "ingest")]
 use indicatif_log_bridge::LogWrapper;
-
 #[cfg(feature = "server")]
-use config::server::Config as ServerConfig;
+use trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient;
 
 fn main() -> anyhow::Result<()> {
     match Cli::parse().command {
