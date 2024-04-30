@@ -30,6 +30,13 @@ use cli_args::Commands;
 
 #[cfg(feature = "ingest")]
 use crate::ingest::pipeline::PipelineProcessor;
+#[cfg(feature = "ingest")]
+use config::ingest::Config as IngestConfig;
+#[cfg(feature = "ingest")]
+use indicatif::MultiProgress;
+#[cfg(feature = "ingest")]
+use indicatif_log_bridge::LogWrapper;
+
 #[cfg(feature = "server")]
 use crate::{
     docstore::DocumentStoreImpl,
@@ -40,16 +47,10 @@ use crate::{
 };
 #[cfg(feature = "server")]
 use actix_web::rt;
-#[cfg(feature = "ingest")]
-use config::ingest::Config as IngestConfig;
 #[cfg(feature = "server")]
 use config::server::Config as ServerConfig;
 #[cfg(feature = "server")]
 use docstore::Docstore;
-#[cfg(feature = "ingest")]
-use indicatif::MultiProgress;
-#[cfg(feature = "ingest")]
-use indicatif_log_bridge::LogWrapper;
 #[cfg(feature = "server")]
 use trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient;
 
