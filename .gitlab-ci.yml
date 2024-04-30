@@ -6,56 +6,26 @@ variables:
   KUBERNETES_MEMORY_LIMIT: 8Gi
 
 stages:
-  - Cache
-  - Sast
+  - SAST
   - Build
   - Test
 
 sast:
-  stage: Sast
+  stage: SAST
 include:
   - template: Security/SAST.gitlab-ci.yml
-
-Populate Cache:
-  cache:
-    - key: binaries-cache
-      paths:
-        - wikidex/target/*
-    - key: apt-cache
-      paths:
-        - ~/.cache/apt/*
-    - key: cargo-registry
-      paths:
-        - ~/.cargo/registry/*
-  image: rust:latest
-  stage: Cache
-  script:
-    - apt-get update
-    - apt-get install -y $APT_COMMON cargo
-    - cargo install cargo-audit
-    - cd wikidex
-    - cargo fetch
 
 Audit Everything:
   cache:
     - key: binaries-cache
       paths:
         - wikidex/target/*
-    - key: apt-cache
-      paths:
-        - ~/.cache/apt/*
-    - key: cargo-registry
-      paths:
-        - ~/.cargo/registry/*
-  image: rust:latest
-  stage: Sast
+  image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
+  stage: SAST
   allow_failure:
     exit_codes:
       - 1
   script:
-    - apt-get update
-    - apt-get install -y $APT_COMMON cargo
-    - cargo install cargo-audit
     - cd wikidex
     - cargo audit
 
@@ -66,17 +36,9 @@ Build Server + SQLite:
     - key: binaries-cache
       paths:
         - wikidex/target/*
-    - key: apt-cache
-      paths:
-        - ~/.cache/apt/*
-    - key: cargo-registry
-      paths:
-        - ~/.cargo/registry/*
-  image: rust:latest
+  image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: Build
   script:
-    - apt-get update
-    - apt-get install -y $APT_COMMON
     - cd wikidex
     - cargo build --no-default-features --features server,sqlite
 
@@ -87,17 +49,9 @@ Build Ingest + SQLite:
     - key: binaries-cache
       paths:
         - wikidex/target/*
-    - key: apt-cache
-      paths:
-        - ~/.cache/apt/*
-    - key: cargo-registry
-      paths:
-        - ~/.cargo/registry/*
-  image: rust:latest
+  image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: Build
   script:
-    - apt-get update
-    - apt-get install -y $APT_COMMON
     - cd wikidex
     - cargo build --no-default-features --features ingest,sqlite
 
@@ -108,17 +62,9 @@ Build Server + PostgreSQL:
     - key: binaries-cache
       paths:
         - wikidex/target/*
-    - key: apt-cache
-      paths:
-        - ~/.cache/apt/*
-    - key: cargo-registry
-      paths:
-        - ~/.cargo/registry/*
-  image: rust:latest
+  image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: Build
   script:
-    - apt-get update
-    - apt-get install -y $APT_COMMON
     - cd wikidex
     - cargo build --no-default-features --features server,postgres
 
@@ -129,16 +75,8 @@ Test Everything:
     - key: binaries-cache
       paths:
         - wikidex/target/*
-    - key: apt-cache
-      paths:
-        - ~/.cache/apt/*
-    - key: cargo-registry
-      paths:
-        - ~/.cargo/registry/*
-  image: rust:latest
+  image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: Test
   script:
-    - apt-get update
-    - apt-get install -y $APT_COMMON
     - cd wikidex
     - cargo test --package wikidex --bin wikidex --no-default-features --features sqlite,server,ingest -- --exact --show-output  --nocapture
