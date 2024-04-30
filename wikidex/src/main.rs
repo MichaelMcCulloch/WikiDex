@@ -12,6 +12,9 @@ use {
     embedding_client::EmbeddingClient,
 };
 
+#[cfg(test)]
+mod test_data;
+
 #[cfg(feature = "ingest")]
 mod ingest;
 #[cfg(feature = "ingest")]
@@ -42,9 +45,6 @@ use {
     server::run_server,
     trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient,
 };
-
-#[cfg(test)]
-mod test_data;
 
 fn main() -> anyhow::Result<()> {
     match Cli::parse().command {
