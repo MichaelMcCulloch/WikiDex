@@ -37,9 +37,9 @@ use crate::{
     server::run_server,
 };
 
+use crate::cli_args::Commands;
 use async_openai::{config::OpenAIConfig, Client};
 use clap::Parser;
-use cli_args::Commands;
 
 use indicatif::MultiProgress;
 use indicatif_log_bridge::LogWrapper;
