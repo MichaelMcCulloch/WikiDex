@@ -39,19 +39,6 @@ Build Server + Ingest + SQLite:
     - cd wikidex
     - cargo build --no-default-features --features sqlite,ingest,server
 
-Build Server + Ingest + PostgreSQL:
-  variables:
-    DATABASE_URL: postgres://wikidex:wikidex@wikidex-dummy-wikidex-dev-postgresql.wikidex-dev:5432/wikipedia
-  cache:
-    - key: cache-postgres-$CI_COMMIT_REF_SLUG
-      paths:
-        - wikidex/target/*
-  image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
-  stage: All
-  script:
-    - cd wikidex
-    - cargo build --no-default-features --features postgres,ingest,server
-
 Build Server + SQLite:
   variables:
     DATABASE_URL: sqlite://sqlite_dummy.db
