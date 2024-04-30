@@ -3,6 +3,8 @@ compile_error!("features `sqlite` and `postgres` are mutually exclusive");
 
 mod cli_args;
 mod embedding_client;
+#[cfg(feature = "ingest")]
+mod ingest;
 mod llm_client;
 
 mod config;
@@ -16,9 +18,6 @@ mod index;
 mod inference;
 #[cfg(feature = "server")]
 mod server;
-
-#[cfg(feature = "ingest")]
-mod ingest;
 
 #[cfg(test)]
 mod test_data;
