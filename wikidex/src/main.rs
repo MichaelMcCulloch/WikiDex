@@ -1,6 +1,10 @@
 #[cfg(all(feature = "sqlite", feature = "postgres"))]
 compile_error!("features `sqlite` and `postgres` are mutually exclusive");
 
+mod cli_args;
+mod embedding_client;
+mod llm_client;
+
 mod config;
 #[cfg(feature = "server")]
 mod docstore;
@@ -18,10 +22,6 @@ mod ingest;
 
 #[cfg(test)]
 mod test_data;
-
-mod cli_args;
-mod embedding_client;
-mod llm_client;
 
 use crate::embedding_client::EmbeddingClient;
 #[cfg(feature = "ingest")]
