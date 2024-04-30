@@ -1,5 +1,4 @@
 variables:
-  DATABASE_URL: sqlite://sqlite_dummy.db
   APT_COMMON: cmake pkg-config libssl-dev liblapack-dev libblas-dev protobuf-compiler
   KUBERNETES_CPU_REQUEST: 400m
   KUBERNETES_CPU_LIMIT: 12000m
@@ -61,6 +60,8 @@ Audit Everything:
     - cargo audit
 
 Build Server + SQLite:
+  variables:
+    DATABASE_URL: sqlite://sqlite_dummy.db
   cache:
     - key: binaries-cache
       paths:
@@ -80,6 +81,8 @@ Build Server + SQLite:
     - cargo build --no-default-features --features server,sqlite
 
 Build Ingest + SQLite:
+  variables:
+    DATABASE_URL: sqlite://sqlite_dummy.db
   cache:
     - key: binaries-cache
       paths:
@@ -97,6 +100,27 @@ Build Ingest + SQLite:
     - apt-get install -y $APT_COMMON
     - cd wikidex
     - cargo build --no-default-features --features ingest,sqlite
+
+Build Server + PostgreSQL:
+  variables:
+    DATABASE_URL: postgres://postgres:postgres@192.168.1.120:5433/postgres
+  cache:
+    - key: binaries-cache
+      paths:
+        - wikidex/target/*
+    - key: apt-cache
+      paths:
+        - /var/cache/apt/*
+    - key: cargo-registry
+      paths:
+        - /root/.cargo/registry/*
+  image: rust:latest
+  stage: Build
+  script:
+    - apt-get update
+    - apt-get install -y $APT_COMMON
+    - cd wikidex
+    - cargo build --no-default-features --features server,postgres
 
 Test Everything:
   cache:
