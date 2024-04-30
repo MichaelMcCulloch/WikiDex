@@ -123,6 +123,8 @@ Build Server + PostgreSQL:
     - cargo build --no-default-features --features server,postgres
 
 Test Everything:
+  variables:
+    DATABASE_URL: sqlite://sqlite_dummy.db
   cache:
     - key: binaries-cache
       paths:
