@@ -26,7 +26,7 @@ Populate Cache:
         - /var/cache/apt/*
     - key: cargo-registry
       paths:
-        - /root/.cargo/registry/*
+        - ~/.cargo/registry/*
   image: rust:latest
   stage: Cache
   script:
@@ -46,7 +46,7 @@ Audit Everything:
         - /var/cache/apt/*
     - key: cargo-registry
       paths:
-        - /root/.cargo/registry/*
+        - ~/.cargo/registry/*
   image: rust:latest
   stage: Sast
   allow_failure:
@@ -71,7 +71,7 @@ Build Server + SQLite:
         - /var/cache/apt/*
     - key: cargo-registry
       paths:
-        - /root/.cargo/registry/*
+        - ~/.cargo/registry/*
   image: rust:latest
   stage: Build
   script:
@@ -92,7 +92,7 @@ Build Ingest + SQLite:
         - /var/cache/apt/*
     - key: cargo-registry
       paths:
-        - /root/.cargo/registry/*
+        - ~/.cargo/registry/*
   image: rust:latest
   stage: Build
   script:
@@ -113,7 +113,7 @@ Build Server + PostgreSQL:
         - /var/cache/apt/*
     - key: cargo-registry
       paths:
-        - /root/.cargo/registry/*
+        - ~/.cargo/registry/*
   image: rust:latest
   stage: Build
   script:
@@ -132,7 +132,7 @@ Test Everything:
         - /var/cache/apt/*
     - key: cargo-registry
       paths:
-        - /root/.cargo/registry/*
+        - ~/.cargo/registry/*
   image: rust:latest
   stage: Test
   script:
