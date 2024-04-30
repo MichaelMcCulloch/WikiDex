@@ -37,18 +37,18 @@ use {config::ingest::Config as IngestConfig, ingest::pipeline::PipelineProcessor
 
 #[cfg(feature = "server")]
 use {
+    actix_web::rt,
+    config::server::Config as ServerConfig,
+    docstore::Docstore,
     docstore::DocumentStoreImpl,
     index::FaceIndex,
     inference::Engine,
     llm_client::{LlmClient, LlmClientImpl, ModelEndpoint, OpenAiInstructClient, TritonClient},
     server::run_server,
-};
-
-#[cfg(feature = "server")]
-use {
-    actix_web::rt, config::server::Config as ServerConfig, docstore::Docstore,
     trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient,
 };
+
+
 
 fn main() -> anyhow::Result<()> {
     match Cli::parse().command {
