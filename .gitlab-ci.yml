@@ -14,6 +14,10 @@ include:
   - template: Security/SAST.gitlab-ci.yml
 
 Audit Everything:
+  cache:
+    - key: cache-$CI_COMMIT_REF_SLUG
+      paths:
+        - wikidex/target/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: Test
   allow_failure:
@@ -26,6 +30,10 @@ Audit Everything:
 Build Server + SQLite:
   variables:
     DATABASE_URL: sqlite://sqlite_dummy.db
+  cache:
+    - key: cache-$CI_COMMIT_REF_SLUG
+      paths:
+        - wikidex/target/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: Test
   script:
@@ -35,6 +43,10 @@ Build Server + SQLite:
 Build Ingest + SQLite:
   variables:
     DATABASE_URL: sqlite://sqlite_dummy.db
+  cache:
+    - key: cache-$CI_COMMIT_REF_SLUG
+      paths:
+        - wikidex/target/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: Test
   script:
@@ -44,6 +56,7 @@ Build Ingest + SQLite:
 Build Server + PostgreSQL:
   variables:
     DATABASE_URL: postgres://wikidex:wikidex@wikidex-dummy-wikidex-dev-postgresql.wikidex-dev:5432/wikipedia
+  cache: []
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: Test
   script:
@@ -53,6 +66,10 @@ Build Server + PostgreSQL:
 Test Everything:
   variables:
     DATABASE_URL: sqlite://sqlite_dummy.db
+  cache:
+    - key: cache-$CI_COMMIT_REF_SLUG
+      paths:
+        - wikidex/target/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: Test
   script:
