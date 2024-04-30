@@ -48,8 +48,6 @@ use {
     trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient,
 };
 
-
-
 fn main() -> anyhow::Result<()> {
     match Cli::parse().command {
         #[cfg(feature = "ingest")]
