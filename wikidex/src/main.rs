@@ -24,17 +24,6 @@ mod index;
 mod inference;
 #[cfg(feature = "server")]
 mod server;
-
-#[cfg(test)]
-mod test_data;
-
-use {
-    async_openai::{config::OpenAIConfig, Client},
-    clap::Parser,
-    cli_args::{Cli, Commands},
-    embedding_client::EmbeddingClient,
-};
-
 #[cfg(feature = "server")]
 use {
     actix_web::rt,
@@ -46,6 +35,16 @@ use {
     llm_client::{LlmClient, LlmClientImpl, ModelEndpoint, OpenAiInstructClient, TritonClient},
     server::run_server,
     trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient,
+};
+
+#[cfg(test)]
+mod test_data;
+
+use {
+    async_openai::{config::OpenAIConfig, Client},
+    clap::Parser,
+    cli_args::{Cli, Commands},
+    embedding_client::EmbeddingClient,
 };
 
 fn main() -> anyhow::Result<()> {
