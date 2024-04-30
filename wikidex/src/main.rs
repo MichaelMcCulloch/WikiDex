@@ -43,9 +43,9 @@ use crate::{
 use {
     async_openai::{config::OpenAIConfig, Client},
     clap::Parser,
+    indicatif::MultiProgress,
+    indicatif_log_bridge::LogWrapper,
 };
-
-use {indicatif::MultiProgress, indicatif_log_bridge::LogWrapper};
 
 #[cfg(feature = "server")]
 use {
