@@ -24,8 +24,12 @@ mod server;
 mod test_data;
 
 use {
+    async_openai::{config::OpenAIConfig, Client},
+    clap::Parser,
     cli_args::{Cli, Commands},
     embedding_client::EmbeddingClient,
+    indicatif::MultiProgress,
+    indicatif_log_bridge::LogWrapper,
 };
 
 #[cfg(feature = "ingest")]
@@ -38,13 +42,6 @@ use {
     inference::Engine,
     llm_client::{LlmClient, LlmClientImpl, ModelEndpoint, OpenAiInstructClient, TritonClient},
     server::run_server,
-};
-
-use {
-    async_openai::{config::OpenAIConfig, Client},
-    clap::Parser,
-    indicatif::MultiProgress,
-    indicatif_log_bridge::LogWrapper,
 };
 
 #[cfg(feature = "server")]
