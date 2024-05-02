@@ -140,7 +140,7 @@ impl Engine {
                 let documents = self.get_documents(&user_query).await?;
                 log::info!("User message: \"{user_query}\"",);
                 log::info!(
-                    "Obtained documents {}.",
+                    "Obtained documents\n{}.",
                     documents
                         .iter()
                         .map(|d| format!("{}:{}", d.index, d.text.lines().next().unwrap()))
