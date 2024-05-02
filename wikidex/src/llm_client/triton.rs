@@ -4,8 +4,7 @@ use tokio::sync::mpsc::UnboundedSender;
 use super::{
     error::LlmClientError,
     triton_helper::{create_request, deserialize_bytes_tensor},
-    LanguageServiceArguments, LlmClient, LlmClientBackend, LlmClientBackendKind,
-    TritonClient,
+    LanguageServiceArguments, LlmClient, LlmClientBackend, LlmClientBackendKind, TritonClient,
 };
 use async_stream::stream;
 
@@ -66,7 +65,6 @@ impl LlmClientBackend for LlmClient<TritonClient> {
         stop_phrases: Vec<S>,
     ) -> Result<(), LlmClientError> {
         let prompt = arguments.prompt;
-        log::info!("{prompt}");
         let request = create_request(
             prompt,
             true,
