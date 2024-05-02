@@ -138,6 +138,15 @@ impl Engine {
         match messages.into_iter().last() {
             Some(Message::User(user_query)) => {
                 let documents = self.get_documents(&user_query).await?;
+                log::info!("User message: \"{user_query}\"",);
+                log::info!(
+                    "Obtained documents {}.",
+                    documents
+                        .iter()
+                        .map(|d| d.index.to_string())
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                );
                 let prompt = self.format_rag_template(&documents, &user_query)?;
 
                 let sources = organize_sources(documents, num_sources);
