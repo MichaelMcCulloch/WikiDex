@@ -77,6 +77,7 @@ impl LlmClient<TritonClient> {
         prompt_context.insert("eos_token", "</s>");
 
         let prompt = self.tera.read().await.render("chat.j2", &prompt_context)?;
+        log::info!("{prompt}");
         Ok(prompt)
     }
 }
