@@ -143,7 +143,7 @@ impl Engine {
                     "Obtained documents {}.",
                     documents
                         .iter()
-                        .map(|d| d.text.lines().next().unwrap())
+                        .map(|d| format!("{},{}", d.index, d.text.lines().next().unwrap()))
                         .collect::<Vec<_>>()
                         .join(", ")
                 );
