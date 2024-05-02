@@ -65,6 +65,7 @@ impl LlmClient<TritonClient> {
             "current_time",
             &DateTime::<Utc>::from(SystemTime::now()).to_rfc3339(),
         );
+        let _system = self.tera.read().await.render("markdown.md.j2", &context)?;
         let prompt = self
             .tera
             .read()
