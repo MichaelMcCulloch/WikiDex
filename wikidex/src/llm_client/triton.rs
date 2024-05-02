@@ -1,5 +1,8 @@
+use std::sync::Arc;
+
 use anyhow::Context;
-use tokio::sync::mpsc::UnboundedSender;
+use tera::Tera;
+use tokio::sync::{mpsc::UnboundedSender, RwLock};
 
 use super::{
     error::LlmClientError,
@@ -9,24 +12,33 @@ use super::{
 use async_stream::stream;
 
 impl LlmClient<TritonClient> {
-    pub(crate) fn new(client: TritonClient) -> Self {
-        Self { client }
+    pub(crate) fn new(client: TritonClient, tera: Arc<RwLock<Tera>>) -> Self {
+        Self { client, tera }
     }
 }
 impl LlmClientBackendKind for TritonClient {}
 impl LlmClientBackend for LlmClient<TritonClient> {
     async fn get_response<S: AsRef<str>>(
         &self,
-        arguments: LanguageServiceArguments<'_>,
+        arguments: LanguageServiceArguments,
         max_tokens: u16,
         stop_phrases: Vec<S>,
     ) -> Result<String, LlmClientError> {
-        let prompt = arguments.prompt;
+        let prompt = self
+            .format_rag_template(
+                &arguments.messages,
+                &arguments.documents,
+                &arguments.user_query,
+            )
+            .await?;
         let request = create_request(
             prompt,
             false,
             max_tokens,
-            stop_phrases.iter().map(AsRef::as_ref).collect::<Vec<_>>(),
+            stop_phrases
+                .iter()
+                .map(|s| s.as_ref().to_string())
+                .collect::<Vec<_>>(),
         )?;
         let request = stream! { yield request };
         let request = tonic::Request::new(request);
@@ -59,17 +71,26 @@ impl LlmClientBackend for LlmClient<TritonClient> {
 
     async fn stream_response<S: AsRef<str>>(
         &self,
-        arguments: LanguageServiceArguments<'_>,
+        arguments: LanguageServiceArguments,
         tx: UnboundedSender<String>,
         max_tokens: u16,
         stop_phrases: Vec<S>,
     ) -> Result<(), LlmClientError> {
-        let prompt = arguments.prompt;
+        let prompt = self
+            .format_rag_template(
+                &arguments.messages,
+                &arguments.documents,
+                &arguments.user_query,
+            )
+            .await?;
         let request = create_request(
             prompt,
             true,
             max_tokens,
-            stop_phrases.iter().map(AsRef::as_ref).collect::<Vec<_>>(),
+            stop_phrases
+                .iter()
+                .map(|s| s.as_ref().to_string())
+                .collect::<Vec<_>>(),
         )?;
         let request = stream! { yield request };
         let request = tonic::Request::new(request);
