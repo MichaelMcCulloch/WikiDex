@@ -64,11 +64,17 @@ impl LlmClient<TritonClient> {
             "current_time",
             &DateTime::<Utc>::from(SystemTime::now()).to_rfc3339(),
         );
-        let _system = self
+        let system = self
             .tera
             .read()
             .await
             .render("markdown.md.j2", &system_context)?;
+
+        let _system_message = LlmMessage {
+            role: LlmRole::System,
+            content: system,
+        };
+
         let mut prompt_context = Context::new();
         prompt_context.insert("messages", messages);
 
