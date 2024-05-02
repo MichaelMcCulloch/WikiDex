@@ -64,14 +64,14 @@ impl LlmClient<TritonClient> {
             "current_time",
             &DateTime::<Utc>::from(SystemTime::now()).to_rfc3339(),
         );
-        let system = self
+        let system_message = self
             .tera
             .read()
             .await
             .render("markdown.md.j2", &system_context)?;
 
         let mut prompt_context = Context::new();
-        prompt_context.insert("system_message", &system);
+        prompt_context.insert("system_message", &system_message);
         prompt_context.insert("messages", &messages);
         prompt_context.insert("bos_token", "<s>");
         prompt_context.insert("eos_token", "</s>");
