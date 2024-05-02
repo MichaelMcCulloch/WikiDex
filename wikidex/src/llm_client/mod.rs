@@ -58,7 +58,7 @@ impl LlmClient<TritonClient> {
         user_query: &String,
     ) -> Result<String, LlmClientError> {
         let mut context = Context::new();
-        context.insert("document_list", documents);
+        context.insert("documents", documents);
         context.insert("user_query", user_query);
         context.insert("messages", messages);
         context.insert(
