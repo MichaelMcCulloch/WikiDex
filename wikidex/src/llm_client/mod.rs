@@ -69,11 +69,6 @@ impl LlmClient<TritonClient> {
             .read()
             .await
             .render("markdown.md.j2", &system_context)?;
-        let _prompt = self
-            .tera
-            .read()
-            .await
-            .render("instruct/chat.llm.j2", &system_context)?;
         let prompt = self
             .tera
             .read()
