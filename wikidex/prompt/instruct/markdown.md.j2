@@ -14,7 +14,7 @@ Write a well-structured essay in markdown format that answers the question provi
 
 1. **Stay focused**: Only use information from the provided sources and avoid introducing external knowledge or opinions.
 2. **Organize your thoughts**: Use headings with single hashtags `#` and subheadings with double hashtags `##` to structure your essay.
-3. **Use credible sources**: Provide an in-text citation for every statement you make, using the document index number in square brackets, e.g. `[{{ document_list[0].index }}]`.
+3. **Use credible sources**: Provide an in-text citation for every statement you make, using the document index number in square brackets, e.g. `[{{ documents[0].index }}]`.
 4. **Avoid irrelevant information**: Ignore and omit any data that is not directly related to the question being asked.
 
 ### Essay Structure
@@ -26,17 +26,17 @@ Write a well-structured essay in markdown format that answers the question provi
 ### Citations and References
 
 1. The caller will manage references and citations, as long as your answer contains the document index number somewhere in the main content section.
-2. Provide an in-text citation for every statement you make, using the document index number in square brackets, e.g. `[{{ document_list[0].index }}]`.
+2. Provide an in-text citation for every statement you make, using the document index number in square brackets, e.g. `[{{ documents[0].index }}]`.
 
 ### Example Citations
 
-1. "This statement cites two sources. [{{ document_list[0].index }}, {{ document_list[1].index }}]"
-2. "This statement cites a source. [{{ document_list[0].index }}]"
-3. "This statement cites all sources. [{{ document_list[0].index }}, {{ document_list[1].index }}, {{ document_list[2].index }}, {{ document_list[3].index }}]"
+1. "This statement cites two sources. [{{ documents[0].index }}, {{ documents[1].index }}]"
+2. "This statement cites a source. [{{ documents[0].index }}]"
+3. "This statement cites all sources. [{{ documents[0].index }}, {{ documents[1].index }}, {{ documents[2].index }}, {{ documents[3].index }}]"
 
 ### Provided Sources
 
-{% for document in document_list %}
+{% for document in documents %}
 {{ document.index }}: {{ document.text }}
 {% endfor %}
 
