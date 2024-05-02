@@ -52,8 +52,10 @@ impl LlmClientBackend for LlmClient<OpenAiInstructClient> {
             .into_iter()
             .map(|LlmMessage { role, content }| match role {
                 LlmRole::Assistant => {
-                    let mut message = ChatCompletionRequestAssistantMessage::default();
-                    message.content = Some(content);
+                    let message = ChatCompletionRequestAssistantMessage {
+                        content: Some(content),
+                        ..Default::default()
+                    };
                     ChatCompletionRequestMessage::Assistant(message)
                 }
                 LlmRole::User => {
