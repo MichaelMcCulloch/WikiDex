@@ -95,6 +95,7 @@ impl Engine {
                         .join("\n")
                 );
                 let prompt = self.format_rag_template(&documents, &user_query)?;
+
                 let sources = organize_sources(documents, num_sources);
 
                 let llm_service_arguments = LanguageServiceArguments { prompt: &prompt };
