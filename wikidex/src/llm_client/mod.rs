@@ -81,11 +81,7 @@ impl LlmClient<TritonClient> {
         prompt_context.insert("messages", &messages_plus);
         prompt_context.insert("bos_token", "<s>");
 
-        let prompt = self
-            .tera
-            .read()
-            .await
-            .render("instruct/chat.llm.j2", &prompt_context)?;
+        let prompt = self.tera.read().await.render("chat.j2", &prompt_context)?;
         Ok(prompt)
     }
 }
