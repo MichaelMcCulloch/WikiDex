@@ -85,7 +85,7 @@ impl Engine {
         match messages.into_iter().last() {
             Some(Message::User(user_query)) => {
                 let documents = self.get_documents(&user_query).await?;
-                log::debug!("Obtained documents: {user_query}",);
+                log::debug!("User message: {user_query}",);
                 log::debug!(
                     "Obtained documents: {:?}",
                     documents.iter().map(|d| d.index).collect::<Vec<_>>()
