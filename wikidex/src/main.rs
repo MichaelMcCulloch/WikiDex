@@ -10,6 +10,10 @@ use {
     clap::Parser,
     cli_args::{Cli, Commands},
     embedding_client::EmbeddingClient,
+    futures::FutureExt,
+    std::{ops::DerefMut, sync::Arc, time::Duration},
+    tera::Tera,
+    tokio::{sync::RwLock, time::sleep},
 };
 
 #[cfg(test)]
@@ -116,13 +120,17 @@ fn main() -> anyhow::Result<()> {
 
             let index = FaceIndex::new(config.index_url);
 
+            let system_prompt = Arc::new(RwLock::new(
+                Tera::new(config.system_prompt_template_path.to_str().unwrap()).unwrap(),
+            ));
+            let tera = system_prompt.clone();
             let llm_client = match config.llm_endpoint {
                 ModelEndpoint::Triton => {
                     let client = system_runner.block_on(GrpcInferenceServiceClient::connect(
                         String::from(config.llm_url.as_ref()),
                     ))?;
 
-                    LlmClientImpl::Triton(LlmClient::<TritonClient>::new(client))
+                    LlmClientImpl::Triton(LlmClient::<TritonClient>::new(client, tera))
                 }
                 ModelEndpoint::OpenAi => {
                     let openai_config = OpenAIConfig::new().with_api_base(config.llm_url);
@@ -131,8 +139,8 @@ fn main() -> anyhow::Result<()> {
                         open_ai_client,
                         config.llm_name.display().to_string(),
                     );
-                    let openai_client =
-                        system_runner.block_on(LlmClient::<OpenAiInstructClient>::new(client))?;
+                    let openai_client = system_runner
+                        .block_on(LlmClient::<OpenAiInstructClient>::new(client, tera))?;
 
                     LlmClientImpl::OpenAiInstruct(openai_client)
                 }
@@ -151,17 +159,31 @@ fn main() -> anyhow::Result<()> {
                 }
             };
 
-            let engine = system_runner.block_on(Engine::new(
-                index,
-                embed_client,
-                llm_client,
-                docstore,
-                config.system_prompt_template_path,
-            ));
+            let engine =
+                system_runner.block_on(Engine::new(index, embed_client, llm_client, docstore));
 
             let run_server = run_server(engine, config.host, config.port);
             let server = run_server?;
-            system_runner.block_on(server).map_err(anyhow::Error::from)
+
+            let tera = system_prompt.clone();
+            system_runner
+                .block_on(async {
+                    actix_web::rt::spawn(async move {
+                        loop {
+                            sleep(Duration::from_secs(2)).await;
+                            tera.write()
+                                .map(|mut t| match t.deref_mut().full_reload() {
+                                    Ok(_) => (),
+                                    Err(e) => {
+                                        log::error!("Could Not Reload Template! {e}");
+                                    }
+                                })
+                                .await;
+                        }
+                    });
+                    server.await
+                })
+                .map_err(anyhow::Error::from)
         }
     }
 }

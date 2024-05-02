@@ -7,19 +7,28 @@ mod protocol;
 mod triton;
 mod triton_helper;
 
+use std::{sync::Arc, time::SystemTime};
+
+use chrono::{DateTime, Utc};
 pub(crate) use endpoint::ModelEndpoint;
 pub(crate) use openai::OpenAiInstructClient;
 
+use tera::{Context, Tera};
 use tonic::transport::Channel;
 
 pub(crate) use trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient;
 
-use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
+use tokio::sync::{
+    mpsc::{unbounded_channel, UnboundedSender},
+    RwLock,
+};
 
 pub(crate) use arguments::LanguageServiceArguments;
 pub(crate) use error::LlmClientError;
 pub(crate) use kind::ModelKind;
 pub(crate) use protocol::{LlmMessage, LlmRole, PartialLlmMessage};
+
+use crate::docstore::Document;
 
 pub(crate) type TritonClient = GrpcInferenceServiceClient<Channel>;
 
@@ -27,25 +36,48 @@ pub(crate) trait LlmClientBackendKind {}
 pub(crate) trait LlmClientBackend {
     async fn get_response<S: AsRef<str>>(
         &self,
-        arguments: LanguageServiceArguments<'_>,
+        arguments: LanguageServiceArguments,
         max_tokens: u16,
         stop_phrases: Vec<S>,
     ) -> Result<String, LlmClientError>;
 
     async fn stream_response<S: AsRef<str>>(
         &self,
-        arguments: LanguageServiceArguments<'_>,
+        arguments: LanguageServiceArguments,
         tx: UnboundedSender<String>,
         max_tokens: u16,
         stop_phrases: Vec<S>,
     ) -> Result<(), LlmClientError>;
 }
 
+impl LlmClient<TritonClient> {
+    async fn format_rag_template(
+        &self,
+        _messages: &Vec<LlmMessage>,
+        documents: &Vec<Document>,
+        user_query: &String,
+    ) -> Result<String, LlmClientError> {
+        let mut context = Context::new();
+        context.insert("document_list", documents);
+        context.insert("user_query", user_query);
+        context.insert(
+            "current_time",
+            &DateTime::<Utc>::from(SystemTime::now()).to_rfc3339(),
+        );
+        let prompt = self
+            .tera
+            .read()
+            .await
+            .render("instruct/chat.llm.j2", &context)?;
+        Ok(prompt)
+    }
+}
+
 impl<T> LlmClientService for T where T: LlmClientBackend {}
 pub(crate) trait LlmClientService: LlmClientBackend {
     async fn get_llm_answer<S: AsRef<str>>(
         &self,
-        arguments: LanguageServiceArguments<'_>,
+        arguments: LanguageServiceArguments,
         max_tokens: u16,
         stop_phrases: Vec<S>,
     ) -> Result<LlmMessage, LlmClientError> {
@@ -59,7 +91,7 @@ pub(crate) trait LlmClientService: LlmClientBackend {
     }
     async fn stream_llm_answer<S: AsRef<str>>(
         &self,
-        arguments: LanguageServiceArguments<'_>,
+        arguments: LanguageServiceArguments,
         tx: UnboundedSender<PartialLlmMessage>,
         max_tokens: u16,
         stop_phrases: Vec<S>,
@@ -81,6 +113,7 @@ pub(crate) trait LlmClientService: LlmClientBackend {
 
 pub(crate) struct LlmClient<Backend: LlmClientBackendKind> {
     client: Backend,
+    tera: Arc<RwLock<Tera>>,
     // prompt_template: tera::Template
 }
 
@@ -92,7 +125,7 @@ pub(crate) enum LlmClientImpl {
 impl LlmClientBackend for LlmClientImpl {
     async fn get_response<S: AsRef<str>>(
         &self,
-        arguments: LanguageServiceArguments<'_>,
+        arguments: LanguageServiceArguments,
         max_tokens: u16,
         stop_phrases: Vec<S>,
     ) -> Result<String, LlmClientError> {
@@ -107,7 +140,7 @@ impl LlmClientBackend for LlmClientImpl {
 
     async fn stream_response<S: AsRef<str>>(
         &self,
-        arguments: LanguageServiceArguments<'_>,
+        arguments: LanguageServiceArguments,
         tx: UnboundedSender<String>,
         max_tokens: u16,
         stop_phrases: Vec<S>,
