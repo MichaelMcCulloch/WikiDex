@@ -60,7 +60,7 @@ x-base_service_wikidex: &base_wikidex
   ports:
     - "${WIKIDEX_HOST_PORT}:${WIKIDEX_CONT_PORT}"
   volumes:
-    - ./wikidex/prompt:/prompt
+    - ./wikidex/prompt/instruct:/prompt
   build:
     dockerfile: Dockerfile
     context: ./wikidex

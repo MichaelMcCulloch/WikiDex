@@ -1,13 +1,1 @@
-{{ bos_token }}
-{% for message in messages %}
-{% if loop.index0 == 0 %}
-{% set content = system_message ~ "\n\n" ~ message['content']  %}
-{% else %}
-{% set content = message['content'] | trim %}
-{% endif %}
-{% if message['role'] == 'user' %}
-{{ '[INST] ' ~ content ~ ' [/INST]' }}
-{% elif message['role'] == 'assistant' %}
-{{ ' '  ~ content ~ ' ' ~ eos_token }}
-{% endif %}
-{% endfor %}
+{{ bos_token }}{% for message in messages %}{% if loop.index0 == 0 %}{% set content = system_message ~ " " ~ message['content']  %}{% else %}{% set content = message['content'] | trim %}{% endif %}{% if message['role'] == 'user' %}{{ '[INST] ' ~ content ~ ' [/INST]' }}{% elif message['role'] == 'assistant' %}{{ ' '  ~ content ~ ' ' ~ eos_token }}{% endif %}{% endfor %}
