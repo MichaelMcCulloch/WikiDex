@@ -82,6 +82,17 @@ impl Engine {
         stop_phrases: Vec<&str>,
     ) -> Result<Message, QueryEngineError> {
         let num_sources = messages.sources_count();
+
+        // let chain: Vec<LlmMessage> = messages
+        //     .into_iter()
+        //     .map(|m| match m {
+        //         Message::User(message) | Message::Assistant(message, _) => LlmMessage {
+        //             role: LlmRole::Assistant,
+        //             content: message,
+        //         },
+        //     })
+        //     .collect::<Vec<_>>();
+
         match messages.into_iter().last() {
             Some(Message::User(user_query)) => {
                 let documents = self.get_documents(&user_query).await?;
@@ -95,7 +106,6 @@ impl Engine {
                         .join("\n")
                 );
                 let prompt = self.format_rag_template(&documents, &user_query)?;
-
                 let sources = organize_sources(documents, num_sources);
 
                 let llm_service_arguments = LanguageServiceArguments { prompt: &prompt };
