@@ -145,7 +145,7 @@ impl Engine {
                         .iter()
                         .map(|d| format!("{}:{}", d.index, d.text.lines().next().unwrap()))
                         .collect::<Vec<_>>()
-                        .join(", ")
+                        .join("\n")
                 );
                 let prompt = self.format_rag_template(&documents, &user_query)?;
 
