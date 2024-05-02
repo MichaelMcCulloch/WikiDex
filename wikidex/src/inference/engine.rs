@@ -179,12 +179,12 @@ impl Engine {
                     let _ = tx.send(PartialMessage::source(source).message());
                 }
 
-                if let Some(_ordinal) = index_ordinal_map.get(&index) {
-                    // let source_link = accumulated_index.replace(
-                    //     accumulated_index.as_str(),
-                    //     format!("[{ordinal}](http://localhost/#{ordinal})").as_str(),
-                    // );
-                    let _ = tx.send(PartialMessage::content(accumulated_index).message());
+                if let Some(ordinal) = index_ordinal_map.get(&index) {
+                    let source_link = accumulated_index.replace(
+                        accumulated_index.as_str(),
+                        format!("[{ordinal}](http://localhost/#{ordinal})").as_str(),
+                    );
+                    let _ = tx.send(PartialMessage::content(source_link).message());
                 } else {
                     let _ = tx.send(PartialMessage::content(accumulated_index).message());
                 }
