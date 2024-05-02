@@ -74,11 +74,11 @@ impl LlmClient<TritonClient> {
             role: LlmRole::System,
             content: system,
         };
-        let mut chain = vec![&system_message];
-        chain.extend(messages);
+        let mut messages_plus = vec![&system_message];
+        messages_plus.extend(messages);
 
         let mut prompt_context = Context::new();
-        prompt_context.insert("messages", messages);
+        prompt_context.insert("messages", &messages_plus);
 
         let prompt = self
             .tera
