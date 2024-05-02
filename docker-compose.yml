@@ -118,6 +118,7 @@ x-base_service_infinity: &base_infinity
 
 services:
   infinity:
+    container_name: wikidex-infinity-gte-small
     <<:
       - *base_service_nvidia
       - *base_infinity
@@ -199,6 +200,7 @@ services:
       - *base_redis
 
   postgres:
+    container_name: wikidex-docstore-$EXTRACT_DATE
     profiles:
       - server
     <<:
@@ -361,6 +363,7 @@ services:
       ]
 
   index:
+    container_name: wikidex-index-$EXTRACT_DATE
     <<:
       - *base_service
       - *base_index
