@@ -53,24 +53,32 @@ pub(crate) trait LlmClientBackend {
 impl LlmClient<TritonClient> {
     async fn format_rag_template(
         &self,
-        messages: &Vec<LlmMessage>,
+        _messages: &Vec<LlmMessage>,
         documents: &Vec<Document>,
         user_query: &String,
     ) -> Result<String, LlmClientError> {
-        let mut context = Context::new();
-        context.insert("documents", documents);
-        context.insert("user_query", user_query);
-        context.insert("messages", messages);
-        context.insert(
+        let mut system_context = Context::new();
+        system_context.insert("documents", documents);
+        system_context.insert("user_query", user_query);
+        system_context.insert(
             "current_time",
             &DateTime::<Utc>::from(SystemTime::now()).to_rfc3339(),
         );
-        let _system = self.tera.read().await.render("markdown.md.j2", &context)?;
+        let _system = self
+            .tera
+            .read()
+            .await
+            .render("markdown.md.j2", &system_context)?;
+        let _prompt = self
+            .tera
+            .read()
+            .await
+            .render("instruct/chat.llm.j2", &system_context)?;
         let prompt = self
             .tera
             .read()
             .await
-            .render("instruct/chat.llm.j2", &context)?;
+            .render("instruct/chat.llm.j2", &system_context)?;
         Ok(prompt)
     }
 }
