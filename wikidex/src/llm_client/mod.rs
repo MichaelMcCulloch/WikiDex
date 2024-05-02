@@ -70,10 +70,12 @@ impl LlmClient<TritonClient> {
             .await
             .render("markdown.md.j2", &system_context)?;
 
-        let _system_message = LlmMessage {
+        let system_message = LlmMessage {
             role: LlmRole::System,
             content: system,
         };
+        let mut chain = vec![&system_message];
+        chain.extend(messages);
 
         let mut prompt_context = Context::new();
         prompt_context.insert("messages", messages);
