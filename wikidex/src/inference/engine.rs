@@ -92,7 +92,7 @@ impl Engine {
                         .iter()
                         .map(|d| d.index.to_string())
                         .collect::<Vec<_>>()
-                        .join(",")
+                        .join(", ")
                 );
                 let prompt = self.format_rag_template(&documents, &user_query)?;
                 let sources = organize_sources(documents, num_sources);
