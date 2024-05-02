@@ -79,6 +79,7 @@ impl LlmClient<TritonClient> {
 
         let mut prompt_context = Context::new();
         prompt_context.insert("messages", &messages_plus);
+        prompt_context.insert("bos_token", "<s>");
 
         let prompt = self
             .tera
