@@ -109,18 +109,24 @@ impl LlmClientBackend for LlmClient<OpenAiInstructClient> {
             .into_iter()
             .map(|LlmMessage { role, content }| match role {
                 LlmRole::Assistant => {
-                    let mut message = ChatCompletionRequestAssistantMessage::default();
-                    message.content = Some(content);
+                    let message = ChatCompletionRequestAssistantMessage {
+                        content: Some(content),
+                        ..Default::default()
+                    };
                     ChatCompletionRequestMessage::Assistant(message)
                 }
                 LlmRole::User => {
-                    let mut message = ChatCompletionRequestUserMessage::default();
-                    message.content = ChatCompletionRequestUserMessageContent::Text(content);
+                    let message = ChatCompletionRequestUserMessage {
+                        content: ChatCompletionRequestUserMessageContent::Text(content),
+                        ..Default::default()
+                    };
                     ChatCompletionRequestMessage::User(message)
                 }
                 LlmRole::System => {
-                    let mut message = ChatCompletionRequestSystemMessage::default();
-                    message.content = content;
+                    let message = ChatCompletionRequestSystemMessage {
+                        content,
+                        ..Default::default()
+                    };
                     ChatCompletionRequestMessage::System(message)
                 }
                 LlmRole::Function => todo!(),
