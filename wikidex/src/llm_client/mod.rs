@@ -53,13 +53,14 @@ pub(crate) trait LlmClientBackend {
 impl LlmClient<TritonClient> {
     async fn format_rag_template(
         &self,
-        _messages: &Vec<LlmMessage>,
+        messages: &Vec<LlmMessage>,
         documents: &Vec<Document>,
         user_query: &String,
     ) -> Result<String, LlmClientError> {
         let mut context = Context::new();
         context.insert("document_list", documents);
         context.insert("user_query", user_query);
+        context.insert("messages", messages);
         context.insert(
             "current_time",
             &DateTime::<Utc>::from(SystemTime::now()).to_rfc3339(),
