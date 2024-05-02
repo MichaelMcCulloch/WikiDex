@@ -53,7 +53,7 @@ pub(crate) trait LlmClientBackend {
 impl LlmClient<TritonClient> {
     async fn format_rag_template(
         &self,
-        _messages: &Vec<LlmMessage>,
+        messages: &Vec<LlmMessage>,
         documents: &Vec<Document>,
         user_query: &String,
     ) -> Result<String, LlmClientError> {
@@ -69,11 +69,14 @@ impl LlmClient<TritonClient> {
             .read()
             .await
             .render("markdown.md.j2", &system_context)?;
+        let mut prompt_context = Context::new();
+        prompt_context.insert("messages", messages);
+
         let prompt = self
             .tera
             .read()
             .await
-            .render("instruct/chat.llm.j2", &system_context)?;
+            .render("instruct/chat.llm.j2", &prompt_context)?;
         Ok(prompt)
     }
 }
