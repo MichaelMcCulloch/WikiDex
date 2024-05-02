@@ -74,11 +74,10 @@ impl LlmClient<TritonClient> {
             role: LlmRole::System,
             content: system,
         };
-        let mut messages_plus = vec![&system_message];
-        messages_plus.extend(messages);
 
         let mut prompt_context = Context::new();
-        prompt_context.insert("messages", &messages_plus);
+        prompt_context.insert("system_message", &system_message);
+        prompt_context.insert("messages", &messages);
         prompt_context.insert("bos_token", "<s>");
 
         let prompt = self.tera.read().await.render("chat.j2", &prompt_context)?;
