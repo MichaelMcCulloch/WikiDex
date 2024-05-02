@@ -66,8 +66,10 @@ impl LlmClientBackend for LlmClient<OpenAiInstructClient> {
                     ChatCompletionRequestMessage::User(message)
                 }
                 LlmRole::System => {
-                    let mut message = ChatCompletionRequestSystemMessage::default();
-                    message.content = content;
+                    let message = ChatCompletionRequestSystemMessage {
+                        content,
+                        ..Default::default()
+                    };
                     ChatCompletionRequestMessage::System(message)
                 }
                 LlmRole::Function => todo!(),
