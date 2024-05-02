@@ -26,9 +26,9 @@ serde = "1.0.197"
 serde_json = "1.0.115"
 sqlx = { version = "0.7.4", features = ["runtime-tokio"] }
 tokio = { version = "1.37.0", features = [
-    "rt",
     "macros",
     "rt-multi-thread",
+    "rt",
     "time",
 ] }
 tonic = { version = "0.11.0" }
@@ -82,10 +82,10 @@ server = [
     "dep:face-api",
     "dep:redis",
     "dep:rkyv",
+    "dep:tera",
     "dep:utoipa-redoc",
     "dep:utoipa-swagger-ui",
     "dep:utoipa",
-    "dep:tera",
 ]
 ingest = [
     "dep:async-compat",
