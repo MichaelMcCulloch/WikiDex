@@ -65,6 +65,7 @@ impl LlmClientBackend for LlmClient<TritonClient> {
         stop_phrases: Vec<S>,
     ) -> Result<(), LlmClientError> {
         let prompt = arguments.prompt;
+        log::info!("{prompt}");
         let request = create_request(
             prompt,
             true,
