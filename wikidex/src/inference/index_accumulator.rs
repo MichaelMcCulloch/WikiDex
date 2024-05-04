@@ -5,6 +5,12 @@ pub(crate) struct IndexAccumulator {
     token_buffer: Vec<String>,
 }
 
+pub(crate) enum IndexAccumulatorReturn<'a> {
+    Nothing,
+    NoTransform(&'a str),
+    Transform(String),
+}
+
 pub(crate) trait IndexAccumulatorTrait {
     fn token(&mut self, token: &str) -> Option<&str>;
 }
