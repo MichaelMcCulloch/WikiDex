@@ -176,10 +176,7 @@ impl Engine {
             documents: documents.clone(),
             user_query,
         };
-        let mut documents = documents
-            .into_iter()
-            .map(Some)
-            .collect::<Vec<_>>();
+        let mut documents = documents.into_iter().map(Some).collect::<Vec<_>>();
 
         let (partial_message_sender, mut partial_message_receiver) = unbounded_channel();
 
@@ -213,6 +210,7 @@ impl Engine {
 
                             let _ = tx.send(PartialMessage::source(source).message());
                         }
+                        let _ = tx.send(PartialMessage::content(content).message());
                     }
                     IndexAccumulatorReturn::NoTransform(content) => {
                         let _ = tx.send(PartialMessage::content(content).message());
