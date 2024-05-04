@@ -7,7 +7,7 @@ use crate::{
     embedding_client::{EmbeddingClient, EmbeddingClientService},
     formatter::{CitationStyle, Cite},
     index::{FaceIndex, SearchService},
-    inference::index_accumulator::IndexAccumulator,
+    inference::index_accumulator::{IndexAccumulator, IndexAccumulatorTrait},
     llm_client::{
         LanguageServiceArguments, LlmClientImpl, LlmClientService, LlmMessage, LlmRole,
         PartialLlmMessage,
@@ -150,7 +150,7 @@ impl Engine {
         let formatter = Box::new(|index: usize| format!("[{index}](http://localhost/#{index})"));
 
         // Create a new IndexAccumulator
-        let _accumulator = IndexAccumulator::new(dictionary, formatter);
+        let mut accumulator = IndexAccumulator::new(dictionary, formatter);
 
         log::info!("User message: \"{user_query}\"",);
         log::info!(
@@ -204,6 +204,10 @@ impl Engine {
                 ..
             }) = partial_message_receiver.recv().await
             {
+                match accumulator.token(&content) {
+                    _ => {}
+                }
+
                 let _ = tx.send(PartialMessage::content(content).message());
                 // Check if the token is numeric (ignoring any leading/trailing whitespace)
                 // if content.trim().parse::<i64>().is_ok() {
