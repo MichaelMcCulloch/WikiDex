@@ -22,7 +22,7 @@ impl IndexAccumulator {
             dictionary,
             token_buffer: vec![],
             is_accumulating: false,
-            formatter: Box::new(formatter),
+            formatter,
         }
     }
 }
