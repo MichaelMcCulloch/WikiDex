@@ -54,7 +54,7 @@ impl Engine {
         let num_sources = messages.sources_count();
 
         let user_query = match messages.iter().last() {
-            Some(Message::User(user_query)) => {
+            Some(Message::User(ref user_query)) => {
                 Ok::<std::string::String, QueryEngineError>(user_query.clone())
             }
             Some(Message::Assistant(_, _)) => Err(QueryEngineError::LastMessageIsNotUser)?,
