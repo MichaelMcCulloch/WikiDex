@@ -174,32 +174,6 @@ impl Engine {
 
         let _sources_list = sources.clone();
         actix_web::rt::spawn(async move {
-            // let mut accumulated_index = String::new();
-            // let mut accumulating_index = false;
-            // let mut index_ordinal_map = HashMap::new();
-            // let mut send_message = |accumulated_index: String| {
-            //     let index = accumulated_index.trim().parse::<i64>().unwrap();
-
-            //     if let Some(source) = sources_list
-            //         .iter()
-            //         .position(|s| s.index == index)
-            //         .map(|i| sources_list.remove(i))
-            //     {
-            //         index_ordinal_map.insert(index, source.ordinal);
-            //         let _ = tx.send(PartialMessage::source(source).message());
-            //     }
-
-            //     if let Some(ordinal) = index_ordinal_map.get(&index) {
-            //         let source_link = accumulated_index.replace(
-            //             accumulated_index.as_str(),
-            //             format!("[{ordinal}](http://localhost/#{ordinal})").as_str(),
-            //         );
-            //         let _ = tx.send(PartialMessage::content(source_link).message());
-            //     } else {
-            //         let _ = tx.send(PartialMessage::content(accumulated_index).message());
-            //     }
-            // };
-
             while let Some(PartialLlmMessage {
                 content: Some(content),
                 ..
