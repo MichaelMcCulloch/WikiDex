@@ -1,7 +1,5 @@
 use bytes::Bytes;
 
-use std::collections::HashMap;
-
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 use crate::{
@@ -9,6 +7,7 @@ use crate::{
     embedding_client::{EmbeddingClient, EmbeddingClientService},
     formatter::{CitationStyle, Cite},
     index::{FaceIndex, SearchService},
+    inference::index_accumulator::IndexAccumulator,
     llm_client::{
         LanguageServiceArguments, LlmClientImpl, LlmClientService, LlmMessage, LlmRole,
         PartialLlmMessage,
@@ -142,6 +141,16 @@ impl Engine {
             .collect::<Vec<_>>();
 
         let documents = self.get_documents(&user_query).await?;
+        let dictionary = documents
+            .iter()
+            .map(|Document { index, .. }| *index)
+            .collect::<Vec<_>>(); // Sample dictionary
+
+        // Define a formatter function
+        let formatter = Box::new(|index: usize| format!("Formatted index: {}", index));
+
+        // Create a new IndexAccumulator
+        let _accumulator = IndexAccumulator::new(dictionary, formatter);
 
         log::info!("User message: \"{user_query}\"",);
         log::info!(
@@ -162,57 +171,58 @@ impl Engine {
 
         let (partial_message_sender, mut partial_message_receiver) = unbounded_channel();
 
-        let mut sources_list = sources.clone();
+        let _sources_list = sources.clone();
         actix_web::rt::spawn(async move {
-            let mut accumulated_index = String::new();
-            let mut accumulating_index = false;
-            let mut index_ordinal_map = HashMap::new();
-            let mut send_message = |accumulated_index: String| {
-                let index = accumulated_index.trim().parse::<i64>().unwrap();
+            // let mut accumulated_index = String::new();
+            // let mut accumulating_index = false;
+            // let mut index_ordinal_map = HashMap::new();
+            // let mut send_message = |accumulated_index: String| {
+            //     let index = accumulated_index.trim().parse::<i64>().unwrap();
 
-                if let Some(source) = sources_list
-                    .iter()
-                    .position(|s| s.index == index)
-                    .map(|i| sources_list.remove(i))
-                {
-                    index_ordinal_map.insert(index, source.ordinal);
-                    let _ = tx.send(PartialMessage::source(source).message());
-                }
+            //     if let Some(source) = sources_list
+            //         .iter()
+            //         .position(|s| s.index == index)
+            //         .map(|i| sources_list.remove(i))
+            //     {
+            //         index_ordinal_map.insert(index, source.ordinal);
+            //         let _ = tx.send(PartialMessage::source(source).message());
+            //     }
 
-                if let Some(ordinal) = index_ordinal_map.get(&index) {
-                    let source_link = accumulated_index.replace(
-                        accumulated_index.as_str(),
-                        format!("[{ordinal}](http://localhost/#{ordinal})").as_str(),
-                    );
-                    let _ = tx.send(PartialMessage::content(source_link).message());
-                } else {
-                    let _ = tx.send(PartialMessage::content(accumulated_index).message());
-                }
-            };
+            //     if let Some(ordinal) = index_ordinal_map.get(&index) {
+            //         let source_link = accumulated_index.replace(
+            //             accumulated_index.as_str(),
+            //             format!("[{ordinal}](http://localhost/#{ordinal})").as_str(),
+            //         );
+            //         let _ = tx.send(PartialMessage::content(source_link).message());
+            //     } else {
+            //         let _ = tx.send(PartialMessage::content(accumulated_index).message());
+            //     }
+            // };
 
             while let Some(PartialLlmMessage {
                 content: Some(content),
                 ..
             }) = partial_message_receiver.recv().await
             {
+                let _ = tx.send(PartialMessage::content(content).message());
                 // Check if the token is numeric (ignoring any leading/trailing whitespace)
-                if content.trim().parse::<i64>().is_ok() {
-                    accumulated_index.push_str(&content);
-                    accumulating_index = true;
-                } else if accumulating_index {
-                    send_message(accumulated_index);
-                    let _ = tx.send(PartialMessage::content(content).message());
-                    accumulated_index = String::new();
-                    accumulating_index = false;
-                } else {
-                    let _ = tx.send(PartialMessage::content(content).message());
-                }
+                // if content.trim().parse::<i64>().is_ok() {
+                //     accumulated_index.push_str(&content);
+                //     accumulating_index = true;
+                // } else if accumulating_index {
+                //     send_message(accumulated_index);
+                //     let _ = tx.send(PartialMessage::content(content).message());
+                //     accumulated_index = String::new();
+                //     accumulating_index = false;
+                // } else {
+                //     let _ = tx.send(PartialMessage::content(content).message());
+                // }
             }
 
             // Send any remaining accumulated number
-            if !accumulated_index.is_empty() {
-                send_message(accumulated_index);
-            }
+            // if !accumulated_index.is_empty() {
+            //     send_message(accumulated_index);
+            // }
 
             let _ = tx.send(PartialMessage::done().message());
         });
