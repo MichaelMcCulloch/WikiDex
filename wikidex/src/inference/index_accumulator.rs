@@ -1,5 +1,3 @@
-
-
 pub(crate) struct IndexAccumulator {
     dictionary: Vec<i64>,
     token_buffer: Vec<String>,
@@ -17,7 +15,13 @@ pub(crate) trait IndexAccumulatorTrait {
 }
 
 impl IndexAccumulator {
-    pub(crate) fn new(_indices: Vec<i64>) {}
+    pub(crate) fn new(dictionary: Vec<i64>) -> Self {
+        Self {
+            dictionary,
+            token_buffer: vec![],
+            is_accumulating: false,
+        }
+    }
 }
 
 impl IndexAccumulatorTrait for IndexAccumulator {
