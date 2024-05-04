@@ -193,7 +193,7 @@ impl Engine {
                     }
                     IndexAccumulatorReturn::Transform(content, position) => {
                         let modified_position = position + num_sources;
-                        let _content = content.replace(
+                        let content = content.replace(
                             position.to_string().as_str(),
                             format!("[{modified_position}](http://localhost/#{modified_position})")
                                 .as_str(),
