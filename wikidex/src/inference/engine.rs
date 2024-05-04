@@ -94,8 +94,8 @@ impl Engine {
         let sources = documents
             .into_iter()
             .enumerate()
-            .map(|(_ordinal, document)| Source {
-                ordinal: _ordinal + num_sources,
+            .map(|(ordinal, document)| Source {
+                ordinal: ordinal + num_sources,
                 index: document.index,
                 citation: document.provenance.format(&CITATION_STYLE),
                 url: document.provenance.url(),
