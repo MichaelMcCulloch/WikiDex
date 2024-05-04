@@ -29,6 +29,7 @@ impl IndexAccumulatorTrait for IndexAccumulator {
     fn token<'a>(&mut self, token: &'a str) -> IndexAccumulatorReturn<'a> {
         if token.trim().parse::<i64>().is_ok() {
             self.token_buffer.push(token.to_string());
+            self.is_accumulating = true;
             IndexAccumulatorReturn::Nothing
         } else if self.is_accumulating {
             let index_string = self.token_buffer.join("");
@@ -48,6 +49,8 @@ impl IndexAccumulatorTrait for IndexAccumulator {
             };
 
             self.token_buffer.clear();
+
+            self.is_accumulating = false;
             result
         } else {
             IndexAccumulatorReturn::NoOp(token)
