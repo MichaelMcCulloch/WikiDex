@@ -150,11 +150,8 @@ impl Engine {
             .map(|Document { index, .. }| *index)
             .collect::<Vec<_>>(); // Sample dictionary
 
-        // Define a formatter function
-        let formatter = Box::new(|index: usize| format!("[{index}](http://localhost/#{index})"));
-
         // Create a new IndexAccumulator
-        let mut accumulator = IndexAccumulator::new(dictionary, formatter);
+        let mut accumulator = IndexAccumulator::new(dictionary);
 
         log::info!("User message: \"{user_query}\"",);
         log::info!(
@@ -213,8 +210,14 @@ impl Engine {
                     IndexAccumulatorReturn::NoOp(_content) => {
                         let _ = tx.send(PartialMessage::content(content.to_string()).message());
                     }
-                    IndexAccumulatorReturn::Transform(content) => {
-                        //         let _ = tx.send(PartialMessage::source(source).message());
+                    IndexAccumulatorReturn::Transform(content, position) => {
+                        let _ =
+                            tx.send(PartialMessage::source(sources[position].clone()).message());
+
+                        let content = content.replace(
+                            position.to_string().as_str(),
+                            format!("[{position}](http://localhost/#{position})").as_str(),
+                        );
                         let _ = tx.send(PartialMessage::content(content).message());
                     }
                     IndexAccumulatorReturn::NoTransform(content) => {
