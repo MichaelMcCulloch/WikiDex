@@ -97,7 +97,7 @@ impl Engine {
             .get_llm_answer(llm_service_arguments, 2048u16, stop_phrases)
             .await?;
 
-        let ordinal = num_sources + 1;
+        let mut ordinal = num_sources + 1;
 
         match role {
             LlmRole::Assistant => {
@@ -107,6 +107,7 @@ impl Engine {
                         format!("{}", source.index).as_str(),
                         format!("[{}](http://localhost/#{})", ordinal, ordinal).as_str(),
                     );
+                    ordinal += 1;
                 }
 
                 Ok(Message::Assistant(content, sources))
