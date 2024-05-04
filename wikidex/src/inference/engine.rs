@@ -208,7 +208,9 @@ impl Engine {
                     crate::inference::index_accumulator::IndexAccumulatorReturn::Nothing => {
                         continue
                     }
-                    crate::inference::index_accumulator::IndexAccumulatorReturn::NoOp(_) => todo!(),
+                    crate::inference::index_accumulator::IndexAccumulatorReturn::NoOp(content) => {
+                        let _ = tx.send(PartialMessage::content(content.to_string()).message());
+                    }
                     crate::inference::index_accumulator::IndexAccumulatorReturn::Transform(_) => {
                         todo!()
                     }
