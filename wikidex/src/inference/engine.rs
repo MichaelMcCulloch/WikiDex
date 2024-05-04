@@ -147,7 +147,7 @@ impl Engine {
             .collect::<Vec<_>>(); // Sample dictionary
 
         // Define a formatter function
-        let formatter = Box::new(|index: usize| format!("Formatted index: {}", index));
+        let formatter = Box::new(|index: usize| format!("[{index}](http://localhost/#{index})"));
 
         // Create a new IndexAccumulator
         let _accumulator = IndexAccumulator::new(dictionary, formatter);
