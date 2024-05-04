@@ -155,14 +155,6 @@ impl Engine {
             .collect::<Vec<_>>();
 
         let documents = self.get_documents(&user_query).await?;
-
-        let mut accumulator = IndexAccumulator::new(
-            documents
-                .iter()
-                .map(|Document { index, .. }| *index)
-                .collect::<Vec<_>>(),
-        );
-
         log::info!("User message: \"{user_query}\"",);
         log::info!(
             "Obtained documents:\n{}.",
@@ -172,12 +164,22 @@ impl Engine {
                 .collect::<Vec<_>>()
                 .join("\n")
         );
+        let mut accumulator = IndexAccumulator::new(
+            documents
+                .iter()
+                .map(|Document { index, .. }| *index)
+                .collect::<Vec<_>>(),
+        );
 
         let llm_service_arguments = LanguageServiceArguments {
             messages,
             documents: documents.clone(),
             user_query,
         };
+        let mut documents = documents
+            .into_iter()
+            .map(Some)
+            .collect::<Vec<_>>();
 
         let (partial_message_sender, mut partial_message_receiver) = unbounded_channel();
 
@@ -194,23 +196,23 @@ impl Engine {
                     }
                     IndexAccumulatorReturn::Transform(content, position) => {
                         let modified_position = position + num_sources;
-
-                        let source = Source {
-                            ordinal: modified_position,
-                            index: documents[position].index,
-                            citation: documents[position].provenance.format(&CITATION_STYLE),
-                            url: documents[position].provenance.url(),
-                            origin_text: documents[position].text.clone(),
-                        };
-
-                        let content = content.replace(
+                        let _content = content.replace(
                             position.to_string().as_str(),
                             format!("[{modified_position}](http://localhost/#{modified_position})")
                                 .as_str(),
                         );
 
-                        let _ =
-                            tx.send(PartialMessage::content_and_source(content, source).message());
+                        if let Some(document) = documents[position].take() {
+                            let source = Source {
+                                ordinal: modified_position,
+                                index: document.index,
+                                citation: document.provenance.format(&CITATION_STYLE),
+                                url: document.provenance.url(),
+                                origin_text: document.text,
+                            };
+
+                            let _ = tx.send(PartialMessage::source(source).message());
+                        }
                     }
                     IndexAccumulatorReturn::NoTransform(content) => {
                         let _ = tx.send(PartialMessage::content(content).message());
