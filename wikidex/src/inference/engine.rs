@@ -91,7 +91,17 @@ impl Engine {
             documents: documents.clone(),
             user_query,
         };
-        let sources = organize_sources(documents, num_sources);
+        let sources = documents
+            .into_iter()
+            .enumerate()
+            .map(|(_ordinal, document)| Source {
+                ordinal: _ordinal + num_sources,
+                index: document.index,
+                citation: document.provenance.format(&CITATION_STYLE),
+                url: document.provenance.url(),
+                origin_text: document.text,
+            })
+            .collect::<Vec<_>>();
         let LlmMessage { role, content } = self
             .llm_client
             .get_llm_answer(llm_service_arguments, 2048u16, stop_phrases)
@@ -145,13 +155,13 @@ impl Engine {
             .collect::<Vec<_>>();
 
         let documents = self.get_documents(&user_query).await?;
-        let dictionary = documents
-            .iter()
-            .map(|Document { index, .. }| *index)
-            .collect::<Vec<_>>(); // Sample dictionary
 
-        // Create a new IndexAccumulator
-        let mut accumulator = IndexAccumulator::new(dictionary);
+        let mut accumulator = IndexAccumulator::new(
+            documents
+                .iter()
+                .map(|Document { index, .. }| *index)
+                .collect::<Vec<_>>(),
+        );
 
         log::info!("User message: \"{user_query}\"",);
         log::info!(
@@ -168,11 +178,9 @@ impl Engine {
             documents: documents.clone(),
             user_query,
         };
-        let sources = organize_sources(documents, num_sources);
 
         let (partial_message_sender, mut partial_message_receiver) = unbounded_channel();
 
-        let _sources_list = sources.clone();
         actix_web::rt::spawn(async move {
             while let Some(PartialLlmMessage {
                 content: Some(content),
@@ -185,16 +193,24 @@ impl Engine {
                         let _ = tx.send(PartialMessage::content(content.to_string()).message());
                     }
                     IndexAccumulatorReturn::Transform(content, position) => {
-                        let _ =
-                            tx.send(PartialMessage::source(sources[position].clone()).message());
-
                         let modified_position = position + num_sources;
+
+                        let source = Source {
+                            ordinal: modified_position,
+                            index: documents[position].index,
+                            citation: documents[position].provenance.format(&CITATION_STYLE),
+                            url: documents[position].provenance.url(),
+                            origin_text: documents[position].text.clone(),
+                        };
+
                         let content = content.replace(
                             position.to_string().as_str(),
                             format!("[{modified_position}](http://localhost/#{modified_position})")
                                 .as_str(),
                         );
-                        let _ = tx.send(PartialMessage::content(content).message());
+
+                        let _ =
+                            tx.send(PartialMessage::content_and_source(content, source).message());
                     }
                     IndexAccumulatorReturn::NoTransform(content) => {
                         let _ = tx.send(PartialMessage::content(content).message());
@@ -235,17 +251,4 @@ impl Engine {
 
         Ok(documents)
     }
-}
-
-fn organize_sources(documents: Vec<Document>, _num_sources: usize) -> Vec<Source> {
-    documents
-        .into_iter()
-        .enumerate()
-        .map(|(_ordinal, document)| Source {
-            index: document.index,
-            citation: document.provenance.format(&CITATION_STYLE),
-            url: document.provenance.url(),
-            origin_text: document.text,
-        })
-        .collect::<Vec<_>>()
 }

@@ -6,6 +6,7 @@ use utoipa::ToSchema;
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 #[schema(example = assistant_message_schema_example)]
 pub(crate) struct Source {
+    pub(crate) ordinal: usize,
     pub(crate) index: i64,
     pub(crate) citation: String,
     pub(crate) url: String,
@@ -48,6 +49,13 @@ impl PartialMessage {
         Self {
             content: Some(content),
             source: None,
+            finished: None,
+        }
+    }
+    pub(crate) fn content_and_source(content: String, source: Source) -> Self {
+        Self {
+            content: Some(content),
+            source: Some(source),
             finished: None,
         }
     }
@@ -115,7 +123,7 @@ fn assistant_partial_message_schema_example() -> PartialMessage {
 }
 
 fn source_schema_example() -> Source {
-    Source {  index: 987087, citation: "Bogonam-Foulbé. 2023, December 1. In Wikipedia. Retrieved December 1, 2023, from https://en.wikipedia.org/wiki/Bogonam-Foulbé".to_string(), url: "https://en.wikipedia.org/wiki/Bogonam-Foulbé".to_string(), origin_text: "Bogonam-Foulbé is a village in the Kongoussi Department of Bam Province in northern Burkina Faso. It has a population of 205.".to_string() }
+    Source { ordinal: 0, index: 987087, citation: "Bogonam-Foulbé. 2023, December 1. In Wikipedia. Retrieved December 1, 2023, from https://en.wikipedia.org/wiki/Bogonam-Foulbé".to_string(), url: "https://en.wikipedia.org/wiki/Bogonam-Foulbé".to_string(), origin_text: "Bogonam-Foulbé is a village in the Kongoussi Department of Bam Province in northern Burkina Faso. It has a population of 205.".to_string() }
 }
 
 fn user_message_schema_example() -> Message {
