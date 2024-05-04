@@ -32,7 +32,7 @@ impl IndexAccumulatorTrait for IndexAccumulator {
             IndexAccumulatorReturn::Nothing
         } else if self.is_accumulating {
             let index_string = self.token_buffer.join("");
-            if let Ok(index_string) = index_string.trim().parse::<i64>() {
+            let result = if let Ok(index_string) = index_string.trim().parse::<i64>() {
                 if let Some(position) = self
                     .dictionary
                     .iter()
@@ -43,8 +43,12 @@ impl IndexAccumulatorTrait for IndexAccumulator {
                     IndexAccumulatorReturn::NoTransform(index_string.to_string())
                 }
             } else {
+                self.token_buffer.clear();
                 IndexAccumulatorReturn::NoTransform(index_string)
-            }
+            };
+
+            self.token_buffer.clear();
+            result
         } else {
             IndexAccumulatorReturn::NoOp(token)
         }
