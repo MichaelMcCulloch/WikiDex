@@ -14,3 +14,9 @@ pub(crate) enum IndexAccumulatorReturn<'a> {
 pub(crate) trait IndexAccumulatorTrait {
     fn token(&mut self, token: &str) -> IndexAccumulatorReturn;
 }
+
+impl IndexAccumulatorTrait for IndexAccumulator {
+    fn token(&mut self, _token: &str) -> IndexAccumulatorReturn {
+        todo!()
+    }
+}
