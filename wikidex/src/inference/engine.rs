@@ -208,7 +208,9 @@ impl Engine {
             {
                 match accumulator.token(&content) {
                     IndexAccumulatorReturn::Nothing => continue,
-                    IndexAccumulatorReturn::NoOp(_content) => {}
+                    IndexAccumulatorReturn::NoOp(_content) => {
+                        let _ = tx.send(PartialMessage::content(content.to_string()).message());
+                    }
                     IndexAccumulatorReturn::Transform(content)
                     | IndexAccumulatorReturn::NoTransform(content) => {
                         let _ = tx.send(PartialMessage::content(content.to_string()).message());
