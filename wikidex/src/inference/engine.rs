@@ -213,7 +213,7 @@ impl Engine {
                     }
                     IndexAccumulatorReturn::Transform(content)
                     | IndexAccumulatorReturn::NoTransform(content) => {
-                        let _ = tx.send(PartialMessage::content(content.to_string()).message());
+                        let _ = tx.send(PartialMessage::content(content).message());
                     }
                 }
 
