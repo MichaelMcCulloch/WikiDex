@@ -4,6 +4,7 @@ pub(crate) struct IndexAccumulator {
     is_accumulating: bool,
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) enum IndexAccumulatorReturn<'a> {
     Nothing,
     NoOp(&'a str),
@@ -73,15 +74,27 @@ impl IndexAccumulatorTrait for IndexAccumulator {
 
 #[cfg(test)]
 mod test {
+    use crate::inference::index_accumulator::IndexAccumulatorReturn;
+
     use super::{IndexAccumulator, IndexAccumulatorTrait};
 
     #[test]
     fn test() {
         let mut accumulator = IndexAccumulator::new(vec![1234, 4321]);
 
-        let _token1 = accumulator.token("This");
-        let _token1 = accumulator.token(" is");
-        let _token1 = accumulator.token(" a");
-        let _token1 = accumulator.token(" test");
+        let token1 = accumulator.token("This");
+        let token2 = accumulator.token(" is");
+        let token3 = accumulator.token(" a");
+        let token4 = accumulator.token(" test");
+
+        assert_eq!(
+            vec![
+                IndexAccumulatorReturn::NoOp("This"),
+                IndexAccumulatorReturn::NoOp(" is"),
+                IndexAccumulatorReturn::NoOp(" a"),
+                IndexAccumulatorReturn::NoOp(" test")
+            ],
+            vec![token1, token2, token3, token4]
+        )
     }
 }
