@@ -12,5 +12,5 @@ pub(crate) enum IndexAccumulatorReturn<'a> {
 }
 
 pub(crate) trait IndexAccumulatorTrait {
-    fn token(&mut self, token: &str) -> Option<&str>;
+    fn token(&mut self, token: &str) -> IndexAccumulatorReturn;
 }
