@@ -41,7 +41,8 @@ impl IndexAccumulatorTrait for IndexAccumulator {
                     .iter()
                     .position(|element| element == &index_string)
                 {
-                    IndexAccumulatorReturn::Transform(position.to_string())
+                    let string = (self.formatter)(position);
+                    IndexAccumulatorReturn::Transform(string)
                 } else {
                     IndexAccumulatorReturn::NoTransform(index_string.to_string())
                 }
