@@ -7,7 +7,9 @@ use crate::{
     embedding_client::{EmbeddingClient, EmbeddingClientService},
     formatter::{CitationStyle, Cite},
     index::{FaceIndex, SearchService},
-    inference::index_accumulator::{IndexAccumulator, IndexAccumulatorTrait},
+    inference::index_accumulator::{
+        IndexAccumulator, IndexAccumulatorReturn, IndexAccumulatorTrait,
+    },
     llm_client::{
         LanguageServiceArguments, LlmClientImpl, LlmClientService, LlmMessage, LlmRole,
         PartialLlmMessage,
@@ -205,17 +207,11 @@ impl Engine {
             }) = partial_message_receiver.recv().await
             {
                 match accumulator.token(&content) {
-                    crate::inference::index_accumulator::IndexAccumulatorReturn::Nothing => {
-                        continue
-                    }
-                    crate::inference::index_accumulator::IndexAccumulatorReturn::NoOp(content) => {
+                    IndexAccumulatorReturn::Nothing => continue,
+                    IndexAccumulatorReturn::NoOp(_content) => {}
+                    IndexAccumulatorReturn::Transform(content)
+                    | IndexAccumulatorReturn::NoTransform(content) => {
                         let _ = tx.send(PartialMessage::content(content.to_string()).message());
-                    }
-                    crate::inference::index_accumulator::IndexAccumulatorReturn::Transform(_) => {
-                        todo!()
-                    }
-                    crate::inference::index_accumulator::IndexAccumulatorReturn::NoTransform(_) => {
-                        todo!()
                     }
                 }
 
