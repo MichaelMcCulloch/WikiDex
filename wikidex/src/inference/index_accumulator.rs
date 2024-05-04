@@ -1,7 +1,7 @@
-use std::collections::HashMap;
+
 
 pub(crate) struct IndexAccumulator {
-    dictionary: HashMap<i64, u8>,
+    dictionary: Vec<i64>,
     token_buffer: Vec<String>,
     is_accumulating: bool,
 }
@@ -15,6 +15,8 @@ pub(crate) enum IndexAccumulatorReturn<'a> {
 pub(crate) trait IndexAccumulatorTrait {
     fn token<'a>(&mut self, token: &'a str) -> IndexAccumulatorReturn<'a>;
 }
+
+impl IndexAccumulator {}
 
 impl IndexAccumulatorTrait for IndexAccumulator {
     fn token<'a>(&mut self, token: &'a str) -> IndexAccumulatorReturn<'a> {
