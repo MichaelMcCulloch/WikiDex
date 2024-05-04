@@ -73,7 +73,15 @@ impl IndexAccumulatorTrait for IndexAccumulator {
 
 #[cfg(test)]
 mod test {
+    use super::{IndexAccumulator, IndexAccumulatorTrait};
 
     #[test]
-    fn test() {}
+    fn test() {
+        let mut accumulator = IndexAccumulator::new(vec![1234, 4321]);
+
+        let _token1 = accumulator.token("This");
+        let _token1 = accumulator.token(" is");
+        let _token1 = accumulator.token(" a");
+        let _token1 = accumulator.token(" test");
+    }
 }
