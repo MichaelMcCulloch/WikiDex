@@ -214,6 +214,7 @@ impl Engine {
                         let _ =
                             tx.send(PartialMessage::source(sources[position].clone()).message());
 
+                        let position = position + num_sources;
                         let content = content.replace(
                             position.to_string().as_str(),
                             format!("[{position}](http://localhost/#{position})").as_str(),
