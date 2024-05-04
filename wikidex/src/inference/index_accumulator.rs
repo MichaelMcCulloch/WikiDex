@@ -16,7 +16,12 @@ pub(crate) trait IndexAccumulatorTrait {
 }
 
 impl IndexAccumulatorTrait for IndexAccumulator {
-    fn token(&mut self, _token: &str) -> IndexAccumulatorReturn {
-        todo!()
+    fn token(&mut self, token: &str) -> IndexAccumulatorReturn {
+        if token.trim().parse::<i64>().is_ok() {
+            self.token_buffer.push(token.to_string());
+            IndexAccumulatorReturn::Nothing
+        } else {
+            IndexAccumulatorReturn::Nothing
+        }
     }
 }
