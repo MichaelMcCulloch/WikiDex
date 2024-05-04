@@ -14,7 +14,7 @@ pub(crate) enum IndexAccumulatorReturn<'a> {
 
 pub(crate) trait IndexAccumulatorTrait {
     fn token<'a>(&mut self, token: &'a str) -> IndexAccumulatorReturn<'a>;
-    fn flush(self) -> String;
+    fn flush(&mut self) -> String;
 }
 
 impl IndexAccumulator {
@@ -61,7 +61,10 @@ impl IndexAccumulatorTrait for IndexAccumulator {
         }
     }
 
-    fn flush(self) -> String {
-        self.token_buffer.join("")
+    fn flush(&mut self) -> String {
+        let string = self.token_buffer.join("");
+
+        self.token_buffer.clear();
+        string
     }
 }
