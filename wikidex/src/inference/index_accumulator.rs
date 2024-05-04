@@ -70,3 +70,10 @@ impl IndexAccumulatorTrait for IndexAccumulator {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+
+    #[test]
+    fn test() {}
+}
