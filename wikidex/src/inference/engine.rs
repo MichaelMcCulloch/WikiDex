@@ -217,7 +217,6 @@ impl Engine {
                     }
                 }
 
-                let _ = tx.send(PartialMessage::content(content).message());
                 // Check if the token is numeric (ignoring any leading/trailing whitespace)
                 // if content.trim().parse::<i64>().is_ok() {
                 //     accumulated_index.push_str(&content);
