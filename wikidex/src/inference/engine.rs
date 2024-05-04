@@ -188,10 +188,11 @@ impl Engine {
                         let _ =
                             tx.send(PartialMessage::source(sources[position].clone()).message());
 
-                        let position = position + num_sources;
+                        let modified_position = position + num_sources;
                         let content = content.replace(
                             position.to_string().as_str(),
-                            format!("[{position}](http://localhost/#{position})").as_str(),
+                            format!("[{modified_position}](http://localhost/#{modified_position})")
+                                .as_str(),
                         );
                         let _ = tx.send(PartialMessage::content(content).message());
                     }
