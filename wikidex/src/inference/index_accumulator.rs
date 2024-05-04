@@ -16,7 +16,9 @@ pub(crate) trait IndexAccumulatorTrait {
     fn token<'a>(&mut self, token: &'a str) -> IndexAccumulatorReturn<'a>;
 }
 
-impl IndexAccumulator {}
+impl IndexAccumulator {
+    pub(crate) fn new(_indices: Vec<i64>) {}
+}
 
 impl IndexAccumulatorTrait for IndexAccumulator {
     fn token<'a>(&mut self, token: &'a str) -> IndexAccumulatorReturn<'a> {
