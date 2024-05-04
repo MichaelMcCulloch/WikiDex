@@ -13,16 +13,18 @@ pub(crate) enum IndexAccumulatorReturn<'a> {
 }
 
 pub(crate) trait IndexAccumulatorTrait {
-    fn token(&mut self, token: &str) -> IndexAccumulatorReturn;
+    fn token<'a>(&mut self, token: &'a str) -> IndexAccumulatorReturn<'a>;
 }
 
 impl IndexAccumulatorTrait for IndexAccumulator {
-    fn token(&mut self, token: &str) -> IndexAccumulatorReturn {
+    fn token<'a>(&mut self, token: &'a str) -> IndexAccumulatorReturn<'a> {
         if token.trim().parse::<i64>().is_ok() {
             self.token_buffer.push(token.to_string());
             IndexAccumulatorReturn::Nothing
+        } else if self.is_accumulating {
+            IndexAccumulatorReturn::Transform(self.token_buffer.join(""))
         } else {
-            IndexAccumulatorReturn::Nothing
+            IndexAccumulatorReturn::NoTransform(token)
         }
     }
 }
