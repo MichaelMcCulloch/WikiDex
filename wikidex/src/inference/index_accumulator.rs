@@ -6,8 +6,9 @@ pub(crate) struct IndexAccumulator {
 
 pub(crate) enum IndexAccumulatorReturn<'a> {
     Nothing,
-    NoTransform(&'a str),
+    NoOp(&'a str),
     Transform(String),
+    NoTransform(String),
 }
 
 pub(crate) trait IndexAccumulatorTrait {
@@ -30,9 +31,22 @@ impl IndexAccumulatorTrait for IndexAccumulator {
             self.token_buffer.push(token.to_string());
             IndexAccumulatorReturn::Nothing
         } else if self.is_accumulating {
-            IndexAccumulatorReturn::Transform(self.token_buffer.join(""))
+            let index_string = self.token_buffer.join("");
+            if let Ok(index_string) = index_string.trim().parse::<i64>() {
+                if let Some(position) = self
+                    .dictionary
+                    .iter()
+                    .position(|element| element == &index_string)
+                {
+                    IndexAccumulatorReturn::Transform(position.to_string())
+                } else {
+                    IndexAccumulatorReturn::NoTransform(index_string.to_string())
+                }
+            } else {
+                IndexAccumulatorReturn::NoTransform(index_string)
+            }
         } else {
-            IndexAccumulatorReturn::NoTransform(token)
+            IndexAccumulatorReturn::NoOp(token)
         }
     }
 }
