@@ -205,7 +205,14 @@ impl Engine {
             }) = partial_message_receiver.recv().await
             {
                 match accumulator.token(&content) {
-                    _ => {}
+                    crate::inference::index_accumulator::IndexAccumulatorReturn::Nothing => todo!(),
+                    crate::inference::index_accumulator::IndexAccumulatorReturn::NoOp(_) => todo!(),
+                    crate::inference::index_accumulator::IndexAccumulatorReturn::Transform(_) => {
+                        todo!()
+                    }
+                    crate::inference::index_accumulator::IndexAccumulatorReturn::NoTransform(_) => {
+                        todo!()
+                    }
                 }
 
                 let _ = tx.send(PartialMessage::content(content).message());
