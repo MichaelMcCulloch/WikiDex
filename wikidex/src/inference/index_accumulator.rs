@@ -2,6 +2,7 @@ pub(crate) struct IndexAccumulator {
     dictionary: Vec<i64>,
     token_buffer: Vec<String>,
     is_accumulating: bool,
+    formatter: Box<dyn Fn(usize) -> String>,
 }
 
 pub(crate) enum IndexAccumulatorReturn<'a> {
@@ -16,11 +17,12 @@ pub(crate) trait IndexAccumulatorTrait {
 }
 
 impl IndexAccumulator {
-    pub(crate) fn new(dictionary: Vec<i64>) -> Self {
+    pub(crate) fn new(dictionary: Vec<i64>, formatter: Box<dyn Fn(usize) -> String>) -> Self {
         Self {
             dictionary,
             token_buffer: vec![],
             is_accumulating: false,
+            formatter: Box::new(formatter),
         }
     }
 }
