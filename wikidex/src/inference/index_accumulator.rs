@@ -77,7 +77,9 @@ impl IndexAccumulator {
 
 impl TokenAccumulator for IndexAccumulator {
     fn token<'a>(&mut self, token: &'a str) -> TokenValue<'a> {
-        if token.trim().parse::<i64>().is_ok() {
+        if token.is_empty() && !self.is_accumulating {
+            TokenValue::Nothing
+        } else if token.trim().parse::<i64>().is_ok() {
             self.token_buffer.push(token.to_string());
             self.is_accumulating = true;
             TokenValue::Nothing
