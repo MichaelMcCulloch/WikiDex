@@ -7,9 +7,7 @@ use crate::{
     embedding_client::{EmbeddingClient, EmbeddingClientService},
     formatter::{CitationStyle, Cite},
     index::{FaceIndex, SearchService},
-    inference::index_accumulator::{
-        IndexAccumulator, IndexAccumulatorReturn, IndexAccumulatorTrait,
-    },
+    inference::index_accumulator::{IndexAccumulator, IndexAccumulatorTrait, TokenValue},
     llm_client::{
         LanguageServiceArguments, LlmClientImpl, LlmClientService, LlmMessage, LlmRole,
         PartialLlmMessage,
@@ -187,11 +185,11 @@ impl Engine {
             }) = partial_message_receiver.recv().await
             {
                 match accumulator.token(&content) {
-                    IndexAccumulatorReturn::Nothing => continue,
-                    IndexAccumulatorReturn::NoOp(_content) => {
+                    TokenValue::Nothing => continue,
+                    TokenValue::NoOp(_content) => {
                         let _ = tx.send(PartialMessage::content(content.to_string()).message());
                     }
-                    IndexAccumulatorReturn::Transform(content, position) => {
+                    TokenValue::Transform(content, position) => {
                         let modified_position = position + num_sources;
                         let content = content.replace(
                             position.to_string().as_str(),
@@ -212,13 +210,13 @@ impl Engine {
                         }
                         let _ = tx.send(PartialMessage::content(content).message());
                     }
-                    IndexAccumulatorReturn::NoTransform(content) => {
+                    TokenValue::NoTransform(content) => {
                         let _ = tx.send(PartialMessage::content(content).message());
                     }
                 }
             }
 
-            if let IndexAccumulatorReturn::NoTransform(content) = accumulator.flush() {
+            if let TokenValue::NoTransform(content) = accumulator.flush() {
                 let _ = tx.send(PartialMessage::content(content).message());
             }
             let _ = tx.send(PartialMessage::done().message());
