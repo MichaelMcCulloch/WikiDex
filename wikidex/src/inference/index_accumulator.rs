@@ -179,7 +179,7 @@ mod test {
         let mut a = IndexAccumulator::new(vec![1234]);
 
         assert_eq!(I::Nothing, a.token(" 1"));
-        assert_eq!(I::Nothing, a.token(" 2"));
+        assert_eq!(I::NoTransform(" 1 ".to_string()), a.token(" 2"));
         assert_eq!(I::Nothing, a.token(" 3"));
         assert_eq!(I::Nothing, a.token(" 4"));
         assert_eq!(I::NoTransform("2341".to_string()), a.flush());
