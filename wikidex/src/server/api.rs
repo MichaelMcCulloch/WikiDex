@@ -42,7 +42,7 @@ async fn conversation(
     query_engine: Data<Arc<Engine>>,
 ) -> impl Responder {
     match query_engine
-        .conversation(conversation, vec![&"References:"])
+        .conversation(conversation, vec!["References:".to_string()])
         .await
     {
         Ok(message) => HttpResponse::Ok().json(message),
@@ -79,7 +79,7 @@ async fn streaming_conversation(
     let (client, sender) = Client::new();
     actix_web::rt::spawn(async move {
         let _ = query_engine
-            .streaming_conversation(conversation_1, sender, vec![&"References"])
+            .streaming_conversation(conversation_1, sender, vec!["References".to_string()])
             .await
             .map_err(|e| log::error!("{e}"));
     });

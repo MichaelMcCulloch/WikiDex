@@ -11,7 +11,7 @@ use crate::{
         LanguageServiceArguments, LanguageServiceDocument, LlmClientImpl, LlmClientService,
         LlmMessage, LlmRole, PartialLlmMessage,
     },
-    server::{Conversation, CountSources, Message, PartialMessage, Source},
+    server::{Conversation, Message, PartialMessage, Source},
 };
 
 use super::QueryEngineError;
@@ -47,29 +47,28 @@ impl Engine {
     pub(crate) async fn conversation(
         &self,
         Conversation { messages }: Conversation,
-        _stop_phrases: Vec<&str>,
+        stop_phrases: Vec<String>,
     ) -> Result<Message, QueryEngineError> {
-        let num_sources = messages.sources_count();
-
         let user_query = match messages.iter().last() {
             Some(Message::User(user_query)) => {
                 Ok::<std::string::String, QueryEngineError>(user_query.clone())
             }
-            Some(Message::Assistant(_, _)) => Err(QueryEngineError::LastMessageIsNotUser)?,
+            Some(_) => Err(QueryEngineError::LastMessageIsNotUser)?,
             None => Err(QueryEngineError::EmptyConversation)?,
         }?;
 
         let messages = messages
             .into_iter()
-            .map(|m| match m {
-                Message::User(content) => LlmMessage {
+            .filter_map(|m| match m {
+                Message::User(content) => Some(LlmMessage {
                     role: LlmRole::User,
                     content,
-                },
-                Message::Assistant(content, _) => LlmMessage {
+                }),
+                Message::Assistant(content) => Some(LlmMessage {
                     role: LlmRole::Assistant,
                     content,
-                },
+                }),
+                Message::SourceMap(_) => None,
             })
             .collect::<Vec<_>>();
 
@@ -93,11 +92,10 @@ impl Engine {
             })
             .collect::<Vec<_>>();
 
-        let sources = documents
+        let _sources = documents
             .into_iter()
             .enumerate()
-            .map(|(ordinal, document)| Source {
-                ordinal: ordinal + num_sources,
+            .map(|(_ordinal, document)| Source {
                 index: document.index,
                 citation: document.provenance.format(&CITATION_STYLE),
                 url: document.provenance.url(),
@@ -110,7 +108,7 @@ impl Engine {
             documents: document_arguments,
             user_query,
             max_tokens: 2048,
-            stop_phrases: vec!["References:".to_string()],
+            stop_phrases,
         };
         let LlmMessage { role, content } = self
             .llm_client
@@ -120,7 +118,7 @@ impl Engine {
         match role {
             LlmRole::Assistant => {
                 let content = content.trim().to_string();
-                Ok(Message::Assistant(content, sources))
+                Ok(Message::Assistant(content))
             }
             _ => Err(QueryEngineError::InvalidAgentResponse)?,
         }
@@ -130,27 +128,27 @@ impl Engine {
         &self,
         Conversation { messages }: Conversation,
         tx: UnboundedSender<Bytes>,
-        _stop_phrases: Vec<&str>,
+        stop_phrases: Vec<String>,
     ) -> Result<(), QueryEngineError> {
-        let _num_sources = messages.sources_count();
         let user_query = match messages.iter().last() {
             Some(Message::User(user_query)) => {
                 Ok::<std::string::String, QueryEngineError>(user_query.clone())
             }
-            Some(Message::Assistant(_, _)) => Err(QueryEngineError::LastMessageIsNotUser)?,
+            Some(_) => Err(QueryEngineError::LastMessageIsNotUser)?,
             None => Err(QueryEngineError::EmptyConversation)?,
         }?;
         let messages = messages
             .into_iter()
-            .map(|m| match m {
-                Message::User(content) => LlmMessage {
+            .filter_map(|m| match m {
+                Message::User(content) => Some(LlmMessage {
                     role: LlmRole::User,
                     content,
-                },
-                Message::Assistant(content, _) => LlmMessage {
+                }),
+                Message::Assistant(content) => Some(LlmMessage {
                     role: LlmRole::Assistant,
                     content,
-                },
+                }),
+                Message::SourceMap(_) => None,
             })
             .collect::<Vec<_>>();
 
@@ -177,9 +175,19 @@ impl Engine {
             documents: document_arguments,
             user_query,
             max_tokens: 2048,
-            stop_phrases: vec!["References:".to_string()],
+            stop_phrases,
         };
-        let _documents = documents.into_iter().map(Some).collect::<Vec<_>>();
+
+        let _sources = documents
+            .into_iter()
+            .enumerate()
+            .map(|(_ordinal, document)| Source {
+                index: document.index,
+                citation: document.provenance.format(&CITATION_STYLE),
+                url: document.provenance.url(),
+                origin_text: document.text,
+            })
+            .collect::<Vec<_>>();
 
         let (partial_message_sender, mut partial_message_receiver) = unbounded_channel();
 

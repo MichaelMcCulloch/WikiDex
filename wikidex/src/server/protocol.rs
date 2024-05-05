@@ -1,12 +1,16 @@
+use std::collections::HashMap;
+
 use bytes::Bytes;
+use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+
+use crate::formatter::{Cite, Provenance};
 
 // type Source = (String, String, String, String);
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 #[schema(example = assistant_message_schema_example)]
 pub(crate) struct Source {
-    pub(crate) ordinal: usize,
     pub(crate) index: i64,
     pub(crate) citation: String,
     pub(crate) url: String,
@@ -17,14 +21,15 @@ pub(crate) struct Source {
 #[schema(example = assistant_message_schema_example)]
 pub(crate) enum Message {
     User(String),
-    Assistant(String, Vec<Source>),
+    Assistant(String),
+    SourceMap(HashMap<i64, Source>),
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug)]
 #[schema(example = assistant_partial_message_schema_example)]
 pub(crate) struct PartialMessage {
     pub(crate) content: Option<String>,
-    pub(crate) source: Option<Source>,
+    pub(crate) source_map: Option<HashMap<i64, Source>>,
     pub(crate) finished: Option<String>,
 }
 
@@ -32,15 +37,15 @@ impl PartialMessage {
     pub(crate) fn done() -> Self {
         Self {
             content: None,
-            source: None,
+            source_map: None,
             finished: Some(String::from("DONE")),
         }
     }
 
-    pub(crate) fn source(source: Source) -> Self {
+    pub(crate) fn source(source: HashMap<i64, Source>) -> Self {
         Self {
             content: None,
-            source: Some(source),
+            source_map: Some(source),
             finished: None,
         }
     }
@@ -48,14 +53,7 @@ impl PartialMessage {
     pub(crate) fn content(content: String) -> Self {
         Self {
             content: Some(content),
-            source: None,
-            finished: None,
-        }
-    }
-    pub(crate) fn content_and_source(content: String, source: Source) -> Self {
-        Self {
-            content: Some(content),
-            source: Some(source),
+            source_map: None,
             finished: None,
         }
     }
@@ -76,19 +74,6 @@ pub(crate) struct Conversation {
 pub(crate) trait CountSources {
     fn sources_count(&self) -> usize;
 }
-impl CountSources for Vec<Message> {
-    fn sources_count(&self) -> usize {
-        self.iter().fold(0usize, |acc, message| match message {
-            Message::User(_) => acc,
-            Message::Assistant(_, s) => s.len() + acc,
-        })
-    }
-}
-impl CountSources for Conversation {
-    fn sources_count(&self) -> usize {
-        self.messages.sources_count()
-    }
-}
 
 #[derive(Serialize, Deserialize, ToSchema, Debug)]
 #[schema(example = query_schema_example)]
@@ -103,31 +88,43 @@ pub(crate) struct Answer {
 }
 
 fn assistant_message_schema_example() -> Message {
-    Message::Assistant(
-        String::from("String"),
-        vec![
-            source_schema_example(),
-            source_schema_example(),
-            source_schema_example(),
-            source_schema_example(),
-        ],
-    )
+    Message::Assistant(String::from("String"))
 }
 
 fn assistant_partial_message_schema_example() -> PartialMessage {
     PartialMessage {
         content: Some(String::from(" fragment")),
-        source: Some(source_schema_example()),
+        source_map: Some(source_map_example()),
         finished: Some(String::new()),
     }
 }
 
+fn source_map_example() -> HashMap<i64, Source> {
+    let source = source_schema_example();
+    let mut source_map = HashMap::new();
+    let _ = source_map.insert(source.index, source);
+    source_map
+}
 fn source_schema_example() -> Source {
-    Source { ordinal: 0, index: 987087, citation: "Bogonam-Foulbé. 2023, December 1. In Wikipedia. Retrieved December 1, 2023, from https://en.wikipedia.org/wiki/Bogonam-Foulbé".to_string(), url: "https://en.wikipedia.org/wiki/Bogonam-Foulbé".to_string(), origin_text: "Bogonam-Foulbé is a village in the Kongoussi Department of Bam Province in northern Burkina Faso. It has a population of 205.".to_string() }
+    let p = Provenance::Wikipedia(
+        "Bogonam-Foulbé".to_string(),
+        DateTime::from_timestamp_millis(0).unwrap().date_naive(),
+        DateTime::from_timestamp_millis(0).unwrap().date_naive(),
+    );
+    p.format(&crate::formatter::CitationStyle::Mla);
+    Source {
+        index: 987087,
+        citation: p.format(&crate::formatter::CitationStyle::Mla),
+        url: p.url(),
+        origin_text: p.title(),
+    }
 }
 
 fn user_message_schema_example() -> Message {
     Message::User(String::from("String"))
+}
+fn source_map_message_schema_example() -> Message {
+    Message::SourceMap(source_map_example())
 }
 fn query_schema_example() -> Query {
     Query {
