@@ -29,17 +29,14 @@ SQLite:
     - key: cache-sqlite
       paths:
         - wikidex/target/*
-    - key: cache-cargo
-      paths:
-        - wikidex/cargo_cache/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: All
   script:
     - cd wikidex
-    - CARGO_HOME=./cargo_cache cargo build --no-default-features --features sqlite,server
-    - CARGO_HOME=./cargo_cache cargo build --no-default-features --features sqlite,ingest
-    - CARGO_HOME=./cargo_cache cargo build --no-default-features --features sqlite,ingest,server
-    - CARGO_HOME=./cargo_cache cargo test --package wikidex --bin wikidex --no-default-features --features sqlite,server,ingest -- --exact --show-output  --nocapture
+    - cargo build --no-default-features --features sqlite,server
+    - cargo build --no-default-features --features sqlite,ingest
+    - cargo build --no-default-features --features sqlite,ingest,server
+    - cargo test --package wikidex --bin wikidex --no-default-features --features sqlite,server,ingest -- --exact --show-output  --nocapture
 
 PostgreSQL:
   variables:
@@ -48,11 +45,8 @@ PostgreSQL:
     - key: cache-postgres
       paths:
         - wikidex/target/*
-    - key: cache-cargo
-      paths:
-        - wikidex/cargo_cache/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: All
   script:
     - cd wikidex
-    - CARGO_HOME=./cargo_cache cargo build --no-default-features --features server,postgres
+    - cargo build --no-default-features --features server,postgres
