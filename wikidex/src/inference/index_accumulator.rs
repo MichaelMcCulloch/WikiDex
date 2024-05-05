@@ -80,7 +80,6 @@ impl TokenAccumulator for IndexAccumulator {
         if token.trim().parse::<i64>().is_ok() {
             self.token_buffer.push(token.to_string());
             self.is_accumulating = true;
-
             TokenValue::Nothing
         } else if self.is_accumulating {
             let key_string = self.token_buffer.join("");
