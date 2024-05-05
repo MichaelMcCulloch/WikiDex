@@ -32,19 +32,15 @@ pub(crate) type TritonClient = GrpcInferenceServiceClient<Channel>;
 
 pub(crate) trait LlmClientBackendKind {}
 pub(crate) trait LlmClientBackend {
-    async fn get_response<S: AsRef<str>>(
+    async fn get_response(
         &self,
         arguments: LanguageServiceArguments,
-        max_tokens: u16,
-        stop_phrases: Vec<S>,
     ) -> Result<String, LlmClientError>;
 
-    async fn stream_response<S: AsRef<str>>(
+    async fn stream_response(
         &self,
         arguments: LanguageServiceArguments,
         tx: UnboundedSender<String>,
-        max_tokens: u16,
-        stop_phrases: Vec<S>,
     ) -> Result<(), LlmClientError>;
 }
 
@@ -82,26 +78,20 @@ impl LlmClient<TritonClient> {
 
 impl<T> LlmClientService for T where T: LlmClientBackend {}
 pub(crate) trait LlmClientService: LlmClientBackend {
-    async fn get_llm_answer<S: AsRef<str>>(
+    async fn get_llm_answer(
         &self,
         arguments: LanguageServiceArguments,
-        max_tokens: u16,
-        stop_phrases: Vec<S>,
     ) -> Result<LlmMessage, LlmClientError> {
-        let message = self
-            .get_response(arguments, max_tokens, stop_phrases)
-            .await?;
+        let message = self.get_response(arguments).await?;
         Ok(LlmMessage {
             role: LlmRole::Assistant,
             content: message,
         })
     }
-    async fn stream_llm_answer<S: AsRef<str>>(
+    async fn stream_llm_answer(
         &self,
         arguments: LanguageServiceArguments,
         tx: UnboundedSender<PartialLlmMessage>,
-        max_tokens: u16,
-        stop_phrases: Vec<S>,
     ) -> Result<(), LlmClientError> {
         let (tx_s, mut rx_s) = unbounded_channel();
 
@@ -113,8 +103,7 @@ pub(crate) trait LlmClientService: LlmClientBackend {
                 });
             }
         });
-        self.stream_response(arguments, tx_s, max_tokens, stop_phrases)
-            .await
+        self.stream_response(arguments, tx_s).await
     }
 }
 
@@ -130,38 +119,26 @@ pub(crate) enum LlmClientImpl {
     OpenAiInstruct(LlmClient<OpenAiInstructClient>),
 }
 impl LlmClientBackend for LlmClientImpl {
-    async fn get_response<S: AsRef<str>>(
+    async fn get_response(
         &self,
         arguments: LanguageServiceArguments,
-        max_tokens: u16,
-        stop_phrases: Vec<S>,
     ) -> Result<String, LlmClientError> {
         match self {
-            LlmClientImpl::Triton(t) => t.get_response(arguments, max_tokens, stop_phrases).await,
+            LlmClientImpl::Triton(t) => t.get_response(arguments).await,
 
-            LlmClientImpl::OpenAiInstruct(o) => {
-                o.get_response(arguments, max_tokens, stop_phrases).await
-            }
+            LlmClientImpl::OpenAiInstruct(o) => o.get_response(arguments).await,
         }
     }
 
-    async fn stream_response<S: AsRef<str>>(
+    async fn stream_response(
         &self,
         arguments: LanguageServiceArguments,
         tx: UnboundedSender<String>,
-        max_tokens: u16,
-        stop_phrases: Vec<S>,
     ) -> Result<(), LlmClientError> {
         match self {
-            LlmClientImpl::Triton(t) => {
-                t.stream_response(arguments, tx, max_tokens, stop_phrases)
-                    .await
-            }
+            LlmClientImpl::Triton(t) => t.stream_response(arguments, tx).await,
 
-            LlmClientImpl::OpenAiInstruct(o) => {
-                o.stream_response(arguments, tx, max_tokens, stop_phrases)
-                    .await
-            }
+            LlmClientImpl::OpenAiInstruct(o) => o.stream_response(arguments, tx).await,
         }
     }
 }

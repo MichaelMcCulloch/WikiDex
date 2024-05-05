@@ -18,11 +18,9 @@ impl LlmClient<TritonClient> {
 }
 impl LlmClientBackendKind for TritonClient {}
 impl LlmClientBackend for LlmClient<TritonClient> {
-    async fn get_response<S: AsRef<str>>(
+    async fn get_response(
         &self,
         arguments: LanguageServiceArguments,
-        max_tokens: u16,
-        stop_phrases: Vec<S>,
     ) -> Result<String, LlmClientError> {
         let prompt = self
             .format_rag_template(
@@ -31,15 +29,7 @@ impl LlmClientBackend for LlmClient<TritonClient> {
                 &arguments.user_query,
             )
             .await?;
-        let request = create_request(
-            prompt,
-            false,
-            max_tokens,
-            stop_phrases
-                .iter()
-                .map(|s| s.as_ref().to_string())
-                .collect::<Vec<_>>(),
-        )?;
+        let request = create_request(prompt, false, arguments.max_tokens, arguments.stop_phrases)?;
         let request = stream! { yield request };
         let request = tonic::Request::new(request);
 
@@ -69,12 +59,10 @@ impl LlmClientBackend for LlmClient<TritonClient> {
         Ok(contents)
     }
 
-    async fn stream_response<S: AsRef<str>>(
+    async fn stream_response(
         &self,
         arguments: LanguageServiceArguments,
         tx: UnboundedSender<String>,
-        max_tokens: u16,
-        stop_phrases: Vec<S>,
     ) -> Result<(), LlmClientError> {
         let prompt = self
             .format_rag_template(
@@ -83,15 +71,7 @@ impl LlmClientBackend for LlmClient<TritonClient> {
                 &arguments.user_query,
             )
             .await?;
-        let request = create_request(
-            prompt,
-            true,
-            max_tokens,
-            stop_phrases
-                .iter()
-                .map(|s| s.as_ref().to_string())
-                .collect::<Vec<_>>(),
-        )?;
+        let request = create_request(prompt, true, arguments.max_tokens, arguments.stop_phrases)?;
         let request = stream! { yield request };
         let request = tonic::Request::new(request);
         let mut stream = self

@@ -47,7 +47,7 @@ impl Engine {
     pub(crate) async fn conversation(
         &self,
         Conversation { messages }: Conversation,
-        stop_phrases: Vec<&str>,
+        _stop_phrases: Vec<&str>,
     ) -> Result<Message, QueryEngineError> {
         let num_sources = messages.sources_count();
 
@@ -109,10 +109,12 @@ impl Engine {
             messages,
             documents: document_arguments,
             user_query,
+            max_tokens: 2048,
+            stop_phrases: vec!["References:".to_string()],
         };
         let LlmMessage { role, content } = self
             .llm_client
-            .get_llm_answer(llm_service_arguments, 2048u16, stop_phrases)
+            .get_llm_answer(llm_service_arguments)
             .await?;
 
         match role {
@@ -128,7 +130,7 @@ impl Engine {
         &self,
         Conversation { messages }: Conversation,
         tx: UnboundedSender<Bytes>,
-        stop_phrases: Vec<&str>,
+        _stop_phrases: Vec<&str>,
     ) -> Result<(), QueryEngineError> {
         let _num_sources = messages.sources_count();
         let user_query = match messages.iter().last() {
@@ -174,6 +176,8 @@ impl Engine {
             messages,
             documents: document_arguments,
             user_query,
+            max_tokens: 2048,
+            stop_phrases: vec!["References:".to_string()],
         };
         let _documents = documents.into_iter().map(Some).collect::<Vec<_>>();
 
@@ -192,12 +196,7 @@ impl Engine {
         });
 
         self.llm_client
-            .stream_llm_answer(
-                llm_service_arguments,
-                partial_message_sender,
-                2048u16,
-                stop_phrases,
-            )
+            .stream_llm_answer(llm_service_arguments, partial_message_sender)
             .await?;
 
         Ok(())

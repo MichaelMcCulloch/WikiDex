@@ -41,11 +41,9 @@ impl LlmClient<OpenAiInstructClient> {
 impl LlmClientBackendKind for OpenAiInstructClient {}
 
 impl LlmClientBackend for LlmClient<OpenAiInstructClient> {
-    async fn get_response<S: AsRef<str>>(
+    async fn get_response(
         &self,
         arguments: LanguageServiceArguments,
-        max_tokens: u16,
-        stop_phrases: Vec<S>,
     ) -> Result<String, LlmClientError> {
         let prompt = arguments
             .messages
@@ -77,11 +75,11 @@ impl LlmClientBackend for LlmClient<OpenAiInstructClient> {
             })
             .collect::<Vec<_>>();
         let request = CreateChatCompletionRequestArgs::default()
-            .max_tokens(max_tokens)
+            .max_tokens(arguments.max_tokens)
             .model(&self.client.model_name)
             .n(1)
             .messages(prompt)
-            .stop(stop_phrases.iter().map(AsRef::as_ref).collect::<Vec<_>>())
+            .stop(arguments.stop_phrases)
             .build()?;
 
         let response = self.client.client.chat().create(request).await?;
@@ -97,12 +95,10 @@ impl LlmClientBackend for LlmClient<OpenAiInstructClient> {
         Ok(response)
     }
 
-    async fn stream_response<S: AsRef<str>>(
+    async fn stream_response(
         &self,
         arguments: LanguageServiceArguments,
         tx: UnboundedSender<String>,
-        max_tokens: u16,
-        stop_phrases: Vec<S>,
     ) -> Result<(), LlmClientError> {
         let prompt = arguments
             .messages
@@ -134,11 +130,11 @@ impl LlmClientBackend for LlmClient<OpenAiInstructClient> {
             })
             .collect::<Vec<_>>();
         let request = CreateChatCompletionRequestArgs::default()
-            .max_tokens(max_tokens)
+            .max_tokens(arguments.max_tokens)
             .model(&self.client.model_name)
             .n(1)
             .messages(prompt)
-            .stop(stop_phrases.iter().map(AsRef::as_ref).collect::<Vec<_>>())
+            .stop(arguments.stop_phrases)
             .build()?;
 
         let mut stream = self.client.client.chat().create_stream(request).await?;
