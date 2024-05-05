@@ -218,4 +218,14 @@ mod test {
         assert_eq!(I::NoTransform(" 4 ".to_string()), a.token(" 4 "));
         assert_eq!(I::Nothing, a.flush());
     }
+    #[test]
+    fn test_number_is_absent_trailing_and_leading_space_large_fragments() {
+        let mut a = IndexAccumulator::new(vec![1234]);
+
+        assert_eq!(I::NoTransform(" 1234 ".to_string()), a.token(" 1234 "));
+        assert_eq!(I::NoTransform(" 123 ".to_string()), a.token(" 123 "));
+        assert_eq!(I::NoTransform(" 12 ".to_string()), a.token(" 12 "));
+        assert_eq!(I::NoTransform(" 34 ".to_string()), a.token(" 34 "));
+        assert_eq!(I::Nothing, a.flush());
+    }
 }
