@@ -80,12 +80,12 @@ mod test {
 
     #[test]
     fn test() {
-        let mut accumulator = IndexAccumulator::new(vec![1234, 4321]);
+        let mut a = IndexAccumulator::new(vec![1234, 4321]);
 
-        assert_eq!(I::NoOp("This"), accumulator.token("This"));
-        assert_eq!(I::NoOp(" is"), accumulator.token(" is"));
-        assert_eq!(I::NoOp(" a"), accumulator.token(" a"));
-        assert_eq!(I::NoOp(" test"), accumulator.token(" test"));
+        assert_eq!(I::NoOp("This"), a.token("This"));
+        assert_eq!(I::NoOp(" is"), a.token(" is"));
+        assert_eq!(I::NoOp(" a"), a.token(" a"));
+        assert_eq!(I::NoOp(" test"), a.token(" test"));
     }
 
     #[test]
