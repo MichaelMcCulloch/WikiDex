@@ -190,6 +190,14 @@ mod test {
     }
 
     #[test]
+    fn index_matched_large_fragments() {
+        let mut a = IndexAccumulator::new(vec![123456789]);
+
+        assert_eq!(I::Nothing, a.token("1234"));
+        assert_eq!(I::Nothing, a.token("56789"));
+        assert_eq!(I::Transform("123456789".to_string(), 0), a.flush());
+    }
+    #[test]
     fn index_matched_leading_large_fragments() {
         let mut a = IndexAccumulator::new(vec![123456789]);
 
