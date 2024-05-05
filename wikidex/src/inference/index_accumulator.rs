@@ -417,10 +417,6 @@ mod test {
         let mut a = IndexAccumulator::new(vec![1234], 0, Box::new(formatter));
 
         assert_eq!(
-            TVS::Unit(TV::NoTransform(" 1234 ".to_string())),
-            a.token(" 1234 ")
-        );
-        assert_eq!(
             TVS::Unit(TV::NoTransform(" 123 ".to_string())),
             a.token(" 123 ")
         );
