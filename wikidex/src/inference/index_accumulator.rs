@@ -27,8 +27,8 @@ pub(crate) enum TokenValues<'a> {
 }
 
 impl<'a> From<TokenValue<'a>> for TokenValues<'a> {
-    fn from(_value: TokenValue<'a>) -> Self {
-        match _value {
+    fn from(value: TokenValue<'a>) -> Self {
+        match value {
             TokenValue::Nothing => TokenValues::Nothing,
             t => TokenValues::Unit(t),
         }
