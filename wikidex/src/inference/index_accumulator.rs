@@ -44,9 +44,7 @@ impl IndexAccumulatorTrait for IndexAccumulator {
                 }
             }
         } else {
-            let token_as_number: Option<i64> = token.trim().parse().ok();
-
-            if let Some(num) = token_as_number {
+            if let Ok(num) = token.trim().parse() {
                 if self.dictionary.contains(&num) {
                     self.token_buffer.push(token.to_string());
                     return IndexAccumulatorReturn::Nothing;
