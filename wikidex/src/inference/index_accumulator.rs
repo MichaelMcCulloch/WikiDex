@@ -140,7 +140,7 @@ impl TokenAccumulator for IndexAccumulator {
 
     fn flush<'a>(&mut self) -> TokenValues<'a> {
         let key_string = self.clear_buffer();
-        TokenValues::Unit(self.process(key_string))
+        self.process(key_string).into()
     }
 }
 
