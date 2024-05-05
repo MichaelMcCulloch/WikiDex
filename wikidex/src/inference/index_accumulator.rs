@@ -162,8 +162,8 @@ mod test {
     fn empty() {
         let mut a = IndexAccumulator::new(vec![1234, 4321], 0, Box::new(formatter));
 
-        assert_eq!(TVS::Unit(TV::Nothing), a.token(""));
-        assert_eq!(TVS::Unit(TV::Nothing), a.flush());
+        assert_eq!(TVS::Nothing, a.token(""));
+        assert_eq!(TVS::Nothing, a.flush());
     }
     #[test]
     fn plain_text() {
@@ -173,118 +173,118 @@ mod test {
         assert_eq!(TVS::Unit(TV::NoOp(" is")), a.token(" is"));
         assert_eq!(TVS::Unit(TV::NoOp(" a")), a.token(" a"));
         assert_eq!(TVS::Unit(TV::NoOp(" test")), a.token(" test"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.flush());
+        assert_eq!(TVS::Nothing, a.flush());
     }
     #[test]
     fn index_unmatched() {
         let mut a = IndexAccumulator::new(vec![1234, 4321], 0, Box::new(formatter));
 
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("4"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
+        assert_eq!(TVS::Nothing, a.token("2"));
+        assert_eq!(TVS::Nothing, a.token("3"));
+        assert_eq!(TVS::Nothing, a.token("4"));
+        assert_eq!(TVS::Nothing, a.token("1"));
         assert_eq!(TVS::Unit(TV::NoTransform("2341".to_string())), a.flush());
     }
     #[test]
     fn index_matched() {
         let mut a = IndexAccumulator::new(vec![1234], 0, Box::new(formatter));
 
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("4"));
+        assert_eq!(TVS::Nothing, a.token("1"));
+        assert_eq!(TVS::Nothing, a.token("2"));
+        assert_eq!(TVS::Nothing, a.token("3"));
+        assert_eq!(TVS::Nothing, a.token("4"));
         assert_eq!(TVS::Unit(TV::NoTransform("0".to_string())), a.flush());
     }
     #[test]
     fn indices_unmatched() {
         let mut a = IndexAccumulator::new(vec![1234], 0, Box::new(formatter));
 
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
+        assert_eq!(TVS::Nothing, a.token("1"));
+        assert_eq!(TVS::Nothing, a.token("2"));
+        assert_eq!(TVS::Nothing, a.token("3"));
         assert_eq!(TVS::Unit(TV::NoTransform("123 ".to_string())), a.token(" "));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
+        assert_eq!(TVS::Nothing, a.token("3"));
+        assert_eq!(TVS::Nothing, a.token("2"));
+        assert_eq!(TVS::Nothing, a.token("1"));
         assert_eq!(TVS::Unit(TV::NoTransform("321".to_string())), a.flush());
     }
     #[test]
     fn indices_matched_and_same() {
         let mut a = IndexAccumulator::new(vec![123], 0, Box::new(formatter));
 
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
+        assert_eq!(TVS::Nothing, a.token("1"));
+        assert_eq!(TVS::Nothing, a.token("2"));
+        assert_eq!(TVS::Nothing, a.token("3"));
         assert_eq!(TVS::Unit(TV::Transform("0 ".to_string(), 0)), a.token(" "));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
+        assert_eq!(TVS::Nothing, a.token("1"));
+        assert_eq!(TVS::Nothing, a.token("2"));
+        assert_eq!(TVS::Nothing, a.token("3"));
         assert_eq!(TVS::Unit(TV::Transform("0".to_string(), 0)), a.flush());
     }
     #[test]
     fn indices_matched_and_different() {
         let mut a = IndexAccumulator::new(vec![123, 321], 0, Box::new(formatter));
 
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
+        assert_eq!(TVS::Nothing, a.token("1"));
+        assert_eq!(TVS::Nothing, a.token("2"));
+        assert_eq!(TVS::Nothing, a.token("3"));
         assert_eq!(TVS::Unit(TV::Transform("0 ".to_string(), 0)), a.token(" "));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
+        assert_eq!(TVS::Nothing, a.token("3"));
+        assert_eq!(TVS::Nothing, a.token("2"));
+        assert_eq!(TVS::Nothing, a.token("1"));
         assert_eq!(TVS::Unit(TV::Transform("1".to_string(), 1)), a.flush());
     }
     #[test]
     fn indices_single_matched() {
         let mut a = IndexAccumulator::new(vec![123], 0, Box::new(formatter));
 
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
+        assert_eq!(TVS::Nothing, a.token("1"));
+        assert_eq!(TVS::Nothing, a.token("2"));
+        assert_eq!(TVS::Nothing, a.token("3"));
         assert_eq!(TVS::Unit(TV::Transform("0 ".to_string(), 0)), a.token(" "));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
+        assert_eq!(TVS::Nothing, a.token("3"));
+        assert_eq!(TVS::Nothing, a.token("2"));
+        assert_eq!(TVS::Nothing, a.token("1"));
         assert_eq!(TVS::Unit(TV::NoTransform("321".to_string())), a.flush());
     }
     #[test]
     fn index_matched_leading() {
         let mut a = IndexAccumulator::new(vec![1234], 0, Box::new(formatter));
 
-        assert_eq!(TVS::Unit(TV::Nothing), a.token(" 1"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("4"));
+        assert_eq!(TVS::Nothing, a.token(" 1"));
+        assert_eq!(TVS::Nothing, a.token("2"));
+        assert_eq!(TVS::Nothing, a.token("3"));
+        assert_eq!(TVS::Nothing, a.token("4"));
         assert_eq!(TVS::Unit(TV::NoTransform("0".to_string())), a.flush());
     }
     #[test]
     fn index_matched_trailing() {
         let mut a = IndexAccumulator::new(vec![1234], 0, Box::new(formatter));
 
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("4 "));
+        assert_eq!(TVS::Nothing, a.token("1"));
+        assert_eq!(TVS::Nothing, a.token("2"));
+        assert_eq!(TVS::Nothing, a.token("3"));
+        assert_eq!(TVS::Nothing, a.token("4 "));
         assert_eq!(TVS::Unit(TV::NoTransform("0".to_string())), a.flush());
     }
     #[test]
     fn index_matched_leading_trailing() {
         let mut a = IndexAccumulator::new(vec![12], 0, Box::new(formatter));
 
-        assert_eq!(TVS::Unit(TV::Nothing), a.token(" 1"));
+        assert_eq!(TVS::Nothing, a.token(" 1"));
         assert_eq!(
             TVS::Unit(TV::Transform(" 12 ".to_string(), 0)),
             a.token("2 ")
         );
-        assert_eq!(TVS::Unit(TV::Nothing), a.flush());
+        assert_eq!(TVS::Nothing, a.flush());
     }
 
     #[test]
     fn index_matched_large_fragments() {
         let mut a = IndexAccumulator::new(vec![123456789], 0, Box::new(formatter));
 
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("1234"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("56789"));
+        assert_eq!(TVS::Nothing, a.token("1234"));
+        assert_eq!(TVS::Nothing, a.token("56789"));
         assert_eq!(
             TVS::Unit(TV::Transform("123456789".to_string(), 0)),
             a.flush()
@@ -294,8 +294,8 @@ mod test {
     fn index_matched_leading_large_fragments() {
         let mut a = IndexAccumulator::new(vec![123456789], 0, Box::new(formatter));
 
-        assert_eq!(TVS::Unit(TV::Nothing), a.token(" 1234"));
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("56789"));
+        assert_eq!(TVS::Nothing, a.token(" 1234"));
+        assert_eq!(TVS::Nothing, a.token("56789"));
         assert_eq!(
             TVS::Unit(TV::Transform("123456789".to_string(), 0)),
             a.flush()
@@ -305,29 +305,29 @@ mod test {
     fn index_matched_trailing_large_fragments() {
         let mut a = IndexAccumulator::new(vec![123456789], 0, Box::new(formatter));
 
-        assert_eq!(TVS::Unit(TV::Nothing), a.token("1234"));
+        assert_eq!(TVS::Nothing, a.token("1234"));
         assert_eq!(
             TVS::Unit(TV::Transform("123456789 ".to_string(), 0)),
             a.token("56789 ")
         );
-        assert_eq!(TVS::Unit(TV::Nothing), a.flush());
+        assert_eq!(TVS::Nothing, a.flush());
     }
     #[test]
     fn index_matched_leading_trailing_large_fragments() {
         let mut a = IndexAccumulator::new(vec![123456789], 0, Box::new(formatter));
 
-        assert_eq!(TVS::Unit(TV::Nothing), a.token(" 1234"));
+        assert_eq!(TVS::Nothing, a.token(" 1234"));
         assert_eq!(
             TVS::Unit(TV::NoTransform(" 123456789 ".to_string())),
             a.token("56789 ")
         );
-        assert_eq!(TVS::Unit(TV::Nothing), a.flush());
+        assert_eq!(TVS::Nothing, a.flush());
     }
     #[test]
     fn index_unmatched_leading() {
         let mut a = IndexAccumulator::new(vec![1234], 0, Box::new(formatter));
 
-        assert_eq!(TVS::Unit(TV::Nothing), a.token(" 1"));
+        assert_eq!(TVS::Nothing, a.token(" 1"));
         assert_eq!(TVS::Unit(TV::NoTransform(" 1".to_string())), a.token(" 2"));
         assert_eq!(TVS::Unit(TV::NoTransform(" 2".to_string())), a.token(" 3"));
         assert_eq!(TVS::Unit(TV::NoTransform(" 3".to_string())), a.token(" 4"));
@@ -341,7 +341,7 @@ mod test {
         assert_eq!(TVS::Unit(TV::NoTransform("2 ".to_string())), a.token("2 "));
         assert_eq!(TVS::Unit(TV::NoTransform("3 ".to_string())), a.token("3 "));
         assert_eq!(TVS::Unit(TV::NoTransform("4 ".to_string())), a.token("4 "));
-        assert_eq!(TVS::Unit(TV::Nothing), a.flush());
+        assert_eq!(TVS::Nothing, a.flush());
     }
     #[test]
     fn index_unmatched_leading_trailing() {
@@ -363,7 +363,7 @@ mod test {
             TVS::Unit(TV::NoTransform(" 4 ".to_string())),
             a.token(" 4 ")
         );
-        assert_eq!(TVS::Unit(TV::Nothing), a.flush());
+        assert_eq!(TVS::Nothing, a.flush());
     }
     #[test]
     fn index_unmatched_leading_trailing_large_fragments() {
@@ -385,6 +385,6 @@ mod test {
             TVS::Unit(TV::NoTransform(" 34 ".to_string())),
             a.token(" 34 ")
         );
-        assert_eq!(TVS::Unit(TV::Nothing), a.flush());
+        assert_eq!(TVS::Nothing, a.flush());
     }
 }
