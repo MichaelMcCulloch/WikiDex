@@ -93,10 +93,11 @@ mod test {
     fn test_sequential_numbers_absent() {
         let mut a = IndexAccumulator::new(vec![1234, 4321]);
 
-        assert_eq!(I::NoOp("This"), a.token("2"));
-        assert_eq!(I::NoOp(" is"), a.token("3"));
-        assert_eq!(I::NoOp(" a"), a.token("4"));
-        assert_eq!(I::NoOp(" test"), a.token("1"));
+        assert_eq!(I::Nothing, a.token("2"));
+        assert_eq!(I::Nothing, a.token("3"));
+        assert_eq!(I::Nothing, a.token("4"));
+        assert_eq!(I::Nothing, a.token("1"));
+        assert_eq!(Some("2341".to_string()), a.flush());
     }
 
     #[test]
