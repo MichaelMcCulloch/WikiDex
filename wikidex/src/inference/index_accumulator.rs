@@ -114,8 +114,7 @@ impl TokenAccumulator for IndexAccumulator {
         } else if self.is_accumulating {
             let key_string = self.clear_buffer();
             let result = self.process(key_string);
-            self.push_buffer(token);
-            result.into()
+            TokenValues::Twofer(result, TokenValue::NoOp(token))
         } else {
             let _key_string = self.clear_buffer();
             assert!(_key_string.is_empty());
