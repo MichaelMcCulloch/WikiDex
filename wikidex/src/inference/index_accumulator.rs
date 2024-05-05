@@ -67,7 +67,6 @@ impl TokenAccumulator for IndexAccumulator {
             if self.is_accumulating {
                 self.token_buffer.push(token.to_string());
                 self.is_accumulating = true;
-
                 let key_string = self.token_buffer.join("");
                 self.is_accumulating = false;
                 self.token_buffer.clear();
