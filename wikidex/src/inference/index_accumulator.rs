@@ -363,7 +363,7 @@ mod test {
 
         assert_eq!(TVS::Nothing, a.token(" 1234"));
         assert_eq!(
-            TVS::Unit(TV::NoTransform(" 123456789 ".to_string())),
+            TVS::Unit(TV::NoTransform(" [0](http://localhost/#0) ".to_string())),
             a.token("56789 ")
         );
         assert_eq!(TVS::Nothing, a.flush());
