@@ -162,11 +162,14 @@ impl TokenAccumulator for IndexAccumulator {
     }
 
     fn flush(&mut self) -> TokenValue {
-        let buffer = self.token_buffer.join("");
-        if buffer.is_empty() {
-            TokenValue::Nothing
+        let key_string = self.clear_buffer();
+        let key = key_string.trim().parse::<i64>().unwrap();
+        if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
+            let value_string = (self.formatter)(value, self.modifier);
+            let value_string = key_string.replace(&key.to_string(), &value_string);
+            TokenValue::Transform(value_string, value)
         } else {
-            TokenValue::NoTransform(buffer)
+            TokenValue::NoTransform(key_string)
         }
     }
 }
