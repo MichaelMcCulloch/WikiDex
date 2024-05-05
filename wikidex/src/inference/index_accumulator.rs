@@ -104,13 +104,11 @@ impl TokenAccumulator for IndexAccumulator {
                 this.is_accumulating = true;
                 result.into()
             } else {
-                let _key_string = {
-                    let this = &mut *self;
-                    let string = this.token_buffer.join("");
-                    this.is_accumulating = false;
-                    this.token_buffer.clear();
-                    string
-                };
+                let this = &mut *self;
+                let _key_string = this.token_buffer.join("");
+                this.is_accumulating = false;
+                this.token_buffer.clear();
+
                 assert!(_key_string.is_empty());
                 let this = &mut *self;
                 this.token_buffer.push(token.to_string());
@@ -130,13 +128,11 @@ impl TokenAccumulator for IndexAccumulator {
                 let current_result = self.process(token.to_string());
                 TokenValues::Twofer(previous_result, current_result)
             } else {
-                let _key_string = {
-                    let this = &mut *self;
-                    let string = this.token_buffer.join("");
-                    this.is_accumulating = false;
-                    this.token_buffer.clear();
-                    string
-                };
+                let this = &mut *self;
+                let _key_string = this.token_buffer.join("");
+                this.is_accumulating = false;
+                this.token_buffer.clear();
+
                 assert!(_key_string.is_empty());
                 let current_result = self.process(token.to_string());
                 TokenValues::Unit(current_result)
@@ -152,13 +148,11 @@ impl TokenAccumulator for IndexAccumulator {
             let result = self.process(key_string);
             TokenValues::Twofer(result, TokenValue::NoOp(token))
         } else {
-            let _key_string = {
-                let this = &mut *self;
-                let string = this.token_buffer.join("");
-                this.is_accumulating = false;
-                this.token_buffer.clear();
-                string
-            };
+            let this = &mut *self;
+            let _key_string = this.token_buffer.join("");
+            this.is_accumulating = false;
+            this.token_buffer.clear();
+
             assert!(_key_string.is_empty());
             TokenValues::Unit(TokenValue::NoOp(token))
         }
