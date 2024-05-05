@@ -442,7 +442,7 @@ mod test {
     }
     #[test]
     fn index_matched_letters_large_fragments() {
-        let mut a = IndexAccumulator::new(vec![1234], 0, Box::new(formatter));
+        let mut a = IndexAccumulator::new(vec![123], 0, Box::new(formatter));
 
         assert_eq!(TVS::Unit(TV::NoOp("i123i")), a.token("i123i"));
         assert_eq!(TVS::Unit(TV::NoOp("i12i")), a.token("i12i"));
