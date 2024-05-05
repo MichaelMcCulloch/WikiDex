@@ -1,5 +1,3 @@
-
-
 use regex::Regex;
 
 const NON_DIGITS_FOLLOWED_BY_DIGITS: &str = r#"^(\D*)(\d+)$"#;
@@ -26,6 +24,12 @@ pub(crate) enum TokenValues<'a> {
     Nothing,
     Unit(TokenValue<'a>),
     Twofer(TokenValue<'a>, TokenValue<'a>),
+}
+
+impl From<TokenValue<'_>> for TokenValues<'_> {
+    fn from(_value: TokenValue<'_>) -> Self {
+        todo!()
+    }
 }
 
 pub(crate) trait TokenAccumulator {
