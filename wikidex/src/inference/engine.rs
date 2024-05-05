@@ -196,22 +196,13 @@ impl Engine {
                 for token_value in token_values {
                     match token_value {
                         TokenValue::Nothing => continue,
-                        TokenValue::NoOp(_content) => {
+                        TokenValue::NoOp(content) => {
                             let _ = tx.send(PartialMessage::content(content.to_string()).message());
                         }
                         TokenValue::Transform(content, position) => {
-                            let modified_position = position + num_sources;
-                            let content = content.replace(
-                                position.to_string().as_str(),
-                                format!(
-                                    "[{modified_position}](http://localhost/#{modified_position})"
-                                )
-                                .as_str(),
-                            );
-
                             if let Some(document) = documents[position].take() {
                                 let source = Source {
-                                    ordinal: modified_position,
+                                    ordinal: position + num_sources + 1,
                                     index: document.index,
                                     citation: document.provenance.format(&CITATION_STYLE),
                                     url: document.provenance.url(),
