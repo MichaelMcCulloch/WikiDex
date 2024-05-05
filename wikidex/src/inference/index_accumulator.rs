@@ -1,3 +1,5 @@
+
+
 use regex::Regex;
 
 const NON_DIGITS_FOLLOWED_BY_DIGITS: &str = r#"^(\D*)(\d+)$"#;
@@ -67,35 +69,22 @@ impl TokenAccumulator for IndexAccumulator {
         if token.is_empty() {
             TokenValues::Nothing
         } else if token.parse::<i64>().is_ok() {
-            let this = &mut *self;
-            this.token_buffer.push(token.to_string());
-            this.is_accumulating = true;
+            self.push_buffer(token);
             TokenValues::Nothing
         } else if token.trim_end().parse::<i64>().is_ok() {
             if self.is_accumulating {
-                let this = &mut *self;
-                this.token_buffer.push(token.to_string());
-                let key_string = this.token_buffer.join("");
-                this.token_buffer.clear();
-                let value = self.process(key_string);
-                TokenValues::Unit(value)
+                self.push_buffer(token);
+                let key_string = self.clear_buffer();
+                TokenValues::Unit(self.process(key_string))
             } else {
-                let this = &mut *self;
-                let key_string = this.token_buffer.join("");
-                this.token_buffer.clear();
-                let value = self.process(key_string);
-                TokenValues::Unit(value)
+                let key_string = self.clear_buffer();
+                TokenValues::Unit(self.process(key_string))
             }
         } else if token.trim_start().parse::<i64>().is_ok() {
             if self.is_accumulating {
-                let this = &mut *self;
-                let key_string = this.token_buffer.join("");
-                this.is_accumulating = false;
-                this.token_buffer.clear();
+                let key_string = self.clear_buffer();
                 let result = self.process(key_string);
-                let this = &mut *self;
-                this.token_buffer.push(token.to_string());
-                this.is_accumulating = true;
+                self.push_buffer(token);
                 TokenValues::Unit(result)
             } else {
                 let _key_string = self.clear_buffer();
@@ -107,13 +96,13 @@ impl TokenAccumulator for IndexAccumulator {
             if self.is_accumulating {
                 let key_string = self.clear_buffer();
                 let previous_result = self.process(key_string);
-                let current_result = self.process_noop(token);
+                let current_result = self.process(token.to_string());
                 TokenValues::Twofer(previous_result, current_result)
             } else {
                 let _key_string = self.clear_buffer();
                 assert!(_key_string.is_empty());
                 self.push_buffer(token);
-                let current_result = self.process_noop(token);
+                let current_result = self.process(token.to_string());
                 TokenValues::Unit(current_result)
             }
         } else {
