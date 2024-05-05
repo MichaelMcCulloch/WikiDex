@@ -26,10 +26,10 @@ SQLite:
   variables:
     DATABASE_URL: sqlite://sqlite_dummy.db
   cache:
-    - key: cache-sqlite-$CI_COMMIT_REF_SLUG
+    - key: cache-sqlite
       paths:
         - wikidex/target/*
-    - key: cache-cargo-$CI_COMMIT_REF_SLUG
+    - key: cache-cargo
       paths:
         - wikidex/cargo_cache/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
@@ -45,10 +45,10 @@ PostgreSQL:
   variables:
     DATABASE_URL: postgres://wikidex:wikidex@wikidex-dummy-wikidex-dev-postgresql.wikidex-dev:5432/wikipedia
   cache:
-    - key: cache-postgres-$CI_COMMIT_REF_SLUG
+    - key: cache-postgres
       paths:
         - wikidex/target/*
-    - key: cache-cargo-$CI_COMMIT_REF_SLUG
+    - key: cache-cargo
       paths:
         - wikidex/cargo_cache/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
