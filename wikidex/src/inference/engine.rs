@@ -7,7 +7,7 @@ use crate::{
     embedding_client::{EmbeddingClient, EmbeddingClientService},
     formatter::{CitationStyle, Cite},
     index::{FaceIndex, SearchService},
-    inference::index_accumulator::{IndexAccumulator, IndexAccumulatorTrait, TokenValue},
+    inference::index_accumulator::{IndexAccumulator, TokenAccumulator, TokenValue},
     llm_client::{
         LanguageServiceArguments, LlmClientImpl, LlmClientService, LlmMessage, LlmRole,
         PartialLlmMessage,
