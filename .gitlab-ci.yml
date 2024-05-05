@@ -25,10 +25,6 @@ Audit:
 SQLite:
   variables:
     DATABASE_URL: sqlite://sqlite_dummy.db
-  cache:
-    - key: cache-sqlite-$CI_COMMIT_REF_SLUG
-      paths:
-        - wikidex/target/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: All
   script:
@@ -41,10 +37,6 @@ SQLite:
 PostgreSQL:
   variables:
     DATABASE_URL: postgres://wikidex:wikidex@wikidex-dummy-wikidex-dev-postgresql.wikidex-dev:5432/wikipedia
-  cache:
-    - key: cache-postgres-$CI_COMMIT_REF_SLUG
-      paths:
-        - wikidex/target/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: All
   script:
