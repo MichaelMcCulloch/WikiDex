@@ -5,7 +5,7 @@ pub(crate) struct IndexAccumulator {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) enum IndexAccumulatorReturn<'a> {
+pub(crate) enum TokenValue<'a> {
     Nothing,
     NoOp(&'a str),
     Transform(String, usize),
@@ -13,8 +13,8 @@ pub(crate) enum IndexAccumulatorReturn<'a> {
 }
 
 pub(crate) trait IndexAccumulatorTrait {
-    fn token<'a>(&mut self, token: &'a str) -> IndexAccumulatorReturn<'a>;
-    fn flush(&mut self) -> IndexAccumulatorReturn;
+    fn token<'a>(&mut self, token: &'a str) -> TokenValue<'a>;
+    fn flush(&mut self) -> TokenValue;
 }
 
 impl IndexAccumulator {
@@ -28,13 +28,12 @@ impl IndexAccumulator {
 }
 
 impl IndexAccumulatorTrait for IndexAccumulator {
-    fn token<'a>(&mut self, token: &'a str) -> IndexAccumulatorReturn<'a> {
-        // If the token is not a number or not in the dictionary, return NoOp
-        IndexAccumulatorReturn::NoOp(token)
+    fn token<'a>(&mut self, _token: &'a str) -> TokenValue<'a> {
+        TokenValue::Nothing
     }
 
-    fn flush(&mut self) -> IndexAccumulatorReturn {
-        IndexAccumulatorReturn::Nothing
+    fn flush(&mut self) -> TokenValue {
+        TokenValue::Nothing
     }
 }
 
@@ -81,7 +80,7 @@ impl IndexAccumulatorTrait for IndexAccumulator {
 
 #[cfg(test)]
 mod test {
-    use crate::inference::index_accumulator::IndexAccumulatorReturn as I;
+    use crate::inference::index_accumulator::TokenValue as I;
 
     use super::{IndexAccumulator, IndexAccumulatorTrait};
 
