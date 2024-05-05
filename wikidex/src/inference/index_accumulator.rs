@@ -76,8 +76,12 @@ impl IndexAccumulator {
 }
 
 impl TokenAccumulator for IndexAccumulator {
-    fn token<'a>(&mut self, _token: &'a str) -> TokenValue<'a> {
-        TokenValue::Nothing
+    fn token<'a>(&mut self, token: &'a str) -> TokenValue<'a> {
+        if token.is_empty() {
+            TokenValue::Nothing
+        } else {
+            TokenValue::NoOp(token)
+        }
     }
 
     fn flush(&mut self) -> TokenValue {
