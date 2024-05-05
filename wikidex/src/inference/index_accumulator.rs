@@ -123,4 +123,17 @@ mod test {
         assert_eq!(I::Nothing, a.token("1"));
         assert_eq!(Some("321".to_string()), a.flush());
     }
+    #[test]
+    fn test_two_numbers_are_present_and_same() {
+        let mut a = IndexAccumulator::new(vec![123]);
+
+        assert_eq!(I::Nothing, a.token("1"));
+        assert_eq!(I::Nothing, a.token("2"));
+        assert_eq!(I::Nothing, a.token("3"));
+        assert_eq!(I::NoTransform("123 ".to_string()), a.token(" "));
+        assert_eq!(I::Nothing, a.token("1"));
+        assert_eq!(I::Nothing, a.token("2"));
+        assert_eq!(I::Nothing, a.token("3"));
+        assert_eq!(Some("321".to_string()), a.flush());
+    }
 }
