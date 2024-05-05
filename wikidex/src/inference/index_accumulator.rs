@@ -41,6 +41,30 @@ impl IndexAccumulator {
     }
 
     fn process_token<'a>(&mut self, token: &'a str) -> TokenValue<'a> {
+        match (
+            token.parse::<i64>(),
+            token.trim_start().parse::<i64>(),
+            token.trim_end().parse::<i64>(),
+            token.trim().parse::<i64>(),
+        ) {
+            (Ok(_), Ok(_), Ok(_), Ok(_)) => todo!(),
+            (Ok(_), Ok(_), Ok(_), Err(_)) => todo!(),
+            (Ok(_), Ok(_), Err(_), Ok(_)) => todo!(),
+            (Ok(_), Ok(_), Err(_), Err(_)) => todo!(),
+            (Ok(_), Err(_), Ok(_), Ok(_)) => todo!(),
+            (Ok(_), Err(_), Ok(_), Err(_)) => todo!(),
+            (Ok(_), Err(_), Err(_), Ok(_)) => todo!(),
+            (Ok(_), Err(_), Err(_), Err(_)) => todo!(),
+            (Err(_), Ok(_), Ok(_), Ok(_)) => todo!(),
+            (Err(_), Ok(_), Ok(_), Err(_)) => todo!(),
+            (Err(_), Ok(_), Err(_), Ok(_)) => todo!(),
+            (Err(_), Ok(_), Err(_), Err(_)) => todo!(),
+            (Err(_), Err(_), Ok(_), Ok(_)) => todo!(),
+            (Err(_), Err(_), Ok(_), Err(_)) => todo!(),
+            (Err(_), Err(_), Err(_), Ok(_)) => todo!(),
+            (Err(_), Err(_), Err(_), Err(_)) => todo!(),
+        }
+
         if let Ok(key) = token.parse::<i64>() {
             if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
                 TokenValue::Transform(token.replace(&key.to_string(), &value.to_string()), value)
