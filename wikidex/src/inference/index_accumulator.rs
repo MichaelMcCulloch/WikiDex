@@ -189,6 +189,14 @@ mod test {
     }
 
     #[test]
+    fn test_number_is_present_trailing_and_leading_space() {
+        let mut a = IndexAccumulator::new(vec![12]);
+
+        assert_eq!(I::Nothing, a.token(" 1"));
+        assert_eq!(I::Transform(" 12 ".to_string(), 0), a.token("2 "));
+        assert_eq!(I::Nothing, a.flush());
+    }
+    #[test]
     fn test_number_is_absent_leading_space() {
         let mut a = IndexAccumulator::new(vec![1234]);
 
@@ -226,6 +234,14 @@ mod test {
         assert_eq!(I::NoTransform(" 123 ".to_string()), a.token(" 123 "));
         assert_eq!(I::NoTransform(" 12 ".to_string()), a.token(" 12 "));
         assert_eq!(I::NoTransform(" 34 ".to_string()), a.token(" 34 "));
+        assert_eq!(I::Nothing, a.flush());
+    }
+    #[test]
+    fn test_number_is_present_leading_space_large_fragments() {
+        let mut a = IndexAccumulator::new(vec![123456789]);
+
+        assert_eq!(I::NoTransform(" 1234".to_string()), a.token(" 1234 "));
+        assert_eq!(I::NoTransform("56789".to_string()), a.token("56789 "));
         assert_eq!(I::Nothing, a.flush());
     }
 }
