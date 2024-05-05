@@ -87,9 +87,9 @@ impl TokenAccumulator for IndexAccumulator {
 
             let response = if let Some(value) = self.dictionary.iter().position(|s| *s == key) {
                 let new_value = (self.formatter)(value, self.modifier);
-                let new_key_string = key_string.replace(&key.to_string(), &new_value);
-                let new_key_string = format!("{}{}", new_key_string, token);
-                TokenValue::Transform(new_key_string, value)
+                let key_string = key_string.replace(&key.to_string(), &new_value);
+                let key_string = format!("{}{}", key_string, token);
+                TokenValue::Transform(key_string, value)
             } else {
                 TokenValue::NoTransform(key_string)
             };
