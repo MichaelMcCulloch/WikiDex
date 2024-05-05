@@ -182,6 +182,6 @@ mod test {
         assert_eq!(I::NoTransform(" 1".to_string()), a.token(" 2"));
         assert_eq!(I::NoTransform(" 2".to_string()), a.token(" 3"));
         assert_eq!(I::NoTransform(" 3".to_string()), a.token(" 4"));
-        assert_eq!(I::NoTransform("4".to_string()), a.flush());
+        assert_eq!(I::NoTransform(" 4".to_string()), a.flush());
     }
 }
