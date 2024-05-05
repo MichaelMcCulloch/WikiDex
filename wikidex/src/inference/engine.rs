@@ -167,6 +167,7 @@ impl Engine {
                 .iter()
                 .map(|Document { index, .. }| *index)
                 .collect::<Vec<_>>(),
+            Box::new(Self::index_format),
         );
 
         let llm_service_arguments = LanguageServiceArguments {
@@ -248,5 +249,13 @@ impl Engine {
         let documents = self.docstore.retreive(&document_indices).await?;
 
         Ok(documents)
+    }
+
+    fn index_format(index: usize, modifier: usize) -> String {
+        format!(
+            "[{}](http://localhost/#{})",
+            index + modifier,
+            index + modifier
+        )
     }
 }
