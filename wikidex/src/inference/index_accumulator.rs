@@ -136,4 +136,17 @@ mod test {
         assert_eq!(I::Nothing, a.token("3"));
         assert_eq!(I::Transform("0".to_string(), 0), a.flush());
     }
+    #[test]
+    fn test_two_numbers_are_present_and_different() {
+        let mut a = IndexAccumulator::new(vec![123, 321]);
+
+        assert_eq!(I::Nothing, a.token("1"));
+        assert_eq!(I::Nothing, a.token("2"));
+        assert_eq!(I::Nothing, a.token("3"));
+        assert_eq!(I::Transform("0 ".to_string(), 0), a.token(" "));
+        assert_eq!(I::Nothing, a.token("3"));
+        assert_eq!(I::Nothing, a.token("2"));
+        assert_eq!(I::Nothing, a.token("1"));
+        assert_eq!(I::Transform("1".to_string(), 1), a.flush());
+    }
 }
