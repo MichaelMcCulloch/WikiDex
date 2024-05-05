@@ -130,7 +130,7 @@ mod test {
         assert_eq!(I::Nothing, a.token("1"));
         assert_eq!(I::Nothing, a.token("2"));
         assert_eq!(I::Nothing, a.token("3"));
-        assert_eq!(I::NoTransform("1 ".to_string()), a.token(" "));
+        assert_eq!(I::Transform("0 ".to_string(), 0), a.token(" "));
         assert_eq!(I::Nothing, a.token("1"));
         assert_eq!(I::Nothing, a.token("2"));
         assert_eq!(I::Nothing, a.token("3"));
