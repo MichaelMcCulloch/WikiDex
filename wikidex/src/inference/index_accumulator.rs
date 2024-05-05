@@ -82,7 +82,11 @@ impl TokenAccumulator for IndexAccumulator {
             TokenValues::Nothing
         } else if token.trim_end().parse::<i64>().is_ok() {
             if self.is_accumulating {
-                self.push_buffer(token);
+                {
+                    let this = &mut *self;
+                    this.token_buffer.push(token.to_string());
+                    this.is_accumulating = true;
+                };
                 let key_string = self.clear_buffer();
                 self.process(key_string).into()
             } else {
@@ -92,12 +96,20 @@ impl TokenAccumulator for IndexAccumulator {
             if self.is_accumulating {
                 let key_string = self.clear_buffer();
                 let result = self.process(key_string);
-                self.push_buffer(token);
+                {
+                    let this = &mut *self;
+                    this.token_buffer.push(token.to_string());
+                    this.is_accumulating = true;
+                };
                 result.into()
             } else {
                 let _key_string = self.clear_buffer();
                 assert!(_key_string.is_empty());
-                self.push_buffer(token);
+                {
+                    let this = &mut *self;
+                    this.token_buffer.push(token.to_string());
+                    this.is_accumulating = true;
+                };
                 TokenValues::Nothing
             }
         } else if token.trim().parse::<i64>().is_ok() {
