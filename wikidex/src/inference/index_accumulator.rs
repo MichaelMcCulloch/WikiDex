@@ -66,7 +66,6 @@ impl TokenAccumulator for IndexAccumulator {
         } else if token.trim_end().parse::<i64>().is_ok() {
             if self.is_accumulating {
                 self.token_buffer.push(token.to_string());
-                self.is_accumulating = true;
                 let key_string = self.token_buffer.join("");
                 self.is_accumulating = false;
                 self.token_buffer.clear();
@@ -77,19 +76,13 @@ impl TokenAccumulator for IndexAccumulator {
         } else if token.trim_start().parse::<i64>().is_ok() {
             if self.is_accumulating {
                 let key_string = self.token_buffer.join("");
-                self.is_accumulating = false;
                 self.token_buffer.clear();
                 let result = self.process(key_string);
-
                 self.token_buffer.push(token.to_string());
                 self.is_accumulating = true;
                 result.into()
             } else {
-                let key_string = self.token_buffer.join("");
-                self.is_accumulating = false;
                 self.token_buffer.clear();
-                assert!(key_string.is_empty());
-
                 self.token_buffer.push(token.to_string());
                 self.is_accumulating = true;
                 TokenValues::Nothing
@@ -103,10 +96,8 @@ impl TokenAccumulator for IndexAccumulator {
                 let current_result = self.process(token.to_string());
                 TokenValues::Twofer(previous_result, current_result)
             } else {
-                let key_string = self.token_buffer.join("");
                 self.is_accumulating = false;
                 self.token_buffer.clear();
-                assert!(key_string.is_empty());
                 let current_result = self.process(token.to_string());
                 TokenValues::Unit(current_result)
             }
