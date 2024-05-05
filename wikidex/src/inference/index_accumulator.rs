@@ -41,35 +41,36 @@ impl IndexAccumulator {
     }
 
     fn process_token<'a>(&mut self, token: &'a str) -> TokenValue<'a> {
-        match (
-            token.parse::<i64>(),
-            token.trim_start().parse::<i64>(),
-            token.trim_end().parse::<i64>(),
-            token.trim().parse::<i64>(),
-        ) {
-            (Ok(key), _, _, _) | (Err(_), Ok(key), _, _) => {
-                if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
-                    TokenValue::Transform(
-                        token.replace(&key.to_string(), &value.to_string()),
-                        value,
-                    )
-                } else {
-                    self.is_accumulating = true;
-                    self.token_buffer.push(token.to_string());
-                    TokenValue::Nothing
-                }
+        if let Ok(key) = token.parse::<i64>() {
+            if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
+                TokenValue::Transform(token.replace(&key.to_string(), &value.to_string()), value)
+            } else {
+                self.is_accumulating = true;
+                self.token_buffer.push(token.to_string());
+                TokenValue::Nothing
             }
-            (Err(_), Err(_), Ok(key), _) | (Err(_), Err(_), Err(_), Ok(key)) => {
-                if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
-                    TokenValue::Transform(
-                        token.replace(&key.to_string(), &value.to_string()),
-                        value,
-                    )
-                } else {
-                    TokenValue::NoOp(token)
-                }
+        } else if let Ok(key) = token.trim_start().parse::<i64>() {
+            if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
+                TokenValue::Transform(token.replace(&key.to_string(), &value.to_string()), value)
+            } else {
+                self.is_accumulating = true;
+                self.token_buffer.push(token.to_string());
+                TokenValue::Nothing
             }
-            (Err(_), Err(_), Err(_), Err(_)) => TokenValue::Nothing,
+        } else if let Ok(key) = token.trim_end().parse::<i64>() {
+            if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
+                TokenValue::Transform(token.replace(&key.to_string(), &value.to_string()), value)
+            } else {
+                TokenValue::NoOp(token)
+            }
+        } else if let Ok(key) = token.trim().parse::<i64>() {
+            if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
+                TokenValue::Transform(token.replace(&key.to_string(), &value.to_string()), value)
+            } else {
+                TokenValue::NoOp(token)
+            }
+        } else {
+            TokenValue::Nothing
         }
     }
 }
