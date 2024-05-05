@@ -294,7 +294,10 @@ mod test {
         assert_eq!(TVS::Nothing, a.token("2"));
         assert_eq!(TVS::Nothing, a.token("3"));
         assert_eq!(TVS::Nothing, a.token("4"));
-        assert_eq!(TVS::Unit(TV::NoTransform("0".to_string())), a.flush());
+        assert_eq!(
+            TVS::Unit(TV::Transform("[0](http://localhost/#0)".to_string(), 0)),
+            a.flush()
+        );
     }
     #[test]
     fn index_matched_trailing() {
