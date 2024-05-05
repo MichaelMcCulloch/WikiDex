@@ -105,11 +105,11 @@ impl TokenAccumulator for IndexAccumulator {
                 result.into()
             } else {
                 let this = &mut *self;
-                let _key_string = this.token_buffer.join("");
+                let key_string = this.token_buffer.join("");
                 this.is_accumulating = false;
                 this.token_buffer.clear();
 
-                assert!(_key_string.is_empty());
+                assert!(key_string.is_empty());
                 let this = &mut *self;
                 this.token_buffer.push(token.to_string());
                 this.is_accumulating = true;
@@ -129,11 +129,11 @@ impl TokenAccumulator for IndexAccumulator {
                 TokenValues::Twofer(previous_result, current_result)
             } else {
                 let this = &mut *self;
-                let _key_string = this.token_buffer.join("");
+                let key_string = this.token_buffer.join("");
                 this.is_accumulating = false;
                 this.token_buffer.clear();
 
-                assert!(_key_string.is_empty());
+                assert!(key_string.is_empty());
                 let current_result = self.process(token.to_string());
                 TokenValues::Unit(current_result)
             }
@@ -149,11 +149,11 @@ impl TokenAccumulator for IndexAccumulator {
             TokenValues::Twofer(result, TokenValue::NoOp(token))
         } else {
             let this = &mut *self;
-            let _key_string = this.token_buffer.join("");
+            let key_string = this.token_buffer.join("");
             this.is_accumulating = false;
             this.token_buffer.clear();
 
-            assert!(_key_string.is_empty());
+            assert!(key_string.is_empty());
             TokenValues::Unit(TokenValue::NoOp(token))
         }
     }
