@@ -26,9 +26,12 @@ pub(crate) enum TokenValues<'a> {
     Twofer(TokenValue<'a>, TokenValue<'a>),
 }
 
-impl From<TokenValue<'_>> for TokenValues<'_> {
-    fn from(_value: TokenValue<'_>) -> Self {
-        todo!()
+impl<'a> From<TokenValue<'a>> for TokenValues<'a> {
+    fn from(_value: TokenValue<'a>) -> Self {
+        match _value {
+            TokenValue::Nothing => TokenValues::Nothing,
+            t => TokenValues::Unit(t),
+        }
     }
 }
 
