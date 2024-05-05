@@ -263,10 +263,7 @@ mod test {
         assert_eq!(TVS::Nothing, a.token("2"));
         assert_eq!(TVS::Nothing, a.token("1"));
         assert_eq!(
-            TVS::Twofer(
-                TV::Transform("[1](http://localhost/#1)".to_string(), 1),
-                TV::NoOp(" ")
-            ),
+            TVS::Unit(TV::Transform("[1](http://localhost/#1)".to_string(), 1),),
             a.flush()
         );
     }
