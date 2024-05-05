@@ -130,13 +130,16 @@ impl TokenAccumulator for IndexAccumulator {
         }
     }
     fn process_noop<'a>(&mut self, key_string: &'a str) -> TokenValue<'a> {
-        let key = key_string.trim().parse::<i64>().unwrap();
-        if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
-            let value_string = (self.formatter)(value, self.modifier);
-            let value_string = key_string.replace(&key.to_string(), &value_string);
-            TokenValue::Transform(value_string, value)
+        if let Ok(key) = key_string.trim().parse::<i64>() {
+            if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
+                let value_string = (self.formatter)(value, self.modifier);
+                let value_string = key_string.replace(&key.to_string(), &value_string);
+                TokenValue::Transform(value_string, value)
+            } else {
+                TokenValue::NoOp(key_string)
+            }
         } else {
-            TokenValue::NoOp(key_string)
+            TokenValue::Nothing
         }
     }
 
