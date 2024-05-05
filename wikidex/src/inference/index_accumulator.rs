@@ -92,7 +92,7 @@ impl TokenAccumulator for IndexAccumulator {
                 let key_string = self.clear_buffer();
                 let result = self.process(key_string);
                 self.push_buffer(token);
-                TokenValues::Unit(result)
+                result.into()
             } else {
                 let _key_string = self.clear_buffer();
                 assert!(_key_string.is_empty());
