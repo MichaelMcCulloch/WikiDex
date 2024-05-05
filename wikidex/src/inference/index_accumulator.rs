@@ -88,7 +88,10 @@ impl TokenAccumulator for IndexAccumulator {
             }
         } else if token.trim_start().parse::<i64>().is_ok() {
             if self.is_accumulating {
-                let key_string = self.clear_buffer();
+                let this = &mut *self;
+                let key_string = this.token_buffer.join("");
+                this.is_accumulating = false;
+                this.token_buffer.clear();
                 let result = self.process(key_string);
                 let this = &mut *self;
                 this.token_buffer.push(token.to_string());
