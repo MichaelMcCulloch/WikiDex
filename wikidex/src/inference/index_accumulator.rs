@@ -108,7 +108,6 @@ impl TokenAccumulator for IndexAccumulator {
             } else {
                 let _key_string = self.clear_buffer();
                 assert!(_key_string.is_empty());
-                self.push_buffer(token);
                 let current_result = self.process(token.to_string());
                 TokenValues::Unit(current_result)
             }
