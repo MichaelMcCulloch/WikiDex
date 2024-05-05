@@ -218,7 +218,7 @@ impl Engine {
                 }
             }
 
-            if let Some(content) = accumulator.flush() {
+            if let IndexAccumulatorReturn::NoTransform(content) = accumulator.flush() {
                 let _ = tx.send(PartialMessage::content(content).message());
             }
             let _ = tx.send(PartialMessage::done().message());
