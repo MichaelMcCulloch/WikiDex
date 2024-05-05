@@ -51,6 +51,7 @@ SQLite Test:
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: All
   script:
+    - cd wikidex
     - cargo test --package wikidex --bin wikidex --no-default-features --features sqlite,server,ingest -- --exact --show-output  --nocapture
 
 PostgreSQL:
