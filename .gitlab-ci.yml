@@ -8,7 +8,6 @@ variables:
   ARTIFACT_COMPRESSION_LEVEL: "fastest"
   CACHE_COMPRESSION_LEVEL: "fastest"
 
-
 stages:
   - All
 sast:
@@ -31,7 +30,9 @@ SQLite:
   variables:
     DATABASE_URL: sqlite://sqlite_dummy.db
   cache:
-    - key: cache-sqlite-all-release
+    - key:
+        files:
+          - wikidex/Cargo.lock
       paths:
         - wikidex/target/debug/*
         - wikidex/target/.rustc_info.json
@@ -48,7 +49,9 @@ SQLite Test:
   variables:
     DATABASE_URL: sqlite://sqlite_dummy.db
   cache:
-    - key: cache-sqlite-all-test
+    - key:
+        files:
+          - wikidex/Cargo.lock
       paths:
         - wikidex/target/release/*
         - wikidex/target/.rustc_info.json
@@ -63,7 +66,9 @@ PostgreSQL:
   variables:
     DATABASE_URL: postgres://wikidex:wikidex@wikidex-dummy-wikidex-dev-postgresql.wikidex-dev:5432/wikipedia
   cache:
-    - key: cache-postgres-all-release
+    - key:
+        files:
+          - wikidex/Cargo.lock
       paths:
         - wikidex/target/debug/*
         - wikidex/target/.rustc_info.json
