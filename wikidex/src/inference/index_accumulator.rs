@@ -1,3 +1,5 @@
+
+
 use regex::Regex;
 
 const NON_DIGITS_FOLLOWED_BY_DIGITS: &str = r#"^(\D*)(\d+)$"#;
@@ -19,9 +21,17 @@ pub(crate) enum TokenValue<'a> {
     NoTransform(String),
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum TokenValues<'a> {
+    Nothing,
+    Unit(TokenValue<'a>),
+    Twofer(TokenValue<'a>, TokenValue<'a>),
+}
+
 pub(crate) trait TokenAccumulator {
-    fn token<'a>(&mut self, token: &'a str) -> TokenValue<'a>;
-    fn flush<'a>(&mut self) -> TokenValue<'a>;
+    fn token<'a>(&mut self, token: &'a str) -> TokenValues<'a>;
+    fn process<'a>(&mut self, key_string: String) -> TokenValue<'a>;
+    fn flush<'a>(&mut self) -> TokenValues<'a>;
 }
 
 impl IndexAccumulator {
@@ -51,110 +61,63 @@ impl IndexAccumulator {
         self.token_buffer.push(token.to_string());
         self.is_accumulating = true;
     }
-
-    fn process_token<'a>(&mut self, token: &'a str) -> TokenValue<'a> {
-        if let Ok(key) = token.parse::<i64>() {
-            if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
-                TokenValue::Transform(token.replace(&key.to_string(), &value.to_string()), value)
-            } else {
-                self.is_accumulating = true;
-                self.token_buffer.push(token.to_string());
-                TokenValue::Nothing
-            }
-        } else if let Ok(key) = token.trim_start().parse::<i64>() {
-            if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
-                TokenValue::Transform(token.replace(&key.to_string(), &value.to_string()), value)
-            } else {
-                self.is_accumulating = true;
-                self.token_buffer.push(token.to_string());
-                TokenValue::Nothing
-            }
-        } else if let Ok(key) = token.trim_end().parse::<i64>() {
-            if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
-                TokenValue::Transform(token.replace(&key.to_string(), &value.to_string()), value)
-            } else {
-                TokenValue::NoOp(token)
-            }
-        } else if let Ok(key) = token.trim().parse::<i64>() {
-            if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
-                TokenValue::Transform(token.replace(&key.to_string(), &value.to_string()), value)
-            } else {
-                TokenValue::NoOp(token)
-            }
-        } else {
-            TokenValue::Nothing
-        }
-    }
 }
 
 impl TokenAccumulator for IndexAccumulator {
-    fn token<'a>(&mut self, token: &'a str) -> TokenValue<'a> {
+    fn token<'a>(&mut self, token: &'a str) -> TokenValues<'a> {
         if token.is_empty() {
-            TokenValue::Nothing
+            TokenValues::Nothing
         } else if token.parse::<i64>().is_ok() {
-            self.push_buffer(token);
-            TokenValue::Nothing
+            let this = &mut *self;
+            this.token_buffer.push(token.to_string());
+            this.is_accumulating = true;
+            TokenValues::Nothing
         } else if token.trim_end().parse::<i64>().is_ok() {
             if self.is_accumulating {
-                self.push_buffer(token);
-                self.flush()
+                let this = &mut *self;
+                this.token_buffer.push(token.to_string());
+                let key_string = this.token_buffer.join("");
+                this.token_buffer.clear();
+                let value = self.process(key_string);
+                TokenValues::Unit(value)
             } else {
-                let _key_string = self.clear_buffer();
-                assert!(_key_string.is_empty());
-
-                let key_string = token;
-                let key = key_string.trim().parse::<i64>().unwrap();
-                if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
-                    let value_string = (self.formatter)(value, self.modifier);
-                    let value_string = token.replace(&key.to_string(), &value_string);
-                    TokenValue::Transform(value_string, value)
-                } else {
-                    TokenValue::NoOp(token)
-                }
+                let this = &mut *self;
+                let key_string = this.token_buffer.join("");
+                this.token_buffer.clear();
+                let value = self.process(key_string);
+                TokenValues::Unit(value)
             }
         } else if token.trim_start().parse::<i64>().is_ok() {
             if self.is_accumulating {
                 let key_string = self.clear_buffer();
+                let result = self.process(key_string);
                 self.push_buffer(token);
-                let key = key_string.trim().parse::<i64>().unwrap();
-                if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
-                    let value_string = (self.formatter)(value, self.modifier);
-                    let value_string = token.replace(&key.to_string(), &value_string);
-                    TokenValue::Transform(value_string, value)
-                } else {
-                    TokenValue::NoTransform(key_string)
-                }
+                TokenValues::Unit(result)
             } else {
                 let _key_string = self.clear_buffer();
                 assert!(_key_string.is_empty());
                 self.push_buffer(token);
-                TokenValue::Nothing
+                TokenValues::Nothing
             }
         } else if token.trim().parse::<i64>().is_ok() {
             if self.is_accumulating {
                 let key_string = self.clear_buffer();
-                self.push_buffer(token);
-                let key = key_string.trim().parse::<i64>().unwrap();
-                if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
-                    let value_string = (self.formatter)(value, self.modifier);
-                    let value_string = token.replace(&key.to_string(), &value_string);
-                    TokenValue::Transform(value_string, value)
-                } else {
-                    TokenValue::NoTransform(key_string)
-                }
+                let previous_result = self.process(key_string);
+                let current_result = self.process(token.to_string());
+                TokenValues::Twofer(previous_result, current_result)
             } else {
                 let _key_string = self.clear_buffer();
                 assert!(_key_string.is_empty());
                 self.push_buffer(token);
-                TokenValue::Nothing
+                let current_result = self.process(token.to_string());
+                TokenValues::Unit(current_result)
             }
         } else {
-            TokenValue::NoOp(token)
+            TokenValues::Unit(TokenValue::NoOp(token))
         }
     }
 
-    fn flush<'a>(&mut self) -> TokenValue<'a> {
-        let key_string = self.clear_buffer();
+    fn process<'a>(&mut self, key_string: String) -> TokenValue<'a> {
         let key = key_string.trim().parse::<i64>().unwrap();
         if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
             let value_string = (self.formatter)(value, self.modifier);
@@ -164,52 +127,17 @@ impl TokenAccumulator for IndexAccumulator {
             TokenValue::NoTransform(key_string)
         }
     }
-}
 
-// impl IndexAccumulatorTrait for IndexAccumulator {
-//     fn token<'a>(&mut self, token: &'a str) -> IndexAccumulatorReturn<'a> {
-//         if token.trim().parse::<i64>().is_ok() {
-//             self.token_buffer.push(token.to_string());
-//             self.is_accumulating = true;
-//             IndexAccumulatorReturn::Nothing
-//         } else if self.is_accumulating {
-//             let index_string = self.token_buffer.join("");
-//             let result = if let Ok(index) = index_string.trim().parse::<i64>() {
-//                 if let Some(position) = self.dictionary.iter().position(|element| element == &index)
-//                 {
-//                     IndexAccumulatorReturn::Transform(
-//                         index_string
-//                             .replace(index.to_string().as_str(), position.to_string().as_str()),
-//                         position,
-//                     )
-//                 } else {
-//                     IndexAccumulatorReturn::NoTransform(index_string.to_string())
-//                 }
-//             } else {
-//                 self.token_buffer.clear();
-//                 IndexAccumulatorReturn::NoTransform(index_string)
-//             };
-//             self.token_buffer.clear();
-//             self.is_accumulating = false;
-//             result
-//         } else {
-//             IndexAccumulatorReturn::NoOp(token)
-//         }
-//     }
-//     fn flush(&mut self) -> IndexAccumulatorReturn {
-//         let string = self.token_buffer.join("");
-//         self.token_buffer.clear();
-//         if string.is_empty() {
-//             IndexAccumulatorReturn::Nothing
-//         } else {
-//             IndexAccumulatorReturn::NoTransform(string)
-//         }
-//     }
-// }
+    fn flush<'a>(&mut self) -> TokenValues<'a> {
+        let key_string = self.clear_buffer();
+        TokenValues::Unit(self.process(key_string))
+    }
+}
 
 #[cfg(test)]
 mod test {
-    use crate::inference::index_accumulator::TokenValue as I;
+    use crate::inference::index_accumulator::TokenValue as TV;
+    use crate::inference::index_accumulator::TokenValues as TVS;
 
     use super::{IndexAccumulator, TokenAccumulator};
 
@@ -225,190 +153,229 @@ mod test {
     fn empty() {
         let mut a = IndexAccumulator::new(vec![1234, 4321], 0, Box::new(formatter));
 
-        assert_eq!(I::Nothing, a.token(""));
-        assert_eq!(I::Nothing, a.flush());
+        assert_eq!(TVS::Unit(TV::Nothing), a.token(""));
+        assert_eq!(TVS::Unit(TV::Nothing), a.flush());
     }
     #[test]
     fn plain_text() {
         let mut a = IndexAccumulator::new(vec![1234, 4321], 0, Box::new(formatter));
 
-        assert_eq!(I::NoOp("This"), a.token("This"));
-        assert_eq!(I::NoOp(" is"), a.token(" is"));
-        assert_eq!(I::NoOp(" a"), a.token(" a"));
-        assert_eq!(I::NoOp(" test"), a.token(" test"));
-        assert_eq!(I::Nothing, a.flush());
+        assert_eq!(TVS::Unit(TV::NoOp("This")), a.token("This"));
+        assert_eq!(TVS::Unit(TV::NoOp(" is")), a.token(" is"));
+        assert_eq!(TVS::Unit(TV::NoOp(" a")), a.token(" a"));
+        assert_eq!(TVS::Unit(TV::NoOp(" test")), a.token(" test"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.flush());
     }
     #[test]
     fn index_unmatched() {
         let mut a = IndexAccumulator::new(vec![1234, 4321], 0, Box::new(formatter));
 
-        assert_eq!(I::Nothing, a.token("2"));
-        assert_eq!(I::Nothing, a.token("3"));
-        assert_eq!(I::Nothing, a.token("4"));
-        assert_eq!(I::Nothing, a.token("1"));
-        assert_eq!(I::NoTransform("2341".to_string()), a.flush());
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("4"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
+        assert_eq!(TVS::Unit(TV::NoTransform("2341".to_string())), a.flush());
     }
     #[test]
     fn index_matched() {
         let mut a = IndexAccumulator::new(vec![1234], 0, Box::new(formatter));
 
-        assert_eq!(I::Nothing, a.token("1"));
-        assert_eq!(I::Nothing, a.token("2"));
-        assert_eq!(I::Nothing, a.token("3"));
-        assert_eq!(I::Nothing, a.token("4"));
-        assert_eq!(I::NoTransform("0".to_string()), a.flush());
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("4"));
+        assert_eq!(TVS::Unit(TV::NoTransform("0".to_string())), a.flush());
     }
     #[test]
     fn indices_unmatched() {
         let mut a = IndexAccumulator::new(vec![1234], 0, Box::new(formatter));
 
-        assert_eq!(I::Nothing, a.token("1"));
-        assert_eq!(I::Nothing, a.token("2"));
-        assert_eq!(I::Nothing, a.token("3"));
-        assert_eq!(I::NoTransform("123 ".to_string()), a.token(" "));
-        assert_eq!(I::Nothing, a.token("3"));
-        assert_eq!(I::Nothing, a.token("2"));
-        assert_eq!(I::Nothing, a.token("1"));
-        assert_eq!(I::NoTransform("321".to_string()), a.flush());
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
+        assert_eq!(TVS::Unit(TV::NoTransform("123 ".to_string())), a.token(" "));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
+        assert_eq!(TVS::Unit(TV::NoTransform("321".to_string())), a.flush());
     }
     #[test]
     fn indices_matched_and_same() {
         let mut a = IndexAccumulator::new(vec![123], 0, Box::new(formatter));
 
-        assert_eq!(I::Nothing, a.token("1"));
-        assert_eq!(I::Nothing, a.token("2"));
-        assert_eq!(I::Nothing, a.token("3"));
-        assert_eq!(I::Transform("0 ".to_string(), 0), a.token(" "));
-        assert_eq!(I::Nothing, a.token("1"));
-        assert_eq!(I::Nothing, a.token("2"));
-        assert_eq!(I::Nothing, a.token("3"));
-        assert_eq!(I::Transform("0".to_string(), 0), a.flush());
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
+        assert_eq!(TVS::Unit(TV::Transform("0 ".to_string(), 0)), a.token(" "));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
+        assert_eq!(TVS::Unit(TV::Transform("0".to_string(), 0)), a.flush());
     }
     #[test]
     fn indices_matched_and_different() {
         let mut a = IndexAccumulator::new(vec![123, 321], 0, Box::new(formatter));
 
-        assert_eq!(I::Nothing, a.token("1"));
-        assert_eq!(I::Nothing, a.token("2"));
-        assert_eq!(I::Nothing, a.token("3"));
-        assert_eq!(I::Transform("0 ".to_string(), 0), a.token(" "));
-        assert_eq!(I::Nothing, a.token("3"));
-        assert_eq!(I::Nothing, a.token("2"));
-        assert_eq!(I::Nothing, a.token("1"));
-        assert_eq!(I::Transform("1".to_string(), 1), a.flush());
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
+        assert_eq!(TVS::Unit(TV::Transform("0 ".to_string(), 0)), a.token(" "));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
+        assert_eq!(TVS::Unit(TV::Transform("1".to_string(), 1)), a.flush());
     }
     #[test]
     fn indices_single_matched() {
         let mut a = IndexAccumulator::new(vec![123], 0, Box::new(formatter));
 
-        assert_eq!(I::Nothing, a.token("1"));
-        assert_eq!(I::Nothing, a.token("2"));
-        assert_eq!(I::Nothing, a.token("3"));
-        assert_eq!(I::Transform("0 ".to_string(), 0), a.token(" "));
-        assert_eq!(I::Nothing, a.token("3"));
-        assert_eq!(I::Nothing, a.token("2"));
-        assert_eq!(I::Nothing, a.token("1"));
-        assert_eq!(I::NoTransform("321".to_string()), a.flush());
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
+        assert_eq!(TVS::Unit(TV::Transform("0 ".to_string(), 0)), a.token(" "));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
+        assert_eq!(TVS::Unit(TV::NoTransform("321".to_string())), a.flush());
     }
     #[test]
     fn index_matched_leading() {
         let mut a = IndexAccumulator::new(vec![1234], 0, Box::new(formatter));
 
-        assert_eq!(I::Nothing, a.token(" 1"));
-        assert_eq!(I::Nothing, a.token("2"));
-        assert_eq!(I::Nothing, a.token("3"));
-        assert_eq!(I::Nothing, a.token("4"));
-        assert_eq!(I::NoTransform("0".to_string()), a.flush());
+        assert_eq!(TVS::Unit(TV::Nothing), a.token(" 1"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("4"));
+        assert_eq!(TVS::Unit(TV::NoTransform("0".to_string())), a.flush());
     }
     #[test]
     fn index_matched_trailing() {
         let mut a = IndexAccumulator::new(vec![1234], 0, Box::new(formatter));
 
-        assert_eq!(I::Nothing, a.token("1"));
-        assert_eq!(I::Nothing, a.token("2"));
-        assert_eq!(I::Nothing, a.token("3"));
-        assert_eq!(I::Nothing, a.token("4 "));
-        assert_eq!(I::NoTransform("0".to_string()), a.flush());
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("1"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("2"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("3"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("4 "));
+        assert_eq!(TVS::Unit(TV::NoTransform("0".to_string())), a.flush());
     }
     #[test]
     fn index_matched_leading_trailing() {
         let mut a = IndexAccumulator::new(vec![12], 0, Box::new(formatter));
 
-        assert_eq!(I::Nothing, a.token(" 1"));
-        assert_eq!(I::Transform(" 12 ".to_string(), 0), a.token("2 "));
-        assert_eq!(I::Nothing, a.flush());
+        assert_eq!(TVS::Unit(TV::Nothing), a.token(" 1"));
+        assert_eq!(
+            TVS::Unit(TV::Transform(" 12 ".to_string(), 0)),
+            a.token("2 ")
+        );
+        assert_eq!(TVS::Unit(TV::Nothing), a.flush());
     }
 
     #[test]
     fn index_matched_large_fragments() {
         let mut a = IndexAccumulator::new(vec![123456789], 0, Box::new(formatter));
 
-        assert_eq!(I::Nothing, a.token("1234"));
-        assert_eq!(I::Nothing, a.token("56789"));
-        assert_eq!(I::Transform("123456789".to_string(), 0), a.flush());
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("1234"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("56789"));
+        assert_eq!(
+            TVS::Unit(TV::Transform("123456789".to_string(), 0)),
+            a.flush()
+        );
     }
     #[test]
     fn index_matched_leading_large_fragments() {
         let mut a = IndexAccumulator::new(vec![123456789], 0, Box::new(formatter));
 
-        assert_eq!(I::Nothing, a.token(" 1234"));
-        assert_eq!(I::Nothing, a.token("56789"));
-        assert_eq!(I::Transform("123456789".to_string(), 0), a.flush());
+        assert_eq!(TVS::Unit(TV::Nothing), a.token(" 1234"));
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("56789"));
+        assert_eq!(
+            TVS::Unit(TV::Transform("123456789".to_string(), 0)),
+            a.flush()
+        );
     }
     #[test]
     fn index_matched_trailing_large_fragments() {
         let mut a = IndexAccumulator::new(vec![123456789], 0, Box::new(formatter));
 
-        assert_eq!(I::Nothing, a.token("1234"));
-        assert_eq!(I::Transform("123456789 ".to_string(), 0), a.token("56789 "));
-        assert_eq!(I::Nothing, a.flush());
+        assert_eq!(TVS::Unit(TV::Nothing), a.token("1234"));
+        assert_eq!(
+            TVS::Unit(TV::Transform("123456789 ".to_string(), 0)),
+            a.token("56789 ")
+        );
+        assert_eq!(TVS::Unit(TV::Nothing), a.flush());
     }
     #[test]
     fn index_matched_leading_trailing_large_fragments() {
         let mut a = IndexAccumulator::new(vec![123456789], 0, Box::new(formatter));
 
-        assert_eq!(I::Nothing, a.token(" 1234"));
-        assert_eq!(I::NoTransform(" 123456789 ".to_string()), a.token("56789 "));
-        assert_eq!(I::Nothing, a.flush());
+        assert_eq!(TVS::Unit(TV::Nothing), a.token(" 1234"));
+        assert_eq!(
+            TVS::Unit(TV::NoTransform(" 123456789 ".to_string())),
+            a.token("56789 ")
+        );
+        assert_eq!(TVS::Unit(TV::Nothing), a.flush());
     }
     #[test]
     fn index_unmatched_leading() {
         let mut a = IndexAccumulator::new(vec![1234], 0, Box::new(formatter));
 
-        assert_eq!(I::Nothing, a.token(" 1"));
-        assert_eq!(I::NoTransform(" 1".to_string()), a.token(" 2"));
-        assert_eq!(I::NoTransform(" 2".to_string()), a.token(" 3"));
-        assert_eq!(I::NoTransform(" 3".to_string()), a.token(" 4"));
-        assert_eq!(I::NoTransform(" 4".to_string()), a.flush());
+        assert_eq!(TVS::Unit(TV::Nothing), a.token(" 1"));
+        assert_eq!(TVS::Unit(TV::NoTransform(" 1".to_string())), a.token(" 2"));
+        assert_eq!(TVS::Unit(TV::NoTransform(" 2".to_string())), a.token(" 3"));
+        assert_eq!(TVS::Unit(TV::NoTransform(" 3".to_string())), a.token(" 4"));
+        assert_eq!(TVS::Unit(TV::NoTransform(" 4".to_string())), a.flush());
     }
     #[test]
     fn index_unmatched_trailing() {
         let mut a = IndexAccumulator::new(vec![1234], 0, Box::new(formatter));
 
-        assert_eq!(I::NoTransform("1 ".to_string()), a.token("1 "));
-        assert_eq!(I::NoTransform("2 ".to_string()), a.token("2 "));
-        assert_eq!(I::NoTransform("3 ".to_string()), a.token("3 "));
-        assert_eq!(I::NoTransform("4 ".to_string()), a.token("4 "));
-        assert_eq!(I::Nothing, a.flush());
+        assert_eq!(TVS::Unit(TV::NoTransform("1 ".to_string())), a.token("1 "));
+        assert_eq!(TVS::Unit(TV::NoTransform("2 ".to_string())), a.token("2 "));
+        assert_eq!(TVS::Unit(TV::NoTransform("3 ".to_string())), a.token("3 "));
+        assert_eq!(TVS::Unit(TV::NoTransform("4 ".to_string())), a.token("4 "));
+        assert_eq!(TVS::Unit(TV::Nothing), a.flush());
     }
     #[test]
     fn index_unmatched_leading_trailing() {
         let mut a = IndexAccumulator::new(vec![1234], 0, Box::new(formatter));
 
-        assert_eq!(I::NoTransform(" 1 ".to_string()), a.token(" 1 "));
-        assert_eq!(I::NoTransform(" 2 ".to_string()), a.token(" 2 "));
-        assert_eq!(I::NoTransform(" 3 ".to_string()), a.token(" 3 "));
-        assert_eq!(I::NoTransform(" 4 ".to_string()), a.token(" 4 "));
-        assert_eq!(I::Nothing, a.flush());
+        assert_eq!(
+            TVS::Unit(TV::NoTransform(" 1 ".to_string())),
+            a.token(" 1 ")
+        );
+        assert_eq!(
+            TVS::Unit(TV::NoTransform(" 2 ".to_string())),
+            a.token(" 2 ")
+        );
+        assert_eq!(
+            TVS::Unit(TV::NoTransform(" 3 ".to_string())),
+            a.token(" 3 ")
+        );
+        assert_eq!(
+            TVS::Unit(TV::NoTransform(" 4 ".to_string())),
+            a.token(" 4 ")
+        );
+        assert_eq!(TVS::Unit(TV::Nothing), a.flush());
     }
     #[test]
     fn index_unmatched_leading_trailing_large_fragments() {
         let mut a = IndexAccumulator::new(vec![1234], 0, Box::new(formatter));
 
-        assert_eq!(I::NoTransform(" 1234 ".to_string()), a.token(" 1234 "));
-        assert_eq!(I::NoTransform(" 123 ".to_string()), a.token(" 123 "));
-        assert_eq!(I::NoTransform(" 12 ".to_string()), a.token(" 12 "));
-        assert_eq!(I::NoTransform(" 34 ".to_string()), a.token(" 34 "));
-        assert_eq!(I::Nothing, a.flush());
+        assert_eq!(
+            TVS::Unit(TV::NoTransform(" 1234 ".to_string())),
+            a.token(" 1234 ")
+        );
+        assert_eq!(
+            TVS::Unit(TV::NoTransform(" 123 ".to_string())),
+            a.token(" 123 ")
+        );
+        assert_eq!(
+            TVS::Unit(TV::NoTransform(" 12 ".to_string())),
+            a.token(" 12 ")
+        );
+        assert_eq!(
+            TVS::Unit(TV::NoTransform(" 34 ".to_string())),
+            a.token(" 34 ")
+        );
+        assert_eq!(TVS::Unit(TV::Nothing), a.flush());
     }
 }
