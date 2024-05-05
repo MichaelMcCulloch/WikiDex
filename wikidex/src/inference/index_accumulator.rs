@@ -86,18 +86,17 @@ impl TokenAccumulator for IndexAccumulator {
             let key_string = self.token_buffer.join("");
             let key = key_string.trim().parse::<i64>().unwrap();
 
-            if let Some(value) = self.dictionary.iter().position(|s| *s == key) {
+            let response = if let Some(value) = self.dictionary.iter().position(|s| *s == key) {
                 let new_value = (self.formatter)(value, self.modifier);
                 let new_key_string = key_string.replace(&key.to_string(), &new_value);
 
-                self.token_buffer.clear();
-                self.is_accumulating = false;
                 TokenValue::Transform(new_key_string, value)
             } else {
-                self.token_buffer.clear();
-                self.is_accumulating = false;
                 TokenValue::NoTransform(key_string)
-            }
+            };
+            self.token_buffer.clear();
+            self.is_accumulating = false;
+            response
         } else {
             TokenValue::NoOp(token)
         }
