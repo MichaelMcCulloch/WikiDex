@@ -3,6 +3,11 @@ variables:
   KUBERNETES_CPU_LIMIT: 12000m
   KUBERNETES_MEMORY_REQUEST: 2Gi
   KUBERNETES_MEMORY_LIMIT: 8Gi
+  FF_USE_FASTZIP: "true"
+  # These can be specified per job or per pipeline (slowest, slow, default, fast, and fastest)
+  ARTIFACT_COMPRESSION_LEVEL: "fastest"
+  CACHE_COMPRESSION_LEVEL: "fastest"
+
 
 stages:
   - All
