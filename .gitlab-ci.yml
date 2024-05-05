@@ -26,9 +26,11 @@ SQLite:
   variables:
     DATABASE_URL: sqlite://sqlite_dummy.db
   cache:
-    - key: cache-sqlite
+    - key: cache-sqlite-all-release
       paths:
-        - wikidex/target/*
+        - wikidex/target/debug/*
+        - wikidex/target/.rustc_info.json
+        - wikidex/target/CACHEDIR.TAG
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: All
   script:
@@ -36,15 +38,30 @@ SQLite:
     - cargo build --no-default-features --features sqlite,server
     - cargo build --no-default-features --features sqlite,ingest
     - cargo build --no-default-features --features sqlite,ingest,server
+
+SQLite Test:
+  variables:
+    DATABASE_URL: sqlite://sqlite_dummy.db
+  cache:
+    - key: cache-sqlite-all-test
+      paths:
+        - wikidex/target/release/*
+        - wikidex/target/.rustc_info.json
+        - wikidex/target/CACHEDIR.TAG
+  image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
+  stage: All
+  script:
     - cargo test --package wikidex --bin wikidex --no-default-features --features sqlite,server,ingest -- --exact --show-output  --nocapture
 
 PostgreSQL:
   variables:
     DATABASE_URL: postgres://wikidex:wikidex@wikidex-dummy-wikidex-dev-postgresql.wikidex-dev:5432/wikipedia
   cache:
-    - key: cache-postgres
+    - key: cache-postgres-all-release
       paths:
-        - wikidex/target/*
+        - wikidex/target/debug/*
+        - wikidex/target/.rustc_info.json
+        - wikidex/target/CACHEDIR.TAG
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: All
   script:
