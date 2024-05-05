@@ -43,7 +43,8 @@ impl IndexAccumulator {
 
 impl TokenAccumulator for IndexAccumulator {
     fn token<'a>(&mut self, token: &'a str) -> TokenValue<'a> {
-        if token.is_empty() {
+        if self.is_accumulating {
+        } else if token.is_empty() {
             return TokenValue::Nothing;
         }
 
