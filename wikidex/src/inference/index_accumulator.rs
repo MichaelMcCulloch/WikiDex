@@ -102,11 +102,12 @@ mod test {
 
     #[test]
     fn test2() {
-        let mut accumulator = IndexAccumulator::new(vec![1234, 4321]);
+        let mut a = IndexAccumulator::new(vec![1234, 4321]);
 
-        assert_eq!(I::NoOp("This"), accumulator.token("This"));
-        assert_eq!(I::NoOp(" is"), accumulator.token(" is"));
-        assert_eq!(I::NoOp(" a"), accumulator.token(" a"));
-        assert_eq!(I::NoOp(" test"), accumulator.token(" test"));
+        assert_eq!(I::Nothing, a.token("1"));
+        assert_eq!(I::Nothing, a.token("2"));
+        assert_eq!(I::Nothing, a.token("3"));
+        assert_eq!(I::Nothing, a.token("4"));
+        assert_eq!(Some("1".to_string()), a.flush());
     }
 }
