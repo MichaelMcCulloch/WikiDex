@@ -118,8 +118,7 @@ impl TokenAccumulator for IndexAccumulator {
         } else {
             let _key_string = self.clear_buffer();
             assert!(_key_string.is_empty());
-            self.push_buffer(token);
-            TokenValues::Nothing
+            TokenValues::Unit(TokenValue::NoOp(token))
         }
     }
 
