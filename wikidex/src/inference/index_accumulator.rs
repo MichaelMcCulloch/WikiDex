@@ -29,61 +29,12 @@ impl IndexAccumulator {
 
 impl IndexAccumulatorTrait for IndexAccumulator {
     fn token<'a>(&mut self, token: &'a str) -> IndexAccumulatorReturn<'a> {
-        if !self.is_accumulating {
-            if token.trim().is_empty() {
-                return IndexAccumulatorReturn::NoOp(token);
-            }
-
-            let token_as_number: Option<i64> = token.trim().parse().ok();
-
-            if let Some(num) = token_as_number {
-                if self.dictionary.contains(&num) {
-                    self.is_accumulating = true;
-                    self.token_buffer.push(token.to_string());
-                    return IndexAccumulatorReturn::Nothing;
-                }
-            }
-        } else {
-            if let Ok(num) = token.trim().parse() {
-                if self.dictionary.contains(&num) {
-                    self.token_buffer.push(token.to_string());
-                    return IndexAccumulatorReturn::Nothing;
-                }
-            }
-
-            // Flush the buffer if the current token does not continue the sequence
-            let result = self.flush();
-            if let IndexAccumulatorReturn::NoTransform(d) = result {
-                // If the buffer was not transformed, return the result of the flush
-                return IndexAccumulatorReturn::NoTransform(d);
-            }
-        }
-
         // If the token is not a number or not in the dictionary, return NoOp
         IndexAccumulatorReturn::NoOp(token)
     }
 
     fn flush(&mut self) -> IndexAccumulatorReturn {
-        if self.token_buffer.is_empty() {
-            return IndexAccumulatorReturn::Nothing;
-        }
-
-        let accumulated_string = self.token_buffer.join("");
-        self.token_buffer.clear();
-        self.is_accumulating = false;
-
-        let accumulated_number: i64 = accumulated_string.parse().unwrap_or(0);
-
-        if self.dictionary.contains(&accumulated_number) {
-            let index = self
-                .dictionary
-                .iter()
-                .position(|&x| x == accumulated_number)
-                .unwrap();
-            IndexAccumulatorReturn::Transform(index.to_string(), index)
-        } else {
-            IndexAccumulatorReturn::NoTransform(accumulated_string)
-        }
+        IndexAccumulatorReturn::Nothing
     }
 }
 
