@@ -85,7 +85,12 @@ impl TokenAccumulator for IndexAccumulator {
     }
 
     fn flush(&mut self) -> TokenValue {
-        TokenValue::Nothing
+        let buffer = self.token_buffer.join("");
+        if buffer.is_empty() {
+            TokenValue::Nothing
+        } else {
+            TokenValue::NoTransform(buffer)
+        }
     }
 }
 
