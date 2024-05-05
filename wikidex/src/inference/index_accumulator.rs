@@ -47,7 +47,7 @@ impl IndexAccumulator {
             token.trim_end().parse::<i64>(),
             token.trim().parse::<i64>(),
         ) {
-            (Ok(_), Ok(_), Ok(_), Ok(_)) => todo!(),
+            (Ok(_), _, _, _) => todo!(),
             (Ok(_), Ok(_), Ok(_), Err(_)) => todo!(),
             (Ok(_), Ok(_), Err(_), Ok(_)) => todo!(),
             (Ok(_), Ok(_), Err(_), Err(_)) => todo!(),
