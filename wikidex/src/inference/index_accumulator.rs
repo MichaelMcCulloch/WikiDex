@@ -1,4 +1,4 @@
-use regex::Regex;
+
 
 const NON_DIGITS_FOLLOWED_BY_DIGITS: &str = r#"^(\D*)(\d+)$"#;
 
@@ -7,7 +7,6 @@ pub(crate) struct IndexAccumulator {
     token_buffer: Vec<String>,
     modifier: usize,
     is_accumulating: bool,
-    non_digits_followed_by_digits: Regex,
     formatter: Box<dyn Fn(usize, usize) -> String>,
 }
 
@@ -52,7 +51,6 @@ impl IndexAccumulator {
             dictionary,
             token_buffer: vec![],
             is_accumulating: false,
-            non_digits_followed_by_digits: Regex::new(NON_DIGITS_FOLLOWED_BY_DIGITS).unwrap(),
             formatter,
             modifier,
         }
