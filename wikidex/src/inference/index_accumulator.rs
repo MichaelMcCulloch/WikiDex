@@ -12,7 +12,7 @@ pub(crate) enum TokenValue<'a> {
     NoTransform(String),
 }
 
-pub(crate) trait IndexAccumulatorTrait {
+pub(crate) trait TokenAccumulator {
     fn token<'a>(&mut self, token: &'a str) -> TokenValue<'a>;
     fn flush(&mut self) -> TokenValue;
 }
@@ -27,7 +27,7 @@ impl IndexAccumulator {
     }
 }
 
-impl IndexAccumulatorTrait for IndexAccumulator {
+impl TokenAccumulator for IndexAccumulator {
     fn token<'a>(&mut self, _token: &'a str) -> TokenValue<'a> {
         TokenValue::Nothing
     }
@@ -82,7 +82,7 @@ impl IndexAccumulatorTrait for IndexAccumulator {
 mod test {
     use crate::inference::index_accumulator::TokenValue as I;
 
-    use super::{IndexAccumulator, IndexAccumulatorTrait};
+    use super::{IndexAccumulator, TokenAccumulator};
 
     #[test]
     fn plain_text() {
