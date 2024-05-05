@@ -58,13 +58,6 @@ impl IndexAccumulator {
         }
     }
 
-    fn clear_buffer(&mut self) -> String {
-        let string = self.token_buffer.join("");
-        self.is_accumulating = false;
-        self.token_buffer.clear();
-        string
-    }
-
     fn push_buffer<S: ToString>(&mut self, token: S) {
         self.token_buffer.push(token.to_string());
         self.is_accumulating = true;
@@ -85,21 +78,39 @@ impl TokenAccumulator for IndexAccumulator {
                 let this = &mut *self;
                 this.token_buffer.push(token.to_string());
                 this.is_accumulating = true;
-                let key_string = self.clear_buffer();
+                let key_string = {
+                    let this = &mut *self;
+                    let string = this.token_buffer.join("");
+                    this.is_accumulating = false;
+                    this.token_buffer.clear();
+                    string
+                };
                 self.process(key_string).into()
             } else {
                 self.process_noop(token).into()
             }
         } else if token.trim_start().parse::<i64>().is_ok() {
             if self.is_accumulating {
-                let key_string = self.clear_buffer();
+                let key_string = {
+                    let this = &mut *self;
+                    let string = this.token_buffer.join("");
+                    this.is_accumulating = false;
+                    this.token_buffer.clear();
+                    string
+                };
                 let result = self.process(key_string);
                 let this = &mut *self;
                 this.token_buffer.push(token.to_string());
                 this.is_accumulating = true;
                 result.into()
             } else {
-                let _key_string = self.clear_buffer();
+                let _key_string = {
+                    let this = &mut *self;
+                    let string = this.token_buffer.join("");
+                    this.is_accumulating = false;
+                    this.token_buffer.clear();
+                    string
+                };
                 assert!(_key_string.is_empty());
                 let this = &mut *self;
                 this.token_buffer.push(token.to_string());
@@ -108,22 +119,46 @@ impl TokenAccumulator for IndexAccumulator {
             }
         } else if token.trim().parse::<i64>().is_ok() {
             if self.is_accumulating {
-                let key_string = self.clear_buffer();
+                let key_string = {
+                    let this = &mut *self;
+                    let string = this.token_buffer.join("");
+                    this.is_accumulating = false;
+                    this.token_buffer.clear();
+                    string
+                };
                 let previous_result = self.process(key_string);
                 let current_result = self.process(token.to_string());
                 TokenValues::Twofer(previous_result, current_result)
             } else {
-                let _key_string = self.clear_buffer();
+                let _key_string = {
+                    let this = &mut *self;
+                    let string = this.token_buffer.join("");
+                    this.is_accumulating = false;
+                    this.token_buffer.clear();
+                    string
+                };
                 assert!(_key_string.is_empty());
                 let current_result = self.process(token.to_string());
                 TokenValues::Unit(current_result)
             }
         } else if self.is_accumulating {
-            let key_string = self.clear_buffer();
+            let key_string = {
+                let this = &mut *self;
+                let string = this.token_buffer.join("");
+                this.is_accumulating = false;
+                this.token_buffer.clear();
+                string
+            };
             let result = self.process(key_string);
             TokenValues::Twofer(result, TokenValue::NoOp(token))
         } else {
-            let _key_string = self.clear_buffer();
+            let _key_string = {
+                let this = &mut *self;
+                let string = this.token_buffer.join("");
+                this.is_accumulating = false;
+                this.token_buffer.clear();
+                string
+            };
             assert!(_key_string.is_empty());
             TokenValues::Unit(TokenValue::NoOp(token))
         }
@@ -157,7 +192,13 @@ impl TokenAccumulator for IndexAccumulator {
     }
 
     fn flush<'a>(&mut self) -> TokenValues<'a> {
-        let key_string = self.clear_buffer();
+        let key_string = {
+            let this = &mut *self;
+            let string = this.token_buffer.join("");
+            this.is_accumulating = false;
+            this.token_buffer.clear();
+            string
+        };
         self.process(key_string).into()
     }
 }
