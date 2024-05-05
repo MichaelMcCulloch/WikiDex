@@ -52,6 +52,13 @@ impl PartialMessage {
             finished: None,
         }
     }
+    pub(crate) fn content_and_source(content: String, source: Source) -> Self {
+        Self {
+            content: Some(content),
+            source: Some(source),
+            finished: None,
+        }
+    }
 
     pub(crate) fn message(self) -> Bytes {
         let message_string = &serde_json::to_string(&self).unwrap();

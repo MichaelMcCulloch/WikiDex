@@ -1,4 +1,4 @@
-use crate::{docstore::Document};
+use crate::docstore::Document;
 
 use super::LlmMessage;
 

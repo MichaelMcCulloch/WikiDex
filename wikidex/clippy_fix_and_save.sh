@@ -8,5 +8,6 @@
 cargo clippy --fix --workspace --message-format=json --all-targets --allow-dirty && \
 git checkout local-step && \
 git add . && \
-git commit -m "`date`" && \
-git push
+git commit -m "`date`"
+# && \
+# git push

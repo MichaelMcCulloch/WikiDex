@@ -1,7 +1,5 @@
 use bytes::Bytes;
 
-use std::collections::HashMap;
-
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 use crate::{
@@ -9,6 +7,7 @@ use crate::{
     embedding_client::{EmbeddingClient, EmbeddingClientService},
     formatter::{CitationStyle, Cite},
     index::{FaceIndex, SearchService},
+    inference::index_accumulator::{IndexAccumulator, TokenAccumulator, TokenValue, TokenValues},
     llm_client::{
         LanguageServiceArguments, LlmClientImpl, LlmClientService, LlmMessage, LlmRole,
         PartialLlmMessage,
@@ -90,11 +89,23 @@ impl Engine {
             documents: documents.clone(),
             user_query,
         };
-        let sources = organize_sources(documents, num_sources);
+        let sources = documents
+            .into_iter()
+            .enumerate()
+            .map(|(ordinal, document)| Source {
+                ordinal: ordinal + num_sources,
+                index: document.index,
+                citation: document.provenance.format(&CITATION_STYLE),
+                url: document.provenance.url(),
+                origin_text: document.text,
+            })
+            .collect::<Vec<_>>();
         let LlmMessage { role, content } = self
             .llm_client
             .get_llm_answer(llm_service_arguments, 2048u16, stop_phrases)
             .await?;
+
+        let mut ordinal = num_sources + 1;
 
         match role {
             LlmRole::Assistant => {
@@ -102,9 +113,9 @@ impl Engine {
                 for source in sources.iter() {
                     content = content.replace(
                         format!("{}", source.index).as_str(),
-                        format!("[{}](http://localhost/#{})", source.ordinal, source.ordinal)
-                            .as_str(),
+                        format!("[{}](http://localhost/#{})", ordinal, ordinal).as_str(),
                     );
+                    ordinal += 1;
                 }
 
                 Ok(Message::Assistant(content, sources))
@@ -142,7 +153,6 @@ impl Engine {
             .collect::<Vec<_>>();
 
         let documents = self.get_documents(&user_query).await?;
-
         log::info!("User message: \"{user_query}\"",);
         log::info!(
             "Obtained documents:\n{}.",
@@ -152,68 +162,112 @@ impl Engine {
                 .collect::<Vec<_>>()
                 .join("\n")
         );
+        let mut accumulator = IndexAccumulator::new(
+            documents
+                .iter()
+                .map(|Document { index, .. }| *index)
+                .collect::<Vec<_>>(),
+            num_sources + 1,
+            Box::new(Self::formatter),
+        );
 
         let llm_service_arguments = LanguageServiceArguments {
             messages,
             documents: documents.clone(),
             user_query,
         };
-        let sources = organize_sources(documents, num_sources);
+        let mut documents = documents.into_iter().map(Some).collect::<Vec<_>>();
 
         let (partial_message_sender, mut partial_message_receiver) = unbounded_channel();
 
-        let mut sources_list = sources.clone();
         actix_web::rt::spawn(async move {
-            let mut accumulated_index = String::new();
-            let mut accumulating_index = false;
-            let mut index_ordinal_map = HashMap::new();
-            let mut send_message = |accumulated_index: String| {
-                let index = accumulated_index.trim().parse::<i64>().unwrap();
-
-                if let Some(source) = sources_list
-                    .iter()
-                    .position(|s| s.index == index)
-                    .map(|i| sources_list.remove(i))
-                {
-                    index_ordinal_map.insert(index, source.ordinal);
-                    let _ = tx.send(PartialMessage::source(source).message());
-                }
-
-                if let Some(ordinal) = index_ordinal_map.get(&index) {
-                    let source_link = accumulated_index.replace(
-                        accumulated_index.as_str(),
-                        format!("[{ordinal}](http://localhost/#{ordinal})").as_str(),
-                    );
-                    let _ = tx.send(PartialMessage::content(source_link).message());
-                } else {
-                    let _ = tx.send(PartialMessage::content(accumulated_index).message());
-                }
-            };
-
             while let Some(PartialLlmMessage {
                 content: Some(content),
                 ..
             }) = partial_message_receiver.recv().await
             {
-                // Check if the token is numeric (ignoring any leading/trailing whitespace)
-                if content.trim().parse::<i64>().is_ok() {
-                    accumulated_index.push_str(&content);
-                    accumulating_index = true;
-                } else if accumulating_index {
-                    send_message(accumulated_index);
-                    let _ = tx.send(PartialMessage::content(content).message());
-                    accumulated_index = String::new();
-                    accumulating_index = false;
-                } else {
-                    let _ = tx.send(PartialMessage::content(content).message());
+                let token_values = match accumulator.token(&content) {
+                    TokenValues::Nothing => vec![],
+                    TokenValues::Unit(TokenValue::Nothing) => vec![],
+                    TokenValues::Unit(unit) => vec![unit],
+                    TokenValues::Twofer(a, b) => vec![a, b],
+                };
+
+                for token_value in token_values {
+                    match token_value {
+                        TokenValue::Nothing => continue,
+                        TokenValue::NoOp(_content) => {
+                            let _ = tx.send(PartialMessage::content(content.to_string()).message());
+                        }
+                        TokenValue::Transform(content, position) => {
+                            let modified_position = position + num_sources;
+                            let content = content.replace(
+                                position.to_string().as_str(),
+                                format!(
+                                    "[{modified_position}](http://localhost/#{modified_position})"
+                                )
+                                .as_str(),
+                            );
+
+                            if let Some(document) = documents[position].take() {
+                                let source = Source {
+                                    ordinal: modified_position,
+                                    index: document.index,
+                                    citation: document.provenance.format(&CITATION_STYLE),
+                                    url: document.provenance.url(),
+                                    origin_text: document.text,
+                                };
+
+                                let _ = tx.send(PartialMessage::source(source).message());
+                            }
+                            let _ = tx.send(PartialMessage::content(content).message());
+                        }
+                        TokenValue::NoTransform(content) => {
+                            let _ = tx.send(PartialMessage::content(content).message());
+                        }
+                    }
                 }
             }
 
-            // Send any remaining accumulated number
-            if !accumulated_index.is_empty() {
-                send_message(accumulated_index);
-            }
+            let token_values = match accumulator.flush() {
+                TokenValues::Nothing => vec![],
+                TokenValues::Unit(TokenValue::Nothing) => vec![],
+                TokenValues::Unit(unit) => vec![unit],
+                TokenValues::Twofer(a, b) => vec![a, b],
+            };
 
+            for token_value in token_values {
+                match token_value {
+                    TokenValue::Nothing => continue,
+                    TokenValue::NoOp(content) => {
+                        let _ = tx.send(PartialMessage::content(content.to_string()).message());
+                    }
+                    TokenValue::Transform(content, position) => {
+                        let modified_position = position + num_sources;
+                        let content = content.replace(
+                            position.to_string().as_str(),
+                            format!("[{modified_position}](http://localhost/#{modified_position})")
+                                .as_str(),
+                        );
+
+                        if let Some(document) = documents[position].take() {
+                            let source = Source {
+                                ordinal: modified_position,
+                                index: document.index,
+                                citation: document.provenance.format(&CITATION_STYLE),
+                                url: document.provenance.url(),
+                                origin_text: document.text,
+                            };
+
+                            let _ = tx.send(PartialMessage::source(source).message());
+                        }
+                        let _ = tx.send(PartialMessage::content(content).message());
+                    }
+                    TokenValue::NoTransform(content) => {
+                        let _ = tx.send(PartialMessage::content(content).message());
+                    }
+                }
+            }
             let _ = tx.send(PartialMessage::done().message());
         });
 
@@ -244,18 +298,12 @@ impl Engine {
 
         Ok(documents)
     }
-}
 
-fn organize_sources(documents: Vec<Document>, num_sources: usize) -> Vec<Source> {
-    documents
-        .into_iter()
-        .enumerate()
-        .map(|(ordinal, document)| Source {
-            ordinal: num_sources + ordinal + 1,
-            index: document.index,
-            citation: document.provenance.format(&CITATION_STYLE),
-            url: document.provenance.url(),
-            origin_text: document.text,
-        })
-        .collect::<Vec<_>>()
+    fn formatter(index: usize, modifier: usize) -> String {
+        format!(
+            "[{}](http://localhost/#{})",
+            index + modifier,
+            index + modifier
+        )
+    }
 }
