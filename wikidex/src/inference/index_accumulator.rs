@@ -318,7 +318,7 @@ mod test {
 
         assert_eq!(TVS::Nothing, a.token(" 1"));
         assert_eq!(
-            TVS::Unit(TV::Transform(" 12 ".to_string(), 0)),
+            TVS::Unit(TV::Transform(" [0](http://localhost/#0) ".to_string(), 0)),
             a.token("2 ")
         );
         assert_eq!(TVS::Nothing, a.flush());
