@@ -14,7 +14,7 @@ pub(crate) enum IndexAccumulatorReturn<'a> {
 
 pub(crate) trait IndexAccumulatorTrait {
     fn token<'a>(&mut self, token: &'a str) -> IndexAccumulatorReturn<'a>;
-    fn flush(&mut self) -> Option<String>;
+    fn flush(&mut self) -> IndexAccumulatorReturn;
 }
 
 impl IndexAccumulator {
@@ -60,14 +60,14 @@ impl IndexAccumulatorTrait for IndexAccumulator {
         }
     }
 
-    fn flush(&mut self) -> Option<String> {
+    fn flush(&mut self) -> IndexAccumulatorReturn {
         let string = self.token_buffer.join("");
 
         self.token_buffer.clear();
         if string.is_empty() {
-            None
+            IndexAccumulatorReturn::Nothing
         } else {
-            Some(string)
+            IndexAccumulatorReturn::NoTransform(string)
         }
     }
 }
@@ -86,7 +86,7 @@ mod test {
         assert_eq!(I::NoOp(" is"), a.token(" is"));
         assert_eq!(I::NoOp(" a"), a.token(" a"));
         assert_eq!(I::NoOp(" test"), a.token(" test"));
-        assert_eq!(None, a.flush());
+        assert_eq!(I::Nothing, a.flush());
     }
 
     #[test]
@@ -97,7 +97,7 @@ mod test {
         assert_eq!(I::Nothing, a.token("3"));
         assert_eq!(I::Nothing, a.token("4"));
         assert_eq!(I::Nothing, a.token("1"));
-        assert_eq!(Some("2341".to_string()), a.flush());
+        assert_eq!(I::NoTransform("2341".to_string()), a.flush());
     }
 
     #[test]
@@ -108,7 +108,7 @@ mod test {
         assert_eq!(I::Nothing, a.token("2"));
         assert_eq!(I::Nothing, a.token("3"));
         assert_eq!(I::Nothing, a.token("4"));
-        assert_eq!(Some("0".to_string()), a.flush());
+        assert_eq!(I::NoTransform("0".to_string()), a.flush());
     }
     #[test]
     fn test_two_numbers_are_absent() {
@@ -121,7 +121,7 @@ mod test {
         assert_eq!(I::Nothing, a.token("3"));
         assert_eq!(I::Nothing, a.token("2"));
         assert_eq!(I::Nothing, a.token("1"));
-        assert_eq!(Some("321".to_string()), a.flush());
+        assert_eq!(I::NoTransform("321".to_string()), a.flush());
     }
     #[test]
     fn test_two_numbers_are_present_and_same() {
@@ -134,6 +134,6 @@ mod test {
         assert_eq!(I::Nothing, a.token("1"));
         assert_eq!(I::Nothing, a.token("2"));
         assert_eq!(I::Nothing, a.token("3"));
-        assert_eq!(Some("0".to_string()), a.flush());
+        assert_eq!(I::Transform("0".to_string(), 0), a.flush());
     }
 }
