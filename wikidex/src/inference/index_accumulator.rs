@@ -49,9 +49,7 @@ impl IndexAccumulator {
         ) {
             (Ok(_), _, _, _) => todo!(),
             (Err(_), Ok(_), _, _) => todo!(),
-            (Err(_), Ok(_), Ok(_), Err(_)) => todo!(),
-            (Err(_), Ok(_), Err(_), Ok(_)) => todo!(),
-            (Err(_), Ok(_), Err(_), Err(_)) => todo!(),
+
             (Err(_), Err(_), Ok(_), Ok(_)) => todo!(),
             (Err(_), Err(_), Ok(_), Err(_)) => todo!(),
             (Err(_), Err(_), Err(_), Ok(_)) => todo!(),
