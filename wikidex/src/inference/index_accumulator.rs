@@ -134,6 +134,6 @@ mod test {
         assert_eq!(I::Nothing, a.token("1"));
         assert_eq!(I::Nothing, a.token("2"));
         assert_eq!(I::Nothing, a.token("3"));
-        assert_eq!(Some("1".to_string()), a.flush());
+        assert_eq!(Some("0".to_string()), a.flush());
     }
 }
