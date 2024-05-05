@@ -82,6 +82,20 @@ mod test {
     fn test() {
         let mut accumulator = IndexAccumulator::new(vec![1234, 4321]);
 
+        assert_eq!(
+            IndexAccumulatorReturn::NoOp("This"),
+            accumulator.token("This")
+        );
+        assert_eq!(
+            IndexAccumulatorReturn::NoOp(" is"),
+            accumulator.token(" is")
+        );
+        assert_eq!(IndexAccumulatorReturn::NoOp(" a"), accumulator.token(" a"));
+        assert_eq!(
+            IndexAccumulatorReturn::NoOp(" test"),
+            accumulator.token(" test")
+        );
+
         let token1 = accumulator.token("This");
         let token2 = accumulator.token(" is");
         let token3 = accumulator.token(" a");
@@ -96,8 +110,8 @@ mod test {
             ],
             vec![token1, token2, token3, token4]
         )
-    } 
-    
+    }
+
     #[test]
     fn test2() {
         let mut accumulator = IndexAccumulator::new(vec![1234, 4321]);
