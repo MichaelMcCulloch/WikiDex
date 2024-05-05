@@ -104,19 +104,31 @@ impl TokenAccumulator for IndexAccumulator {
     }
 
     fn flush(&mut self) -> TokenValue {
-        let key_string = self.token_buffer.join("");
-        let key = key_string.trim().parse::<i64>().unwrap();
+        let token = self.token_buffer.join("");
+        if token.is_empty() && !self.is_accumulating {
+            TokenValue::Nothing
+        } else if token.trim().parse::<i64>().is_ok() {
+            self.token_buffer.push(token.to_string());
+            self.is_accumulating = true;
+            TokenValue::Nothing
+        } else if self.is_accumulating {
+            let key_string = self.token_buffer.join("");
+            let key = key_string.trim().parse::<i64>().unwrap();
 
-        let response = if let Some(value) = self.dictionary.iter().position(|s| *s == key) {
-            let new_value = (self.formatter)(value, self.modifier);
-            let key_string = key_string.replace(&key.to_string(), &new_value);
-            TokenValue::Transform(key_string, value)
+            let response = if let Some(value) = self.dictionary.iter().position(|s| *s == key) {
+                let new_value = (self.formatter)(value, self.modifier);
+                let key_string = key_string.replace(&key.to_string(), &new_value);
+                let key_string = format!("{}{}", key_string, token);
+                TokenValue::Transform(key_string, value)
+            } else {
+                TokenValue::NoTransform(key_string)
+            };
+            self.token_buffer.clear();
+            self.is_accumulating = false;
+            response
         } else {
-            TokenValue::NoTransform(key_string)
-        };
-        self.token_buffer.clear();
-        self.is_accumulating = false;
-        response
+            TokenValue::NoTransform(token)
+        }
     }
 }
 
