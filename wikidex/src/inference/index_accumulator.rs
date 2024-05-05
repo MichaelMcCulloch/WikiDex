@@ -1,5 +1,3 @@
-
-
 use regex::Regex;
 
 const NON_DIGITS_FOLLOWED_BY_DIGITS: &str = r#"^(\D*)(\d+)$"#;
@@ -31,6 +29,7 @@ pub(crate) enum TokenValues<'a> {
 pub(crate) trait TokenAccumulator {
     fn token<'a>(&mut self, token: &'a str) -> TokenValues<'a>;
     fn process<'a>(&mut self, key_string: String) -> TokenValue<'a>;
+    fn process_noop<'a>(&mut self, key_string: &'a str) -> TokenValue<'a>;
     fn flush<'a>(&mut self) -> TokenValues<'a>;
 }
 
@@ -125,6 +124,16 @@ impl TokenAccumulator for IndexAccumulator {
             TokenValue::Transform(value_string, value)
         } else {
             TokenValue::NoTransform(key_string)
+        }
+    }
+    fn process_noop<'a>(&mut self, key_string: &'a str) -> TokenValue<'a> {
+        let key = key_string.trim().parse::<i64>().unwrap();
+        if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
+            let value_string = (self.formatter)(value, self.modifier);
+            let value_string = key_string.replace(&key.to_string(), &value_string);
+            TokenValue::Transform(value_string, value)
+        } else {
+            TokenValue::NoOp(key_string)
         }
     }
 
