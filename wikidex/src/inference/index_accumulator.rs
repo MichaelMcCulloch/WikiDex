@@ -87,7 +87,50 @@ impl TokenAccumulator for IndexAccumulator {
                     TokenValue::NoTransform(string)
                 }
             } else {
-                self.process_token(token)
+                let this = &mut *self;
+                if let Ok(key) = token.parse::<i64>() {
+                    if let Some(value) = this.dictionary.iter().position(|i| *i == key) {
+                        TokenValue::Transform(
+                            token.replace(&key.to_string(), &value.to_string()),
+                            value,
+                        )
+                    } else {
+                        this.is_accumulating = true;
+                        this.token_buffer.push(token.to_string());
+                        TokenValue::Nothing
+                    }
+                } else if let Ok(key) = token.trim_start().parse::<i64>() {
+                    if let Some(value) = this.dictionary.iter().position(|i| *i == key) {
+                        TokenValue::Transform(
+                            token.replace(&key.to_string(), &value.to_string()),
+                            value,
+                        )
+                    } else {
+                        this.is_accumulating = true;
+                        this.token_buffer.push(token.to_string());
+                        TokenValue::Nothing
+                    }
+                } else if let Ok(key) = token.trim_end().parse::<i64>() {
+                    if let Some(value) = this.dictionary.iter().position(|i| *i == key) {
+                        TokenValue::Transform(
+                            token.replace(&key.to_string(), &value.to_string()),
+                            value,
+                        )
+                    } else {
+                        TokenValue::NoOp(token)
+                    }
+                } else if let Ok(key) = token.trim().parse::<i64>() {
+                    if let Some(value) = this.dictionary.iter().position(|i| *i == key) {
+                        TokenValue::Transform(
+                            token.replace(&key.to_string(), &value.to_string()),
+                            value,
+                        )
+                    } else {
+                        TokenValue::NoOp(token)
+                    }
+                } else {
+                    TokenValue::Nothing
+                }
             }
         } else if token.is_empty() {
             TokenValue::Nothing
