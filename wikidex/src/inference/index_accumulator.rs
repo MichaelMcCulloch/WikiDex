@@ -111,8 +111,29 @@ impl TokenAccumulator for IndexAccumulator {
                 let current_result = self.process(token.to_string());
                 TokenValues::Unit(current_result)
             }
+        } else if self.is_accumulating {
+            let key_string = self.clear_buffer();
+            let result = {
+                let this = &mut *self;
+                if let Ok(key) = key_string.trim().parse::<i64>() {
+                    if let Some(value) = this.dictionary.iter().position(|i| *i == key) {
+                        let value_string = (this.formatter)(value, this.modifier);
+                        let value_string = key_string.replace(&key.to_string(), &value_string);
+                        TokenValue::Transform(value_string, value)
+                    } else {
+                        TokenValue::NoTransform(key_string)
+                    }
+                } else {
+                    TokenValue::Nothing
+                }
+            };
+            self.push_buffer(token);
+            result.into()
         } else {
-            TokenValues::Unit(TokenValue::NoOp(token))
+            let _key_string = self.clear_buffer();
+            assert!(_key_string.is_empty());
+            self.push_buffer(token);
+            TokenValues::Nothing
         }
     }
 
