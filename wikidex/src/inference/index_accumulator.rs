@@ -79,9 +79,13 @@ impl TokenAccumulator for IndexAccumulator {
             self.push_buffer(token);
             TokenValues::Nothing
         } else if token.trim_end().parse::<i64>().is_ok() {
-            self.push_buffer(token);
-            let key_string = self.clear_buffer();
-            self.process(key_string).into()
+            if self.is_accumulating {
+                self.push_buffer(token);
+                let key_string = self.clear_buffer();
+                self.process(key_string).into()
+            } else {
+                self.process_noop(token).into()
+            }
         } else if token.trim_start().parse::<i64>().is_ok() {
             if self.is_accumulating {
                 let key_string = self.clear_buffer();
@@ -213,7 +217,7 @@ mod test {
         assert_eq!(TVS::Nothing, a.token("2"));
         assert_eq!(TVS::Nothing, a.token("3"));
         assert_eq!(
-            TVS::Twofer(TV::NoTransform("123 ".to_string()), TV::NoOp(" ")),
+            TVS::Twofer(TV::NoTransform("123".to_string()), TV::NoOp(" ")),
             a.token(" ")
         );
         assert_eq!(TVS::Nothing, a.token("3"));
