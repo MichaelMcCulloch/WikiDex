@@ -90,7 +90,7 @@ mod test {
     }
 
     #[test]
-    fn test_sequential_numbers_absent() {
+    fn test_number_is_absent() {
         let mut a = IndexAccumulator::new(vec![1234, 4321]);
 
         assert_eq!(I::Nothing, a.token("2"));
@@ -101,7 +101,7 @@ mod test {
     }
 
     #[test]
-    fn test2() {
+    fn test_number_is_present() {
         let mut a = IndexAccumulator::new(vec![1234]);
 
         assert_eq!(I::Nothing, a.token("1"));
