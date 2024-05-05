@@ -213,7 +213,7 @@ mod test {
         assert_eq!(TVS::Nothing, a.token("2"));
         assert_eq!(TVS::Nothing, a.token("3"));
         assert_eq!(
-            TVS::Twofer(TV::NoTransform("123 ".to_string()), TV::NoOp(" ")),
+            TVS::Twofer(TV::NoTransform("123".to_string()), TV::NoOp(" ")),
             a.token(" ")
         );
         assert_eq!(TVS::Nothing, a.token("3"));
