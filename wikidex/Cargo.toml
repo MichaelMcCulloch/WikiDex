@@ -25,6 +25,7 @@ regex = "1.10.4"
 serde = "1.0.197"
 serde_json = "1.0.115"
 sqlx = { version = "0.7.4", features = ["runtime-tokio"] }
+tera = { version = "1.19.1" }
 tokio = { version = "1.37.0", features = [
     "macros",
     "rt-multi-thread",
@@ -43,7 +44,6 @@ redis = { version = "0.25.3", features = [
     "tokio-comp",
 ], optional = true }
 rkyv = { version = "0.7.44", features = ["std", "bytecheck"], optional = true }
-tera = { version = "1.19.1", optional = true }
 utoipa = { version = "4.2.0", features = ["actix_extras"], optional = true }
 utoipa-redoc = { version = "3.0.0", features = ["actix-web"], optional = true }
 utoipa-swagger-ui = { version = "6.0.0", features = [
@@ -82,7 +82,6 @@ server = [
     "dep:face-api",
     "dep:redis",
     "dep:rkyv",
-    "dep:tera",
     "dep:utoipa-redoc",
     "dep:utoipa-swagger-ui",
     "dep:utoipa",

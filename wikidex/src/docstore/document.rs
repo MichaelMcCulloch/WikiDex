@@ -2,6 +2,7 @@ use crate::formatter::{Provenance, TextFormatter};
 use redis::{FromRedisValue, RedisError, RedisResult, ToRedisArgs, Value};
 use rkyv::{archived_root, Archive, Deserialize, Infallible, Serialize as RkyvSerialize};
 use serde::Serialize as SerdeSerialize;
+
 #[derive(Clone, RkyvSerialize, SerdeSerialize, Deserialize, Archive, Debug)]
 pub(crate) struct Document {
     pub(crate) index: i64,
