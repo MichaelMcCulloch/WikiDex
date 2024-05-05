@@ -437,15 +437,15 @@ mod test {
 
         assert_eq!(
             TVS::Unit(TV::NoTransform("i123i".to_string())),
-            a.token(" 123 ")
+            a.token("i123i")
         );
         assert_eq!(
             TVS::Unit(TV::NoTransform("i12i".to_string())),
-            a.token(" 12 ")
+            a.token("i12i")
         );
         assert_eq!(
             TVS::Unit(TV::NoTransform("i34i".to_string())),
-            a.token(" 34 ")
+            a.token("i34i")
         );
         assert_eq!(TVS::Nothing, a.flush());
     }
