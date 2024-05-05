@@ -1,6 +1,9 @@
 #[cfg(all(feature = "sqlite", feature = "postgres"))]
 compile_error!("features `sqlite` and `postgres` are mutually exclusive");
 
+#[cfg(test)]
+mod test_data;
+
 mod cli_args;
 mod config;
 mod embedding_client;
@@ -11,9 +14,6 @@ use {
     cli_args::{Cli, Commands},
     embedding_client::EmbeddingClient,
 };
-
-#[cfg(test)]
-mod test_data;
 
 #[cfg(feature = "ingest")]
 mod ingest;
