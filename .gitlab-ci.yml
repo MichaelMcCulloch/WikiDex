@@ -25,20 +25,34 @@ Audit:
 SQLite:
   variables:
     DATABASE_URL: sqlite://sqlite_dummy.db
+  cache:
+    - key: cache-sqlite-$CI_COMMIT_REF_SLUG
+      paths:
+        - wikidex/target/*
+    - key: cache-cargo-$CI_COMMIT_REF_SLUG
+      paths:
+        - wikidex/cargo_cache/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: All
   script:
     - cd wikidex
-    - cargo build --no-default-features --features sqlite,server
-    - cargo build --no-default-features --features sqlite,ingest
-    - cargo build --no-default-features --features sqlite,ingest,server
-    - cargo test --package wikidex --bin wikidex --no-default-features --features sqlite,server,ingest -- --exact --show-output  --nocapture
+    - CARGO_HOME=./cargo_cache cargo build --no-default-features --features sqlite,server
+    - CARGO_HOME=./cargo_cache cargo build --no-default-features --features sqlite,ingest
+    - CARGO_HOME=./cargo_cache cargo build --no-default-features --features sqlite,ingest,server
+    - CARGO_HOME=./cargo_cache cargo test --package wikidex --bin wikidex --no-default-features --features sqlite,server,ingest -- --exact --show-output  --nocapture
 
 PostgreSQL:
   variables:
     DATABASE_URL: postgres://wikidex:wikidex@wikidex-dummy-wikidex-dev-postgresql.wikidex-dev:5432/wikipedia
+  cache:
+    - key: cache-postgres-$CI_COMMIT_REF_SLUG
+      paths:
+        - wikidex/target/*
+    - key: cache-cargo-$CI_COMMIT_REF_SLUG
+      paths:
+        - wikidex/cargo_cache/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: All
   script:
     - cd wikidex
-    - cargo build --no-default-features --features server,postgres
+    - CARGO_HOME=./cargo_cache cargo build --no-default-features --features server,postgres
