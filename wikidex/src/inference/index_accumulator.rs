@@ -79,14 +79,9 @@ impl TokenAccumulator for IndexAccumulator {
             self.push_buffer(token);
             TokenValues::Nothing
         } else if token.trim_end().parse::<i64>().is_ok() {
-            if self.is_accumulating {
-                self.push_buffer(token);
-                let key_string = self.clear_buffer();
-                self.process(key_string).into()
-            } else {
-                let key_string = self.clear_buffer();
-                self.process(key_string).into()
-            }
+            self.push_buffer(token);
+            let key_string = self.clear_buffer();
+            self.process(key_string).into()
         } else if token.trim_start().parse::<i64>().is_ok() {
             if self.is_accumulating {
                 let key_string = self.clear_buffer();
