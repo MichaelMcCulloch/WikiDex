@@ -7,7 +7,6 @@ use crate::{
     embedding_client::{EmbeddingClient, EmbeddingClientService},
     formatter::{CitationStyle, Cite},
     index::{FaceIndex, SearchService},
-    inference::index_accumulator::{IndexAccumulator, TokenAccumulator, TokenValue, TokenValues},
     llm_client::{
         LanguageServiceArguments, LanguageServiceDocument, LlmClientImpl, LlmClientService,
         LlmMessage, LlmRole, PartialLlmMessage,
@@ -93,11 +92,7 @@ impl Engine {
                 text: d.text.clone(),
             })
             .collect::<Vec<_>>();
-        let llm_service_arguments = LanguageServiceArguments {
-            messages,
-            documents: document_arguments,
-            user_query,
-        };
+
         let sources = documents
             .into_iter()
             .enumerate()
@@ -109,24 +104,20 @@ impl Engine {
                 origin_text: document.text,
             })
             .collect::<Vec<_>>();
+
+        let llm_service_arguments = LanguageServiceArguments {
+            messages,
+            documents: document_arguments,
+            user_query,
+        };
         let LlmMessage { role, content } = self
             .llm_client
             .get_llm_answer(llm_service_arguments, 2048u16, stop_phrases)
             .await?;
 
-        let mut ordinal = num_sources + 1;
-
         match role {
             LlmRole::Assistant => {
-                let mut content = content.trim().to_string();
-                for source in sources.iter() {
-                    content = content.replace(
-                        format!("{}", source.index).as_str(),
-                        format!("[{}](http://localhost/#{})", ordinal, ordinal).as_str(),
-                    );
-                    ordinal += 1;
-                }
-
+                let content = content.trim().to_string();
                 Ok(Message::Assistant(content, sources))
             }
             _ => Err(QueryEngineError::InvalidAgentResponse)?,
@@ -139,7 +130,7 @@ impl Engine {
         tx: UnboundedSender<Bytes>,
         stop_phrases: Vec<&str>,
     ) -> Result<(), QueryEngineError> {
-        let num_sources = messages.sources_count();
+        let _num_sources = messages.sources_count();
         let user_query = match messages.iter().last() {
             Some(Message::User(user_query)) => {
                 Ok::<std::string::String, QueryEngineError>(user_query.clone())
@@ -171,12 +162,6 @@ impl Engine {
                 .collect::<Vec<_>>()
                 .join("\n")
         );
-        let mut accumulator = IndexAccumulator::new(
-            documents
-                .iter()
-                .map(|Document { index, .. }| *index)
-                .collect::<Vec<_>>(),
-        );
 
         let document_arguments = documents
             .iter()
@@ -190,7 +175,7 @@ impl Engine {
             documents: document_arguments,
             user_query,
         };
-        let mut documents = documents.into_iter().map(Some).collect::<Vec<_>>();
+        let _documents = documents.into_iter().map(Some).collect::<Vec<_>>();
 
         let (partial_message_sender, mut partial_message_receiver) = unbounded_channel();
 
@@ -200,79 +185,9 @@ impl Engine {
                 ..
             }) = partial_message_receiver.recv().await
             {
-                let token_values = match accumulator.token(&content) {
-                    TokenValues::Nothing => vec![],
-                    TokenValues::Unit(TokenValue::Nothing) => vec![],
-                    TokenValues::Unit(unit) => vec![unit],
-                    TokenValues::Twofer(a, b) => vec![a, b],
-                };
-
-                for token_value in token_values {
-                    match token_value {
-                        TokenValue::Nothing => continue,
-                        TokenValue::NoOp(content) => {
-                            let _ = tx.send(PartialMessage::content(content.to_string()).message());
-                        }
-                        TokenValue::Transform(content, position) => {
-                            if let Some(document) = documents[position].take() {
-                                let source = Source {
-                                    ordinal: position + num_sources + 1,
-                                    index: document.index,
-                                    citation: document.provenance.format(&CITATION_STYLE),
-                                    url: document.provenance.url(),
-                                    origin_text: document.text,
-                                };
-
-                                let _ = tx.send(PartialMessage::source(source).message());
-                            }
-                            let _ = tx.send(PartialMessage::content(content).message());
-                        }
-                        TokenValue::NoTransform(content) => {
-                            let _ = tx.send(PartialMessage::content(content).message());
-                        }
-                    }
-                }
+                let _ = tx.send(PartialMessage::content(content).message());
             }
 
-            let token_values = match accumulator.flush() {
-                TokenValues::Nothing => vec![],
-                TokenValues::Unit(TokenValue::Nothing) => vec![],
-                TokenValues::Unit(unit) => vec![unit],
-                TokenValues::Twofer(a, b) => vec![a, b],
-            };
-
-            for token_value in token_values {
-                match token_value {
-                    TokenValue::Nothing => continue,
-                    TokenValue::NoOp(content) => {
-                        let _ = tx.send(PartialMessage::content(content.to_string()).message());
-                    }
-                    TokenValue::Transform(content, position) => {
-                        let modified_position = position + num_sources;
-                        let content = content.replace(
-                            position.to_string().as_str(),
-                            format!("[{modified_position}](http://localhost/#{modified_position})")
-                                .as_str(),
-                        );
-
-                        if let Some(document) = documents[position].take() {
-                            let source = Source {
-                                ordinal: modified_position,
-                                index: document.index,
-                                citation: document.provenance.format(&CITATION_STYLE),
-                                url: document.provenance.url(),
-                                origin_text: document.text,
-                            };
-
-                            let _ = tx.send(PartialMessage::source(source).message());
-                        }
-                        let _ = tx.send(PartialMessage::content(content).message());
-                    }
-                    TokenValue::NoTransform(content) => {
-                        let _ = tx.send(PartialMessage::content(content).message());
-                    }
-                }
-            }
             let _ = tx.send(PartialMessage::done().message());
         });
 
@@ -302,13 +217,5 @@ impl Engine {
         let documents = self.docstore.retreive(&document_indices).await?;
 
         Ok(documents)
-    }
-
-    fn formatter(index: usize, modifier: usize) -> String {
-        format!(
-            "[{}](http://localhost/#{})",
-            index + modifier,
-            index + modifier
-        )
     }
 }
