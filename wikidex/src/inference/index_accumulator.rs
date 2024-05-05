@@ -102,7 +102,7 @@ mod test {
 
     #[test]
     fn test2() {
-        let mut a = IndexAccumulator::new(vec![1234, 4321]);
+        let mut a = IndexAccumulator::new(vec![1234]);
 
         assert_eq!(I::Nothing, a.token("1"));
         assert_eq!(I::Nothing, a.token("2"));
