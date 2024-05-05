@@ -7,7 +7,7 @@ use crate::{
     embedding_client::{EmbeddingClient, EmbeddingClientService},
     formatter::{CitationStyle, Cite},
     index::{FaceIndex, SearchService},
-    inference::index_accumulator::{IndexAccumulator, TokenAccumulator, TokenValue},
+    inference::index_accumulator::{IndexAccumulator, TokenAccumulator, TokenValue, TokenValues},
     llm_client::{
         LanguageServiceArguments, LlmClientImpl, LlmClientService, LlmMessage, LlmRole,
         PartialLlmMessage,
@@ -168,7 +168,7 @@ impl Engine {
                 .map(|Document { index, .. }| *index)
                 .collect::<Vec<_>>(),
             num_sources + 1,
-            Box::new(Self::index_format),
+            Box::new(Self::formatter),
         );
 
         let llm_service_arguments = LanguageServiceArguments {
@@ -186,9 +186,60 @@ impl Engine {
                 ..
             }) = partial_message_receiver.recv().await
             {
-                match accumulator.token(&content) {
+                let token_values = match accumulator.token(&content) {
+                    TokenValues::Nothing => vec![],
+                    TokenValues::Unit(TokenValue::Nothing) => vec![],
+                    TokenValues::Unit(unit) => vec![unit],
+                    TokenValues::Twofer(a, b) => vec![a, b],
+                };
+
+                for token_value in token_values {
+                    match token_value {
+                        TokenValue::Nothing => continue,
+                        TokenValue::NoOp(_content) => {
+                            let _ = tx.send(PartialMessage::content(content.to_string()).message());
+                        }
+                        TokenValue::Transform(content, position) => {
+                            let modified_position = position + num_sources;
+                            let content = content.replace(
+                                position.to_string().as_str(),
+                                format!(
+                                    "[{modified_position}](http://localhost/#{modified_position})"
+                                )
+                                .as_str(),
+                            );
+
+                            if let Some(document) = documents[position].take() {
+                                let source = Source {
+                                    ordinal: modified_position,
+                                    index: document.index,
+                                    citation: document.provenance.format(&CITATION_STYLE),
+                                    url: document.provenance.url(),
+                                    origin_text: document.text,
+                                };
+
+                                let _ = tx.send(PartialMessage::source(source).message());
+                            }
+                            let _ = tx.send(PartialMessage::content(content).message());
+                        }
+                        TokenValue::NoTransform(content) => {
+                            let _ = tx.send(PartialMessage::content(content).message());
+                        }
+                    }
+                }
+            }
+
+            let token_values = match accumulator.flush() {
+                TokenValues::Nothing => vec![],
+                TokenValues::Unit(TokenValue::Nothing) => vec![],
+                TokenValues::Unit(unit) => vec![unit],
+                TokenValues::Twofer(a, b) => vec![a, b],
+            };
+
+            for token_value in token_values {
+                match token_value {
                     TokenValue::Nothing => continue,
-                    TokenValue::NoOp(_content) => {
+                    TokenValue::NoOp(content) => {
                         let _ = tx.send(PartialMessage::content(content.to_string()).message());
                     }
                     TokenValue::Transform(content, position) => {
@@ -216,10 +267,6 @@ impl Engine {
                         let _ = tx.send(PartialMessage::content(content).message());
                     }
                 }
-            }
-
-            if let TokenValue::NoTransform(content) = accumulator.flush() {
-                let _ = tx.send(PartialMessage::content(content).message());
             }
             let _ = tx.send(PartialMessage::done().message());
         });
@@ -252,7 +299,7 @@ impl Engine {
         Ok(documents)
     }
 
-    fn index_format(index: usize, modifier: usize) -> String {
+    fn formatter(index: usize, modifier: usize) -> String {
         format!(
             "[{}](http://localhost/#{})",
             index + modifier,
