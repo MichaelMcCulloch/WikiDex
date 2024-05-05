@@ -11,7 +11,7 @@ sast:
 include:
   - template: Security/SAST.gitlab-ci.yml
 
-Audit Everything:
+Audit:
   cache: []
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: All
@@ -22,7 +22,7 @@ Audit Everything:
     - cd wikidex
     - cargo audit
 
-Build Server + Ingest + SQLite:
+SQLite:
   variables:
     DATABASE_URL: sqlite://sqlite_dummy.db
   cache:
@@ -38,7 +38,7 @@ Build Server + Ingest + SQLite:
     - cargo build --no-default-features --features sqlite,ingest,server
     - cargo test --package wikidex --bin wikidex --no-default-features --features sqlite,server,ingest -- --exact --show-output  --nocapture
 
-Build Server + PostgreSQL:
+PostgreSQL:
   variables:
     DATABASE_URL: postgres://wikidex:wikidex@wikidex-dummy-wikidex-dev-postgresql.wikidex-dev:5432/wikipedia
   cache:
