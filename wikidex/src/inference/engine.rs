@@ -9,8 +9,8 @@ use crate::{
     index::{FaceIndex, SearchService},
     inference::index_accumulator::{IndexAccumulator, TokenAccumulator, TokenValue, TokenValues},
     llm_client::{
-        LanguageServiceArguments, LlmClientImpl, LlmClientService, LlmMessage, LlmRole,
-        PartialLlmMessage,
+        LanguageServiceArguments, LanguageServiceDocument, LlmClientImpl, LlmClientService,
+        LlmMessage, LlmRole, PartialLlmMessage,
     },
     server::{Conversation, CountSources, Message, PartialMessage, Source},
 };
@@ -75,6 +75,7 @@ impl Engine {
             .collect::<Vec<_>>();
 
         let documents = self.get_documents(&user_query).await?;
+
         log::info!("User message: \"{user_query}\"",);
         log::info!(
             "Obtained documents:\n{}.",
@@ -84,9 +85,17 @@ impl Engine {
                 .collect::<Vec<_>>()
                 .join("\n")
         );
+
+        let document_arguments = documents
+            .iter()
+            .map(|d| LanguageServiceDocument {
+                index: d.index,
+                text: d.text.clone(),
+            })
+            .collect::<Vec<_>>();
         let llm_service_arguments = LanguageServiceArguments {
             messages,
-            documents: documents.clone(),
+            documents: document_arguments,
             user_query,
         };
         let sources = documents
@@ -171,9 +180,16 @@ impl Engine {
             Box::new(Self::formatter),
         );
 
+        let document_arguments = documents
+            .iter()
+            .map(|d| LanguageServiceDocument {
+                index: d.index,
+                text: d.text.clone(),
+            })
+            .collect::<Vec<_>>();
         let llm_service_arguments = LanguageServiceArguments {
             messages,
-            documents: documents.clone(),
+            documents: document_arguments,
             user_query,
         };
         let mut documents = documents.into_iter().map(Some).collect::<Vec<_>>();

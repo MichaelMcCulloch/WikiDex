@@ -10,10 +10,6 @@ use {
     clap::Parser,
     cli_args::{Cli, Commands},
     embedding_client::EmbeddingClient,
-    futures::FutureExt,
-    std::{ops::DerefMut, sync::Arc, time::Duration},
-    tera::Tera,
-    tokio::{sync::RwLock, time::sleep},
 };
 
 #[cfg(test)]
@@ -27,6 +23,13 @@ use {
     indicatif_log_bridge::LogWrapper, ingest::pipeline::PipelineProcessor,
 };
 
+#[cfg(feature = "server")]
+use {
+    futures::FutureExt,
+    std::{ops::DerefMut, sync::Arc, time::Duration},
+    tera::Tera,
+    tokio::{sync::RwLock, time::sleep},
+};
 #[cfg(feature = "server")]
 mod docstore;
 #[cfg(feature = "server")]

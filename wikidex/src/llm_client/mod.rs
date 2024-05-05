@@ -23,12 +23,10 @@ use tokio::sync::{
     RwLock,
 };
 
-pub(crate) use arguments::LanguageServiceArguments;
+pub(crate) use arguments::{LanguageServiceArguments, LanguageServiceDocument};
 pub(crate) use error::LlmClientError;
 pub(crate) use kind::ModelKind;
 pub(crate) use protocol::{LlmMessage, LlmRole, PartialLlmMessage};
-
-use crate::docstore::Document;
 
 pub(crate) type TritonClient = GrpcInferenceServiceClient<Channel>;
 
@@ -54,7 +52,7 @@ impl LlmClient<TritonClient> {
     async fn format_rag_template(
         &self,
         messages: &Vec<LlmMessage>,
-        documents: &Vec<Document>,
+        documents: &Vec<LanguageServiceDocument>,
         user_query: &String,
     ) -> Result<String, LlmClientError> {
         let mut system_context = Context::new();
