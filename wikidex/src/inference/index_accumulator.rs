@@ -86,7 +86,6 @@ impl TokenAccumulator for IndexAccumulator {
                     TokenValue::NoTransform(string)
                 }
             } else {
-                let this = &mut *self;
                 // Attempt to parse the token in various trimmed forms only once
                 let keys_to_try = [
                     token.parse::<i64>(),              // untrimmed
@@ -99,7 +98,7 @@ impl TokenAccumulator for IndexAccumulator {
                 for key_result in keys_to_try.iter() {
                     if let Ok(key) = key_result {
                         // Check if the parsed key exists in the dictionary and handle it
-                        if let Some(value) = this.dictionary.iter().position(|&i| i == *key) {
+                        if let Some(value) = self.dictionary.iter().position(|&i| i == *key) {
                             return TokenValue::Transform(
                                 token.replace(&key.to_string(), &value.to_string()),
                                 value,
@@ -107,8 +106,8 @@ impl TokenAccumulator for IndexAccumulator {
                         } else {
                             // Only accumulate the token if it's the original, unmodified token
                             if key_result == &keys_to_try[0] {
-                                this.is_accumulating = true;
-                                this.token_buffer.push(token.to_string());
+                                self.is_accumulating = true;
+                                self.token_buffer.push(token.to_string());
                             }
                             return TokenValue::Nothing;
                         }
