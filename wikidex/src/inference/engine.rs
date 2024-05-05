@@ -167,7 +167,7 @@ impl Engine {
                 .iter()
                 .map(|Document { index, .. }| *index)
                 .collect::<Vec<_>>(),
-            num_sources,
+            num_sources + 1,
             Box::new(Self::index_format),
         );
 
