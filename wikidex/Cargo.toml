@@ -6,24 +6,24 @@ edition = "2021"
 [dependencies]
 
 # Common
-actix-rt = "2.9.0"
-actix-web = "4.5.1"
-anyhow = "1.0.81"
+actix-rt = { version = "2.9.0" }
+actix-web = { version = "4.5.1" }
+anyhow = { version = "1.0.81" }
 async-openai = { git = "https://github.com/MichaelMcCulloch/async-not-just-openai.git", tag = "0.20.0" }
 async-stream = { version = "0.3.5" }
-backoff = "0.4.0"
-bytes = "1.6.0"
+backoff = { version = "0.4.0" }
+bytes = { version = "1.6.0" }
 chrono = { version = "0.4.37", features = ["rkyv", "serde"] }
 clap = { version = "4.5.4", features = ["derive"] }
-colored = "2.1.0"
+colored = { version = "2.1.0" }
 env_logger = { version = "0.11.3", features = ["color"] }
-flate2 = "1.0.28"
-futures = "0.3.30"
+flate2 = { version = "1.0.28" }
+futures = { version = "0.3.30" }
 http = { version = "1.1.0", optional = true }
-log = "0.4.21"
-regex = "1.10.4"
-serde = "1.0.197"
-serde_json = "1.0.115"
+log = { version = "0.4.21" }
+regex = { version = "1.10.4" }
+serde = { version = "1.0.197" }
+serde_json = { version = "1.0.115" }
 sqlx = { version = "0.7.4", features = ["runtime-tokio"] }
 tera = { version = "1.19.1" }
 tokio = { version = "1.37.0", features = [
@@ -34,7 +34,7 @@ tokio = { version = "1.37.0", features = [
 ] }
 tonic = { version = "0.11.0" }
 trtllm = { git = "https://github.com/MichaelMcCulloch/trtllm.git", tag = "0.2.1-lib" }
-url = "2.5.0"
+url = { version = "2.5.0" }
 
 # Server
 actix-cors = { version = "0.7.0", optional = true }
