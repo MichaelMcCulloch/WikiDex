@@ -176,8 +176,6 @@ impl Engine {
                 .iter()
                 .map(|Document { index, .. }| *index)
                 .collect::<Vec<_>>(),
-            num_sources + 1,
-            Box::new(Self::formatter),
         );
 
         let document_arguments = documents
