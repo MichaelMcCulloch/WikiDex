@@ -109,7 +109,7 @@ mod test {
         assert_eq!(I::NoTransform("0".to_string()), a.flush());
     }
     #[test]
-    fn two_numbers_are_unmatched() {
+    fn indices_unmatched() {
         let mut a = IndexAccumulator::new(vec![1234]);
 
         assert_eq!(I::Nothing, a.token("1"));
@@ -122,7 +122,7 @@ mod test {
         assert_eq!(I::NoTransform("321".to_string()), a.flush());
     }
     #[test]
-    fn two_numbers_are_matched_and_same() {
+    fn indices_matched_and_same() {
         let mut a = IndexAccumulator::new(vec![123]);
 
         assert_eq!(I::Nothing, a.token("1"));
@@ -135,7 +135,7 @@ mod test {
         assert_eq!(I::Transform("0".to_string(), 0), a.flush());
     }
     #[test]
-    fn two_numbers_are_matched_and_different() {
+    fn indices_matched_and_different() {
         let mut a = IndexAccumulator::new(vec![123, 321]);
 
         assert_eq!(I::Nothing, a.token("1"));
@@ -148,7 +148,7 @@ mod test {
         assert_eq!(I::Transform("1".to_string(), 1), a.flush());
     }
     #[test]
-    fn two_numbers_one_matched() {
+    fn indices_single_matched() {
         let mut a = IndexAccumulator::new(vec![123]);
 
         assert_eq!(I::Nothing, a.token("1"));
@@ -161,7 +161,7 @@ mod test {
         assert_eq!(I::NoTransform("321".to_string()), a.flush());
     }
     #[test]
-    fn index_matched_leading_space() {
+    fn index_matched_leading() {
         let mut a = IndexAccumulator::new(vec![1234]);
 
         assert_eq!(I::Nothing, a.token(" 1"));
@@ -171,7 +171,7 @@ mod test {
         assert_eq!(I::NoTransform("0".to_string()), a.flush());
     }
     #[test]
-    fn index_matched_trailing_space() {
+    fn index_matched_trailing() {
         let mut a = IndexAccumulator::new(vec![1234]);
 
         assert_eq!(I::Nothing, a.token("1"));
@@ -181,7 +181,7 @@ mod test {
         assert_eq!(I::NoTransform("0".to_string()), a.flush());
     }
     #[test]
-    fn index_matched_leading_and_trailing_space() {
+    fn index_matched_leading_trailing() {
         let mut a = IndexAccumulator::new(vec![12]);
 
         assert_eq!(I::Nothing, a.token(" 1"));
@@ -190,7 +190,7 @@ mod test {
     }
 
     #[test]
-    fn index_matched_leading_space_large_fragments() {
+    fn index_matched_leading_large_fragments() {
         let mut a = IndexAccumulator::new(vec![123456789]);
 
         assert_eq!(I::Nothing, a.token(" 1234"));
@@ -198,7 +198,7 @@ mod test {
         assert_eq!(I::Nothing, a.flush());
     }
     #[test]
-    fn index_matched_trailing_space_large_fragments() {
+    fn index_matched_trailing_large_fragments() {
         let mut a = IndexAccumulator::new(vec![123456789]);
 
         assert_eq!(I::Nothing, a.token("1234"));
@@ -206,7 +206,7 @@ mod test {
         assert_eq!(I::Nothing, a.flush());
     }
     #[test]
-    fn index_matched_leading_and_trailing_space_large_fragments() {
+    fn index_matched_leading_trailing_large_fragments() {
         let mut a = IndexAccumulator::new(vec![123456789]);
 
         assert_eq!(I::Nothing, a.token(" 1234"));
@@ -214,7 +214,7 @@ mod test {
         assert_eq!(I::Nothing, a.flush());
     }
     #[test]
-    fn index_unmatched_leading_space() {
+    fn index_unmatched_leading() {
         let mut a = IndexAccumulator::new(vec![1234]);
 
         assert_eq!(I::Nothing, a.token(" 1"));
@@ -224,7 +224,7 @@ mod test {
         assert_eq!(I::NoTransform(" 4".to_string()), a.flush());
     }
     #[test]
-    fn index_unmatched_trailing_space() {
+    fn index_unmatched_trailing() {
         let mut a = IndexAccumulator::new(vec![1234]);
 
         assert_eq!(I::NoTransform("1 ".to_string()), a.token("1 "));
@@ -234,7 +234,7 @@ mod test {
         assert_eq!(I::Nothing, a.flush());
     }
     #[test]
-    fn index_unmatched_leading_and_trailing_space() {
+    fn index_unmatched_leading_trailing() {
         let mut a = IndexAccumulator::new(vec![1234]);
 
         assert_eq!(I::NoTransform(" 1 ".to_string()), a.token(" 1 "));
@@ -244,7 +244,7 @@ mod test {
         assert_eq!(I::Nothing, a.flush());
     }
     #[test]
-    fn index_unmatched_leading_and_trailing_space_large_fragments() {
+    fn index_unmatched_leading_trailing_large_fragments() {
         let mut a = IndexAccumulator::new(vec![1234]);
 
         assert_eq!(I::NoTransform(" 1234 ".to_string()), a.token(" 1234 "));
