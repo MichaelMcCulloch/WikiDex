@@ -284,7 +284,10 @@ mod test {
         assert_eq!(TVS::Nothing, a.token("3"));
         assert_eq!(TVS::Nothing, a.token("2"));
         assert_eq!(TVS::Nothing, a.token("1"));
-        assert_eq!(TVS::Unit(TV::NoTransform("321".to_string())), a.flush());
+        assert_eq!(
+            TVS::Unit(TV::Transform("[1](http://localhost/#1)".to_string(), 1),),
+            a.flush()
+        );
     }
     #[test]
     fn index_matched_leading() {
