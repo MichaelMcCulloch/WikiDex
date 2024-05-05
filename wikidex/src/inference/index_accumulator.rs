@@ -384,10 +384,10 @@ mod test {
     fn index_unmatched_trailing() {
         let mut a = IndexAccumulator::new(vec![1234], 0, Box::new(formatter));
 
-        assert_eq!(TVS::Unit(TV::NoTransform("1 ".to_string())), a.token("1 "));
-        assert_eq!(TVS::Unit(TV::NoTransform("2 ".to_string())), a.token("2 "));
-        assert_eq!(TVS::Unit(TV::NoTransform("3 ".to_string())), a.token("3 "));
-        assert_eq!(TVS::Unit(TV::NoTransform("4 ".to_string())), a.token("4 "));
+        assert_eq!(TVS::Unit(TV::NoOp("1 ")), a.token("1 "));
+        assert_eq!(TVS::Unit(TV::NoOp("2 ")), a.token("2 "));
+        assert_eq!(TVS::Unit(TV::NoOp("3 ")), a.token("3 "));
+        assert_eq!(TVS::Unit(TV::NoOp("4 ")), a.token("4 "));
         assert_eq!(TVS::Nothing, a.flush());
     }
     #[test]
