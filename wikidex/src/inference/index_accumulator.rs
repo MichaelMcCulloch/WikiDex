@@ -202,8 +202,8 @@ mod test {
         let mut a = IndexAccumulator::new(vec![123456789]);
 
         assert_eq!(I::Nothing, a.token(" 1234"));
-        assert_eq!(I::Transform(" 123456789".to_string(), 0), a.token("56789"));
-        assert_eq!(I::Nothing, a.flush());
+        assert_eq!(I::Nothing, a.token("56789"));
+        assert_eq!(I::Transform("123456789".to_string(), 0), a.flush());
     }
     #[test]
     fn index_matched_trailing_large_fragments() {
