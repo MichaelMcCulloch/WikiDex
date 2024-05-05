@@ -86,36 +86,7 @@ impl TokenAccumulator for IndexAccumulator {
                     TokenValue::NoTransform(string)
                 }
             } else {
-                // Attempt to parse the token in various trimmed forms only once
-                let keys_to_try = [
-                    token.parse::<i64>(),              // untrimmed
-                    token.trim_start().parse::<i64>(), // leading spaces removed
-                    token.trim_end().parse::<i64>(),   // trailing spaces removed
-                    token.trim().parse::<i64>(),       // leading and trailing spaces removed
-                ];
-
-                // Iterate through the parsed keys and handle the first successful parse
-                for key_result in keys_to_try.iter() {
-                    if let Ok(key) = key_result {
-                        // Check if the parsed key exists in the dictionary and handle it
-                        if let Some(value) = self.dictionary.iter().position(|&i| i == *key) {
-                            return TokenValue::Transform(
-                                token.replace(&key.to_string(), &value.to_string()),
-                                value,
-                            );
-                        } else {
-                            // Only accumulate the token if it's the original, unmodified token
-                            if key_result == &keys_to_try[0] {
-                                self.is_accumulating = true;
-                                self.token_buffer.push(token.to_string());
-                            }
-                            return TokenValue::Nothing;
-                        }
-                    }
-                }
-
-                // If none of the parsed results are valid, handle the no operation or accumulation
-                TokenValue::NoOp(token)
+                self.process_token(token)
             }
         } else if token.is_empty() {
             TokenValue::Nothing
