@@ -1,5 +1,3 @@
-use regex::Regex;
-
 const NON_DIGITS_FOLLOWED_BY_DIGITS: &str = r#"^(\D*)(\d+)$"#;
 
 pub(crate) struct IndexAccumulator {
@@ -7,7 +5,6 @@ pub(crate) struct IndexAccumulator {
     token_buffer: Vec<String>,
     modifier: usize,
     is_accumulating: bool,
-    non_digits_followed_by_digits: Regex,
     formatter: Box<dyn Fn(usize, usize) -> String>,
 }
 
@@ -52,22 +49,9 @@ impl IndexAccumulator {
             dictionary,
             token_buffer: vec![],
             is_accumulating: false,
-            non_digits_followed_by_digits: Regex::new(NON_DIGITS_FOLLOWED_BY_DIGITS).unwrap(),
             formatter,
             modifier,
         }
-    }
-
-    fn clear_buffer(&mut self) -> String {
-        let string = self.token_buffer.join("");
-        self.is_accumulating = false;
-        self.token_buffer.clear();
-        string
-    }
-
-    fn push_buffer<S: ToString>(&mut self, token: S) {
-        self.token_buffer.push(token.to_string());
-        self.is_accumulating = true;
     }
 }
 
@@ -76,47 +60,58 @@ impl TokenAccumulator for IndexAccumulator {
         if token.is_empty() {
             TokenValues::Nothing
         } else if token.parse::<i64>().is_ok() {
-            self.push_buffer(token);
+            self.token_buffer.push(token.to_string());
+            self.is_accumulating = true;
             TokenValues::Nothing
         } else if token.trim_end().parse::<i64>().is_ok() {
             if self.is_accumulating {
-                self.push_buffer(token);
-                let key_string = self.clear_buffer();
+                self.token_buffer.push(token.to_string());
+                let key_string = self.token_buffer.join("");
+                self.is_accumulating = false;
+                self.token_buffer.clear();
                 self.process(key_string).into()
             } else {
                 self.process_noop(token).into()
             }
         } else if token.trim_start().parse::<i64>().is_ok() {
             if self.is_accumulating {
-                let key_string = self.clear_buffer();
+                let key_string = self.token_buffer.join("");
+                self.token_buffer.clear();
                 let result = self.process(key_string);
-                self.push_buffer(token);
+                self.token_buffer.push(token.to_string());
+                self.is_accumulating = true;
                 result.into()
             } else {
-                let _key_string = self.clear_buffer();
-                assert!(_key_string.is_empty());
-                self.push_buffer(token);
+                self.token_buffer.clear();
+                self.token_buffer.push(token.to_string());
+                self.is_accumulating = true;
                 TokenValues::Nothing
             }
         } else if token.trim().parse::<i64>().is_ok() {
             if self.is_accumulating {
-                let key_string = self.clear_buffer();
+                let key_string = self.token_buffer.join("");
+                self.is_accumulating = false;
+                self.token_buffer.clear();
                 let previous_result = self.process(key_string);
                 let current_result = self.process(token.to_string());
                 TokenValues::Twofer(previous_result, current_result)
             } else {
-                let _key_string = self.clear_buffer();
-                assert!(_key_string.is_empty());
+                self.is_accumulating = false;
+                self.token_buffer.clear();
                 let current_result = self.process(token.to_string());
                 TokenValues::Unit(current_result)
             }
         } else if self.is_accumulating {
-            let key_string = self.clear_buffer();
+            let key_string = self.token_buffer.join("");
+            self.is_accumulating = false;
+            self.token_buffer.clear();
             let result = self.process(key_string);
             TokenValues::Twofer(result, TokenValue::NoOp(token))
         } else {
-            let _key_string = self.clear_buffer();
-            assert!(_key_string.is_empty());
+            let key_string = self.token_buffer.join("");
+            self.is_accumulating = false;
+            self.token_buffer.clear();
+            assert!(key_string.is_empty());
             TokenValues::Unit(TokenValue::NoOp(token))
         }
     }
@@ -149,7 +144,12 @@ impl TokenAccumulator for IndexAccumulator {
     }
 
     fn flush<'a>(&mut self) -> TokenValues<'a> {
-        let key_string = self.clear_buffer();
+        let key_string = {
+            let string = self.token_buffer.join("");
+            self.is_accumulating = false;
+            self.token_buffer.clear();
+            string
+        };
         self.process(key_string).into()
     }
 }
@@ -428,6 +428,16 @@ mod test {
             TVS::Unit(TV::NoTransform(" 34 ".to_string())),
             a.token(" 34 ")
         );
+        assert_eq!(TVS::Nothing, a.flush());
+    }
+
+    #[test]
+    fn index_unmatched_letters_large_fragments() {
+        let mut a = IndexAccumulator::new(vec![1234], 0, Box::new(formatter));
+
+        assert_eq!(TVS::Unit(TV::NoOp("i123i")), a.token("i123i"));
+        assert_eq!(TVS::Unit(TV::NoOp("i12i")), a.token("i12i"));
+        assert_eq!(TVS::Unit(TV::NoOp("i34i")), a.token("i34i"));
         assert_eq!(TVS::Nothing, a.flush());
     }
 }
