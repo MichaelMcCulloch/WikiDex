@@ -74,7 +74,7 @@ impl IndexAccumulatorTrait for IndexAccumulator {
 
 #[cfg(test)]
 mod test {
-    use crate::inference::index_accumulator::IndexAccumulatorReturn;
+    use crate::inference::index_accumulator::IndexAccumulatorReturn as I;
 
     use super::{IndexAccumulator, IndexAccumulatorTrait};
 
@@ -82,53 +82,19 @@ mod test {
     fn test() {
         let mut accumulator = IndexAccumulator::new(vec![1234, 4321]);
 
-        assert_eq!(
-            IndexAccumulatorReturn::NoOp("This"),
-            accumulator.token("This")
-        );
-        assert_eq!(
-            IndexAccumulatorReturn::NoOp(" is"),
-            accumulator.token(" is")
-        );
-        assert_eq!(IndexAccumulatorReturn::NoOp(" a"), accumulator.token(" a"));
-        assert_eq!(
-            IndexAccumulatorReturn::NoOp(" test"),
-            accumulator.token(" test")
-        );
-
-        let token1 = accumulator.token("This");
-        let token2 = accumulator.token(" is");
-        let token3 = accumulator.token(" a");
-        let token4 = accumulator.token(" test");
-
-        assert_eq!(
-            vec![
-                IndexAccumulatorReturn::NoOp("This"),
-                IndexAccumulatorReturn::NoOp(" is"),
-                IndexAccumulatorReturn::NoOp(" a"),
-                IndexAccumulatorReturn::NoOp(" test")
-            ],
-            vec![token1, token2, token3, token4]
-        )
+        assert_eq!(I::NoOp("This"), accumulator.token("This"));
+        assert_eq!(I::NoOp(" is"), accumulator.token(" is"));
+        assert_eq!(I::NoOp(" a"), accumulator.token(" a"));
+        assert_eq!(I::NoOp(" test"), accumulator.token(" test"));
     }
 
     #[test]
     fn test2() {
         let mut accumulator = IndexAccumulator::new(vec![1234, 4321]);
 
-        let token1 = accumulator.token("1");
-        let token2 = accumulator.token(" 2");
-        let token3 = accumulator.token(" 3");
-        let token4 = accumulator.token(" 4");
-
-        assert_eq!(
-            vec![
-                IndexAccumulatorReturn::NoOp("This"),
-                IndexAccumulatorReturn::NoOp(" is"),
-                IndexAccumulatorReturn::NoOp(" a"),
-                IndexAccumulatorReturn::NoOp(" test")
-            ],
-            vec![token1, token2, token3, token4]
-        )
+        assert_eq!(I::NoOp("This"), accumulator.token("This"));
+        assert_eq!(I::NoOp(" is"), accumulator.token(" is"));
+        assert_eq!(I::NoOp(" a"), accumulator.token(" a"));
+        assert_eq!(I::NoOp(" test"), accumulator.token(" test"));
     }
 }
