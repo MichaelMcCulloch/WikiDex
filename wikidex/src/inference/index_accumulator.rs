@@ -77,20 +77,27 @@ impl IndexAccumulator {
 
 impl TokenAccumulator for IndexAccumulator {
     fn token<'a>(&mut self, token: &'a str) -> TokenValue<'a> {
-        if self.is_accumulating {
-            if token.is_empty() {
-                let string = self.token_buffer.join("");
-                self.token_buffer.clear();
-                if string.is_empty() {
-                    TokenValue::Nothing
-                } else {
-                    TokenValue::NoTransform(string)
-                }
-            } else {
-                self.process_token(token)
-            }
-        } else if token.is_empty() {
+        if token.trim().parse::<i64>().is_ok() {
+            self.token_buffer.push(token.to_string());
+            self.is_accumulating = true;
+
             TokenValue::Nothing
+        } else if self.is_accumulating {
+            let key_string = self.token_buffer.join("");
+            let key = key_string.trim().parse::<i64>().unwrap();
+
+            if let Some(value) = self.dictionary.iter().position(|s| *s == key) {
+                let new_value = (self.formatter)(value, self.modifier);
+                let new_key_string = key_string.replace(&key.to_string(), &new_value);
+
+                self.token_buffer.clear();
+                self.is_accumulating = false;
+                TokenValue::Transform(new_key_string, value)
+            } else {
+                self.token_buffer.clear();
+                self.is_accumulating = false;
+                TokenValue::NoTransform(key_string)
+            }
         } else {
             TokenValue::NoOp(token)
         }
