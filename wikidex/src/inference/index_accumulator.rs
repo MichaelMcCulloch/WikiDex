@@ -40,6 +40,18 @@ impl IndexAccumulator {
         }
     }
 
+    fn clear_buffer(&mut self) -> String {
+        let string = self.token_buffer.join("");
+        self.is_accumulating = false;
+        self.token_buffer.clear();
+        string
+    }
+
+    fn push_buffer<S: ToString>(&mut self, token: S) {
+        self.token_buffer.push(token.to_string());
+        self.is_accumulating = true;
+    }
+
     fn process_token<'a>(&mut self, token: &'a str) -> TokenValue<'a> {
         if let Ok(key) = token.parse::<i64>() {
             if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
@@ -79,6 +91,71 @@ impl TokenAccumulator for IndexAccumulator {
     fn token<'a>(&mut self, token: &'a str) -> TokenValue<'a> {
         if token.is_empty() {
             TokenValue::Nothing
+        } else if token.parse::<i64>().is_ok() {
+            self.push_buffer(token);
+            TokenValue::Nothing
+        } else if token.trim_end().parse::<i64>().is_ok() {
+            if self.is_accumulating {
+                self.push_buffer(token);
+                let key_string = self.clear_buffer();
+                let key = key_string.trim().parse::<i64>().unwrap();
+                if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
+                    let value_string = (self.formatter)(value, self.modifier);
+                    let value_string = token.replace(&key.to_string(), &value_string);
+                    TokenValue::Transform(value_string, value)
+                } else {
+                    TokenValue::NoTransform(key_string)
+                }
+            } else {
+                let _key_string = self.clear_buffer();
+                assert!(_key_string.is_empty());
+
+                let key_string = token;
+                let key = key_string.trim().parse::<i64>().unwrap();
+                if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
+                    let value_string = (self.formatter)(value, self.modifier);
+                    let value_string = token.replace(&key.to_string(), &value_string);
+                    TokenValue::Transform(value_string, value)
+                } else {
+                    TokenValue::NoOp(token)
+                }
+            }
+        } else if token.trim_start().parse::<i64>().is_ok() {
+            if self.is_accumulating {
+                let key_string = self.clear_buffer();
+                self.push_buffer(token);
+                let key = key_string.trim().parse::<i64>().unwrap();
+                if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
+                    let value_string = (self.formatter)(value, self.modifier);
+                    let value_string = token.replace(&key.to_string(), &value_string);
+                    TokenValue::Transform(value_string, value)
+                } else {
+                    TokenValue::NoTransform(key_string)
+                }
+            } else {
+                let _key_string = self.clear_buffer();
+                assert!(_key_string.is_empty());
+                self.push_buffer(token);
+                TokenValue::Nothing
+            }
+        } else if token.trim().parse::<i64>().is_ok() {
+            if self.is_accumulating {
+                let key_string = self.clear_buffer();
+                self.push_buffer(token);
+                let key = key_string.trim().parse::<i64>().unwrap();
+                if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
+                    let value_string = (self.formatter)(value, self.modifier);
+                    let value_string = token.replace(&key.to_string(), &value_string);
+                    TokenValue::Transform(value_string, value)
+                } else {
+                    TokenValue::NoTransform(key_string)
+                }
+            } else {
+                let _key_string = self.clear_buffer();
+                assert!(_key_string.is_empty());
+                self.push_buffer(token);
+                TokenValue::Nothing
+            }
         } else {
             TokenValue::NoOp(token)
         }
