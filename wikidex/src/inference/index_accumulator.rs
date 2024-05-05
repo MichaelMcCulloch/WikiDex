@@ -57,11 +57,6 @@ impl IndexAccumulator {
             modifier,
         }
     }
-
-    fn push_buffer<S: ToString>(&mut self, token: S) {
-        self.token_buffer.push(token.to_string());
-        self.is_accumulating = true;
-    }
 }
 
 impl TokenAccumulator for IndexAccumulator {
