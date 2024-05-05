@@ -21,7 +21,7 @@ pub(crate) enum TokenValue<'a> {
 
 pub(crate) trait TokenAccumulator {
     fn token<'a>(&mut self, token: &'a str) -> TokenValue<'a>;
-    fn flush(&mut self) -> TokenValue;
+    fn flush<'a>(&mut self) -> TokenValue<'a>;
 }
 
 impl IndexAccumulator {
@@ -97,15 +97,7 @@ impl TokenAccumulator for IndexAccumulator {
         } else if token.trim_end().parse::<i64>().is_ok() {
             if self.is_accumulating {
                 self.push_buffer(token);
-                let key_string = self.clear_buffer();
-                let key = key_string.trim().parse::<i64>().unwrap();
-                if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
-                    let value_string = (self.formatter)(value, self.modifier);
-                    let value_string = token.replace(&key.to_string(), &value_string);
-                    TokenValue::Transform(value_string, value)
-                } else {
-                    TokenValue::NoTransform(key_string)
-                }
+                self.flush()
             } else {
                 let _key_string = self.clear_buffer();
                 assert!(_key_string.is_empty());
@@ -161,7 +153,7 @@ impl TokenAccumulator for IndexAccumulator {
         }
     }
 
-    fn flush(&mut self) -> TokenValue {
+    fn flush<'a>(&mut self) -> TokenValue<'a> {
         let key_string = self.clear_buffer();
         let key = key_string.trim().parse::<i64>().unwrap();
         if let Some(value) = self.dictionary.iter().position(|i| *i == key) {
