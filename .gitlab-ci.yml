@@ -8,7 +8,6 @@ variables:
   ARTIFACT_COMPRESSION_LEVEL: "fastest"
   CACHE_COMPRESSION_LEVEL: "fastest"
 
-
 stages:
   - All
 sast:
@@ -27,32 +26,52 @@ Audit:
     - cd wikidex
     - cargo audit
 
-SQLite:
+SQLite Server:
   variables:
     DATABASE_URL: sqlite://sqlite_dummy.db
   cache:
-    - key: cache-sqlite-all-release
+    - key: cache-sqlite-server
       paths:
-        - wikidex/target/debug/*
-        - wikidex/target/.rustc_info.json
-        - wikidex/target/CACHEDIR.TAG
+        - wikidex/target/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: All
   script:
     - cd wikidex
     - cargo build --no-default-features --features sqlite,server
+
+SQLite Ingest:
+  variables:
+    DATABASE_URL: sqlite://sqlite_dummy.db
+  cache:
+    - key: cache-sqlite-ingest
+      paths:
+        - wikidex/target/*
+  image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
+  stage: All
+  script:
+    - cd wikidex
     - cargo build --no-default-features --features sqlite,ingest
+
+SQLite Ingest Server:
+  variables:
+    DATABASE_URL: sqlite://sqlite_dummy.db
+  cache:
+    - key: cache-sqlite-ingest-server
+      paths:
+        - wikidex/target/*
+  image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
+  stage: All
+  script:
+    - cd wikidex
     - cargo build --no-default-features --features sqlite,ingest,server
 
 SQLite Test:
   variables:
     DATABASE_URL: sqlite://sqlite_dummy.db
   cache:
-    - key: cache-sqlite-all-test
+    - key: cache-sqlite-ingest-server-test
       paths:
-        - wikidex/target/release/*
-        - wikidex/target/.rustc_info.json
-        - wikidex/target/CACHEDIR.TAG
+        - wikidex/target/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: All
   script:
@@ -63,7 +82,7 @@ PostgreSQL:
   variables:
     DATABASE_URL: postgres://wikidex:wikidex@wikidex-dummy-wikidex-dev-postgresql.wikidex-dev:5432/wikipedia
   cache:
-    - key: cache-postgres-all-release
+    - key: cache-postgres-all-debug
       paths:
         - wikidex/target/debug/*
         - wikidex/target/.rustc_info.json
