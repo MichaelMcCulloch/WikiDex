@@ -430,4 +430,23 @@ mod test {
         );
         assert_eq!(TVS::Nothing, a.flush());
     }
+
+    #[test]
+    fn index_unmatched_letters_large_fragments() {
+        let mut a = IndexAccumulator::new(vec![1234], 0, Box::new(formatter));
+
+        assert_eq!(
+            TVS::Unit(TV::NoTransform("i123i".to_string())),
+            a.token(" 123 ")
+        );
+        assert_eq!(
+            TVS::Unit(TV::NoTransform("i12i".to_string())),
+            a.token(" 12 ")
+        );
+        assert_eq!(
+            TVS::Unit(TV::NoTransform("i34i".to_string())),
+            a.token(" 34 ")
+        );
+        assert_eq!(TVS::Nothing, a.flush());
+    }
 }
