@@ -61,19 +61,15 @@ impl IndexAccumulatorTrait for IndexAccumulator {
 //                 self.token_buffer.clear();
 //                 IndexAccumulatorReturn::NoTransform(index_string)
 //             };
-
 //             self.token_buffer.clear();
-
 //             self.is_accumulating = false;
 //             result
 //         } else {
 //             IndexAccumulatorReturn::NoOp(token)
 //         }
 //     }
-
 //     fn flush(&mut self) -> IndexAccumulatorReturn {
 //         let string = self.token_buffer.join("");
-
 //         self.token_buffer.clear();
 //         if string.is_empty() {
 //             IndexAccumulatorReturn::Nothing
