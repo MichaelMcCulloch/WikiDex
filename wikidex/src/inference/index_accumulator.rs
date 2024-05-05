@@ -90,7 +90,9 @@ impl TokenAccumulator for IndexAccumulator {
             if self.is_accumulating {
                 let key_string = self.clear_buffer();
                 let result = self.process(key_string);
-                self.push_buffer(token);
+                let this = &mut *self;
+                this.token_buffer.push(token.to_string());
+                this.is_accumulating = true;
                 TokenValues::Unit(result)
             } else {
                 let _key_string = self.clear_buffer();
