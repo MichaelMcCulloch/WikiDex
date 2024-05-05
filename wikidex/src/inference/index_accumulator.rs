@@ -110,4 +110,14 @@ mod test {
         assert_eq!(I::Nothing, a.token("4"));
         assert_eq!(Some("0".to_string()), a.flush());
     }
+    #[test]
+    fn test_two_numbers_is_absent() {
+        let mut a = IndexAccumulator::new(vec![1234]);
+
+        assert_eq!(I::Nothing, a.token("1"));
+        assert_eq!(I::Nothing, a.token("2"));
+        assert_eq!(I::Nothing, a.token("3"));
+        assert_eq!(I::Nothing, a.token("4"));
+        assert_eq!(Some("0".to_string()), a.flush());
+    }
 }
