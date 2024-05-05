@@ -232,7 +232,7 @@ mod test {
         assert_eq!(TVS::Nothing, a.token("3"));
         assert_eq!(
             TVS::Twofer(
-                TV::Transform("[0](http://localhost/#0) ".to_string(), 0),
+                TV::Transform("[0](http://localhost/#0)".to_string(), 0),
                 TV::NoOp(" ")
             ),
             a.token(" ")
