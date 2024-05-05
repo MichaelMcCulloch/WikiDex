@@ -79,13 +79,24 @@ mod test {
     use super::{IndexAccumulator, IndexAccumulatorTrait};
 
     #[test]
-    fn test() {
+    fn test_plain_text() {
         let mut a = IndexAccumulator::new(vec![1234, 4321]);
 
         assert_eq!(I::NoOp("This"), a.token("This"));
         assert_eq!(I::NoOp(" is"), a.token(" is"));
         assert_eq!(I::NoOp(" a"), a.token(" a"));
         assert_eq!(I::NoOp(" test"), a.token(" test"));
+        assert_eq!(None, a.flush());
+    }
+
+    #[test]
+    fn test_sequential_numbers_absent() {
+        let mut a = IndexAccumulator::new(vec![1234, 4321]);
+
+        assert_eq!(I::NoOp("This"), a.token("2"));
+        assert_eq!(I::NoOp(" is"), a.token("3"));
+        assert_eq!(I::NoOp(" a"), a.token("4"));
+        assert_eq!(I::NoOp(" test"), a.token("1"));
     }
 
     #[test]
