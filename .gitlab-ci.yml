@@ -1,8 +1,8 @@
 variables:
-  KUBERNETES_CPU_LIMIT: 12000m
   KUBERNETES_CPU_REQUEST: 400m
-  KUBERNETES_MEMORY_LIMIT: 8Gi
+  KUBERNETES_CPU_LIMIT: 12000m
   KUBERNETES_MEMORY_REQUEST: 2Gi
+  KUBERNETES_MEMORY_LIMIT: 8Gi
 
 stages:
   - All
@@ -26,23 +26,17 @@ SQLite:
   variables:
     DATABASE_URL: sqlite://sqlite_dummy.db
   cache:
-    - key: cache-sqlite-SqlServer-$CI_COMMIT_REF_SLUG
+    - key: cache-sqlite-$CI_COMMIT_REF_SLUG
       paths:
-        - wikidex/target/SqlServer
-    - key: cache-sqlite-SqlIngest-$CI_COMMIT_REF_SLUG
-      paths:
-        - wikidex/target/SqlIngest
-    - key: cache-sqlite-SqlIngestServer-$CI_COMMIT_REF_SLUG
-      paths:
-        - wikidex/target/SqlIngestServer
+        - wikidex/target/*
   image: registry.semanticallyinvalid.net/omnipedia/cicd/wikidex-cicd:latest
   stage: All
   script:
     - cd wikidex
-    - CARGO_TARGET_DIR=target/SqlServer cargo build --no-default-features --features sqlite,server
-    - CARGO_TARGET_DIR=target/SqlIngest cargo build --no-default-features --features sqlite,ingest
-    - CARGO_TARGET_DIR=target/SqlIngestServer cargo build --no-default-features --features sqlite,ingest,server
-    - CARGO_TARGET_DIR=target/SqlIngestServer cargo test --package wikidex --bin wikidex --no-default-features --features sqlite,server,ingest -- --exact --show-output  --nocapture
+    - cargo build --no-default-features --features sqlite,server
+    - cargo build --no-default-features --features sqlite,ingest
+    - cargo build --no-default-features --features sqlite,ingest,server
+    - cargo test --package wikidex --bin wikidex --no-default-features --features sqlite,server,ingest -- --exact --show-output  --nocapture
 
 PostgreSQL:
   variables:
