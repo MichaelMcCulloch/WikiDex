@@ -1,9 +1,9 @@
-use std::fmt::{Display, Formatter, Result};
-
+use crate::llm_client::LlmClientError;
 use crate::{
     docstore::DocstoreRetrieveError, embedding_client::EmbeddingServiceError,
-    index::IndexSearchError, llm_client::LlmClientError,
+    index::IndexSearchError,
 };
+use std::fmt::{Display, Formatter, Result};
 
 #[derive(Debug)]
 pub(crate) enum QueryEngineError {

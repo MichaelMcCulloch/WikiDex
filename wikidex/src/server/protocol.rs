@@ -1,15 +1,14 @@
 use std::collections::HashMap;
 
 use bytes::Bytes;
-use chrono::DateTime;
+
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::formatter::{Cite, Provenance};
+use crate::formatter::{Cite};
 
 // type Source = (String, String, String, String);
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
-#[schema(example = assistant_message_schema_example)]
 pub(crate) struct Source {
     pub(crate) index: i64,
     pub(crate) citation: String,
@@ -18,17 +17,23 @@ pub(crate) struct Source {
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug)]
-#[schema(example = assistant_message_schema_example)]
-pub(crate) enum Message {
-    User(String),
-    Assistant(String),
-    SourceMap(HashMap<i64, Source>),
+pub(crate) struct Message {
+    pub(crate) role: Role,
+    pub(crate) message: String,
+    pub(crate) source_map: HashMap<i64, Source>,
+}
+#[derive(Serialize, Deserialize, ToSchema, Debug)]
+pub(crate) enum Role {
+    User,
+    Assistant,
+    SourceMap,
+    System,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug)]
-#[schema(example = assistant_partial_message_schema_example)]
 pub(crate) struct PartialMessage {
-    pub(crate) content: Option<String>,
+    pub(crate) role: Role,
+    pub(crate) message: Option<String>,
     pub(crate) source_map: Option<HashMap<i64, Source>>,
     pub(crate) finished: Option<String>,
 }
@@ -36,25 +41,28 @@ pub(crate) struct PartialMessage {
 impl PartialMessage {
     pub(crate) fn done() -> Self {
         Self {
-            content: None,
+            message: None,
             source_map: None,
             finished: Some(String::from("DONE")),
+            role: Role::Assistant,
         }
     }
 
     pub(crate) fn source(source: HashMap<i64, Source>) -> Self {
         Self {
-            content: None,
+            message: None,
             source_map: Some(source),
             finished: None,
+            role: Role::SourceMap,
         }
     }
 
     pub(crate) fn content(content: String) -> Self {
         Self {
-            content: Some(content),
+            message: Some(content),
             source_map: None,
             finished: None,
+            role: Role::Assistant,
         }
     }
 
@@ -66,7 +74,6 @@ impl PartialMessage {
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug)]
-#[schema(example = conversation_schema_example)]
 pub(crate) struct Conversation {
     pub(crate) messages: Vec<Message>,
 }
@@ -76,71 +83,11 @@ pub(crate) trait CountSources {
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug)]
-#[schema(example = query_schema_example)]
 pub(crate) struct Query {
     pub(crate) message: String,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug)]
-#[schema(example = answer_schema_example)]
 pub(crate) struct Answer {
     pub(crate) message: String,
-}
-
-fn assistant_message_schema_example() -> Message {
-    Message::Assistant(String::from("String"))
-}
-
-fn assistant_partial_message_schema_example() -> PartialMessage {
-    PartialMessage {
-        content: Some(String::from(" fragment")),
-        source_map: Some(source_map_example()),
-        finished: Some(String::new()),
-    }
-}
-
-fn source_map_example() -> HashMap<i64, Source> {
-    let source = source_schema_example();
-    let mut source_map = HashMap::new();
-    let _ = source_map.insert(source.index, source);
-    source_map
-}
-fn source_schema_example() -> Source {
-    let p = Provenance::Wikipedia(
-        "Bogonam-Foulbé".to_string(),
-        DateTime::from_timestamp_millis(0).unwrap().date_naive(),
-        DateTime::from_timestamp_millis(0).unwrap().date_naive(),
-    );
-    p.format(&crate::formatter::CitationStyle::Mla);
-    Source {
-        index: 987087,
-        citation: p.format(&crate::formatter::CitationStyle::Mla),
-        url: p.url(),
-        origin_text: p.title(),
-    }
-}
-
-fn user_message_schema_example() -> Message {
-    Message::User(String::from("String"))
-}
-fn source_map_message_schema_example() -> Message {
-    Message::SourceMap(source_map_example())
-}
-fn query_schema_example() -> Query {
-    Query {
-        message: String::from("String"),
-    }
-}
-fn answer_schema_example() -> Answer {
-    Answer {
-        message: String::from("String"),
-    }
-}
-fn conversation_schema_example() -> Conversation {
-    Conversation {
-        messages: vec![
-            user_message_schema_example(),
-            assistant_message_schema_example(),
-        ],
-    }
 }

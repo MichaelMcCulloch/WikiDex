@@ -3,11 +3,10 @@ name = "wikidex"
 version = "0.1.0"
 edition = "2021"
 
+
 [dependencies]
 
-# Common
-actix-rt = { version = "2.9.0" }
-actix-web = { version = "4.5.1" }
+# Commonaxum = "0.7.5"
 anyhow = { version = "1.0.81" }
 async-openai = { git = "https://github.com/MichaelMcCulloch/async-not-just-openai.git", tag = "0.20.0" }
 async-stream = { version = "0.3.5" }
@@ -32,23 +31,37 @@ tokio = { version = "1.37.0", features = [
     "rt",
     "time",
 ] }
-tonic = { version = "0.11.0" }
 trtllm = { git = "https://github.com/MichaelMcCulloch/trtllm.git", tag = "0.2.1-lib" }
 url = { version = "2.5.0" }
+tonic = { version = "0.11.0" }
+
 
 # Server
-actix-cors = { version = "0.7.0", optional = true }
+hyper = { version = "1.3.1", optional = true }
+axum = { version = "0.7.5", default-features = false, features = [
+    "tokio",
+    "ws",
+    "http2",
+    "json",
+    "matched-path",
+    "original-uri",
+    "query",
+], optional = true }
 face-api = { git = "https://github.com/MichaelMcCulloch/face-api.git", tag = "0.1.1", optional = true }
 redis = { version = "0.25.3", features = [
     "aio",
     "tokio-comp",
 ], optional = true }
 rkyv = { version = "0.7.44", features = ["std", "bytecheck"], optional = true }
-utoipa = { version = "4.2.0", features = ["actix_extras"], optional = true }
-utoipa-redoc = { version = "3.0.0", features = ["actix-web"], optional = true }
-utoipa-swagger-ui = { version = "6.0.0", features = [
-    'actix-web',
+tower-http = { version = "0.5.2", features = ["cors"], optional = true }
+tokio-stream = { version = "0.1.15", optional = true }
+utoipa = { version = "4.2.1", features = [
+    "axum_extras",
+    "openapi_extensions",
 ], optional = true }
+utoipa-redoc = { version = "4.0.0", features = ["axum"], optional = true }
+utoipa-rapidoc = { version = "4.0.0", features = ["axum"], optional = true }
+utoipa-swagger-ui = { version = "7.0.0", features = ['axum'], optional = true }
 
 # Ingest
 async-compat = { version = "0.2.3", optional = true }
@@ -78,11 +91,15 @@ debug = 0
 [features]
 default = ["postgres", "server"]
 server = [
-    "dep:actix-cors",
+    "dep:axum",
     "dep:face-api",
+    "dep:hyper",
     "dep:redis",
     "dep:rkyv",
+    "dep:tokio-stream",
+    "dep:tower-http",
     "dep:utoipa-redoc",
+    "dep:utoipa-rapidoc",
     "dep:utoipa-swagger-ui",
     "dep:utoipa",
 ]

@@ -1,5 +1,10 @@
-use bytes::Bytes;
+use std::collections::HashMap;
 
+use crate::llm_client::{
+    LanguageServiceArguments, LanguageServiceDocument, LlmClientImpl, LlmClientService, LlmMessage,
+    LlmRole, PartialLlmMessage,
+};
+use bytes::Bytes;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 use crate::{
@@ -7,11 +12,7 @@ use crate::{
     embedding_client::{EmbeddingClient, EmbeddingClientService},
     formatter::{CitationStyle, Cite},
     index::{FaceIndex, SearchService},
-    llm_client::{
-        LanguageServiceArguments, LanguageServiceDocument, LlmClientImpl, LlmClientService,
-        LlmMessage, LlmRole, PartialLlmMessage,
-    },
-    server::{Conversation, Message, PartialMessage, Source},
+    server::{Conversation, Message, PartialMessage, Role, Source},
 };
 
 use super::QueryEngineError;
@@ -50,25 +51,27 @@ impl Engine {
         stop_phrases: Vec<String>,
     ) -> Result<Message, QueryEngineError> {
         let user_query = match messages.iter().last() {
-            Some(Message::User(user_query)) => {
-                Ok::<std::string::String, QueryEngineError>(user_query.clone())
-            }
+            Some(Message {
+                role: Role::User,
+                message,
+                source_map: _,
+            }) => Ok::<std::string::String, QueryEngineError>(message.clone()),
             Some(_) => Err(QueryEngineError::LastMessageIsNotUser)?,
             None => Err(QueryEngineError::EmptyConversation)?,
         }?;
 
         let messages = messages
             .into_iter()
-            .filter_map(|m| match m {
-                Message::User(content) => Some(LlmMessage {
+            .filter_map(|m| match m.role {
+                Role::User => Some(LlmMessage {
                     role: LlmRole::User,
-                    content,
+                    content: m.message,
                 }),
-                Message::Assistant(content) => Some(LlmMessage {
+                Role::Assistant => Some(LlmMessage {
                     role: LlmRole::Assistant,
-                    content,
+                    content: m.message,
                 }),
-                Message::SourceMap(_) => None,
+                Role::SourceMap | Role::System => None,
             })
             .collect::<Vec<_>>();
 
@@ -118,7 +121,11 @@ impl Engine {
         match role {
             LlmRole::Assistant => {
                 let content = content.trim().to_string();
-                Ok(Message::Assistant(content))
+                Ok(Message {
+                    role: Role::Assistant,
+                    message: content,
+                    source_map: HashMap::new(),
+                })
             }
             _ => Err(QueryEngineError::InvalidAgentResponse)?,
         }
@@ -131,24 +138,26 @@ impl Engine {
         stop_phrases: Vec<String>,
     ) -> Result<(), QueryEngineError> {
         let user_query = match messages.iter().last() {
-            Some(Message::User(user_query)) => {
-                Ok::<std::string::String, QueryEngineError>(user_query.clone())
-            }
+            Some(Message {
+                role: Role::User,
+                message,
+                source_map: _,
+            }) => Ok::<std::string::String, QueryEngineError>(message.clone()),
             Some(_) => Err(QueryEngineError::LastMessageIsNotUser)?,
             None => Err(QueryEngineError::EmptyConversation)?,
         }?;
         let messages = messages
             .into_iter()
-            .filter_map(|m| match m {
-                Message::User(content) => Some(LlmMessage {
+            .filter_map(|m| match m.role {
+                Role::User => Some(LlmMessage {
                     role: LlmRole::User,
-                    content,
+                    content: m.message,
                 }),
-                Message::Assistant(content) => Some(LlmMessage {
+                Role::Assistant => Some(LlmMessage {
                     role: LlmRole::Assistant,
-                    content,
+                    content: m.message,
                 }),
-                Message::SourceMap(_) => None,
+                Role::SourceMap | Role::System => None,
             })
             .collect::<Vec<_>>();
 
@@ -191,7 +200,7 @@ impl Engine {
 
         let (partial_message_sender, mut partial_message_receiver) = unbounded_channel();
 
-        actix_web::rt::spawn(async move {
+        tokio::spawn(async move {
             while let Some(PartialLlmMessage {
                 content: Some(content),
                 ..

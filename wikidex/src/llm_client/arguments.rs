@@ -2,17 +2,17 @@ use super::LlmMessage;
 use serde::Serialize;
 
 #[derive(Serialize)]
-pub(crate) struct LanguageServiceDocument {
-    pub(crate) index: i64,
-    pub(crate) text: String,
+pub struct LanguageServiceDocument {
+    pub index: i64,
+    pub text: String,
 }
 // pub(crate) struct LanguageServiceArguments<'arg> {
 //     pub(crate) prompt: &'arg str,
 // }
-pub(crate) struct LanguageServiceArguments {
-    pub(crate) messages: Vec<LlmMessage>,
-    pub(crate) documents: Vec<LanguageServiceDocument>,
-    pub(crate) user_query: String,
-    pub(crate) max_tokens: u16,
-    pub(crate) stop_phrases: Vec<String>,
+pub struct LanguageServiceArguments {
+    pub messages: Vec<LlmMessage>,
+    pub documents: Vec<LanguageServiceDocument>,
+    pub user_query: String,
+    pub max_tokens: u16,
+    pub stop_phrases: Vec<String>,
 }

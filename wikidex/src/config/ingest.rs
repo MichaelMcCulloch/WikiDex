@@ -1,7 +1,5 @@
-use crate::{
-    cli_args::WikipediaIngestArgs,
-    llm_client::{ModelEndpoint, ModelKind},
-};
+use crate::cli_args::WikipediaIngestArgs;
+use crate::llm_client::{ModelEndpoint, ModelKind};
 use colored::Colorize;
 use std::{fmt::Display, path::PathBuf};
 use url::Url;

@@ -1,7 +1,7 @@
 use std::fmt::{self, Debug, Display, Formatter};
 
 #[derive(Debug)]
-pub(crate) enum LlmClientError {
+pub enum LlmClientError {
     Utf8Error(std::str::Utf8Error),
     Anyhow(anyhow::Error),
     TonicError(tonic::transport::Error),

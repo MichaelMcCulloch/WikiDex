@@ -3,10 +3,11 @@ use std::{
     fmt::{Display, Formatter, Result},
 };
 
+use crate::llm_client::LlmClientError;
 use nebula_client::v3::graph::GraphQueryError;
 use nebula_fbthrift_graph_v3::graph_service::AuthenticateError;
 
-use crate::{embedding_client::EmbeddingServiceError, llm_client::LlmClientError};
+use crate::embedding_client::EmbeddingServiceError;
 
 #[derive(Debug)]
 pub(crate) enum PlainTextProcessingError {

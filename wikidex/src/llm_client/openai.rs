@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use async_openai::{
     config::OpenAIConfig,
     types::{
@@ -10,27 +8,28 @@ use async_openai::{
     Client,
 };
 use futures::StreamExt;
+use std::sync::Arc;
 use tera::Tera;
 use tokio::sync::{mpsc::UnboundedSender, RwLock};
 
 use super::{
-    error::LlmClientError, LanguageServiceArguments, LlmClient, LlmClientBackend,
-    LlmClientBackendKind, LlmMessage, LlmRole,
+    client::{LlmClient, LlmClientBackend, LlmClientBackendKind},
+    LanguageServiceArguments, LlmClientError, LlmMessage, LlmRole,
 };
 
-pub(crate) struct OpenAiInstructClient {
+pub struct OpenAiInstructClient {
     client: Client<OpenAIConfig>,
     model_name: String,
 }
 
 impl OpenAiInstructClient {
-    pub(crate) fn new(client: Client<OpenAIConfig>, model_name: String) -> Self {
+    pub fn new(client: Client<OpenAIConfig>, model_name: String) -> Self {
         Self { client, model_name }
     }
 }
 
 impl LlmClient<OpenAiInstructClient> {
-    pub(crate) async fn new(
+    pub async fn new(
         client: OpenAiInstructClient,
         tera: Arc<RwLock<Tera>>,
     ) -> Result<Self, LlmClientError> {

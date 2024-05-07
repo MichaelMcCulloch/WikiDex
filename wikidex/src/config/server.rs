@@ -1,12 +1,9 @@
-use std::{fmt::Display, path::PathBuf};
-
+use crate::llm_client::{ModelEndpoint, ModelKind};
 use colored::Colorize;
+use std::{fmt::Display, path::PathBuf};
 use url::Url;
 
-use crate::{
-    cli_args::ServerArgs,
-    llm_client::{ModelEndpoint, ModelKind},
-};
+use crate::cli_args::ServerArgs;
 
 #[derive(Debug)]
 pub(crate) struct Config {

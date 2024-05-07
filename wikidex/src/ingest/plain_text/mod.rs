@@ -10,10 +10,11 @@ use fbthrift_transport::{AsyncTransport, AsyncTransportConfiguration};
 use indicatif::MultiProgress;
 use nebula_client::v3::{GraphClient, GraphSession as GS, GraphTransportResponseHandler};
 
+use crate::llm_client::LlmClientImpl;
 use tokio::{net::TcpStream, time::Sleep};
 use url::Url;
 
-use crate::{embedding_client::EmbeddingClient, llm_client::LlmClientImpl};
+use crate::embedding_client::EmbeddingClient;
 
 use self::error::PlainTextProcessingError;
 

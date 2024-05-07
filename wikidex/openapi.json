@@ -1,0 +1,206 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "wikidex",
+    "description": "",
+    "license": {
+      "name": ""
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/conversation": {
+      "post": {
+        "tags": [
+          "crate"
+        ],
+        "operationId": "conversation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Conversation"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "AI Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No user input"
+          },
+          "400": {
+            "description": "Empty Request"
+          }
+        }
+      }
+    },
+    "/streaming_conversation": {
+      "post": {
+        "tags": [
+          "crate"
+        ],
+        "operationId": "streaming_conversation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Conversation"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "AI Response",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartialMessage"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No user input"
+          },
+          "400": {
+            "description": "Empty Request"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Answer": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "Conversation": {
+        "type": "object",
+        "required": [
+          "messages"
+        ],
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            }
+          }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "required": [
+          "role",
+          "message",
+          "source_map"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "source_map": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Source"
+            }
+          }
+        }
+      },
+      "PartialMessage": {
+        "type": "object",
+        "required": [
+          "role"
+        ],
+        "properties": {
+          "finished": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "source_map": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Source"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "Query": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "Role": {
+        "type": "string",
+        "enum": [
+          "User",
+          "Assistant",
+          "SourceMap",
+          "System"
+        ]
+      },
+      "Source": {
+        "type": "object",
+        "required": [
+          "index",
+          "citation",
+          "url",
+          "origin_text"
+        ],
+        "properties": {
+          "citation": {
+            "type": "string"
+          },
+          "index": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "origin_text": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

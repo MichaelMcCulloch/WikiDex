@@ -15,7 +15,7 @@ impl Client {
 }
 
 impl Stream for Client {
-    type Item = Result<Bytes, actix_web::http::Error>;
+    type Item = Result<Bytes, hyper::Error>;
     /// This does NOT work without self.0 being a tokio receiver of some kind
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         match Pin::new(&mut self.0).poll_recv(cx) {

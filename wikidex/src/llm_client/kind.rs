@@ -1,13 +1,13 @@
 use std::{error::Error, fmt::Display, str::FromStr};
 
 #[derive(Debug, Clone, Copy)]
-pub(crate) enum ModelKind {
+pub enum ModelKind {
     Instruct,
     Chat,
 }
 
 #[derive(Debug)]
-pub(crate) struct ParseModelKindError;
+pub struct ParseModelKindError;
 impl Error for ParseModelKindError {}
 impl Display for ParseModelKindError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

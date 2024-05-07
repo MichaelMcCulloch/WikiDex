@@ -3,16 +3,20 @@ use std::sync::Arc;
 use anyhow::Context;
 use tera::Tera;
 use tokio::sync::{mpsc::UnboundedSender, RwLock};
+use tonic::transport::Channel;
+use trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient;
 
 use super::{
-    error::LlmClientError,
+    client::{LlmClient, LlmClientBackend, LlmClientBackendKind},
     triton_helper::{create_request, deserialize_bytes_tensor},
-    LanguageServiceArguments, LlmClient, LlmClientBackend, LlmClientBackendKind, TritonClient,
+    LanguageServiceArguments, LlmClientError,
 };
+
 use async_stream::stream;
 
+pub type TritonClient = GrpcInferenceServiceClient<Channel>;
 impl LlmClient<TritonClient> {
-    pub(crate) fn new(client: TritonClient, tera: Arc<RwLock<Tera>>) -> Self {
+    pub fn new(client: TritonClient, tera: Arc<RwLock<Tera>>) -> Self {
         Self { client, tera }
     }
 }

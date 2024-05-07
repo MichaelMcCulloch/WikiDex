@@ -1,38 +1,39 @@
-use std::sync::Arc;
+use super::{conversation, streaming_conversation, ApiDoc};
 
-use actix_cors::Cors;
-use actix_web::{dev::Server, middleware, web::Data, App, HttpServer};
+use crate::inference::Engine;
+use axum::{
+    routing::{post},
+    Router,
+};
+use std::{net::SocketAddr, sync::Arc};
+use tower_http::cors::{Any, CorsLayer};
 use utoipa::OpenApi;
+use utoipa_rapidoc::RapiDoc;
 use utoipa_redoc::{Redoc, Servable};
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::inference::Engine;
-
-use super::{conversation, streaming_conversation, ApiDoc};
-
-pub(crate) fn run_server<S: AsRef<str>>(
+pub(crate) async fn run_server(
     engine: Engine,
-    host: S,
+    host: String,
     port: u16,
-) -> Result<Server, std::io::Error> {
-    let openapi = ApiDoc::openapi();
-
+) -> Result<(), std::io::Error> {
     let engine = Arc::new(engine);
 
-    let mut server = HttpServer::new(move || {
-        App::new()
-            .wrap(middleware::Logger::default())
-            .wrap(Cors::permissive())
-            .app_data(Data::new(engine.clone()))
-            .service(
-                SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-docs/openapi.json", openapi.clone()),
-            )
-            .service(streaming_conversation)
-            .service(conversation)
-            .service(Redoc::with_url("/api-doc", openapi.clone()))
-    });
+    let cors = CorsLayer::new().allow_methods(Any).allow_origin(Any);
+    // Create the router
+    let app = Router::new()
+        .route("/streaming_conversation", post(streaming_conversation))
+        .route("/conversation", post(conversation))
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
+        .merge(Redoc::with_url("/api-doc", ApiDoc::openapi()))
+        .merge(RapiDoc::new("/api-docs/openapi.json").path("/rapidoc"))
+        .with_state(engine)
+        .layer(cors);
 
-    server = server.bind((host.as_ref(), port))?;
-    let s = server.run();
-    Ok(s)
+    // Bind and serve
+    let addr: SocketAddr = format!("{}:{}", host, port).parse().unwrap();
+
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    axum::serve(listener, app).await.unwrap();
+    Ok(())
 }

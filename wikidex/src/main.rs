@@ -5,6 +5,7 @@ mod cli_args;
 mod config;
 mod embedding_client;
 mod llm_client;
+
 use {
     async_openai::{config::OpenAIConfig, Client},
     clap::Parser,
@@ -42,7 +43,6 @@ mod inference;
 mod server;
 #[cfg(feature = "server")]
 use {
-    actix_web::rt,
     config::server::Config as ServerConfig,
     docstore::{Docstore, DocumentStoreImpl},
     index::FaceIndex,
@@ -52,7 +52,8 @@ use {
     trtllm::triton::grpc_inference_service_client::GrpcInferenceServiceClient,
 };
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     match Cli::parse().command {
         #[cfg(feature = "ingest")]
         Commands::Wikipedia(ingest_args) => {
@@ -67,7 +68,6 @@ fn main() -> anyhow::Result<()> {
                 .unwrap();
 
             let config = IngestConfig::from(ingest_args);
-            let system_runner = tokio::runtime::Runtime::new().unwrap();
 
             log::info!("\n{config}");
 
@@ -80,13 +80,14 @@ fn main() -> anyhow::Result<()> {
 
             let pipeline = PipelineProcessor;
 
-            system_runner
-                .block_on(pipeline.process(
+            pipeline
+                .process(
                     &multi_progress,
                     config.wiki_xml,
                     config.output_directory,
                     embedding_client,
-                ))
+                )
+                .await
                 .map_err(anyhow::Error::from)?;
             Ok(())
         }
@@ -95,26 +96,23 @@ fn main() -> anyhow::Result<()> {
         Commands::Server(server_args) => {
             env_logger::init();
             let config = ServerConfig::from(server_args);
-            let system_runner = rt::System::new();
 
             log::info!("\n{config}");
 
             let docstore = match config.docstore_url.scheme() {
                 #[cfg(feature = "sqlite")]
                 "sqlite" => {
-                    let docstore = system_runner.block_on(Docstore::<sqlx::Sqlite>::new(
-                        &config.docstore_url,
-                        &config.redis_url,
-                    ))?;
+                    let docstore =
+                        Docstore::<sqlx::Sqlite>::new(&config.docstore_url, &config.redis_url)
+                            .await?;
 
                     DocumentStoreImpl::Sqlite(docstore)
                 }
                 #[cfg(feature = "postgres")]
                 "postgres" => {
-                    let docstore = system_runner.block_on(Docstore::<sqlx::Postgres>::new(
-                        &config.docstore_url,
-                        &config.redis_url,
-                    ))?;
+                    let docstore =
+                        Docstore::<sqlx::Postgres>::new(&config.docstore_url, &config.redis_url)
+                            .await?;
 
                     DocumentStoreImpl::Postgres(docstore)
                 }
@@ -127,11 +125,25 @@ fn main() -> anyhow::Result<()> {
                 Tera::new(config.system_prompt_template_path.to_str().unwrap()).unwrap(),
             ));
             let tera = system_prompt.clone();
+            tokio::spawn(async move {
+                loop {
+                    sleep(Duration::from_secs(2)).await;
+                    tera.write()
+                        .map(|mut t| match t.deref_mut().full_reload() {
+                            Ok(_) => (),
+                            Err(e) => {
+                                log::error!("Could Not Reload Template! {e}");
+                            }
+                        })
+                        .await;
+                }
+            });
+            let tera = system_prompt.clone();
             let llm_client = match config.llm_endpoint {
                 ModelEndpoint::Triton => {
-                    let client = system_runner.block_on(GrpcInferenceServiceClient::connect(
-                        String::from(config.llm_url.as_ref()),
-                    ))?;
+                    let client =
+                        GrpcInferenceServiceClient::connect(String::from(config.llm_url.as_ref()))
+                            .await?;
 
                     LlmClientImpl::Triton(LlmClient::<TritonClient>::new(client, tera))
                 }
@@ -142,8 +154,8 @@ fn main() -> anyhow::Result<()> {
                         open_ai_client,
                         config.llm_name.display().to_string(),
                     );
-                    let openai_client = system_runner
-                        .block_on(LlmClient::<OpenAiInstructClient>::new(client, tera))?;
+                    let openai_client =
+                        LlmClient::<OpenAiInstructClient>::new(client, tera).await?;
 
                     LlmClientImpl::OpenAiInstruct(openai_client)
                 }
@@ -162,30 +174,10 @@ fn main() -> anyhow::Result<()> {
                 }
             };
 
-            let engine =
-                system_runner.block_on(Engine::new(index, embed_client, llm_client, docstore));
+            let engine = Engine::new(index, embed_client, llm_client, docstore).await;
 
-            let run_server = run_server(engine, config.host, config.port);
-            let server = run_server?;
-
-            let tera = system_prompt.clone();
-            system_runner
-                .block_on(async {
-                    actix_web::rt::spawn(async move {
-                        loop {
-                            sleep(Duration::from_secs(2)).await;
-                            tera.write()
-                                .map(|mut t| match t.deref_mut().full_reload() {
-                                    Ok(_) => (),
-                                    Err(e) => {
-                                        log::error!("Could Not Reload Template! {e}");
-                                    }
-                                })
-                                .await;
-                        }
-                    });
-                    server.await
-                })
+            run_server(engine, config.host, config.port)
+                .await
                 .map_err(anyhow::Error::from)
         }
     }

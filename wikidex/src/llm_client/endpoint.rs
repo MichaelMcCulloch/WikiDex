@@ -1,7 +1,7 @@
 use std::{error::Error, fmt::Display, str::FromStr};
 
 #[derive(Debug, Clone, Copy)]
-pub(crate) enum ModelEndpoint {
+pub enum ModelEndpoint {
     Triton,
     OpenAi,
 }
@@ -16,7 +16,7 @@ impl Display for ModelEndpoint {
 }
 
 #[derive(Debug)]
-pub(crate) struct ParseModelEndpointError;
+pub struct ParseModelEndpointError;
 impl Error for ParseModelEndpointError {}
 impl Display for ParseModelEndpointError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

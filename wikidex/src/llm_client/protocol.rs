@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum LlmRole {
+pub enum LlmRole {
     Assistant,
     User,
     System,
@@ -26,15 +26,15 @@ impl Display for LlmRole {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub(crate) struct LlmMessage {
-    pub(crate) role: LlmRole,
-    pub(crate) content: String,
+pub struct LlmMessage {
+    pub role: LlmRole,
+    pub content: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub(crate) struct PartialLlmMessage {
-    pub(crate) role: Option<LlmRole>,
-    pub(crate) content: Option<String>,
+pub struct PartialLlmMessage {
+    pub role: Option<LlmRole>,
+    pub content: Option<String>,
 }
 
 impl From<&Role> for LlmRole {
