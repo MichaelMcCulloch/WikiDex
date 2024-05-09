@@ -33,6 +33,17 @@ x-base_service_vllm: &base_vllm
   ports:
     - "${VLLM_HOST_PORT}:${VLLM_CONT_PORT}"
 
+x-base_service_aphrodite: &base_aphrodite
+  env_file: .env
+  image: alpindale/aphrodite-engine:latest
+  user: "0"
+  profiles:
+    - aphrodite
+  volumes:
+    - ~/.cache/huggingface/:/root/.cache/huggingface
+  ports:
+    - "${VLLM_HOST_PORT}:7860"
+
 x-base_service_triton: &base_triton
   env_file: .env
   profiles:
@@ -146,6 +157,18 @@ services:
     build:
       dockerfile: Dockerfile
       context: ./ui
+
+  aphrodite:
+    container_name: mixtral-7x8b
+    <<:
+      - *base_service_nvidia
+      - *base_aphrodite
+    entrypoint: ["/app/aphrodite-engine/docker/entrypoint.sh"]
+    environment:
+      - MODEL_NAME=$LLM_MODEL_NAME
+      - CONTEXT_LENGTH=$MAX_MODEL_LEN
+      - GPU_MEMORY_UTILIZATION=$VLLM_MEM_MAX
+      - DATATYPE=half
 
   vllm:
     <<:
