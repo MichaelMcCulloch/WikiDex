@@ -1,5 +1,9 @@
 use std::collections::VecDeque;
-
+/// A text splitter that splits text into chunks of a given size.
+///        - chunk_size: The maximum size of a chunk.
+///        - chunk_overlap: The amount of overlap between chunks.
+///        - separators: A list of separators to use. If None, the default separators will be used.
+///        - keep_separator: Whether to keep the separator in the chunks.
 pub(crate) struct RecursiveCharacterTextSplitter {
     chunk_size: usize,
     chunk_overlap: usize,
@@ -110,8 +114,8 @@ mod tests_text_splitter {
     #[test]
     fn split_huge_article() {
         let process = SUPREME_COURT_VOL_129_PARSE_RESULT;
-        let split = RecursiveCharacterTextSplitter::new(1024, 128, None, true);
-        let splits = split.split_text(process);
+        let splitter = RecursiveCharacterTextSplitter::new(1024, 128, None, true);
+        let splits = splitter.split_text(process);
 
         assert_eq!(splits, SUPREME_COURT_VOL_129_SPLIT_RESULT);
     }
