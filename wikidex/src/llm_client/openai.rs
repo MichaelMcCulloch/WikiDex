@@ -140,16 +140,20 @@ impl LlmClientBackend for LlmClient<OpenAiInstructClient> {
         let mut stream = self.client.client.chat().create_stream(request).await?;
 
         while let Some(Ok(fragment)) = stream.next().await {
-            let response = fragment
+            let delta = fragment
                 .choices
                 .into_iter()
                 .next()
                 .ok_or(LlmClientError::EmptyResponse)?
-                .delta
-                .content
-                .ok_or(LlmClientError::EmptyResponse)?;
+                .delta;
 
-            let _ = tx.send(response);
+            if delta.role.is_none() || delta.content.is_none() {
+                return Err(LlmClientError::EmptyResponse);
+            }
+
+            if let Some(content) = delta.content {
+                let _ = tx.send(content);
+            }
         }
 
         Ok(())
