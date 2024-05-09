@@ -6,8 +6,6 @@ export CXX="$CUDA/bin/g++";
 export RUST_LOG="info,async_openai=error"
 export RUSTFLAGS="-C target-cpu=native"
 
-# cargo test --package wikidex --bin wikidex -- ingest::pipeline::processor::test::test --exact --show-output  --nocapture
-# cargo test --package wikidex --bin wikidex -- ingest::pipeline::index_converter::test::test --exact --show-output  --nocapture
 cargo run --release -- \
 wikipedia \
 --wiki-xml \

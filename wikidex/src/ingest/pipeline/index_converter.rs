@@ -92,8 +92,8 @@ mod test {
     #[tokio::test]
     async fn test() {
         create_index(
-            PathBuf::from("/home/michael/Development/Scratch Space/wikisql/wikipedia_index.sqlite"),
-            PathBuf::from("/home/michael/Documents/WIKIDUMPS/20240420/index/thenlper/gte-small/wikipedia_index.faiss"),
+            PathBuf::from("/home/michael/Documents/WIKIDUMPS/YYYYMMDD/wikipedia_index.sqlite"),
+            PathBuf::from("/home/michael/Documents/WIKIDUMPS/YYYYMMDD/index/thenlper/gte-small/wikipedia_index.faiss"),
         )
         .await
         .unwrap();

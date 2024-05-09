@@ -37,7 +37,7 @@ x-base_service_triton: &base_triton
   env_file: .env
   profiles:
     - triton
-    - iingest
+    - ingest
   build:
     context: ./triton
     dockerfile: Dockerfile
@@ -69,7 +69,7 @@ x-base_service_wikidex: &base_wikidex
 
 x-base_service_ingest: &base_ingest
   profiles:
-    - iingest
+    - ingest
   volumes:
     - ~/Documents/WIKIDUMPS/20240401/:/wikipedia/
   build:
@@ -227,7 +227,7 @@ services:
 
   postgres_ingest:
     profiles:
-      - iingest
+      - ingest
     <<:
       - *base_service
       - *base_postgres
