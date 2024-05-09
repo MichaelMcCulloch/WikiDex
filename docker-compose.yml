@@ -40,9 +40,7 @@ x-base_service_aphrodite: &base_aphrodite
   profiles:
     - aphrodite
   volumes:
-    - ~/.cache/huggingface/:/root/.cache/huggingface
-  ports:
-    - "${VLLM_HOST_PORT}:7860"
+    - ~/.cache/huggingface/hub/:/root/.cache/huggingface/hub
 
 x-base_service_triton: &base_triton
   env_file: .env
@@ -119,7 +117,6 @@ x-base_service_postgres_prod_gid: &base_postgres_gid_fix
 x-base_service_infinity: &base_infinity
   profiles:
     - infinity
-    - server
     - ingest
   image: michaelf34/infinity:latest
   volumes:
@@ -137,7 +134,6 @@ services:
     entrypoint:
       [
         infinity_emb,
-        --compile,
         --url-prefix,
         "/v1",
         --model-name-or-path,
@@ -169,6 +165,8 @@ services:
       - CONTEXT_LENGTH=$MAX_MODEL_LEN
       - GPU_MEMORY_UTILIZATION=$VLLM_MEM_MAX
       - DATATYPE=half
+      - HF_HOME=/root/.cache/huggingface
+      - ENFORCE_EAGER=True
 
   vllm:
     <<:
