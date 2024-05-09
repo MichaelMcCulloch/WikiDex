@@ -1,4 +1,3 @@
-use actix_web::rt;
 use redis::AsyncCommands;
 use sqlx::Database;
 
@@ -80,7 +79,7 @@ impl<DB: Database> DocumentCache for Docstore<DB> {
         data: Document,
     ) -> Result<(), DocstoreRetrieveError> {
         let mut cache = self.cache.clone();
-        rt::spawn(async move {
+        tokio::spawn(async move {
             let result: Result<(), DocstoreRetrieveError> = cache
                 .set(index, data)
                 .await

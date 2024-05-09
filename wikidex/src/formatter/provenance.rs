@@ -50,7 +50,7 @@ impl Cite for Provenance {
 
     fn title(&self) -> String {
         match self {
-            Provenance::Wikipedia(title, _, _) => title.clone(),
+            Provenance::Wikipedia(title, _, _) => title.to_string(),
         }
     }
 }

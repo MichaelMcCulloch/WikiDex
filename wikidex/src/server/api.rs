@@ -77,7 +77,7 @@ async fn streaming_conversation(
     query_engine: Data<Arc<Engine>>,
 ) -> impl Responder {
     let (client, sender) = Client::new();
-    actix_web::rt::spawn(async move {
+    tokio::spawn(async move {
         let _ = query_engine
             .streaming_conversation(conversation_1, sender, vec!["References".to_string()])
             .await

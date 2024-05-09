@@ -76,7 +76,7 @@ opt-level = 3
 debug = 0
 
 [features]
-default = ["postgres", "server"]
+default = ["sqlite", "server", "ingest"]
 server = [
     "dep:actix-cors",
     "dep:face-api",

@@ -95,7 +95,7 @@ pub(crate) trait LlmClientService: LlmClientBackend {
     ) -> Result<(), LlmClientError> {
         let (tx_s, mut rx_s) = unbounded_channel();
 
-        actix_web::rt::spawn(async move {
+        tokio::spawn(async move {
             while let Some(content) = rx_s.recv().await {
                 let _ = tx.send(PartialLlmMessage {
                     role: None,

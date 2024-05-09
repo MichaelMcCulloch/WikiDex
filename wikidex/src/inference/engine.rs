@@ -191,7 +191,7 @@ impl Engine {
 
         let (partial_message_sender, mut partial_message_receiver) = unbounded_channel();
 
-        actix_web::rt::spawn(async move {
+        tokio::spawn(async move {
             while let Some(PartialLlmMessage {
                 content: Some(content),
                 ..

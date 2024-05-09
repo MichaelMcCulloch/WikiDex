@@ -107,6 +107,7 @@ x-base_service_postgres_prod_gid: &base_postgres_gid_fix
 
 x-base_service_infinity: &base_infinity
   profiles:
+    - infinity
     - server
     - ingest
   image: michaelf34/infinity:latest
